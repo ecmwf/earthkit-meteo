@@ -1,11 +1,6 @@
 # earthkit-meteo
 
-<!-- ![earthkit-meteo](docs/_static/earthkit-meteo.png) -->
-
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-meteo.svg)](https://pypi.python.org/pypi/earthkit-meteo/)
-
-A format-agnostic interface for geospatial data with a focus on meteorology and
-climate science.
+Meteorological computations.
 
 **DISCLAIMER**
 This project is **BETA** and will be **Experimental** for the foreseeable future.

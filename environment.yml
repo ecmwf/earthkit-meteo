@@ -1,0 +1,23 @@
+name: earthkit-meteo
+channels:
+- conda-forge
+- nodefaults
+dependencies:
+- pip
+- numpy
+- pandas
+- make
+- mypy
+- myst-parser
+- pre-commit
+- pydata-sphinx-theme
+- pytest
+- pytest-cov
+- sphinx
+- sphinx-autoapi
+- sphinx_rtd_theme
+- sphinxcontrib-apidoc
+- nbformat
+- nbconvert
+- nbsphinx
+- ipykernel
