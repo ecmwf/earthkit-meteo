@@ -1,6 +1,6 @@
 # earthkit-meteo
 
-![earthkit-meteo](docs/_static/earthkit-meteo.png)
+<!-- ![earthkit-meteo](docs/_static/earthkit-meteo.png) -->
 
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-meteo.svg)](https://pypi.python.org/pypi/earthkit-meteo/)
 
