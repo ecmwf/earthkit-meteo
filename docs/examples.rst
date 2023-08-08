@@ -11,4 +11,3 @@ Here is a list of example notebooks to illustrate how to use earthkit-meteo.
     :glob:
 
     examples/*.ipynb
-   

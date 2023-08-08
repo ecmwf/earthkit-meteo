@@ -7,4 +7,3 @@ sphinx-rtd-theme
 nbsphinx
 setuptools
 sphinx-autoapi
-

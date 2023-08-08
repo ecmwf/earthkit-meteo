@@ -15,4 +15,3 @@ Alternatively, install via ``conda`` with:
 .. code-block:: bash
 
     conda install earthkit-meteo -c conda-forge
-

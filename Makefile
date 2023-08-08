@@ -13,7 +13,7 @@ qa:
 
 unit-tests:
 	python -m pytest -vv --cov=. --cov-report=$(COV_REPORT)
-	
+
 # type-check:
 # 	python -m mypy .
 
