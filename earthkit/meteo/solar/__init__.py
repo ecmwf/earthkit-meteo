@@ -74,17 +74,17 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
 
 
 def cos_solar_zenith_angle_integrated(
-    date,
+    begin_date,
+    end_date,
     latitudes,
     longitudes,
-    tbegin,
-    tend,
     intervals_per_hour=1,
     integration_order=3,
 ):
     """
     Average of solar zenith angle based on numerical integration using the 3 point gauss integration rule
-        :param date: (datetime.datetime)
+        :param begin_date: (datetime.datetime)
+        :param end_date: (datetime.datetime)
         :param lat: (int array) latitude [degrees]
         :param lon: (int array) longitude [degrees]
         :param tbegin: offset in hours from forecast time to begin of time interval for integration [int]
@@ -129,12 +129,16 @@ def cos_solar_zenith_angle_integrated(
         raise ValueError("Invalid integration order %d", integration_order)
 
     assert intervals_per_hour > 0
+    assert end_date > begin_date
 
-    nsplits = (tend - tbegin) * intervals_per_hour
+    date = begin_date
+    interval_size_hours = (end_date - begin_date).total_seconds() / 3600.0
+
+    nsplits = interval_size_hours * intervals_per_hour
 
     assert nsplits > 0
 
-    time_steps = np.linspace(tbegin, tend, num=nsplits + 1)
+    time_steps = np.linspace(0, interval_size_hours, num=nsplits + 1)
 
     integral = np.zeros_like(latitudes)
     for s in range(len(time_steps) - 1):
@@ -145,7 +149,7 @@ def cos_solar_zenith_angle_integrated(
         jacob = deltat / 2.0
 
         w = jacob * W
-        w /= tend - tbegin  # average of integral
+        w /= interval_size_hours  # average of integral
         t = jacob * E
         t += (tf + ti) / 2.0
 
