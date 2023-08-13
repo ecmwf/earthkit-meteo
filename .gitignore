@@ -357,3 +357,7 @@ notebooks/data/*/
 
 # local code
 _dev
+?
+?.*
+tempCodeRunnerFile*
+dev/

@@ -12,6 +12,10 @@ import numpy as np
 
 DAYS_PER_YEAR = 365.25
 
+"""
+WARNING: This code is incomplete and not tested. DO NOT USE.
+"""
+
 
 def julian_day(date):
     delta = date - datetime.datetime(date.year, 1, 1)
@@ -73,31 +77,16 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
     return np.clip(zenith_angle, 0, None)
 
 
-def cos_solar_zenith_angle_integrated(
+def _integrate(
+    func,
     begin_date,
     end_date,
     latitudes,
     longitudes,
+    *,
     intervals_per_hour=1,
     integration_order=3,
 ):
-    """
-    Average of solar zenith angle based on numerical integration using the 3 point gauss integration rule
-        :param begin_date: (datetime.datetime)
-        :param end_date: (datetime.datetime)
-        :param lat: (int array) latitude [degrees]
-        :param lon: (int array) longitude [degrees]
-        :param tbegin: offset in hours from forecast time to begin of time interval for integration [int]
-        :param tend: offset in hours from forecast time to end of time interval for integration [int]
-        :param intervals_per_hour: number of time integrations per hour [int]
-        :param integration order: order of gauss integration [int] valid = (1, 2, 3, 4)
-        returns average of cosine of the solar zenith angle during interval [degrees]
-    Reference: Hogan and Hirahara (2015), Brimicombe et al. (2022)
-    https://doi.org/10.1002/2015GL066868
-    https://doi.org/10.21957/o7pcu1x2b
-    This function uses Gaussian numerical integration: https://en.wikipedia.org/wiki/Gaussian_quadrature
-    """
-
     # Gauss-Integration coefficients
     if integration_order == 3:  # default, good speed and accuracy (3 points)
         E = np.array([-np.sqrt(3.0 / 5.0), 0.0, np.sqrt(3.0 / 5.0)])
@@ -134,7 +123,7 @@ def cos_solar_zenith_angle_integrated(
     date = begin_date
     interval_size_hours = (end_date - begin_date).total_seconds() / 3600.0
 
-    nsplits = interval_size_hours * intervals_per_hour
+    nsplits = int(interval_size_hours * intervals_per_hour + 0.5)
 
     assert nsplits > 0
 
@@ -154,10 +143,77 @@ def cos_solar_zenith_angle_integrated(
         t += (tf + ti) / 2.0
 
         for n in range(len(w)):
-            integral += w[n] * cos_solar_zenith_angle(
+            integral += w[n] * func(
                 date + datetime.timedelta(hours=t[n]),
                 latitudes,
                 longitudes,
             )
 
     return integral
+
+
+def cos_solar_zenith_angle_integrated(
+    begin_date,
+    end_date,
+    latitudes,
+    longitudes,
+    *,
+    intervals_per_hour=1,
+    integration_order=3,
+):
+    """
+    Average of solar zenith angle based on numerical integration using the 3 point gauss integration rule
+        :param begin_date: (datetime.datetime)
+        :param end_date: (datetime.datetime)
+        :param lat: (int array) latitude [degrees]
+        :param lon: (int array) longitude [degrees]
+        :param tbegin: offset in hours from forecast time to begin of time interval for integration [int]
+        :param tend: offset in hours from forecast time to end of time interval for integration [int]
+        :param intervals_per_hour: number of time integrations per hour [int]
+        :param integration order: order of gauss integration [int] valid = (1, 2, 3, 4)
+        returns average of cosine of the solar zenith angle during interval [degrees]
+    Reference: Hogan and Hirahara (2015), Brimicombe et al. (2022)
+    https://doi.org/10.1002/2015GL066868
+    https://doi.org/10.21957/o7pcu1x2b
+    This function uses Gaussian numerical integration: https://en.wikipedia.org/wiki/Gaussian_quadrature
+    """
+
+    return _integrate(
+        cos_solar_zenith_angle,
+        begin_date,
+        end_date,
+        latitudes,
+        longitudes,
+        intervals_per_hour=intervals_per_hour,
+        integration_order=integration_order,
+    )
+
+
+def toa_incident_solar_radiation(
+    begin_date,
+    end_date,
+    latitudes,
+    longitudes,
+    *,
+    intervals_per_hour=1,
+    integration_order=3,
+):
+    def func(date, latitudes, longitudes):
+        isr = cos_solar_zenith_angle(date, latitudes, longitudes)
+
+        # isr *= 5057408 #- 4730368
+        # isr += 4730368
+        return isr
+
+    return (
+        _integrate(
+            func,
+            begin_date,
+            end_date,
+            latitudes,
+            longitudes,
+            intervals_per_hour=intervals_per_hour,
+            integration_order=integration_order,
+        )
+        * 5057408
+    )
