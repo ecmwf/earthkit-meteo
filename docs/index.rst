@@ -21,7 +21,7 @@ Welcome to earthkit-meteo's documentation
    :maxdepth: 1
    :caption: Documentation
 
-   api
+   _api/meteo/index
 
 .. toctree::
    :maxdepth: 1

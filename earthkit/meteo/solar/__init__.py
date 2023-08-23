@@ -47,17 +47,25 @@ def solar_declination_angle(date):
 
 
 def cos_solar_zenith_angle(date, latitudes, longitudes):
-    """
-    Solar zenith angle
-        :param date: (datetime.datetime)
-        :param lat: (float array) latitude [degrees]
-        :param lon: (float array) longitude [degrees]
-        returns cosine of the solar zenith angle (all values, including negatives)
-    Reference: Hogan and Hirahara (2015)
-    https://doi.org/10.1002/2015GL066868
-    see also: http://answers.google.com/answers/threadview/id/782886.html
-    """
+    """Cosine of solar zenith angle.
 
+    Parameters
+    ----------
+    date: datetime.datetime
+        Date
+    lat: float array
+        Latitude [degrees]
+    lon: float array
+        Longitude [degrees]
+
+    Returns
+    -------
+    float array
+        Cosine of the solar zenith angle (all values, including negatives)
+        [Hogan_and_Hirahara2015]_. See also:
+        http://answers.google.com/answers/threadview/id/782886.html
+
+    """
     # declination angle + time correction for solar angle
     declination, time_correction = solar_declination_angle(date)
 
@@ -161,23 +169,34 @@ def cos_solar_zenith_angle_integrated(
     intervals_per_hour=1,
     integration_order=3,
 ):
-    """
-    Average of solar zenith angle based on numerical integration using the 3 point gauss integration rule
-        :param begin_date: (datetime.datetime)
-        :param end_date: (datetime.datetime)
-        :param lat: (int array) latitude [degrees]
-        :param lon: (int array) longitude [degrees]
-        :param tbegin: offset in hours from forecast time to begin of time interval for integration [int]
-        :param tend: offset in hours from forecast time to end of time interval for integration [int]
-        :param intervals_per_hour: number of time integrations per hour [int]
-        :param integration order: order of gauss integration [int] valid = (1, 2, 3, 4)
-        returns average of cosine of the solar zenith angle during interval [degrees]
-    Reference: Hogan and Hirahara (2015), Brimicombe et al. (2022)
-    https://doi.org/10.1002/2015GL066868
-    https://doi.org/10.21957/o7pcu1x2b
-    This function uses Gaussian numerical integration: https://en.wikipedia.org/wiki/Gaussian_quadrature
-    """
+    """Average of solar zenith angle based on numerical integration.
 
+    Parameters
+    ----------
+    begin_date: datetime.datetime
+    end_date: datetime.datetime
+    lat: int darray
+        Latitude [degrees].
+    lon: int darray
+        Longitude [degrees].
+    tbegin: int
+        Offset in hours from forecast time to begin of time interval for integration.
+    tend: int
+        Offset in hours from forecast time to end of time interval for integration.
+    intervals_per_hour: int
+        Number of time integrations per hour.
+    integration order: int
+        Order of gauss integration, valid = (1, 2, 3, 4)
+
+    Returns
+    -------
+    float array
+        Average of cosine of the solar zenith angle during interval [degrees]. Based on
+        numerical integration using the 3 point
+        `Gauss integration <https://en.wikipedia.org/wiki/Gaussian_quadrature>`_ rule.
+        [Hogan_and_Hirahara2015]_, [Biricombe2022]_
+
+    """
     return _integrate(
         cos_solar_zenith_angle,
         begin_date,
