@@ -225,7 +225,7 @@ def toa_incident_solar_radiation(
     integration_order=3,
 ):
     def func(date, latitudes, longitudes):
-        isr = incoming_solar_radiation(begin_date)
+        isr = incoming_solar_radiation(date)
         csza = cos_solar_zenith_angle(date, latitudes, longitudes)
         return isr * csza
 
