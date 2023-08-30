@@ -211,8 +211,8 @@ def cos_solar_zenith_angle_integrated(
 def incoming_solar_radiation(date):
     # To be replaced with improved formula
     (a, b) = (165120.0, 4892416.0)
-    time_delta = (date - datetime.datetime(2020, 1, 1)).total_seconds() / 3600
-    return np.cos(time_delta / (24 * DAYS_PER_YEAR) * 2 * np.pi) * a + b
+    angle = julian_day(date) / DAYS_PER_YEAR * np.pi * 2
+    return np.cos(angle) * a + b
 
 
 def toa_incident_solar_radiation(
