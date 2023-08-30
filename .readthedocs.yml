@@ -1,12 +1,7 @@
 version: 2
 formats: []
 
-build:
-  os: "ubuntu-22.04"
-  tools:
-    python: "3.8"
-
 python:
+  python: "3.8"
   install:
   - requirements: docs/requirements.txt
-  system_packages: true
