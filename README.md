@@ -1,6 +1,7 @@
 # earthkit-meteo
 
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-meteo.svg)](https://pypi.python.org/pypi/earthkit-meteo/)
+<!--
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-meteo.svg)](https://pypi.python.org/pypi/earthkit-meteo/) -->
 
 **DISCLAIMER**
 This project is **BETA** and will be **Experimental** for the foreseeable future.
@@ -13,8 +14,8 @@ Interfaces and functionality are likely to change, and the project itself may be
 from earthkit.meteo import thermo
 import numpy as np
 
-t = np.array(\[264.12, 261.45\]) # Kelvins
-p = np.array(\[850, 850\]) * 100. # Pascals
+t = np.array([264.12, 261.45]) # Kelvins
+p = np.array([850, 850]) * 100. # Pascals
 
 theta = thermo.potential_temperature(t, p)
 ```
