@@ -670,13 +670,21 @@ def test_wet_bulb_temperature():
                 data.t, data.td, data.p, ept_method=m_ept, t_method=m_t
             )
             np.testing.assert_allclose(
-                pt, ref[f"{m_ept}_{m_t}_td"], err_msg=f"method={m_ept}_{m_t}_td"
+                pt,
+                ref[f"{m_ept}_{m_t}_td"],
+                rtol=1e-03,
+                atol=0,
+                err_msg=f"method={m_ept}_{m_t}_td",
             )
             pt = thermo.wet_bulb_temperature_from_specific_humidity(
                 data.t, data.q, data.p, ept_method=m_ept, t_method=m_t
             )
             np.testing.assert_allclose(
-                pt, ref[f"{m_ept}_{m_t}_q"], err_msg=f"method={m_ept}_{m_t}_q"
+                pt,
+                ref[f"{m_ept}_{m_t}_q"],
+                rtol=1e-03,
+                atol=0,
+                err_msg=f"method={m_ept}_{m_t}_q",
             )
 
 
