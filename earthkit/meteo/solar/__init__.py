@@ -208,6 +208,13 @@ def cos_solar_zenith_angle_integrated(
     )
 
 
+def incoming_solar_radiation(date):
+    # To be replaced with improved formula
+    (a, b) = (165120.0, 4892416.0)
+    angle = julian_day(date) / DAYS_PER_YEAR * np.pi * 2
+    return np.cos(angle) * a + b
+
+
 def toa_incident_solar_radiation(
     begin_date,
     end_date,
@@ -218,21 +225,16 @@ def toa_incident_solar_radiation(
     integration_order=3,
 ):
     def func(date, latitudes, longitudes):
-        isr = cos_solar_zenith_angle(date, latitudes, longitudes)
+        isr = incoming_solar_radiation(date)
+        csza = cos_solar_zenith_angle(date, latitudes, longitudes)
+        return isr * csza
 
-        # isr *= 5057408 #- 4730368
-        # isr += 4730368
-        return isr
-
-    return (
-        _integrate(
-            func,
-            begin_date,
-            end_date,
-            latitudes,
-            longitudes,
-            intervals_per_hour=intervals_per_hour,
-            integration_order=integration_order,
-        )
-        * 5057408
+    return _integrate(
+        func,
+        begin_date,
+        end_date,
+        latitudes,
+        longitudes,
+        intervals_per_hour=intervals_per_hour,
+        integration_order=integration_order,
     )
