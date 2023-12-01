@@ -212,6 +212,10 @@ docs/examples/*.tar
 docs/examples/*.zip
 docs/examples/_*
 docs/examples/earthkit_use_cases/*.grib
+docs/experimental/*.tar
+docs/experimental/*.zip
+docs/experimental/_*
+docs/experimental/*.grib
 
 # PyBuilder
 .pybuilder/
@@ -357,6 +361,7 @@ notebooks/data/*/
 
 # local code
 _dev
+_util
 ?
 ?.*
 tempCodeRunnerFile*
