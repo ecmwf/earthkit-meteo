@@ -504,7 +504,7 @@ clim_eps2 = clim_eps2[:, np.newaxis]
 
 
 def test_efi():
-    efi = extreme.efi(clim, ens)
+    efi = extreme.array.efi(clim, ens)
 
     assert np.isclose(efi[0], -0.18384250406420133)
 
@@ -513,34 +513,34 @@ def test_efi_sorted():
     # ensures the algorithm is the same if we sort the data or not
     ens_perc = np.sort(ens)
 
-    efi = extreme.efi(clim, ens_perc)
+    efi = extreme.array.efi(clim, ens_perc)
 
     assert np.isclose(efi[0], -0.18384250406420133)
 
 
 def test_efi_eps():
-    efi = extreme.efi(clim, ens, eps=1e-4)
+    efi = extreme.array.efi(clim, ens, eps=1e-4)
 
     assert np.isclose(efi[0], -0.18384250406420133)
 
 
 def test_efi_eps1():
-    efi = extreme.efi(clim_eps, ens_eps, eps=1e-4)
+    efi = extreme.array.efi(clim_eps, ens_eps, eps=1e-4)
 
     # fortran code result is  0.4604220986366272
     assert np.isclose(efi[0], 0.46039347745967046)
 
 
 def test_efi_eps2():
-    efi = extreme.efi(clim_eps2, ens_eps2, eps=1e-4)
+    efi = extreme.array.efi(clim_eps2, ens_eps2, eps=1e-4)
 
     # fortran code result is
     assert np.isclose(efi[0], 0.6330071575726789)
 
 
 def test_sot():
-    sot_upper = extreme.sot(clim, ens, 90)
-    sot_lower = extreme.sot(clim, ens, 10)
+    sot_upper = extreme.array.sot(clim, ens, 90)
+    sot_lower = extreme.array.sot(clim, ens, 10)
 
     print(sot_upper)
     print(sot_lower)
@@ -555,7 +555,7 @@ def test_sot_missing():
     qc = np.array([1.1, 1.0, 1.0, 1.00001])
     qf = np.array([1.5, 1.2, 1.0, 0.9])
 
-    sot = extreme.sot_func(qc_tail, qc, qf, eps=1e-4)
+    sot = extreme.array.sot_func(qc_tail, qc, qf, eps=1e-4)
 
     print(sot)
     print(np.isnan(sot))
@@ -571,7 +571,7 @@ def test_sot_bounds():
     qc = np.array([1.1, 1.1])
     qf = np.array([15, -15.0])
 
-    sot = extreme.sot_func(qc_tail, qc, qf)
+    sot = extreme.array.sot_func(qc_tail, qc, qf)
 
     print(sot)
     assert np.allclose(sot, [-10, 10])
@@ -583,17 +583,17 @@ def test_sot_eps():
     qc = np.array([0.1])
     qf = np.array([0.2])
 
-    sot = extreme.sot_func(qc_tail, qc, qf)
+    sot = extreme.array.sot_func(qc_tail, qc, qf)
     print(sot)
     assert np.isclose(sot[0], -3.0)
 
-    sot = extreme.sot_func(qc_tail, qc, qf, eps=0.15)
+    sot = extreme.array.sot_func(qc_tail, qc, qf, eps=0.15)
     print(sot)
     assert np.isnan(sot[0])
 
 
 def test_sot_perc():
-    sot = extreme.sot(clim_eps2, ens_eps2, 90, eps=1e4)
+    sot = extreme.array.sot(clim_eps2, ens_eps2, 90, eps=1e4)
 
     assert np.isnan(sot[0])
 
@@ -606,7 +606,7 @@ def test_efi_nan():
     print(clim_nan)
     print(ens_nan)
 
-    efi = extreme.efi(clim_nan, ens_nan)
+    efi = extreme.array.efi(clim_nan, ens_nan)
 
     print(efi)
     assert np.isnan(efi[0])
@@ -617,21 +617,21 @@ def test_sot_nan():
     qc = np.array([0.1])
     qf = np.array([np.nan])
 
-    sot = extreme.sot_func(qc_tail, qc, qf)
+    sot = extreme.array.sot_func(qc_tail, qc, qf)
     assert np.isnan(sot[0])
 
     qc_tail = np.array([0.05])
     qc = np.array([np.nan])
     qf = np.array([0.1])
 
-    sot = extreme.sot_func(qc_tail, qc, qf)
+    sot = extreme.array.sot_func(qc_tail, qc, qf)
     assert np.isnan(sot[0])
 
     qc_tail = np.array([np.nan])
     qc = np.array([0.1])
     qf = np.array([0.2])
 
-    sot = extreme.sot_func(qc_tail, qc, qf)
+    sot = extreme.array.sot_func(qc_tail, qc, qf)
     assert np.isnan(sot[0])
 
 
@@ -801,5 +801,24 @@ cpf_clim = np.array(
 
 
 def test_cpf():
+    cpf = extreme.array.cpf(cpf_clim, cpf_ens, sort_clim=True)
+    np.testing.assert_allclose(cpf, cpf_val)
+
+
+def test_highlevel_efi():
+    efi = extreme.efi(clim, ens)
+
+    assert np.isclose(efi[0], -0.18384250406420133)
+
+
+def test_highlevel_sot():
+    sot_upper = extreme.sot(clim, ens, 90)
+    sot_lower = extreme.sot(clim, ens, 10)
+
+    assert np.isclose(sot_upper[0], -2.14617638)
+    assert np.isclose(sot_lower[0], -1.3086723)
+
+
+def test_highlevel_cpf():
     cpf = extreme.cpf(cpf_clim, cpf_ens, sort_clim=True)
     np.testing.assert_allclose(cpf, cpf_val)
