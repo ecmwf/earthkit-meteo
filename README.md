@@ -1,11 +1,24 @@
 # earthkit-meteo
 
-Meteorological computations.
+<!--
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-meteo.svg)](https://pypi.python.org/pypi/earthkit-meteo/) -->
 
 **DISCLAIMER**
 This project is **BETA** and will be **Experimental** for the foreseeable future.
 Interfaces and functionality are likely to change, and the project itself may be scrapped.
 **DO NOT** use this software in any project/software that is operational.
+
+**earthkit-meteo** is a Python package providing meteorological computations using **numpy** input and output.
+
+```python
+from earthkit.meteo import thermo
+import numpy as np
+
+t = np.array([264.12, 261.45]) # Kelvins
+p = np.array([850, 850]) * 100. # Pascals
+
+theta = thermo.potential_temperature(t, p)
+```
 
 ## Documentation
 
