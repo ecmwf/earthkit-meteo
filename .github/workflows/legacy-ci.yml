@@ -1,4 +1,4 @@
-name: ci
+name: legacy-ci
 
 on:
   push:
