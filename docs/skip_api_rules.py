@@ -10,7 +10,7 @@
 
 # define skip rules for autoapi
 def _skip_api_items(app, what, name, obj, skip, options):
-    print(f"{what=} {name=}")
+    # print(f"{what=} {name=}")
 
     if (
         what == "module"
