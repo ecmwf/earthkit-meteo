@@ -7,13 +7,21 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Thermodynamic functions.
+import datetime
 
-The API is split into two levels. The low level functions are in the ``array`` submodule and they
-can be used to operate on numpy arrays. The high level functions are still to be developed and
-planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets*.
-"""
+import numpy as np
+import pytest
+
+from earthkit.meteo import solar
 
 
-from .thermo import *  # noqa
+@pytest.mark.parametrize(
+    "date,expected_value",
+    [
+        (datetime.datetime(2024, 4, 22), 112.0),
+        (datetime.datetime(2024, 4, 22, 12, 0, 0), 112.5),
+    ],
+)
+def test_julian_day(date, expected_value):
+    v = solar.julian_day(date)
+    assert np.isclose(v, expected_value)

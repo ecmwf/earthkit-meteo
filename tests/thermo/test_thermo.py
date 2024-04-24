@@ -7,13 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Thermodynamic functions.
+import numpy as np
 
-The API is split into two levels. The low level functions are in the ``array`` submodule and they
-can be used to operate on numpy arrays. The high level functions are still to be developed and
-planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets*.
-"""
+from earthkit.meteo import thermo
 
 
-from .thermo import *  # noqa
+def test_high_level_celsius_to_kelvin():
+    t = np.array([-10, 23.6])
+    v = thermo.celsius_to_kelvin(t)
+    v_ref = np.array([263.16, 296.76])
+    np.testing.assert_allclose(v, v_ref)

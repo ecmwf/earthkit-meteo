@@ -8,12 +8,8 @@
 #
 
 """
-Thermodynamic functions.
-
-The API is split into two levels. The low level functions are in the ``array`` submodule and they
-can be used to operate on numpy arrays. The high level functions are still to be developed and
-planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets*.
+Statistical functions operating on numpy arrays.
 """
 
-
-from .thermo import *  # noqa
+from .numpy_extended import *  # noqa
+from .quantiles import *  # noqa

@@ -55,6 +55,7 @@ autoapi_options = [
 autoapi_root = "_api"
 autoapi_member_order = "alphabetical"
 autoapi_add_toctree_entry = False
+autoapi_own_page_level = "function"
 
 # napoleon configuration
 napoleon_google_docstring = False
@@ -86,3 +87,9 @@ html_static_path = ["_static"]
 html_css_files = ["style.css"]
 
 html_logo = "_static/earthkit-meteo.png"
+
+
+def setup(app):
+    from skip_api_rules import _skip_api_items
+
+    app.connect("autoapi-skip-member", _skip_api_items)
