@@ -357,7 +357,10 @@ notebooks/data/*/
 
 # local code
 _dev
+_util
 ?
 ?.*
 tempCodeRunnerFile*
 dev/
+_util
+docs/experimental

@@ -7,13 +7,12 @@
 # nor does it submit to any jurisdiction.
 #
 
+from . import array  # noqa
 
-"""
-Solar computation functions.
 
-The API is split into two levels. The low level functions are in the ``array`` submodule and they
-can be used to operate on numpy arrays. The high level functions are still to be developed and
-planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets*
-"""
+def sot(*args, **kwargs):
+    return array.sot(*args, **kwargs)
 
-from .solar import *  # noqa
+
+def sot_unsorted(*args, **kwargs):
+    return array.sot_unsorted(*args, **kwargs)
