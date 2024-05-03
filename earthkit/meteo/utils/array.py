@@ -28,7 +28,7 @@ class ArrayNamespace:
                         self._api = None
         return self._api
 
-    def namespace(self, *arrays):
+    def namespace(self, arrays):
         if not arrays:
             import numpy as np
 
