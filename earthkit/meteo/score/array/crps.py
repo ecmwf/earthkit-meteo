@@ -58,3 +58,7 @@ def crps(x, y):
     crps = np.sum(alpha * (p_exp**2) + beta * ((1 - p_exp) ** 2), axis=0)
 
     return crps
+
+# def crps_components(x, y, axis=None)
+
+# def fair_crps(x, y, axis=None)
