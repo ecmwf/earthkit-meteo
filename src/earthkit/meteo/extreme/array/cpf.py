@@ -10,7 +10,7 @@
 import numpy as np
 
 
-def cpf(clim, ens, sort_clim=True, sort_ens=True):
+def cpf(clim, ens, sort_clim=True, sort_ens=True, epsilon=None):
     """Compute Crossing Point Forecast (CPF)
 
     WARNING: this code is experimental, use at your own risk!
@@ -25,6 +25,8 @@ def cpf(clim, ens, sort_clim=True, sort_ens=True):
         If True, sort the climatology first
     sort_ens: bool
         If True, sort the ensemble first
+    epsilon: float or None
+        If set, use this as a threshold for low-signal regions
 
     Returns
     -------
@@ -93,5 +95,10 @@ def cpf(clim, ens, sort_clim=True, sort_ens=True):
 
                 # speed up process
                 break
+
+    if epsilon is not None:
+        # ens is assumed to be sorted at this point
+        mask = ens[-1, :] < epsilon
+        cpf[mask] = 0.0
 
     return cpf
