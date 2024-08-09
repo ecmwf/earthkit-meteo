@@ -65,3 +65,16 @@ def test_quantiles(method):
             [5, 19, 12, 3, 45, 48, 8, 9, 7],
         ]
     )
+
+
+def test_quantiles_nans():
+    arr = np.random.rand(100, 100, 100)
+    arr.ravel()[np.random.choice(arr.size, 100000, replace=False)] = np.nan
+    qs = [0.0, 0.25, 0.5, 0.75, 1.0]
+    sort = [
+        quantile for quantile in stats.iter_quantiles(arr.copy(), qs, method="sort")
+    ]
+    numpy = [
+        quantile for quantile in stats.iter_quantiles(arr.copy(), qs, method="numpy")
+    ]
+    assert np.all(np.isclose(sort, numpy, equal_nan=True))

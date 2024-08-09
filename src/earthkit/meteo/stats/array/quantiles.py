@@ -59,6 +59,7 @@ def iter_quantiles(
     if method == "sort":
         arr = np.asarray(arr)
         arr.sort(axis=axis)
+        missing = np.isnan(np.min(arr, axis=axis))
 
     for q in qs:
         if method == "numpy":
@@ -74,4 +75,5 @@ def iter_quantiles(
             tmp = arr.take(min(j + 1, m - 1), axis=axis)
             tmp *= x
             quantile += tmp
+            quantile[missing] = np.nan
             yield quantile
