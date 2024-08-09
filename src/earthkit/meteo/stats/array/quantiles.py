@@ -59,7 +59,7 @@ def iter_quantiles(
     if method == "sort":
         arr = np.asarray(arr)
         arr.sort(axis=axis)
-        missing = np.isnan(np.min(arr, axis=axis))
+        missing = np.isnan(arr).any(axis=axis)
 
     for q in qs:
         if method == "numpy":
