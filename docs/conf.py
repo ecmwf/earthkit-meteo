@@ -42,8 +42,8 @@ extensions = [
 autodoc_typehints = "none"
 
 # autoapi configuration
-autoapi_dirs = ["../earthkit/meteo"]
-autoapi_ignore = ["*/version.py", "sphinxext/*"]
+autoapi_dirs = ["../src/earthkit/meteo"]
+autoapi_ignore = ["*/_version.py", "sphinxext/*"]
 autoapi_options = [
     "members",
     "undoc-members",
