@@ -10,8 +10,10 @@
 import os
 
 import numpy as np
+import pytest
 
 from earthkit.meteo import thermo
+from earthkit.meteo.utils.testing import ARRAY_BACKENDS
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
@@ -92,32 +94,23 @@ def test_vapour_pressure_from_mixing_ratio():
     np.testing.assert_allclose(vp, v_ref)
 
 
-def test_specific_humidity_from_vapour_pressure():
-    vp = np.array([895.992614, 2862.662152, 10000])
-    p = np.array([700, 1000, 50]) * 100
-    v_ref = np.array([0.008, 0.018, np.nan])
+@pytest.mark.parametrize(
+    "vp, p, v_ref",
+    [
+        ([895.992614, 2862.662152, 10000], [700, 1000, 50], [0.008, 0.018, np.nan]),
+        ([895.992614, 2862.662152, 100000], 700, [0.008, 0.0258354146, np.nan]),
+        (895.992614, 700, 0.008),
+        (100000, 700, np.nan),
+    ],
+)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_specific_humidity_from_vapour_pressure(vp, p, v_ref, array_backend):
+    vp, p, v_ref = array_backend.asarray(vp, p, v_ref)
+    p = p * 100
+    print(f"{vp=} {p=}")
     q = thermo.array.specific_humidity_from_vapour_pressure(vp, p)
-    np.testing.assert_allclose(q, v_ref)
 
-    # single pressure value
-    vp = np.array([895.992614, 2862.662152, 100000])
-    p = 700 * 100.0
-    v_ref = np.array([0.008, 0.0258354146, np.nan])
-    q = thermo.array.specific_humidity_from_vapour_pressure(vp, p)
-    np.testing.assert_allclose(q, v_ref)
-
-    # numbers
-    vp = 895.992614
-    p = 700 * 100.0
-    v_ref = 0.008
-    q = thermo.array.specific_humidity_from_vapour_pressure(vp, p)
-    np.testing.assert_allclose(q, v_ref)
-
-    vp = 100000
-    p = 700 * 100.0
-    v_ref = np.nan
-    q = thermo.array.specific_humidity_from_vapour_pressure(vp, p)
-    np.testing.assert_allclose(q, v_ref)
+    assert array_backend.allclose(q, v_ref, equal_nan=True)
 
 
 def test_mixing_ratio_from_vapour_pressure():
