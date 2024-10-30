@@ -43,13 +43,9 @@ def crps_quaver2(x, y):
         lcond = esarr[0, :] > anarr
         aa[0, lcond] = 1.0
         bb[0, :] = np.where(lcond, esarr[0, :] - anarr, 0.0)
-        aa[1:-1, :] = np.where(
-            esarr[1:, :] <= anarr, esarr[1:, :] - esarr[:-1, :], anarr - esarr[:-1, :]
-        )
+        aa[1:-1, :] = np.where(esarr[1:, :] <= anarr, esarr[1:, :] - esarr[:-1, :], anarr - esarr[:-1, :])
         aa[1:-1, :][esarr[: n_ens - 1, :] > anarr] = 0.0  # this would be hard in xarray
-        bb[1:-1, :] = np.where(
-            esarr[:-1, :] > anarr, esarr[1:, :] - esarr[:-1, :], esarr[1:, :] - anarr
-        )
+        bb[1:-1, :] = np.where(esarr[:-1, :] > anarr, esarr[1:, :] - esarr[:-1, :], esarr[1:, :] - anarr)
         bb[1:-1, :][esarr[1:, :] <= anarr] = 0.0
         lcond = anarr > esarr[-1, :]
         aa[-1, :] = np.where(lcond, anarr - esarr[-1, :], 0.0)

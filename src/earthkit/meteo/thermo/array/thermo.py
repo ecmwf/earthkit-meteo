@@ -182,9 +182,7 @@ def specific_humidity_from_vapour_pressure(e, p, eps=1e-4):
 
     """
     if eps <= 0:
-        raise ValueError(
-            f"specific_humidity_from_vapour_pressure(): eps={eps} must be > 0"
-        )
+        raise ValueError(f"specific_humidity_from_vapour_pressure(): eps={eps} must be > 0")
 
     v = np.asarray(p + (constants.epsilon - 1) * e)
     v[np.asarray(p - e) < eps] = np.nan
@@ -294,24 +292,14 @@ class _EsComp:
         # mixed range
         m_mask = ~(i_mask | w_mask)
         alpha = np.square(t[m_mask] - self.ti) / np.square(self.t0 - self.ti)
-        svp[m_mask] = alpha * self._es_water(t[m_mask]) + (1.0 - alpha) * self._es_ice(
-            t[m_mask]
-        )
+        svp[m_mask] = alpha * self._es_water(t[m_mask]) + (1.0 - alpha) * self._es_ice(t[m_mask])
         return svp
 
     def _es_water_slope(self, t):
-        return (
-            self._es_water(t)
-            * (self.c3w * (self.t0 - self.c4w))
-            / np.square(t - self.c4w)
-        )
+        return self._es_water(t) * (self.c3w * (self.t0 - self.c4w)) / np.square(t - self.c4w)
 
     def _es_ice_slope(self, t):
-        return (
-            self._es_ice(t)
-            * (self.c3i * (self.t0 - self.c4i))
-            / np.square(t - self.c4i)
-        )
+        return self._es_ice(t) * (self.c3i * (self.t0 - self.c4i)) / np.square(t - self.c4i)
 
     def _es_mixed_slope(self, t):
         t = np.asarray(t)
@@ -467,9 +455,7 @@ def saturation_vapour_pressure_slope(t, phase="mixed"):
     return _EsComp().compute_slope(t, phase)
 
 
-def saturation_mixing_ratio_slope(
-    t, p, es=None, es_slope=None, phase="mixed", eps=1e-4
-):
+def saturation_mixing_ratio_slope(t, p, es=None, es_slope=None, phase="mixed", eps=1e-4):
     r"""Computes the slope of saturation mixing ratio with respect to temperature.
 
     Parameters
@@ -519,9 +505,7 @@ def saturation_mixing_ratio_slope(
     return constants.epsilon * es_slope * p / np.square(v)
 
 
-def saturation_specific_humidity_slope(
-    t, p, es=None, es_slope=None, phase="mixed", eps=1e-4
-):
+def saturation_specific_humidity_slope(t, p, es=None, es_slope=None, phase="mixed", eps=1e-4):
     r"""Computes the slope of saturation specific humidity with respect to temperature.
 
     Parameters
@@ -835,9 +819,7 @@ def dewpoint_from_specific_humidity(q, p):
     used in :func:`saturation_vapour_pressure`.
 
     """
-    return temperature_from_saturation_vapour_pressure(
-        vapour_pressure_from_specific_humidity(q, p)
-    )
+    return temperature_from_saturation_vapour_pressure(vapour_pressure_from_specific_humidity(q, p))
 
 
 def virtual_temperature(t, q):
@@ -1057,9 +1039,7 @@ def lcl_temperature(t, td, method="davies"):
     """
     # Davies-Jones formula
     if method == "davies":
-        t_lcl = td - (
-            0.212 + 1.571e-3 * (td - constants.T0) - 4.36e-4 * (t - constants.T0)
-        ) * (t - td)
+        t_lcl = td - (0.212 + 1.571e-3 * (td - constants.T0) - 4.36e-4 * (t - constants.T0)) * (t - td)
         return t_lcl
     # Bolton formula
     elif method == "bolton":
@@ -1144,10 +1124,7 @@ class _EptComp:
         x = ept / t0
         a = [7.101574, -20.68208, 16.11182, 2.574631, -5.205688]
         b = [1.0, -3.552497, 3.781782, -0.6899655, -0.5929340]
-        return ept - np.exp(
-            np.polynomial.polynomial.polyval(x, a)
-            / np.polynomial.polynomial.polyval(x, b)
-        )
+        return ept - np.exp(np.polynomial.polynomial.polyval(x, a) / np.polynomial.polynomial.polyval(x, b))
 
     def compute_t_on_ma_stipanuk(self, ept, p):
         if isinstance(p, np.ndarray):
@@ -1161,10 +1138,7 @@ class _EptComp:
         for _ in range(max_iter):
             ths = _ThermoState(t=t, p=p)
             dt /= 2.0
-            t += (
-                np.sign(ept * np.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths))
-                * dt
-            )
+            t += np.sign(ept * np.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)) * dt
         # ths.t = t
         # return ept - self._th_sat(ths) * np.exp(self._G_sat(ths))
         return t
@@ -1211,11 +1185,7 @@ class _EptComp:
         tw[mask] = (_k1(pp[mask]) - 1.21) - (_k2(pp[mask]) - 1.21) * c_te[mask]
 
         mask = c_te < 0.4
-        tw[mask] = (
-            (_k1(pp[mask]) - 2.66)
-            - (_k2(pp[mask]) - 1.21) * c_te[mask]
-            + 0.58 / c_te[mask]
-        )
+        tw[mask] = (_k1(pp[mask]) - 2.66) - (_k2(pp[mask]) - 1.21) * c_te[mask] + 0.58 / c_te[mask]
         # tw has to be converted to Kelvin
         tw = celsius_to_kelvin(tw)
 
@@ -1306,9 +1276,7 @@ class _EptCompBolton35(_EptComp):
     def _th_sat(self, ths):
         if ths.ws is None:
             ths.ws = saturation_mixing_ratio(ths.t, ths.p)
-        return ths.t * np.power(
-            constants.p0 / ths.p, constants.kappa * (1 - self.K3 * ths.ws)
-        )
+        return ths.t * np.power(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * ths.ws))
 
     def _G_sat(self, ths, scale=1.0):
         if ths.ws is None:
@@ -1334,9 +1302,7 @@ class _EptCompBolton35(_EptComp):
     def _d_lnf(self, ths):
         return -self.c_lambda * (
             1 / ths.t
-            + self.K3
-            * np.log(ths.p / constants.p0)
-            * saturation_vapour_pressure_slope(ths.t)
+            + self.K3 * np.log(ths.p / constants.p0) * saturation_vapour_pressure_slope(ths.t)
             + self._d_G_sat(ths)
         )
 
@@ -1364,9 +1330,7 @@ class _EptCompBolton39(_EptComp):
             w = mixing_ratio_from_specific_humidity(ths.q)
 
         e = vapour_pressure_from_mixing_ratio(w, ths.p)
-        th = potential_temperature(ths.t, ths.p - e) * np.power(
-            ths.t / t_lcl, self.K4 * w
-        )
+        th = potential_temperature(ths.t, ths.p - e) * np.power(ths.t / t_lcl, self.K4 * w)
         return th * np.exp((self.K0 / t_lcl - self.K1) * w * (1.0 + self.K2 * w))
 
     def _th_sat(self, ths):
@@ -1382,36 +1346,24 @@ class _EptCompBolton39(_EptComp):
         # print(f" es={ths.es}")
         ws = mixing_ratio_from_vapour_pressure(ths.es, ths.p)
         # print(f" ws={ws}")
-        return (
-            ((scale * self.K0) / ths.t - (scale * self.K1)) * ws * (1.0 + self.K2 * ws)
-        )
+        return ((scale * self.K0) / ths.t - (scale * self.K1)) * ws * (1.0 + self.K2 * ws)
 
     def _d_G_sat(self, ths):
         # print(f" d_ws={saturation_mixing_ratio_slope(ths.t, ths.p)}")
-        return -self.K0 * (ths.ws + self.K2 * np.square(ths.ws)) / (
-            np.square(ths.t)
-        ) + (self.K0 / ths.t - self.K1) * (
-            1 + (2 * self.K2) * ths.ws
-        ) * saturation_mixing_ratio_slope(
-            ths.t, ths.p
-        )
+        return -self.K0 * (ths.ws + self.K2 * np.square(ths.ws)) / (np.square(ths.t)) + (
+            self.K0 / ths.t - self.K1
+        ) * (1 + (2 * self.K2) * ths.ws) * saturation_mixing_ratio_slope(ths.t, ths.p)
 
     def _f(self, ths):
         # print(f" c_tw={ths.c_tw}")
         # print(f" es_frac={ths.es / ths.p}")
         # print(f" exp={self._G_sat(ths, scale=-self.c_lambda)}")
-        return (
-            ths.c_tw
-            * (1 - ths.es / ths.p)
-            * np.exp(self._G_sat(ths, scale=-self.c_lambda))
-        )
+        return ths.c_tw * (1 - ths.es / ths.p) * np.exp(self._G_sat(ths, scale=-self.c_lambda))
 
     def _d_lnf(self, ths):
         return -self.c_lambda * (
             1 / ths.t
-            + constants.kappa
-            * saturation_vapour_pressure_slope(ths.t)
-            / (ths.p - ths.es)
+            + constants.kappa * saturation_vapour_pressure_slope(ths.t) / (ths.p - ths.es)
             + self._d_G_sat(ths)
         )
 
@@ -1606,9 +1558,7 @@ def temperature_on_moist_adiabat(ept, p, ept_method="ifs", t_method="bisect"):
     elif t_method == "newton":
         return cm.compute_t_on_ma_davies(ept, p)
     else:
-        raise ValueError(
-            f"temperature_on_moist_adiabat: invalid t_method={t_method} specified!"
-        )
+        raise ValueError(f"temperature_on_moist_adiabat: invalid t_method={t_method} specified!")
 
 
 def wet_bulb_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_method="bisect"):
@@ -1648,14 +1598,10 @@ def wet_bulb_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_method="bis
 
     """
     ept = ept_from_dewpoint(t, td, p, method=ept_method)
-    return temperature_on_moist_adiabat(
-        ept, p, ept_method=ept_method, t_method=t_method
-    )
+    return temperature_on_moist_adiabat(ept, p, ept_method=ept_method, t_method=t_method)
 
 
-def wet_bulb_temperature_from_specific_humidity(
-    t, q, p, ept_method="ifs", t_method="bisect"
-):
+def wet_bulb_temperature_from_specific_humidity(t, q, p, ept_method="ifs", t_method="bisect"):
     r"""Computes the pseudo adiabatic wet bulb temperature from specific humidity.
 
     Parameters
@@ -1693,14 +1639,10 @@ def wet_bulb_temperature_from_specific_humidity(
 
     """
     ept = ept_from_specific_humidity(t, q, p, method=ept_method)
-    return temperature_on_moist_adiabat(
-        ept, p, ept_method=ept_method, t_method=t_method
-    )
+    return temperature_on_moist_adiabat(ept, p, ept_method=ept_method, t_method=t_method)
 
 
-def wet_bulb_potential_temperature_from_dewpoint(
-    t, td, p, ept_method="ifs", t_method="direct"
-):
+def wet_bulb_potential_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_method="direct"):
     r"""Computes the pseudo adiabatic wet bulb potential temperature from dewpoint.
 
     Parameters
@@ -1741,14 +1683,10 @@ def wet_bulb_potential_temperature_from_dewpoint(
     if t_method == "direct":
         return _EptComp.make(ept_method).compute_wbpt(ept)
     else:
-        return temperature_on_moist_adiabat(
-            ept, constants.p0, ept_method=ept_method, t_method=t_method
-        )
+        return temperature_on_moist_adiabat(ept, constants.p0, ept_method=ept_method, t_method=t_method)
 
 
-def wet_bulb_potential_temperature_from_specific_humidity(
-    t, q, p, ept_method="ifs", t_method="direct"
-):
+def wet_bulb_potential_temperature_from_specific_humidity(t, q, p, ept_method="ifs", t_method="direct"):
     r"""Computes the pseudo adiabatic wet bulb potential temperature from specific humidity.
 
     Parameters
@@ -1786,6 +1724,4 @@ def wet_bulb_potential_temperature_from_specific_humidity(
     if t_method == "direct":
         return _EptComp.make(ept_method).compute_wbpt(ept)
     else:
-        return temperature_on_moist_adiabat(
-            ept, constants.p0, ept_method=ept_method, t_method=t_method
-        )
+        return temperature_on_moist_adiabat(ept, constants.p0, ept_method=ept_method, t_method=t_method)

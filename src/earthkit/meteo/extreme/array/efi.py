@@ -31,9 +31,7 @@ def efi(clim, ens, eps=-0.1):
         EFI values
     """
     # locate missing values
-    missing_mask = np.logical_or(
-        np.sum(np.isnan(clim), axis=0), np.sum(np.isnan(ens), axis=0)
-    )
+    missing_mask = np.logical_or(np.sum(np.isnan(clim), axis=0), np.sum(np.isnan(ens), axis=0))
 
     # Compute fraction of the forecast below climatology
     nclim, npoints = clim.shape
@@ -65,9 +63,7 @@ def efi(clim, ens, eps=-0.1):
             mask = clim[icl + 1, :] > eps
             dEFI = np.where(
                 mask,
-                (2.0 * frac[icl, :] - 1.0) * acosdiff[icl]
-                + acoef[icl] * dFdp[icl, :]
-                - proddiff[icl],
+                (2.0 * frac[icl, :] - 1.0) * acosdiff[icl] + acoef[icl] * dFdp[icl, :] - proddiff[icl],
                 0.0,
             )
             defimax = np.where(mask, -acosdiff[icl] - proddiff[icl], 0.0)
@@ -77,11 +73,7 @@ def efi(clim, ens, eps=-0.1):
         efi /= efimax
     else:
         for icl in range(nclim - 1):
-            dEFI = (
-                (2.0 * frac[icl, :] - 1.0) * acosdiff[icl]
-                + acoef[icl] * dFdp[icl, :]
-                - proddiff[icl]
-            )
+            dEFI = (2.0 * frac[icl, :] - 1.0) * acosdiff[icl] + acoef[icl] * dFdp[icl, :] - proddiff[icl]
             efi += dEFI
         efi *= 2.0 / np.pi
     ##################################

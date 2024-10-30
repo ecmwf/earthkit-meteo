@@ -302,9 +302,7 @@ def test_saturation_specific_humidity_slope():
     )
 
     for phase in phases:
-        svp = thermo.array.saturation_specific_humidity_slope(
-            d["t"], d["p"], phase=phase
-        )
+        svp = thermo.array.saturation_specific_humidity_slope(d["t"], d["p"], phase=phase)
         np.testing.assert_allclose(svp, d[phase])
 
     v_ref = np.array([np.nan])
@@ -355,9 +353,7 @@ def test_relative_humidity_from_dewpoint():
 
 
 def test_relative_humidity_from_specific_humidity():
-    t = thermo.array.celsius_to_kelvin(
-        np.array([-29.2884, -14.4118, -5.9235, 9.72339, 18.4514])
-    )
+    t = thermo.array.celsius_to_kelvin(np.array([-29.2884, -14.4118, -5.9235, 9.72339, 18.4514]))
     p = np.array([300, 400, 500, 700, 850]) * 100.0
     q = np.array(
         [
@@ -401,9 +397,7 @@ def test_specific_humidity_from_dewpoint():
 
 
 def test_specific_humidity_from_relative_humidity():
-    t = thermo.array.celsius_to_kelvin(
-        np.array([-29.2884, -14.4118, -5.9235, 9.72339, 18.4514])
-    )
+    t = thermo.array.celsius_to_kelvin(np.array([-29.2884, -14.4118, -5.9235, 9.72339, 18.4514]))
     p = np.array([300, 400, 500, 700, 850]) * 100.0
     r = np.array(
         [
@@ -638,9 +632,7 @@ def test_temperature_on_moist_adiabat():
             pt = thermo.array.temperature_on_moist_adiabat(
                 ref["ept"], ref["p"], ept_method=m_ept, t_method=m_t
             )
-            np.testing.assert_allclose(
-                pt, ref[f"{m_ept}_{m_t}"], err_msg=f"method={m_ept}_{m_t}"
-            )
+            np.testing.assert_allclose(pt, ref[f"{m_ept}_{m_t}"], err_msg=f"method={m_ept}_{m_t}")
 
 
 def test_wet_bulb_temperature():
