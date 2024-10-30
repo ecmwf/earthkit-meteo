@@ -7,7 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import Iterable, List, Union
+from typing import Iterable
+from typing import List
+from typing import Union
 
 import numpy as np
 
@@ -41,9 +43,7 @@ def iter_quantiles(
         Quantiles, in increasing order if `which` is an `int`, otherwise in the order specified
     """
     if method not in ("sort", "numpy_bulk", "numpy"):
-        raise ValueError(
-            f"Invalid method {method!r}, expected 'sort', 'numpy_bulk', or 'numpy'"
-        )
+        raise ValueError(f"Invalid method {method!r}, expected 'sort', 'numpy_bulk', or 'numpy'")
 
     if isinstance(which, int):
         n = which

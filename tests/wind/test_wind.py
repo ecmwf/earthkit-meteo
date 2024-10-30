@@ -42,9 +42,7 @@ def test_direction():
     # meteo
     u = np.array([0, 1, 1, 1, 0, -1, -1, -1, 0, np.nan, 1, np.nan])
     v = np.array([1, 1, 0, -1, -1, -1, 0, 1, 0, 1, np.nan, np.nan])
-    v_ref = np.array(
-        [180.0, 225, 270, 315, 0, 45, 90, 135, 270, np.nan, np.nan, np.nan]
-    )
+    v_ref = np.array([180.0, 225, 270, 315, 0, 45, 90, 135, 270, np.nan, np.nan, np.nan])
     d = wind.direction(u, v, convention="meteo")
     np.testing.assert_allclose(d, v_ref)
 
@@ -122,9 +120,7 @@ def test_xy_to_polar():
             np.nan,
         ]
     )
-    d_ref = np.array(
-        [180.0, 225, 270, 315, 0, 45, 90, 135, 270, np.nan, np.nan, np.nan]
-    )
+    d_ref = np.array([180.0, 225, 270, 315, 0, 45, 90, 135, 270, np.nan, np.nan, np.nan])
     sp, d = wind.xy_to_polar(u, v)
     np.testing.assert_allclose(sp, sp_ref)
     np.testing.assert_allclose(d, d_ref)
@@ -172,12 +168,8 @@ def test_coriolis():
 
 
 def test_windrose():
-    sp = np.array(
-        [3.5, 1, 1.1, 2.1, 0.1, 0.0, 2.4, 1.9, 1.7, 3.9, 3.1, 2.1, np.nan, np.nan]
-    )
-    d = np.array(
-        [1.0, 29, 31, 93.0, 121, 171, 189, 245, 240.11, 311, 359.1, np.nan, 11, np.nan]
-    )
+    sp = np.array([3.5, 1, 1.1, 2.1, 0.1, 0.0, 2.4, 1.9, 1.7, 3.9, 3.1, 2.1, np.nan, np.nan])
+    d = np.array([1.0, 29, 31, 93.0, 121, 171, 189, 245, 240.11, 311, 359.1, np.nan, 11, np.nan])
     sp_bins = [0, 1, 2, 3, 4]
 
     # count

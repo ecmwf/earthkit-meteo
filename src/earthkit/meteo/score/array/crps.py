@@ -48,9 +48,7 @@ def crps(x, y):
     alpha[-1] = np.fmax(-diffxy[-1], 0)  # y-x(n)
     beta[-1] = 0
     # else
-    alpha[1:-1] = np.fmin(
-        diffxx, np.fmax(-diffxy[:-1], 0)
-    )  # x(i+1)-x(i) or y-x(i) or 0
+    alpha[1:-1] = np.fmin(diffxx, np.fmax(-diffxy[:-1], 0))  # x(i+1)-x(i) or y-x(i) or 0
     beta[1:-1] = np.fmin(diffxx, np.fmax(diffxy[1:], 0))  # 0 or x(i+1)-y or x(i+1)-x(i)
 
     # compute crps
