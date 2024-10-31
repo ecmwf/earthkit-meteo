@@ -485,6 +485,11 @@ def test_specific_humidity_from_relative_humidity():
             {"eps": 1e-3, "out": np.nan},
             [10, np.nan, np.nan],
         ),
+        (20.0, 52.5224541378, {}, 10.0),
+        (20.0, 0.0, {"eps": 1e-3, "out": thermo.array.celsius_to_kelvin(100)}, 100),
+        (20.0, 0.000001, {"eps": 1e-3, "out": thermo.array.celsius_to_kelvin(100)}, 100),
+        (20.0, 0.0, {"eps": 1e-3, "out": np.nan}, np.nan),
+        (20, 0.000001, {"eps": 1e-3, "out": np.nan}, np.nan),
     ],
 )
 def test_dewpoint_from_relative_humidity(t, r, kwargs, expected_values):
@@ -536,6 +541,11 @@ def test_dewpoint_from_relative_humidity(t, r, kwargs, expected_values):
             {"eps": 1e-3, "out": np.nan},
             [21.78907, np.nan, np.nan],
         ),
+        (0.0169461501, 967.508, {}, 21.78907),
+        (0.0, 967.5085, {"eps": 1e-3, "out": thermo.array.celsius_to_kelvin(100)}, 100),
+        (0.000001, 967.5085, {"eps": 1e-3, "out": thermo.array.celsius_to_kelvin(100)}, 100),
+        (0.0, 967.5085, {"eps": 1e-3, "out": np.nan}, np.nan),
+        (0.000001, 967.5085, {"eps": 1e-3, "out": np.nan}, np.nan),
     ],
 )
 def test_dewpoint_from_specific_humidity(q, p, kwargs, expected_values):

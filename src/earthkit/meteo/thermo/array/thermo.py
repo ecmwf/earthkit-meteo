@@ -824,6 +824,7 @@ def dewpoint_from_relative_humidity(t, r, eps=1e-8, out=None):
     td = temperature_from_saturation_vapour_pressure(es)
 
     if out is not None and not np.isnan(out):
+        td = np.asarray(td)
         td[mask] = out
 
     return td
@@ -880,6 +881,7 @@ def dewpoint_from_specific_humidity(q, p, eps=1e-8, out=None):
     td = temperature_from_saturation_vapour_pressure(es)
 
     if out is not None and not np.isnan(out):
+        td = np.asarray(td)
         td[mask] = out
 
     return td
