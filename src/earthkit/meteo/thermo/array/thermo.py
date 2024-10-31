@@ -785,7 +785,7 @@ def dewpoint_from_relative_humidity(t, r, eps=1e-8, out=None):
         Relative humidity (%)
     eps: number
         If ``out`` is not None, return ``out`` when ``r`` < ``eps``.
-        If out is None, ``eps`` is ignored and return np.nan for ``q``
+        If out is None, ``eps`` is ignored and return np.nan for ``r``
         values very close to zero.
     out: number or None
         If not None, return ``out`` when ``r`` < ``eps``. If None, ``eps`` is
@@ -839,14 +839,12 @@ def dewpoint_from_specific_humidity(q, p, eps=1e-8, out=None):
     p: ndarray
         Pressure (Pa)
     eps: number
-        As an intermediate result the saturation vapour pressure
-        (``es``) is computed (see details below). If ``out`` is not
-        None, return ``out`` when ``es`` < ``eps``. If out is None,
-        ``eps`` is ignored and return np.nan for ``es`` values very
-        close to zero.
+        If ``out`` is not None, return ``out`` when ``q`` < ``eps``.
+        If out is None, ``eps`` is ignored and return np.nan for ``q``
+        values very close to zero.
     out: number or None
-        If not None, return ``out`` when ``es`` < ``eps``. If None, ``eps`` is
-        ignored and return np.nan for ``es`` values very close to zero.
+        If not None, return ``out`` when ``q`` < ``eps``. If None, ``eps`` is
+        ignored and return np.nan for ``q`` values very close to zero.
 
     Returns
     -------
