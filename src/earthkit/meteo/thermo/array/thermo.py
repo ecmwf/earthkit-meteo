@@ -13,6 +13,10 @@ import numpy as np
 from earthkit.meteo import constants
 
 
+def _valid_number(x):
+    return x is not None and not np.isnan(x)
+
+
 def celsius_to_kelvin(t):
     """Converts temperature values from Celsius to Kelvin.
 
@@ -259,9 +263,21 @@ class _EsComp:
         elif phase == "ice":
             return self._es_ice_slope(t)
 
-    def t_from_es(self, es):
-        v = np.log(es / self.c1)
-        return (v * self.c4w - self.c3w * self.t0) / (v - self.c3w)
+    def t_from_es(self, es, eps=1e-8, out=None):
+        def _comp(x):
+            x = x / self.c1
+            x = np.log(x)
+            return (x * self.c4w - self.c3w * self.t0) / (x - self.c3w)
+
+        if out is not None:
+            v = np.asarray(es)
+            z_mask = v < eps
+            v_mask = ~z_mask
+            v[v_mask] = _comp(v[v_mask])
+            v[z_mask] = out
+            return v
+        else:
+            return _comp(es)
 
     def _es_water(self, t):
         return self.c1 * np.exp(self.c3w * (t - self.t0) / (t - self.c4w))
@@ -556,13 +572,21 @@ def saturation_specific_humidity_slope(t, p, es=None, es_slope=None, phase="mixe
     return constants.epsilon * es_slope * p / v
 
 
-def temperature_from_saturation_vapour_pressure(es):
-    r"""Computes the temperature from saturation vapour pressure.
+def temperature_from_saturation_vapour_pressure(es, eps=1e-8, out=None):
+    r"""Compute the temperature from saturation vapour pressure.
 
     Parameters
     ----------
     es: ndarray
         :func:`saturation_vapour_pressure` (Pa)
+    eps: number
+        If ``out`` is not None, return ``out`` when ``es`` < ``eps``. If out
+        is None, ``eps`` is ignored and return np.nan for ``es`` values very
+        close to zero.
+    out: number or None
+        If not None, return ``out`` when ``es`` < ``eps``. If None, ``eps`` is
+        ignored and return np.nan for ``es`` values very close to zero.
+
 
     Returns
     -------
@@ -575,7 +599,7 @@ def temperature_from_saturation_vapour_pressure(es):
     phase ``es`` was computed to.
 
     """
-    return _EsComp().t_from_es(es)
+    return _EsComp().t_from_es(es, eps=eps, out=out)
 
 
 def relative_humidity_from_dewpoint(t, td):
@@ -750,8 +774,8 @@ def specific_humidity_from_relative_humidity(t, r, p):
     return specific_humidity_from_vapour_pressure(e, p)
 
 
-def dewpoint_from_relative_humidity(t, r):
-    r"""Computes the dewpoint temperature from relative humidity.
+def dewpoint_from_relative_humidity(t, r, eps=1e-8, out=None):
+    r"""Compute the dewpoint temperature from relative humidity.
 
     Parameters
     ----------
@@ -759,11 +783,18 @@ def dewpoint_from_relative_humidity(t, r):
         Temperature (K)
     r: ndarray
         Relative humidity (%)
+    eps: number
+        If ``out`` is not None, return ``out`` when ``r`` < ``eps``.
+        If out is None, ``eps`` is ignored and return np.nan for ``r``
+        values very close to zero.
+    out: number or None
+        If not None, return ``out`` when ``r`` < ``eps``. If None, ``eps`` is
+        ignored and return np.nan for ``r`` values very close to zero.
 
     Returns
     -------
     ndarray
-        Dewpoint (K)
+        Dewpoint temperature (K)
 
 
     The computation starts with determining the the saturation vapour pressure over
@@ -782,11 +813,24 @@ def dewpoint_from_relative_humidity(t, r):
     equations used in :func:`saturation_vapour_pressure`.
 
     """
+    # by masking upfront we avoid RuntimeWarning when calling log() in
+    # the computation of td when r is very small
+    if out is not None:
+        r = np.asarray(r)
+        mask = r < eps
+        r[mask] = np.nan
+
     es = saturation_vapour_pressure(t, phase="water") * r / 100.0
-    return temperature_from_saturation_vapour_pressure(es)
+    td = temperature_from_saturation_vapour_pressure(es)
+
+    if out is not None and not np.isnan(out):
+        td = np.asarray(td)
+        td[mask] = out
+
+    return td
 
 
-def dewpoint_from_specific_humidity(q, p):
+def dewpoint_from_specific_humidity(q, p, eps=1e-8, out=None):
     r"""Computes the dewpoint temperature from specific humidity.
 
     Parameters
@@ -795,11 +839,18 @@ def dewpoint_from_specific_humidity(q, p):
         Specific humidity (kg/kg)
     p: ndarray
         Pressure (Pa)
+    eps: number
+        If ``out`` is not None, return ``out`` when ``q`` < ``eps``.
+        If out is None, ``eps`` is ignored and return np.nan for ``q``
+        values very close to zero.
+    out: number or None
+        If not None, return ``out`` when ``q`` < ``eps``. If None, ``eps`` is
+        ignored and return np.nan for ``q`` values very close to zero.
 
     Returns
     -------
     ndarray
-        Dewpoint (K)
+        Dewpoint temperature (K)
 
 
     The computation starts with determining the the saturation vapour pressure over
@@ -819,7 +870,21 @@ def dewpoint_from_specific_humidity(q, p):
     used in :func:`saturation_vapour_pressure`.
 
     """
-    return temperature_from_saturation_vapour_pressure(vapour_pressure_from_specific_humidity(q, p))
+    # by masking upfront we avoid RuntimeWarning when calling log() in
+    # the computation of td when q is very small
+    if out is not None:
+        q = np.asarray(q)
+        mask = q < eps
+        q[mask] = np.nan
+
+    es = vapour_pressure_from_specific_humidity(q, p)
+    td = temperature_from_saturation_vapour_pressure(es)
+
+    if out is not None and not np.isnan(out):
+        td = np.asarray(td)
+        td[mask] = out
+
+    return td
 
 
 def virtual_temperature(t, q):
@@ -828,7 +893,7 @@ def virtual_temperature(t, q):
     Parameters
     ----------
     t: number or ndarray
-        Temperature (K)
+        Temperature (K)s
     q: number or ndarray
         Specific humidity (kg/kg)
 
