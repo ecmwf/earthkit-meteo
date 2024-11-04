@@ -36,6 +36,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "autoapi.extension",
+    "sphinx_issues",
 ]
 
 # autodoc configuration
@@ -61,6 +62,9 @@ autoapi_own_page_level = "function"
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_preprocess_types = True
+
+# Path to GitHub repo {group}/{project}  (note that `group` is the GitHub user or organization)
+issues_github_path = "ecmwf/earthkit-meteo"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
