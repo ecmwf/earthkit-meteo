@@ -58,9 +58,7 @@ def test_cos_solar_zenith_angle_integrated():
     latitudes = np.array([40.0])
     longitudes = np.array([18.0])
 
-    v = solar.cos_solar_zenith_angle_integrated(
-        begin_date, end_date, latitudes, longitudes
-    )
+    v = solar.cos_solar_zenith_angle_integrated(begin_date, end_date, latitudes, longitudes)
     assert np.isclose(v[0], 0.3110738757)
 
 

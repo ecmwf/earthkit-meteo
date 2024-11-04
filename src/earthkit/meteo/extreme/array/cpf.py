@@ -64,10 +64,9 @@ def cpf(clim, ens, sort_clim=True, sort_ens=True):
                     idx = (qv_f < qv_c) & (qv_c_2 < qv_c)
 
                     # intersection between two lines
-                    tau_i = (
-                        tau_c * (qv_c_2[idx] - qv_f[idx])
-                        + tau_c_2 * (qv_f[idx] - qv_c[idx])
-                    ) / (qv_c_2[idx] - qv_c[idx])
+                    tau_i = (tau_c * (qv_c_2[idx] - qv_f[idx]) + tau_c_2 * (qv_f[idx] - qv_c[idx])) / (
+                        qv_c_2[idx] - qv_c[idx]
+                    )
 
                     # populate matrix, no values below 0
                     cpf[idx] = np.maximum(tau_i, 0)
@@ -85,10 +84,9 @@ def cpf(clim, ens, sort_clim=True, sort_ens=True):
 
                     idx = (qv_f > qv_c) & (qv_c_2 > qv_c) & (~mask)
 
-                    tau_i = (
-                        tau_c * (qv_c_2[idx] - qv_f[idx])
-                        + tau_c_2 * (qv_f[idx] - qv_c[idx])
-                    ) / (qv_c_2[idx] - qv_c[idx])
+                    tau_i = (tau_c * (qv_c_2[idx] - qv_f[idx]) + tau_c_2 * (qv_f[idx] - qv_c[idx])) / (
+                        qv_c_2[idx] - qv_c[idx]
+                    )
 
                     # populate matrix, no values above 1
                     cpf[idx] = np.minimum(tau_i, 1)
