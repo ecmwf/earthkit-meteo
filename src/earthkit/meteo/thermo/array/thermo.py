@@ -582,10 +582,11 @@ def temperature_from_saturation_vapour_pressure(es, eps=1e-8, out=None):
     eps: number
         If ``out`` is not None, return ``out`` when ``es`` < ``eps``. If out
         is None, ``eps`` is ignored and return np.nan for ``es`` values very
-        close to zero.
+        close to zero. *New in version 0.2.0*
     out: number or None
         If not None, return ``out`` when ``es`` < ``eps``. If None, ``eps`` is
         ignored and return np.nan for ``es`` values very close to zero.
+        *New in version 0.2.0*
 
 
     Returns
@@ -786,10 +787,11 @@ def dewpoint_from_relative_humidity(t, r, eps=1e-8, out=None):
     eps: number
         If ``out`` is not None, return ``out`` when ``r`` < ``eps``.
         If out is None, ``eps`` is ignored and return np.nan for ``r``
-        values very close to zero.
+        values very close to zero. *New in version 0.2.0*
     out: number or None
         If not None, return ``out`` when ``r`` < ``eps``. If None, ``eps`` is
         ignored and return np.nan for ``r`` values very close to zero.
+        *New in version 0.2.0*
 
     Returns
     -------
@@ -831,7 +833,7 @@ def dewpoint_from_relative_humidity(t, r, eps=1e-8, out=None):
 
 
 def dewpoint_from_specific_humidity(q, p, eps=1e-8, out=None):
-    r"""Computes the dewpoint temperature from specific humidity.
+    r"""Compute the dewpoint temperature from specific humidity.
 
     Parameters
     ----------
@@ -842,10 +844,11 @@ def dewpoint_from_specific_humidity(q, p, eps=1e-8, out=None):
     eps: number
         If ``out`` is not None, return ``out`` when ``q`` < ``eps``.
         If out is None, ``eps`` is ignored and return np.nan for ``q``
-        values very close to zero.
+        values very close to zero. *New in version 0.2.0*
     out: number or None
         If not None, return ``out`` when ``q`` < ``eps``. If None, ``eps`` is
         ignored and return np.nan for ``q`` values very close to zero.
+        *New in version 0.2.0*
 
     Returns
     -------
