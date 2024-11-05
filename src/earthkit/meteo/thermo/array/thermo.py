@@ -11,6 +11,7 @@
 import numpy as np
 
 from earthkit.meteo import constants
+from earthkit.meteo.utils.array import array_namespace
 
 
 def _valid_number(x):
@@ -188,9 +189,14 @@ def specific_humidity_from_vapour_pressure(e, p, eps=1e-4):
     if eps <= 0:
         raise ValueError(f"specific_humidity_from_vapour_pressure(): eps={eps} must be > 0")
 
-    v = np.asarray(p + (constants.epsilon - 1) * e)
-    v[np.asarray(p - e) < eps] = np.nan
+    ns = array_namespace(e, p)
+    v = ns.asarray(p + (constants.epsilon - 1) * e)
+    v[ns.asarray(p - e) < eps] = np.nan
     return constants.epsilon * e / v
+
+    # v = np.asarray(p + (constants.epsilon - 1) * e)
+    # v[np.asarray(p - e) < eps] = np.nan
+    # return constants.epsilon * e / v
 
 
 def mixing_ratio_from_vapour_pressure(e, p, eps=1e-4):
