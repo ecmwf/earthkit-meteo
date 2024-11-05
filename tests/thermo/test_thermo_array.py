@@ -334,24 +334,20 @@ def test_temperature_from_saturation_vapour_pressure_1():
 
 
 @pytest.mark.parametrize(
-    "es,kwargs,expected_values",
+    "es,expected_values",
     [
-        (4.2, {}, 219.7796336743947),
-        ([4.2, 0, 0.001, np.nan], {"eps": 1e-2, "out": 100}, [219.7796336743947, 100, 100, np.nan]),
-        ([4.2, 0, 0.001, np.nan], {"eps": 1e-2, "out": np.nan}, [219.7796336743947, np.nan, np.nan, np.nan]),
-        (0, {}, np.nan),
-        (0.001, {"eps": 1e-2, "out": 100}, 100.0),
-        (0.001, {"eps": 1e-2, "out": np.nan}, np.nan),
+        (4.2, 219.7796336743947),
+        (0, np.nan),
     ],
 )
-def test_temperature_from_saturation_vapour_pressure_2(es, kwargs, expected_values):
+def test_temperature_from_saturation_vapour_pressure_2(es, expected_values):
 
     multi = isinstance(es, list)
     if multi:
         es = np.array(es)
         expected_values = np.array(expected_values)
 
-    t = thermo.array.temperature_from_saturation_vapour_pressure(es, **kwargs)
+    t = thermo.array.temperature_from_saturation_vapour_pressure(es)
     if multi:
         np.testing.assert_allclose(t, expected_values, equal_nan=True)
     else:
@@ -448,7 +444,7 @@ def test_specific_humidity_from_relative_humidity():
 
 
 @pytest.mark.parametrize(
-    "t,r,kwargs,expected_values",
+    "t,r,expected_values",
     [
         (
             [20.0, 20, 0, 35, 5, -15, 25, 25],
@@ -462,37 +458,12 @@ def test_specific_humidity_from_relative_humidity():
                 15.4779832381,
                 0,
             ],
-            {},
             [20.0, 10, -10, 32, -15, -24, -3, np.nan],
         ),
-        (
-            [20.0, 20.0, 20.0],
-            [
-                52.5224541378,
-                0.0,
-                0.000001,
-            ],
-            {"eps": 1e-3, "out": thermo.array.celsius_to_kelvin(100)},
-            [10, 100, 100],
-        ),
-        (
-            [20.0, 20.0, 20.0],
-            [
-                52.5224541378,
-                0.0,
-                0.000001,
-            ],
-            {"eps": 1e-3, "out": np.nan},
-            [10, np.nan, np.nan],
-        ),
-        (20.0, 52.5224541378, {}, 10.0),
-        (20.0, 0.0, {"eps": 1e-3, "out": thermo.array.celsius_to_kelvin(100)}, 100),
-        (20.0, 0.000001, {"eps": 1e-3, "out": thermo.array.celsius_to_kelvin(100)}, 100),
-        (20.0, 0.0, {"eps": 1e-3, "out": np.nan}, np.nan),
-        (20, 0.000001, {"eps": 1e-3, "out": np.nan}, np.nan),
+        (20.0, 52.5224541378, 10.0),
     ],
 )
-def test_dewpoint_from_relative_humidity(t, r, kwargs, expected_values):
+def test_dewpoint_from_relative_humidity(t, r, expected_values):
     # reference was tested with an online relhum calculator at:
     # https://bmcnoldy.rsmas.miami.edu/Humidity.html
 
@@ -505,7 +476,7 @@ def test_dewpoint_from_relative_humidity(t, r, kwargs, expected_values):
     t = thermo.array.celsius_to_kelvin(t)
     v_ref = thermo.array.celsius_to_kelvin(expected_values)
 
-    td = thermo.array.dewpoint_from_relative_humidity(t, r, **kwargs)
+    td = thermo.array.dewpoint_from_relative_humidity(t, r)
     if multi:
         assert np.allclose(td, v_ref, equal_nan=True)
     else:
@@ -513,42 +484,17 @@ def test_dewpoint_from_relative_humidity(t, r, kwargs, expected_values):
 
 
 @pytest.mark.parametrize(
-    "q,p,kwargs,expected_values",
+    "q,p,expected_values",
     [
         (
             [0.0169461501, 0.0155840075, 0.0134912382, 0.0083409720, 0.0057268584, 0.0025150791, 0],
             [967.5085, 936.3775, 872.248, 756.1647, 649.157, 422.4207, 422.4207],
-            {},
             [21.78907, 19.90885, 16.50236, 7.104064, -0.3548709, -16.37916, np.nan],
         ),
-        (
-            [
-                0.0169461501,
-                0.0,
-                0.000001,
-            ],
-            [967.5085, 967.5085, 967.5085],
-            {"eps": 1e-3, "out": thermo.array.celsius_to_kelvin(100)},
-            [21.78907, 100, 100],
-        ),
-        (
-            [
-                0.0169461501,
-                0.0,
-                0.000001,
-            ],
-            [967.5085, 967.5085, 967.5085],
-            {"eps": 1e-3, "out": np.nan},
-            [21.78907, np.nan, np.nan],
-        ),
-        (0.0169461501, 967.508, {}, 21.78907),
-        (0.0, 967.5085, {"eps": 1e-3, "out": thermo.array.celsius_to_kelvin(100)}, 100),
-        (0.000001, 967.5085, {"eps": 1e-3, "out": thermo.array.celsius_to_kelvin(100)}, 100),
-        (0.0, 967.5085, {"eps": 1e-3, "out": np.nan}, np.nan),
-        (0.000001, 967.5085, {"eps": 1e-3, "out": np.nan}, np.nan),
+        (0.0169461501, 967.508, 21.78907),
     ],
 )
-def test_dewpoint_from_specific_humidity(q, p, kwargs, expected_values):
+def test_dewpoint_from_specific_humidity(q, p, expected_values):
     multi = isinstance(q, list)
     if multi:
         q = np.array(q)
@@ -558,7 +504,7 @@ def test_dewpoint_from_specific_humidity(q, p, kwargs, expected_values):
     p = p * 100.0
     v_ref = thermo.array.celsius_to_kelvin(expected_values)
 
-    td = thermo.array.dewpoint_from_specific_humidity(q, p, **kwargs)
+    td = thermo.array.dewpoint_from_specific_humidity(q, p)
     if multi:
         assert np.allclose(td, v_ref, equal_nan=True)
     else:
