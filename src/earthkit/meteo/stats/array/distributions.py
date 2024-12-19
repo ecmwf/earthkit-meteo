@@ -34,6 +34,59 @@ class ContinuousDistribution(abc.ABC):
         """Evaluate the inverse CDF (percent point function)"""
 
 
+# Temporary drop-in replacement for scipy.stats.lmoment from scipy v0.15
+def _lmoment(sample, order=(1, 2), axis=0):
+    """Compute first 2 L-moments of dataset along first axis"""
+    if len(order) != 2 or order[0] != 1 or order[1] != 2:
+        raise NotImplementedError
+    if axis != 0:
+        raise NotImplementedError
+
+    nmoments = 3
+
+    # At least four values needed to make a sample L-moments estimation
+    nvalues, *rest_shape = sample.shape
+    if nvalues < 4:
+        raise ValueError("Insufficient number of values to perform sample L-moments estimation")
+
+    sample = np.sort(sample, axis=0)  # ascending order
+
+    sums = np.zeros_like(sample, shape=(nmoments, *rest_shape))
+
+    for i in range(1, nvalues + 1):
+        z = i
+        term = sample[i - 1]
+        sums[0] = sums[0] + term
+        for j in range(1, nmoments):
+            z -= 1
+            term = term * z
+            sums[j] = sums[j] + term
+
+    y = float(nvalues)
+    z = float(nvalues)
+    sums[0] = sums[0] / z
+    for j in range(1, nmoments):
+        y = y - 1.0
+        z = z * y
+        sums[j] = sums[j] / z
+
+    k = nmoments
+    p0 = -1.0
+    for _ in range(2):
+        ak = float(k)
+        p0 = -p0
+        p = p0
+        temp = p * sums[0]
+        for i in range(1, k):
+            ai = i
+            p = -p * (ak + ai - 1.0) * (ak - ai) / (ai * ai)
+            temp = temp + (p * sums[i])
+        sums[k - 1] = temp
+        k = k - 1
+
+    return np.stack([sums[0], sums[1]])
+
+
 class MaxGumbel(ContinuousDistribution):
     """Gumbel distribution for extreme values
 
@@ -61,7 +114,10 @@ class MaxGumbel(ContinuousDistribution):
         axis: int
             The axis along which to compute the parameters.
         """
-        from scipy.stats import lmoment
+        try:
+            from scipy.stats import lmoment
+        except ImportError:
+            lmoment = _lmoment
 
         lmom = lmoment(sample, axis=axis, order=[1, 2])
         sigma = lmom[1] / np.log(2)
