@@ -13,6 +13,13 @@ from .distributions import MaxGumbel
 class MaximumStatistics:
     """Recurrence statistics for a sample of maximum values.
 
+    All statistics are computed based on a fitted continuous probability
+    distribution. Results will only be meaningful if this fitted distribution
+    is representative of the sample statistics.
+
+    Use, e.g., to compute expected return periods of extreme precipitation or
+    flooding events based on past observations.
+
     Parameters
     ----------
     sample: array_like
@@ -22,18 +29,10 @@ class MaximumStatistics:
         The axis along which to compute the statistics.
     freq: number | timedelta
         Temporal frequency of the input data. Used to scale return periods.
-        Defaults to 1, i.e., no scaling applied. When supplying a numpy
-        timedelta64, unit carries over to return periods, so make sure the
-        resolution is sufficient.
+        Defaults to 1, i.e., no scaling applied. Note: when supplying a numpy
+        timedelta64, the unit carries over to return periods.
     dist:
         Continuous probability distribution fitted to the input data.
-
-    All statistics are computed based on a fitted continuous probability
-    distribution. Results will only be meaningful if this fitted distribution
-    is representative of the sample statistics.
-
-    Use, e.g., to compute expected return periods of extreme precipitation or
-    flooding events based on past observations.
     """
 
     def __init__(self, sample, axis=0, freq=1.0, dist=MaxGumbel):
@@ -43,7 +42,7 @@ class MaximumStatistics:
 
     @property
     def dist(self):
-        """Estimated ontinuous probability distribution for the data."""
+        """Estimated continuous probability distribution for the data."""
         return self._dist
 
     @property
@@ -56,13 +55,14 @@ class MaximumStatistics:
 
         Parameters
         ----------
-        threshold: array_like
+        threshold: Number | array_like
             Input threshold.
 
         Returns
         -------
-        The probability ([0, 1]) of a value to exceed the input threshold in a
-        time interval.
+        array_like
+            The probability ([0, 1]) of a value to exceed the input threshold
+            in a time interval.
         """
         return self.dist.cdf(threshold)
 
@@ -71,12 +71,13 @@ class MaximumStatistics:
 
         Parameters
         ----------
-        threshold: array_like
+        threshold: Number | array_like
             Input threshold.
 
         Returns
         -------
-        The return period of the input threshold.
+        array_like
+            The return period of the input threshold.
         """
         return self.freq / self.probability_of_threshold(threshold)
 
@@ -85,12 +86,14 @@ class MaximumStatistics:
 
         Parameters
         ----------
-        probability: array_like
+        probability: Number | array_like
             Input probability.
 
         Returns
         -------
-        Threshold with exceedance probability equal to the input probability.
+        array_like
+            Threshold with exceedance probability equal to the input
+            probability.
         """
         return self.dist.ppf(probability)
 
@@ -99,11 +102,12 @@ class MaximumStatistics:
 
         Parameters
         ----------
-        return_period: array_like
+        return_period: Number | array_like
             Input return period.
 
         Returns
         -------
-        Threshold with return period equal to the input return period.
+        array_like
+            Threshold with return period equal to the input return period.
         """
         return self.threshold_of_probability(self.freq / return_period)

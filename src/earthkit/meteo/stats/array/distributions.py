@@ -13,7 +13,7 @@ import numpy as np
 
 
 class ContinuousDistribution(abc.ABC):
-    """Continuous probabiliy distribution function.
+    """Continuous probability distribution function.
 
     Partially implements the interface of scipy.stats.rv_continuous, but all
     methods should be applicable along an axis so fields can be processed in
@@ -96,9 +96,9 @@ class MaxGumbel(ContinuousDistribution):
 
     Parameters
     ----------
-    mu: array_like
+    mu: Number | array_like
         Offset parameter.
-    sigma: array_like
+    sigma: Number | array_like
         Scale parameter.
     """
 
@@ -141,13 +141,14 @@ class MaxGumbel(ContinuousDistribution):
 
         Parameters
         ----------
-        x: array_like
-            Input value(s).
+        x: Number | array_like
+            Input value.
 
         Returns
         -------
-        The probability that a random variable X from the distribution is less
-        than or equal to the input x.
+        Number | array_like
+            The probability that a random variable X from the distribution is
+            less than or equal to the input x.
         """
         x = _expand_dims_after(x, self.ndim)
         return 1.0 - np.exp(-np.exp((self.mu - x) / self.sigma))
@@ -157,13 +158,14 @@ class MaxGumbel(ContinuousDistribution):
 
         Parameters
         ----------
-        p: array_like
+        p: Number | array_like
             Probability in interval [0, 1].
 
         Returns
         -------
-        x such that the probability of a random variable from the distribution
-        taking a value less than or equal to x is p.
+        Number | array_like
+            x such that the probability of a random variable from the
+            distribution taking a value less than or equal to x is p.
         """
         p = _expand_dims_after(p, self.ndim)
         return self.mu - self.sigma * np.log(-np.log(1.0 - p))
