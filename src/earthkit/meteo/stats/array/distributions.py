@@ -13,30 +13,30 @@ import numpy as np
 
 
 class ContinuousDistribution(abc.ABC):
-    """Continuous probabiliy distribution function
+    """Continuous probabiliy distribution function.
 
     Partially implements the interface of scipy.stats.rv_continuous, but all
     methods should be applicable along an axis so fields can be processed in
     a grid point-wise fashion.
     """
 
-    @abc.abstracmethod
     @classmethod
+    @abc.abstractmethod
     def fit(cls, sample, axis):
-        """Determine distribution parameters from a sample of data"""
+        """Determine distribution parameters from a sample of data."""
 
     @abc.abstractmethod
     def cdf(self, x):
-        """Evaluate the continuous distribution function"""
+        """Evaluate the continuous distribution function."""
 
     @abc.abstractmethod
     def ppf(self, x):
-        """Evaluate the inverse CDF (percent point function)"""
+        """Evaluate the inverse CDF (percent point function)."""
 
 
 # Temporary drop-in replacement for scipy.stats.lmoment from scipy v0.15
 def _lmoment(sample, order=(1, 2), axis=0):
-    """Compute first 2 L-moments of dataset along first axis"""
+    """Compute first 2 L-moments of dataset along first axis."""
     if len(order) != 2 or order[0] != 1 or order[1] != 2:
         raise NotImplementedError
     if axis != 0:
@@ -87,8 +87,12 @@ def _lmoment(sample, order=(1, 2), axis=0):
     return np.stack([sums[0], sums[1]])
 
 
+def _expand_dims_after(arr, ndim):
+    return np.expand_dims(arr, axis=list(range(-ndim, 0)))
+
+
 class MaxGumbel(ContinuousDistribution):
-    """Gumbel distribution for extreme values
+    """Gumbel distribution for extreme values.
 
     Parameters
     ----------
@@ -98,14 +102,12 @@ class MaxGumbel(ContinuousDistribution):
         Scale parameter.
     """
 
-    def __init__(self, mu, sigma):  # TODO: needs an axis argument?
-        self.mu = np.asarray(mu)
-        self.sigma = np.asarray(sigma)
-        assert self.mu.shape == self.sigma.shape
+    def __init__(self, mu, sigma):
+        self.mu, self.sigma = np.broadcast_arrays(mu, sigma)
 
     @classmethod
     def fit(cls, sample, axis=0):
-        """Gumbel distribution with parameters fitted to sample values
+        """Gumbel distribution with parameters fitted to sample values.
 
         Parameters
         ----------
@@ -124,8 +126,18 @@ class MaxGumbel(ContinuousDistribution):
         mu = lmom[0] - sigma * 0.5772
         return cls(mu, sigma)
 
+    @property
+    def shape(self):
+        """Tuple of dimensions."""
+        return self.mu.shape
+
+    @property
+    def ndim(self):
+        """Number of dimensions."""
+        return self.mu.ndim
+
     def cdf(self, x):
-        """Evaluate the cumulative distribution function
+        """Evaluate the cumulative distribution function.
 
         Parameters
         ----------
@@ -137,10 +149,11 @@ class MaxGumbel(ContinuousDistribution):
         The probability that a random variable X from the distribution is less
         than or equal to the input x.
         """
-        return 1.0 - np.exp(-np.exp((self.mu - x) / self.sigma))  # TODO vectorize along axis properly
+        x = _expand_dims_after(x, self.ndim)
+        return 1.0 - np.exp(-np.exp((self.mu - x) / self.sigma))
 
     def ppf(self, p):
-        """Evaluate the inverse cumulative distribution function
+        """Evaluate the inverse cumulative distribution function.
 
         Parameters
         ----------
@@ -152,4 +165,5 @@ class MaxGumbel(ContinuousDistribution):
         x such that the probability of a random variable from the distribution
         taking a value less than or equal to x is p.
         """
-        return self.mu - self.sigma * np.log(-np.log(1.0 - p))  # TODO vectorize along axis properly
+        p = _expand_dims_after(p, self.ndim)
+        return self.mu - self.sigma * np.log(-np.log(1.0 - p))

@@ -11,7 +11,7 @@ from .distributions import MaxGumbel
 
 
 class MaximumStatistics:
-    """Recurrence statistics for a sample of maximum values
+    """Recurrence statistics for a sample of maximum values.
 
     Parameters
     ----------
@@ -22,7 +22,9 @@ class MaximumStatistics:
         The axis along which to compute the statistics.
     freq: number | timedelta
         Temporal frequency of the input data. Used to scale return periods.
-        Defaults to 1, i.e., no scaling applied.
+        Defaults to 1, i.e., no scaling applied. When supplying a numpy
+        timedelta64, unit carries over to return periods, so make sure the
+        resolution is sufficient.
     dist:
         Continuous probability distribution fitted to the input data.
 
@@ -41,16 +43,16 @@ class MaximumStatistics:
 
     @property
     def dist(self):
-        """Estimated ontinuous probability distribution for the data"""
+        """Estimated ontinuous probability distribution for the data."""
         return self._dist
 
     @property
     def freq(self):
-        """Temporal frequency used for scaling return periods"""
+        """Temporal frequency used for scaling return periods."""
         return self._freq
 
     def probability_of_threshold(self, threshold):
-        """Probability of exceeding the threshold
+        """Probability of exceeding the threshold.
 
         Parameters
         ----------
@@ -65,7 +67,7 @@ class MaximumStatistics:
         return self.dist.cdf(threshold)
 
     def return_period_of_threshold(self, threshold):
-        """Return period of exceeding the threshold
+        """Return period of exceeding the threshold.
 
         Parameters
         ----------
@@ -79,7 +81,7 @@ class MaximumStatistics:
         return self.freq / self.probability_of_threshold(threshold)
 
     def threshold_of_probability(self, probability):
-        """The threshold of a given probability of exceedance
+        """Threshold of a given probability of exceedance.
 
         Parameters
         ----------
@@ -93,7 +95,7 @@ class MaximumStatistics:
         return self.dist.ppf(probability)
 
     def threshold_of_return_period(self, return_period):
-        """The threshold of a given return period
+        """Threshold of a given return period.
 
         Parameters
         ----------
