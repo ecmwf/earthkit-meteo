@@ -13,7 +13,7 @@ from .distributions import MaxGumbel
 class MaximumStatistics:
     """Recurrence statistics for a sample of maximum values.
 
-    All statistics are computed based on a fitted continuous probability
+    All statistics are computed from a fitted continuous probability
     distribution. Results will only be meaningful if this fitted distribution
     is representative of the sample statistics.
 
@@ -31,7 +31,7 @@ class MaximumStatistics:
         Temporal frequency of the input data. Used to scale return periods.
         Defaults to 1, i.e., no scaling applied. Note: when supplying a numpy
         timedelta64, the unit carries over to return periods.
-    dist:
+    dist: ContinuousDistribution
         Continuous probability distribution fitted to the input data.
     """
 
@@ -51,7 +51,7 @@ class MaximumStatistics:
         return self._freq
 
     def probability_of_threshold(self, threshold):
-        """Probability of exceeding the threshold.
+        """Probability of threshold exceedance.
 
         Parameters
         ----------
@@ -67,7 +67,7 @@ class MaximumStatistics:
         return self.dist.cdf(threshold)
 
     def return_period_of_threshold(self, threshold):
-        """Return period of exceeding the threshold.
+        """Return period of threshold exceedance.
 
         Parameters
         ----------

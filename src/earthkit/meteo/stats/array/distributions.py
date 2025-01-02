@@ -27,16 +27,16 @@ class ContinuousDistribution(abc.ABC):
 
     @abc.abstractmethod
     def cdf(self, x):
-        """Evaluate the continuous distribution function."""
+        """Evaluate the cumulative distribution function (CDF)."""
 
     @abc.abstractmethod
     def ppf(self, x):
-        """Evaluate the inverse CDF (percent point function)."""
+        """Evaluate the percent point function (PPF; inverse CDF)."""
 
 
 # Temporary drop-in replacement for scipy.stats.lmoment from scipy v0.15
 def _lmoment(sample, order=(1, 2), axis=0):
-    """Compute first 2 L-moments of dataset along first axis."""
+    """Compute first 2 L-moments of a dataset along the first axis."""
     if len(order) != 2 or order[0] != 1 or order[1] != 2:
         raise NotImplementedError
     if axis != 0:
@@ -44,6 +44,7 @@ def _lmoment(sample, order=(1, 2), axis=0):
 
     nmoments = 3
 
+    sample = np.asarray(sample)
     # At least four values needed to make a sample L-moments estimation
     nvalues, *rest_shape = sample.shape
     if nvalues < 4:
@@ -137,7 +138,7 @@ class MaxGumbel(ContinuousDistribution):
         return self.mu.ndim
 
     def cdf(self, x):
-        """Evaluate the cumulative distribution function.
+        """Evaluate the cumulative distribution function (CDF).
 
         Parameters
         ----------
@@ -154,7 +155,7 @@ class MaxGumbel(ContinuousDistribution):
         return 1.0 - np.exp(-np.exp((self.mu - x) / self.sigma))
 
     def ppf(self, p):
-        """Evaluate the inverse cumulative distribution function.
+        """Evaluate the percent point function (PPF; inverse CDF).
 
         Parameters
         ----------
