@@ -279,13 +279,9 @@ def windrose(speed, direction, sectors=16, speed_bins=[], percent=True):
     speed = np.atleast_1d(speed)
     direction = np.atleast_1d(direction)
     dir_step = 360.0 / sectors
-    dir_bins = np.linspace(
-        int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2
-    )
+    dir_bins = np.linspace(int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2)
 
-    res = np.histogram2d(speed, direction, bins=[speed_bins, dir_bins], density=False)[
-        0
-    ]
+    res = np.histogram2d(speed, direction, bins=[speed_bins, dir_bins], density=False)[0]
 
     # unify the north bins
     res[:, 0] = res[:, 0] + res[:, -1]

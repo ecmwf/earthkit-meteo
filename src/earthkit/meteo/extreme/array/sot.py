@@ -39,9 +39,7 @@ def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
     err = np.seterr(divide="ignore", invalid="ignore")
 
     min_den = np.fmax(eps, 0)
-    sot = np.where(
-        np.fabs(qc_tail - qc) > min_den, (qf - qc_tail) / (qc_tail - qc), np.nan
-    )
+    sot = np.where(np.fabs(qc_tail - qc) > min_den, (qf - qc_tail) / (qc_tail - qc), np.nan)
 
     # revert to original error state
     np.seterr(**err)
@@ -78,20 +76,12 @@ def sot(clim, ens, perc, eps=-1e4):
     numpy array (npoints)
         SOT values
     """
-    if not (isinstance(perc, int) or isinstance(perc, np.int64)) or (
-        perc < 2 or perc > 98
-    ):
-        raise Exception(
-            "Percentile value should be and Integer between 2 and 98, is {}".format(
-                perc
-            )
-        )
+    if not (isinstance(perc, int) or isinstance(perc, np.int64)) or (perc < 2 or perc > 98):
+        raise Exception("Percentile value should be and Integer between 2 and 98, is {}".format(perc))
 
     if clim.shape[0] != 101:
         raise Exception(
-            "Climatology array should contain 101 percentiles, it has {} values".format(
-                clim.shape
-            )
+            "Climatology array should contain 101 percentiles, it has {} values".format(clim.shape)
         )
 
     qc = clim[perc]
@@ -136,20 +126,12 @@ def sot_unsorted(clim, ens, perc, eps=-1e4):
     numpy array (npoints)
         SOT values
     """
-    if not (isinstance(perc, int) or isinstance(perc, np.int64)) or (
-        perc < 2 or perc > 98
-    ):
-        raise Exception(
-            "Percentile value should be and Integer between 2 and 98, is {}".format(
-                perc
-            )
-        )
+    if not (isinstance(perc, int) or isinstance(perc, np.int64)) or (perc < 2 or perc > 98):
+        raise Exception("Percentile value should be and Integer between 2 and 98, is {}".format(perc))
 
     if clim.shape[0] != 101:
         raise Exception(
-            "Climatology array should contain 101 percentiles, it has {} values".format(
-                clim.shape
-            )
+            "Climatology array should contain 101 percentiles, it has {} values".format(clim.shape)
         )
 
     if eps > 0:

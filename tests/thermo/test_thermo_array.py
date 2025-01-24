@@ -295,9 +295,7 @@ def test_saturation_specific_humidity_slope():
     )
 
     for phase in phases:
-        svp = thermo.array.saturation_specific_humidity_slope(
-            d["t"], d["p"], phase=phase
-        )
+        svp = thermo.array.saturation_specific_humidity_slope(d["t"], d["p"], phase=phase)
         np.testing.assert_allclose(svp, d[phase])
 
     v_ref = np.array([np.nan])
@@ -315,7 +313,7 @@ def test_saturation_specific_humidity_slope():
         np.testing.assert_allclose(svp, v_ref[i])
 
 
-def test_temperature_from_saturation_vapour_pressure():
+def test_temperature_from_saturation_vapour_pressure_1():
     ref_file = "sat_vp.csv"
     d = np.genfromtxt(
         data_file(ref_file),
@@ -324,7 +322,28 @@ def test_temperature_from_saturation_vapour_pressure():
     )
 
     t = thermo.array.temperature_from_saturation_vapour_pressure(d["water"])
-    np.testing.assert_allclose(t, d["t"])
+    assert np.allclose(t, d["t"], equal_nan=True)
+
+
+@pytest.mark.parametrize(
+    "es,expected_values",
+    [
+        (4.2, 219.7796336743947),
+        (0, np.nan),
+    ],
+)
+def test_temperature_from_saturation_vapour_pressure_2(es, expected_values):
+
+    multi = isinstance(es, list)
+    if multi:
+        es = np.array(es)
+        expected_values = np.array(expected_values)
+
+    t = thermo.array.temperature_from_saturation_vapour_pressure(es)
+    if multi:
+        np.testing.assert_allclose(t, expected_values, equal_nan=True)
+    else:
+        assert np.isclose(t, expected_values, equal_nan=True)
 
 
 def test_relative_humidity_from_dewpoint():
@@ -348,9 +367,7 @@ def test_relative_humidity_from_dewpoint():
 
 
 def test_relative_humidity_from_specific_humidity():
-    t = thermo.array.celsius_to_kelvin(
-        np.array([-29.2884, -14.4118, -5.9235, 9.72339, 18.4514])
-    )
+    t = thermo.array.celsius_to_kelvin(np.array([-29.2884, -14.4118, -5.9235, 9.72339, 18.4514]))
     p = np.array([300, 400, 500, 700, 850]) * 100.0
     q = np.array(
         [
@@ -394,9 +411,7 @@ def test_specific_humidity_from_dewpoint():
 
 
 def test_specific_humidity_from_relative_humidity():
-    t = thermo.array.celsius_to_kelvin(
-        np.array([-29.2884, -14.4118, -5.9235, 9.72339, 18.4514])
-    )
+    t = thermo.array.celsius_to_kelvin(np.array([-29.2884, -14.4118, -5.9235, 9.72339, 18.4514]))
     p = np.array([300, 400, 500, 700, 850]) * 100.0
     r = np.array(
         [
@@ -420,43 +435,72 @@ def test_specific_humidity_from_relative_humidity():
     np.testing.assert_allclose(q, v_ref)
 
 
-def test_dewpoint_from_relative_humidity():
-    t = thermo.array.celsius_to_kelvin(np.array([20.0, 20, 0, 35, 5, -15, 25]))
-    r = np.array(
-        [
-            100.0000000000,
-            52.5224541378,
-            46.8714823296,
-            84.5391163313,
-            21.9244774232,
-            46.1081101229,
-            15.4779832381,
-        ]
-    )
-    v_ref = thermo.array.celsius_to_kelvin(np.array([20.0, 10, -10, 32, -15, -24, -3]))
+@pytest.mark.parametrize(
+    "t,r,expected_values",
+    [
+        (
+            [20.0, 20, 0, 35, 5, -15, 25, 25],
+            [
+                100.0000000000,
+                52.5224541378,
+                46.8714823296,
+                84.5391163313,
+                21.9244774232,
+                46.1081101229,
+                15.4779832381,
+                0,
+            ],
+            [20.0, 10, -10, 32, -15, -24, -3, np.nan],
+        ),
+        (20.0, 52.5224541378, 10.0),
+    ],
+)
+def test_dewpoint_from_relative_humidity(t, r, expected_values):
     # reference was tested with an online relhum calculator at:
     # https://bmcnoldy.rsmas.miami.edu/Humidity.html
+
+    multi = isinstance(t, list)
+    if multi:
+        t = np.array(t)
+        r = np.array(r)
+        expected_values = np.array(expected_values)
+
+    t = thermo.array.celsius_to_kelvin(t)
+    v_ref = thermo.array.celsius_to_kelvin(expected_values)
+
     td = thermo.array.dewpoint_from_relative_humidity(t, r)
-    np.testing.assert_allclose(td, v_ref)
+    if multi:
+        assert np.allclose(td, v_ref, equal_nan=True)
+    else:
+        assert np.isclose(td, v_ref, equal_nan=True)
 
 
-def test_dewpoint_from_specific_humidity():
-    p = np.array([967.5085, 936.3775, 872.248, 756.1647, 649.157, 422.4207]) * 100
-    q = np.array(
-        [
-            0.0169461501,
-            0.0155840075,
-            0.0134912382,
-            0.0083409720,
-            0.0057268584,
-            0.0025150791,
-        ]
-    )
-    v_ref = thermo.array.celsius_to_kelvin(
-        np.array([21.78907, 19.90885, 16.50236, 7.104064, -0.3548709, -16.37916])
-    )
+@pytest.mark.parametrize(
+    "q,p,expected_values",
+    [
+        (
+            [0.0169461501, 0.0155840075, 0.0134912382, 0.0083409720, 0.0057268584, 0.0025150791, 0],
+            [967.5085, 936.3775, 872.248, 756.1647, 649.157, 422.4207, 422.4207],
+            [21.78907, 19.90885, 16.50236, 7.104064, -0.3548709, -16.37916, np.nan],
+        ),
+        (0.0169461501, 967.508, 21.78907),
+    ],
+)
+def test_dewpoint_from_specific_humidity(q, p, expected_values):
+    multi = isinstance(q, list)
+    if multi:
+        q = np.array(q)
+        p = np.array(p)
+        expected_values = np.array(expected_values)
+
+    p = p * 100.0
+    v_ref = thermo.array.celsius_to_kelvin(expected_values)
+
     td = thermo.array.dewpoint_from_specific_humidity(q, p)
-    np.testing.assert_allclose(td, v_ref)
+    if multi:
+        assert np.allclose(td, v_ref, equal_nan=True)
+    else:
+        assert np.isclose(td, v_ref, equal_nan=True)
 
 
 def test_virtual_temperature():
@@ -631,9 +675,7 @@ def test_temperature_on_moist_adiabat():
             pt = thermo.array.temperature_on_moist_adiabat(
                 ref["ept"], ref["p"], ept_method=m_ept, t_method=m_t
             )
-            np.testing.assert_allclose(
-                pt, ref[f"{m_ept}_{m_t}"], err_msg=f"method={m_ept}_{m_t}"
-            )
+            np.testing.assert_allclose(pt, ref[f"{m_ept}_{m_t}"], err_msg=f"method={m_ept}_{m_t}")
 
 
 def test_wet_bulb_temperature():
