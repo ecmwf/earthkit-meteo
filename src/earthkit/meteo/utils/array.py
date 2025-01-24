@@ -42,9 +42,7 @@ class ArrayNamespace:
         if isinstance(arrays[0], np.ndarray):
             return np
         else:
-            raise ValueError(
-                "Can't find namespace for array. Please install array_api_compat package"
-            )
+            raise ValueError("Can't find namespace for array. Please install array_api_compat package")
 
 
 def array_namespace(*args):
