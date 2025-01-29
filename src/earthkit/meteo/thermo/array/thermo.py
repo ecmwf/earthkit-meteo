@@ -164,16 +164,16 @@ def specific_humidity_from_vapour_pressure(e, p, eps=1e-4):
 
     Parameters
     ----------
-    e: number or ndarray
+    e: number or array-like
         Vapour pressure (Pa)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
     eps: number
         Where p - e < ``eps`` np.nan is returned.
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Specific humidity (kg/kg)
 
 
@@ -191,12 +191,8 @@ def specific_humidity_from_vapour_pressure(e, p, eps=1e-4):
 
     ns = array_namespace(e, p)
     v = ns.asarray(p + (constants.epsilon - 1) * e)
-    v[ns.asarray(p - e) < eps] = np.nan
+    v[ns.asarray(p - e) < eps] = ns.nan
     return constants.epsilon * e / v
-
-    # v = np.asarray(p + (constants.epsilon - 1) * e)
-    # v[np.asarray(p - e) < eps] = np.nan
-    # return constants.epsilon * e / v
 
 
 def mixing_ratio_from_vapour_pressure(e, p, eps=1e-4):
@@ -204,16 +200,16 @@ def mixing_ratio_from_vapour_pressure(e, p, eps=1e-4):
 
     Parameters
     ----------
-    e: number or ndarray
+    e: number or array-like
         Vapour pressure (Pa)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
     eps: number
         Where p - e < ``eps`` np.nan is returned.
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Mixing ratio (kg/kg).
 
 
@@ -229,8 +225,9 @@ def mixing_ratio_from_vapour_pressure(e, p, eps=1e-4):
     if eps <= 0:
         raise ValueError(f"mixing_ratio_from_vapour_pressure(): eps={eps} must be > 0")
 
+    ns = array_namespace(e, p)
     v = np.asarray(p - e)
-    v[v < eps] = np.nan
+    v[v < eps] = ns.nan
     return constants.epsilon * e / v
 
 

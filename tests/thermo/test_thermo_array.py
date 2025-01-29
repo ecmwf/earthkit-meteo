@@ -94,6 +94,7 @@ def test_vapour_pressure_from_mixing_ratio():
     np.testing.assert_allclose(vp, v_ref)
 
 
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "vp, p, v_ref",
     [
@@ -103,35 +104,30 @@ def test_vapour_pressure_from_mixing_ratio():
         (100000, 700, np.nan),
     ],
 )
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 def test_specific_humidity_from_vapour_pressure(vp, p, v_ref, array_backend):
     vp, p, v_ref = array_backend.asarray(vp, p, v_ref)
     p = p * 100
-    print(f"{vp=} {p=}")
     q = thermo.array.specific_humidity_from_vapour_pressure(vp, p)
 
     assert array_backend.allclose(q, v_ref, equal_nan=True)
 
 
-def test_mixing_ratio_from_vapour_pressure():
-    vp = np.array([895.992614, 2862.662152, 100000])
-    p = np.array([700, 1000, 50]) * 100
-    v_ref = np.array([0.0080645161, 0.0183299389, np.nan])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "vp, p, v_ref",
+    [
+        ([895.992614, 2862.662152, 10000], [700, 1000, 50], [0.0080645161, 0.0183299389, np.nan]),
+        ([895.992614, 2862.662152, 100000], 700, [0.0080645161, 0.0265205849, np.nan]),
+        (895.992614, 700, 0.0080645161),
+        (100000.0, 700.0, np.nan),
+    ],
+)
+def test_mixing_ratio_from_vapour_pressure(vp, p, v_ref, array_backend):
+    vp, p, v_ref = array_backend.asarray(vp, p, v_ref)
+    p = p * 100
     mr = thermo.array.mixing_ratio_from_vapour_pressure(vp, p)
-    np.testing.assert_allclose(mr, v_ref, rtol=1e-07)
 
-    # numbers
-    vp = 895.992614
-    p = 700 * 100.0
-    v_ref = 0.0080645161
-    q = thermo.array.mixing_ratio_from_vapour_pressure(vp, p)
-    np.testing.assert_allclose(q, v_ref)
-
-    vp = 100000.0
-    p = 50 * 100.0
-    v_ref = np.nan
-    q = thermo.array.mixing_ratio_from_vapour_pressure(vp, p)
-    np.testing.assert_allclose(q, v_ref)
+    assert array_backend.allclose(mr, v_ref, equal_nan=True)
 
 
 def test_saturation_vapour_pressure():
