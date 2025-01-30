@@ -9,6 +9,32 @@
 
 
 def polyval(x, c):
+    """Evaluation of a polynomial using Horner's scheme.
+
+    If ``c`` is of length ``n + 1``, this function returns the value
+
+    .. math:: p(x) = c_0 + c_1 * x + ... + c_n * x^n
+
+
+    Parameters
+    ----------
+    x: array-like
+        The values(s) at which to evaluate the polynomial. Its elements must
+        support addition and multiplication with with themselves and with
+        the elements of ``c``.
+    c: array0like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree n are contained in c[n].
+
+    Returns
+    -------
+    values : array-like
+        The value(s) of the polynomial at the given point(s).
+
+    Comments
+    --------
+    Based on the ``numpy.polynomal.polinomial.polyval`` function.
+    """
     c0 = c[-1] + x * 0
     for i in range(2, len(c) + 1):
         c0 = c[-i] + c0 * x
