@@ -27,40 +27,40 @@ def check_phase(phase):
 
 
 def compute_es(t, phase):
-    ns = array_namespace(t)
+    xp = array_namespace(t)
     if phase == "mixed":
-        return _es_mixed(t, ns)
+        return _es_mixed(t, xp)
     elif phase == "water":
-        return _es_water(t, ns)
+        return _es_water(t, xp)
     elif phase == "ice":
-        return _es_ice(t, ns)
+        return _es_ice(t, xp)
 
 
 def compute_slope(t, phase):
-    ns = array_namespace(t)
+    xp = array_namespace(t)
     if phase == "mixed":
-        return _es_mixed_slope(t, ns)
+        return _es_mixed_slope(t, xp)
     elif phase == "water":
-        return _es_water_slope(t, ns)
+        return _es_water_slope(t, xp)
     elif phase == "ice":
-        return _es_ice_slope(t, ns)
+        return _es_ice_slope(t, xp)
 
 
 def compute_t_from_es(es):
-    ns = array_namespace(es)
-    v = ns.log(es / C1)
+    xp = array_namespace(es)
+    v = xp.log(es / C1)
     return (v * C4W - C3W * T0) / (v - C3W)
 
 
-def _es_water(t, ns):
-    return C1 * ns.exp(C3W * (t - T0) / (t - C4W))
+def _es_water(t, xp):
+    return C1 * xp.exp(C3W * (t - T0) / (t - C4W))
 
 
-def _es_ice(t, ns):
-    return C1 * ns.exp(C3I * (t - T0) / (t - C4I))
+def _es_ice(t, xp):
+    return C1 * xp.exp(C3I * (t - T0) / (t - C4I))
 
 
-def _es_mixed(t, ns):
+def _es_mixed(t, xp):
     # Fraction of liquid water (=alpha):
     #   t <= ti => alpha=0
     #   t > ti and t < t0 => alpha=(t-ti)/(t0-ti))^2
@@ -69,53 +69,53 @@ def _es_mixed(t, ns):
     # svp is interpolated between the ice and water phases:
     #   svp = alpha * es_water + (1.0 - alpha) * es_ice
 
-    t = ns.asarray(t)
-    svp = ns.zeros(t.shape)
+    t = xp.asarray(t)
+    svp = xp.zeros(t.shape)
 
     # ice range
     i_mask = t <= TI
-    svp[i_mask] = _es_ice(t[i_mask], ns)
+    svp[i_mask] = _es_ice(t[i_mask], xp)
 
     # water range
     w_mask = t >= T0
-    svp[w_mask] = _es_water(t[w_mask], ns)
+    svp[w_mask] = _es_water(t[w_mask], xp)
 
     # mixed range
     m_mask = ~(i_mask | w_mask)
-    alpha = ns.square(t[m_mask] - TI) / ns.square(T0 - TI)
-    svp[m_mask] = alpha * _es_water(t[m_mask], ns) + (1.0 - alpha) * _es_ice(t[m_mask], ns)
+    alpha = xp.square(t[m_mask] - TI) / xp.square(T0 - TI)
+    svp[m_mask] = alpha * _es_water(t[m_mask], xp) + (1.0 - alpha) * _es_ice(t[m_mask], xp)
     return svp
 
 
-def _es_water_slope(t, ns):
-    return _es_water(t, ns) * (C3W * (T0 - C4W)) / ns.square(t - C4W)
+def _es_water_slope(t, xp):
+    return _es_water(t, xp) * (C3W * (T0 - C4W)) / xp.square(t - C4W)
 
 
-def _es_ice_slope(t, ns):
-    return _es_ice(t, ns) * (C3I * (T0 - C4I)) / ns.square(t - C4I)
+def _es_ice_slope(t, xp):
+    return _es_ice(t, xp) * (C3I * (T0 - C4I)) / xp.square(t - C4I)
 
 
-def _es_mixed_slope(t, ns):
-    t = ns.asarray(t)
-    d_svp = ns.zeros(t.shape)
+def _es_mixed_slope(t, xp):
+    t = xp.asarray(t)
+    d_svp = xp.zeros(t.shape)
 
     # ice range
     i_mask = t <= TI
-    d_svp[i_mask] = _es_ice_slope(t[i_mask], ns)
+    d_svp[i_mask] = _es_ice_slope(t[i_mask], xp)
 
     # water range
     w_mask = t >= T0
-    d_svp[w_mask] = _es_water_slope(t[w_mask], ns)
+    d_svp[w_mask] = _es_water_slope(t[w_mask], xp)
 
     # mixed range
     m_mask = ~(i_mask | w_mask)
-    alpha = ns.square(t[m_mask] - TI) / ns.square(T0 - TI)
-    d_alpha = (2.0 / ns.square(T0 - TI)) * (t[m_mask] - TI)
+    alpha = xp.square(t[m_mask] - TI) / xp.square(T0 - TI)
+    d_alpha = (2.0 / xp.square(T0 - TI)) * (t[m_mask] - TI)
     t_m = t[m_mask]
     d_svp[m_mask] = (
-        d_alpha * _es_water(t_m, ns)
-        + alpha * _es_water_slope(t_m, ns)
-        - d_alpha * _es_ice(t_m, ns)
-        + (1.0 - alpha) * _es_ice_slope(t_m, ns)
+        d_alpha * _es_water(t_m, xp)
+        + alpha * _es_water_slope(t_m, xp)
+        - d_alpha * _es_ice(t_m, xp)
+        + (1.0 - alpha) * _es_ice_slope(t_m, xp)
     )
     return d_svp

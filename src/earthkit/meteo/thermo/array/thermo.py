@@ -188,9 +188,9 @@ def specific_humidity_from_vapour_pressure(e, p, eps=1e-4):
     if eps <= 0:
         raise ValueError(f"specific_humidity_from_vapour_pressure(): eps={eps} must be > 0")
 
-    ns = array_namespace(e, p)
-    v = ns.asarray(p + (constants.epsilon - 1) * e)
-    v[ns.asarray(p - e) < eps] = ns.nan
+    xp = array_namespace(e, p)
+    v = xp.asarray(p + (constants.epsilon - 1) * e)
+    v[xp.asarray(p - e) < eps] = xp.nan
     return constants.epsilon * e / v
 
 
@@ -224,9 +224,9 @@ def mixing_ratio_from_vapour_pressure(e, p, eps=1e-4):
     if eps <= 0:
         raise ValueError(f"mixing_ratio_from_vapour_pressure(): eps={eps} must be > 0")
 
-    ns = array_namespace(e, p)
-    v = ns.asarray(p - e)
-    v[v < eps] = ns.nan
+    xp = array_namespace(e, p)
+    v = xp.asarray(p - e)
+    v[v < eps] = xp.nan
     return constants.epsilon * e / v
 
 
@@ -407,10 +407,10 @@ def saturation_mixing_ratio_slope(t, p, es=None, es_slope=None, phase="mixed", e
     if es_slope is None:
         es_slope = saturation_vapour_pressure_slope(t, phase=phase)
 
-    ns = array_namespace(p, es)
-    v = ns.asarray(p - es)
-    v[v < eps] = ns.nan
-    return constants.epsilon * es_slope * p / ns.square(v)
+    xp = array_namespace(p, es)
+    v = xp.asarray(p - es)
+    v[v < eps] = xp.nan
+    return constants.epsilon * es_slope * p / xp.square(v)
 
 
 def saturation_specific_humidity_slope(t, p, es=None, es_slope=None, phase="mixed", eps=1e-4):
@@ -459,9 +459,9 @@ def saturation_specific_humidity_slope(t, p, es=None, es_slope=None, phase="mixe
     if es_slope is None:
         es_slope = saturation_vapour_pressure_slope(t, phase=phase)
 
-    ns = array_namespace(p, es)
-    v = ns.asarray(ns.square(p + es * (constants.epsilon - 1.0)))
-    v[ns.asarray(p - es) < eps] = ns.nan
+    xp = array_namespace(p, es)
+    v = xp.asarray(xp.square(p + es * (constants.epsilon - 1.0)))
+    v[xp.asarray(p - es) < eps] = xp.nan
     return constants.epsilon * es_slope * p / v
 
 
@@ -821,8 +821,8 @@ def potential_temperature(t, p):
     with :math:`\kappa = R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    ns = array_namespace(t, p)
-    return t * ns.power(constants.p0 / p, constants.kappa)
+    xp = array_namespace(t, p)
+    return t * xp.power(constants.p0 / p, constants.kappa)
 
 
 def temperature_from_potential_temperature(th, p):
@@ -850,8 +850,8 @@ def temperature_from_potential_temperature(th, p):
     with :math:`\kappa = R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    ns = array_namespace(th, p)
-    return th * ns.power(p / constants.p0, constants.kappa)
+    xp = array_namespace(th, p)
+    return th * xp.power(p / constants.p0, constants.kappa)
 
 
 def pressure_on_dry_adiabat(t, t_def, p_def):
@@ -881,8 +881,8 @@ def pressure_on_dry_adiabat(t, t_def, p_def):
     with :math:`\kappa =  R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    ns = array_namespace(t, t_def, p_def)
-    return p_def * ns.power(t / t_def, 1 / constants.kappa)
+    xp = array_namespace(t, t_def, p_def)
+    return p_def * xp.power(t / t_def, 1 / constants.kappa)
 
 
 def temperature_on_dry_adiabat(p, t_def, p_def):
@@ -912,8 +912,8 @@ def temperature_on_dry_adiabat(p, t_def, p_def):
     with :math:`\kappa =  R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    ns = array_namespace(p, t_def, p_def)
-    return t_def * ns.power(p / p_def, constants.kappa)
+    xp = array_namespace(p, t_def, p_def)
+    return t_def * xp.power(p / p_def, constants.kappa)
 
 
 def lcl_temperature(t, td, method="davies"):
@@ -958,8 +958,8 @@ def lcl_temperature(t, td, method="davies"):
         return t_lcl
     # Bolton formula
     elif method == "bolton":
-        ns = array_namespace(t, td)
-        return 56.0 + 1 / (1 / (td - 56) + ns.log(t / td) / 800)
+        xp = array_namespace(t, td)
+        return 56.0 + 1 / (1 / (td - 56) + xp.log(t / td) / 800)
     else:
         raise ValueError(f"lcl_temperature: invalid method={method} specified!")
 
@@ -1037,23 +1037,25 @@ class _EptComp:
 
     def compute_ept_sat(self, t, p):
         ths = _ThermoState(t=t, p=p)
-        ns = ths.ns
-        return self._th_sat(ths) * ns.exp(self._G_sat(ths))
+        xp = ths.ns
+        return self._th_sat(ths) * xp.exp(self._G_sat(ths))
 
     def compute_wbpt(self, ept):
-        ns = array_namespace(ept)
+        from .poly import polyval
+
+        xp = array_namespace(ept)
         t0 = 273.16
         x = ept / t0
         a = [7.101574, -20.68208, 16.11182, 2.574631, -5.205688]
         b = [1.0, -3.552497, 3.781782, -0.6899655, -0.5929340]
-        return ept - ns.exp(ns.polynomial.polynomial.polyval(x, a) / ns.polynomial.polynomial.polyval(x, b))
+        return ept - xp.exp(polyval(x, a) / polyval(x, b))
 
     def compute_t_on_ma_stipanuk(self, ept, p):
-        ns = array_namespace(ept, p)
-        ept = ns.asarray(ept)
-        p = ns.asarray(p)
-        size = ns.size(ept) if ns.size(ept) > ns.size(p) else ns.size(p)
-        t = ns.full(size, constants.T0 - 20)
+        xp = array_namespace(ept, p)
+        ept = xp.asarray(ept)
+        p = xp.asarray(p)
+        size = xp.size(ept) if xp.size(ept) > xp.size(p) else xp.size(p)
+        t = xp.full(size, constants.T0 - 20)
 
         # if isinstance(p, np.ndarray):
         #     t = np.full(p.shape, constants.T0 - 20)
@@ -1066,25 +1068,27 @@ class _EptComp:
         for _ in range(max_iter):
             ths = _ThermoState(t=t, p=p)
             dt /= 2.0
-            t += ns.sign(ept * ns.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)) * dt
+            t += xp.sign(ept * xp.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)) * dt
         # ths.t = t
         # return ept - self._th_sat(ths) * np.exp(self._G_sat(ths))
         return t
 
     def compute_t_on_ma_davies(self, ept, p):
-        ns = array_namespace(ept, p)
-        ept = ns.asarray(ept)
-        p = ns.full(ept.shape, p)
+        from .poly import polyval
+
+        xp = array_namespace(ept, p)
+        ept = xp.asarray(ept)
+        p = xp.full(ept.shape, p)
 
         def _k1(pp):
             """Function k1 in the article."""
             a = [-53.737, 137.81, -38.5]
-            return ns.polynomial.polynomial.polyval(pp, a)
+            return polyval(pp, a)
 
         def _k2(pp):
             """Function k2 in the article."""
             a = [-0.384, 56.831, -4.392]
-            return ns.polynomial.polynomial.polyval(pp, a)
+            return polyval(pp, a)
 
         def _D(p):
             """Function D in the article."""
@@ -1094,21 +1098,21 @@ class _EptComp:
         A = 2675
         t0 = 273.16
 
-        # ns = array_namespace(ept, p)
-        # ept = ns.asarray(ept)
-        # p = ns.full(ept.shape, p)
+        # xp = array_namespace(ept, p)
+        # ept = xp.asarray(ept)
+        # p = xp.full(ept.shape, p)
 
         # if not isinstance(p, np.ndarray):
         #     p = np.full(ept.shape, p)
 
         tw = ept.copy()
-        pp = ns.power(p / constants.p0, constants.kappa)
+        pp = xp.power(p / constants.p0, constants.kappa)
         te = ept * pp
-        c_te = ns.power(t0 / te, _EptComp.c_lambda)
+        c_te = xp.power(t0 / te, _EptComp.c_lambda)
 
         # initial guess
         mask = c_te > _D(p)
-        if ns.any(mask):
+        if xp.any(mask):
             es = saturation_vapour_pressure(te[mask])
             ws = mixing_ratio_from_vapour_pressure(es, p[mask])
             d_es = saturation_vapour_pressure_slope(te[mask])
@@ -1131,7 +1135,7 @@ class _EptComp:
 
         for i in range(max_iter):
             ths = _ThermoState(t=tw, p=p)
-            ths.c_tw = ns.power(t0 / ths.t, _EptComp.c_lambda)
+            ths.c_tw = xp.power(t0 / ths.t, _EptComp.c_lambda)
             ths.es = saturation_vapour_pressure(ths.t)
             if self.is_mixing_ratio_based():
                 ths.ws = mixing_ratio_from_vapour_pressure(ths.es, ths.p)
@@ -1152,7 +1156,7 @@ class _EptComp:
         # when ept is derived with the Bolton methods the iteration breaks down for extremely
         # hot and humid conditions (roughly about t > 50C and r > 95%) and results in negative
         # tw values!
-        ns.place(tw, tw <= 0, ns.nan)
+        xp.place(tw, tw <= 0, xp.nan)
 
         # ths = _ThermoState(t=tw, p=p)
         # return ept - self._th_sat(ths) * np.exp(self._G_sat(ths))
@@ -1167,12 +1171,12 @@ class _EptCompIfs(_EptComp):
         return False
 
     def _ept(self, ths):
-        ns = ths.ns
+        xp = ths.ns
         th = potential_temperature(ths.t, ths.p)
         t_lcl = lcl_temperature(ths.t, ths.td, method="davies")
         if ths.q is None:
             ths.q = specific_humidity_from_dewpoint(ths.td, ths.p)
-        return th * ns.exp(self.K0 * ths.q / t_lcl)
+        return th * xp.exp(self.K0 * ths.q / t_lcl)
 
     def _th_sat(self, ths):
         return potential_temperature(ths.t, ths.p)
@@ -1190,8 +1194,8 @@ class _EptCompIfs(_EptComp):
         )
 
     def _f(self, ths):
-        ns = ths.ns
-        return ths.c_tw * ns.exp(self._G_sat(ths, scale=-self.c_lambda))
+        xp = ths.ns
+        return ths.c_tw * xp.exp(self._G_sat(ths, scale=-self.c_lambda))
 
     def _d_lnf(self, ths):
         return -self.c_lambda * (1 / ths.t + self._d_G_sat(ths))
@@ -1203,20 +1207,20 @@ class _EptCompBolton35(_EptComp):
         self.K3 = 0.28
 
     def _ept(self, ths):
-        ns = ths.ns
+        xp = ths.ns
         t_lcl = lcl_temperature(ths.t, ths.td, method="bolton")
         if ths.q is None:
             w = mixing_ratio_from_dewpoint(ths.td, ths.p)
         else:
             w = mixing_ratio_from_specific_humidity(ths.q)
-        th = ths.t * ns.power(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * w))
-        return th * ns.exp(self.K0 * w / t_lcl)
+        th = ths.t * xp.power(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * w))
+        return th * xp.exp(self.K0 * w / t_lcl)
 
     def _th_sat(self, ths):
-        ns = ths.ns
+        xp = ths.ns
         if ths.ws is None:
             ths.ws = saturation_mixing_ratio(ths.t, ths.p)
-        return ths.t * ns.power(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * ths.ws))
+        return ths.t * xp.power(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * ths.ws))
 
     def _G_sat(self, ths, scale=1.0):
         if ths.ws is None:
@@ -1224,9 +1228,9 @@ class _EptCompBolton35(_EptComp):
         return (scale * self.K0) * ths.ws / ths.t
 
     def _d_G_sat(self, ths):
-        ns = ths.ns
+        xp = ths.ns
         return (
-            -self.K0 * ths.ws / ns.square(ths.t)
+            -self.K0 * ths.ws / xp.square(ths.t)
             + self.K0 * saturation_mixing_ratio_slope(ths.t, ths.p) / ths.t
         )
 
@@ -1234,18 +1238,18 @@ class _EptCompBolton35(_EptComp):
         # print(f" c_tw={ths.c_tw}")
         # print(f" es_frac={ths.es / ths.p}")
         # print(f" exp={self._G_sat(ths, scale=-self.c_lambda)}")
-        ns = ths.ns
+        xp = ths.ns
         return (
             ths.c_tw
-            * ns.power(ths.p / constants.p0, self.K3 * ths.ws)
-            * ns.exp(self._G_sat(ths, scale=-self.c_lambda))
+            * xp.power(ths.p / constants.p0, self.K3 * ths.ws)
+            * xp.exp(self._G_sat(ths, scale=-self.c_lambda))
         )
 
     def _d_lnf(self, ths):
-        ns = ths.ns
+        xp = ths.ns
         return -self.c_lambda * (
             1 / ths.t
-            + self.K3 * ns.log(ths.p / constants.p0) * saturation_vapour_pressure_slope(ths.t)
+            + self.K3 * xp.log(ths.p / constants.p0) * saturation_vapour_pressure_slope(ths.t)
             + self._d_G_sat(ths)
         )
 
@@ -1266,7 +1270,7 @@ class _EptCompBolton39(_EptComp):
         self.K4 = 0.28
 
     def _ept(self, ths):
-        ns = ths.ns
+        xp = ths.ns
         t_lcl = lcl_temperature(ths.t, ths.td, method="bolton")
         if ths.q is None:
             w = mixing_ratio_from_dewpoint(ths.td, ths.p)
@@ -1274,39 +1278,39 @@ class _EptCompBolton39(_EptComp):
             w = mixing_ratio_from_specific_humidity(ths.q)
 
         e = vapour_pressure_from_mixing_ratio(w, ths.p)
-        th = potential_temperature(ths.t, ths.p - e) * ns.power(ths.t / t_lcl, self.K4 * w)
-        return th * ns.exp((self.K0 / t_lcl - self.K1) * w * (1.0 + self.K2 * w))
+        th = potential_temperature(ths.t, ths.p - e) * xp.power(ths.t / t_lcl, self.K4 * w)
+        return th * xp.exp((self.K0 / t_lcl - self.K1) * w * (1.0 + self.K2 * w))
 
     def _th_sat(self, ths):
         if ths.es is None:
-            ns = ths.ns
+            xp = ths.ns
             ths.es = saturation_vapour_pressure(ths.t)
-            ths.es[ths.p - ths.es < 1e-4] = ns.nan
+            ths.es[ths.p - ths.es < 1e-4] = xp.nan
         return potential_temperature(ths.t, ths.p - ths.es)
 
     def _G_sat(self, ths, scale=1.0):
         if ths.es is None:
-            ns = ths.ns
+            xp = ths.ns
             ths.es = saturation_vapour_pressure(ths.t)
-            ths.es[ths.p - ths.es < 1e-4] = ns.nan
+            ths.es[ths.p - ths.es < 1e-4] = xp.nan
         # print(f" es={ths.es}")
         ws = mixing_ratio_from_vapour_pressure(ths.es, ths.p)
         # print(f" ws={ws}")
         return ((scale * self.K0) / ths.t - (scale * self.K1)) * ws * (1.0 + self.K2 * ws)
 
     def _d_G_sat(self, ths):
-        ns = ths.ns
+        xp = ths.ns
         # print(f" d_ws={saturation_mixing_ratio_slope(ths.t, ths.p)}")
-        return -self.K0 * (ths.ws + self.K2 * ns.square(ths.ws)) / (ns.square(ths.t)) + (
+        return -self.K0 * (ths.ws + self.K2 * xp.square(ths.ws)) / (xp.square(ths.t)) + (
             self.K0 / ths.t - self.K1
         ) * (1 + (2 * self.K2) * ths.ws) * saturation_mixing_ratio_slope(ths.t, ths.p)
 
     def _f(self, ths):
-        ns = ths.ns
+        xp = ths.ns
         # print(f" c_tw={ths.c_tw}")
         # print(f" es_frac={ths.es / ths.p}")
         # print(f" exp={self._G_sat(ths, scale=-self.c_lambda)}")
-        return ths.c_tw * (1 - ths.es / ths.p) * ns.exp(self._G_sat(ths, scale=-self.c_lambda))
+        return ths.c_tw * (1 - ths.es / ths.p) * xp.exp(self._G_sat(ths, scale=-self.c_lambda))
 
     def _d_lnf(self, ths):
         return -self.c_lambda * (
