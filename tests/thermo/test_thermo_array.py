@@ -329,45 +329,48 @@ def test_temperature_from_saturation_vapour_pressure_1():
     assert np.allclose(t, d["t"], equal_nan=True)
 
 
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
-    "es,expected_values",
+    "es,v_ref",
     [
         (4.2, 219.7796336743947),
         (0, np.nan),
     ],
 )
-def test_temperature_from_saturation_vapour_pressure_2(es, expected_values):
-
-    multi = isinstance(es, list)
-    if multi:
-        es = np.array(es)
-        expected_values = np.array(expected_values)
-
+def test_temperature_from_saturation_vapour_pressure_2(es, v_ref, array_backend):
+    es, v_ref = array_backend.asarray(es, v_ref)
     t = thermo.array.temperature_from_saturation_vapour_pressure(es)
-    if multi:
-        np.testing.assert_allclose(t, expected_values, equal_nan=True)
-    else:
-        assert np.isclose(t, expected_values, equal_nan=True)
+    assert array_backend.allclose(t, v_ref, equal_nan=True)
 
 
-def test_relative_humidity_from_dewpoint():
-    t = thermo.array.celsius_to_kelvin(np.array([20.0, 20, 0, 35, 5, -15, 25]))
-    td = thermo.array.celsius_to_kelvin(np.array([20.0, 10, -10, 32, -15, -24, -3]))
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t,td,v_ref",
+    [
+        (
+            [20.0, 20, 0, 35, 5, -15, 25],
+            [20.0, 10, -10, 32, -15, -24, -3],
+            [
+                100.0000000000,
+                52.5224541378,
+                46.8714823296,
+                84.5391163313,
+                21.9244774232,
+                46.1081101229,
+                15.4779832381,
+            ],  # reference was tested with an online relhum calculator at:
+            # https://bmcnoldy.rsmas.miami.edu/Humidity.html
+        ),
+    ],
+)
+def test_relative_humidity_from_dewpoint(t, td, v_ref, array_backend):
     # reference was tested with an online relhum calculator at:
     # https://bmcnoldy.rsmas.miami.edu/Humidity.html
-    v_ref = np.array(
-        [
-            100.0000000000,
-            52.5224541378,
-            46.8714823296,
-            84.5391163313,
-            21.9244774232,
-            46.1081101229,
-            15.4779832381,
-        ]
-    )
+
+    t = thermo.array.celsius_to_kelvin(t)
+    td = thermo.array.celsius_to_kelvin(td)
     r = thermo.array.relative_humidity_from_dewpoint(t, td)
-    np.testing.assert_allclose(r, v_ref, rtol=1e-05)
+    assert array_backend.allclose(r, v_ref, rtol=1e-05)
 
 
 def test_relative_humidity_from_specific_humidity():
