@@ -50,48 +50,56 @@ class ThermoInputData:
         self.p = d["p"]
 
 
-def test_celsius_to_kelvin():
-    t = np.array([-10, 23.6])
-    v = thermo.array.celsius_to_kelvin(t)
-    v_ref = np.array([263.16, 296.76])
-    np.testing.assert_allclose(v, v_ref)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("t, v_ref", [([-10, 23.6], [263.16, 296.76])])
+def test_celsius_to_kelvin(t, v_ref, array_backend):
+    t, v_ref = array_backend.asarray(t, v_ref)
+    tk = thermo.array.celsius_to_kelvin(t)
+    assert array_backend.allclose(tk, v_ref)
 
 
-def test_kelvin_to_celsius():
-    t = np.array([263.16, 296.76])
-    v = thermo.array.kelvin_to_celsius(t)
-    v_ref = np.array([-10, 23.6])
-    np.testing.assert_allclose(v, v_ref)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("t, v_ref", [([263.16, 296.76], [-10, 23.6])])
+def test_kelvin_to_celsius(t, v_ref, array_backend):
+    t, v_ref = array_backend.asarray(t, v_ref)
+    tc = thermo.array.kelvin_to_celsius(t)
+    assert array_backend.allclose(tc, v_ref)
 
 
-def test_mixing_ratio_from_specific_humidity():
-    q = np.array([0.008, 0.018])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("q, v_ref", [([0.008, 0.018], [0.0080645161, 0.0183299389])])
+def test_mixing_ratio_from_specific_humidity(q, v_ref, array_backend):
+    q, v_ref = array_backend.asarray(q, v_ref)
     mr = thermo.array.mixing_ratio_from_specific_humidity(q)
-    v_ref = np.array([0.0080645161, 0.0183299389])
-    np.testing.assert_allclose(mr, v_ref, rtol=1e-7)
+    assert array_backend.allclose(mr, v_ref, equal_nan=True, rtol=1e-07)
 
 
-def test_specific_humidity_from_mixing_ratio():
-    mr = np.array([0.0080645161, 0.0183299389])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("mr, v_ref", [([0.0080645161, 0.0183299389], [0.008, 0.018])])
+def test_specific_humidity_from_mixing_ratio(mr, v_ref, array_backend):
+    mr, v_ref = array_backend.asarray(mr, v_ref)
     q = thermo.array.specific_humidity_from_mixing_ratio(mr)
-    v_ref = np.array([0.008, 0.018])
-    np.testing.assert_allclose(q, v_ref, rtol=1e-07)
+    assert array_backend.allclose(q, v_ref, equal_nan=True, rtol=1e-07)
 
 
-def test_vapour_pressure_from_specific_humidity():
-    q = np.array([0.008, 0.018])
-    p = np.array([700, 1000]) * 100
-    v_ref = np.array([895.992614, 2862.662152])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("q, p, v_ref", [([0.008, 0.018], [700, 1000], [895.992614, 2862.662152])])
+def test_vapour_pressure_from_specific_humidity(q, p, v_ref, array_backend):
+    q, p, v_ref = array_backend.asarray(q, p, v_ref)
+    p = p * 100
     vp = thermo.array.vapour_pressure_from_specific_humidity(q, p)
-    np.testing.assert_allclose(vp, v_ref)
+    assert array_backend.allclose(vp, v_ref, equal_nan=True)
 
 
-def test_vapour_pressure_from_mixing_ratio():
-    mr = np.array([0.0080645161, 0.0183299389])
-    p = np.array([700, 1000]) * 100
-    v_ref = np.array([895.992614, 2862.662152])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "mr, p, v_ref", [([0.0080645161, 0.0183299389], [700, 1000], [895.992614, 2862.662152])]
+)
+def test_vapour_pressure_from_mixing_ratio(mr, p, v_ref, array_backend):
+    mr, p, v_ref = array_backend.asarray(mr, p, v_ref)
+    p = p * 100
     vp = thermo.array.vapour_pressure_from_mixing_ratio(mr, p)
-    np.testing.assert_allclose(vp, v_ref)
+    assert array_backend.allclose(vp, v_ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
