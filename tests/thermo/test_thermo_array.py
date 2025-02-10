@@ -373,77 +373,102 @@ def test_relative_humidity_from_dewpoint(t, td, v_ref, array_backend):
     assert array_backend.allclose(r, v_ref, rtol=1e-05)
 
 
-def test_relative_humidity_from_specific_humidity():
-    t = thermo.array.celsius_to_kelvin(np.array([-29.2884, -14.4118, -5.9235, 9.72339, 18.4514]))
-    p = np.array([300, 400, 500, 700, 850]) * 100.0
-    q = np.array(
-        [
-            0.000845416891024797,
-            0.00277950354211498,
-            0.00464489207661245,
-            0.0076785187585422,
-            0.0114808182580539,
-        ]
-    )
-    v_ref = np.array(
-        [
-            99.70488530734642,
-            100.25885732613531,
-            97.15956159465799,
-            71.37937968160273,
-            73.41420898756694,
-        ]
-    )
-    r = thermo.array.relative_humidity_from_specific_humidity(t, q, p)
-    np.testing.assert_allclose(r, v_ref)
-
-
-def test_specific_humidity_from_dewpoint():
-    td = thermo.array.celsius_to_kelvin(
-        np.array([21.78907, 19.90885, 16.50236, 7.104064, -0.3548709, -16.37916])
-    )
-    p = np.array([967.5085, 936.3775, 872.248, 756.1647, 649.157, 422.4207]) * 100
-    v_ref = np.array(
-        [
-            0.0169461501,
-            0.0155840075,
-            0.0134912382,
-            0.0083409720,
-            0.0057268584,
-            0.0025150791,
-        ]
-    )
-    q = thermo.array.specific_humidity_from_dewpoint(td, p)
-    np.testing.assert_allclose(q, v_ref, rtol=1e-05)
-
-
-def test_specific_humidity_from_relative_humidity():
-    t = thermo.array.celsius_to_kelvin(np.array([-29.2884, -14.4118, -5.9235, 9.72339, 18.4514]))
-    p = np.array([300, 400, 500, 700, 850]) * 100.0
-    r = np.array(
-        [
-            99.70488530734642,
-            100.25885732613531,
-            97.15956159465799,
-            71.37937968160273,
-            73.41420898756694,
-        ]
-    )
-    v_ref = np.array(
-        [
-            0.000845416891024797,
-            0.00277950354211498,
-            0.00464489207661245,
-            0.0076785187585422,
-            0.0114808182580539,
-        ]
-    )
-    q = thermo.array.specific_humidity_from_relative_humidity(t, r, p)
-    np.testing.assert_allclose(q, v_ref)
-
-
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
-    "t,r,expected_values",
+    "t,p,q,v_ref",
+    [
+        (
+            [-29.2884, -14.4118, -5.9235, 9.72339, 18.4514],
+            [300, 400, 500, 700, 850],
+            [
+                0.000845416891024797,
+                0.00277950354211498,
+                0.00464489207661245,
+                0.0076785187585422,
+                0.0114808182580539,
+            ],
+            [
+                99.70488530734642,
+                100.25885732613531,
+                97.15956159465799,
+                71.37937968160273,
+                73.41420898756694,
+            ],
+        ),
+    ],
+)
+def test_relative_humidity_from_specific_humidity(t, p, q, v_ref, array_backend):
+    t, p, q, v_ref = array_backend.asarray(t, p, q, v_ref)
+    t = thermo.array.celsius_to_kelvin(t)
+    p = p * 100.0
+
+    r = thermo.array.relative_humidity_from_specific_humidity(t, q, p)
+    assert array_backend.allclose(r, v_ref)
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "td,p,v_ref",
+    [
+        (
+            [21.78907, 19.90885, 16.50236, 7.104064, -0.3548709, -16.37916],
+            [967.5085, 936.3775, 872.248, 756.1647, 649.157, 422.4207],
+            [
+                0.0169461501,
+                0.0155840075,
+                0.0134912382,
+                0.0083409720,
+                0.0057268584,
+                0.0025150791,
+            ],
+        )
+    ],
+)
+def test_specific_humidity_from_dewpoint(td, p, v_ref, array_backend):
+    td, p, v_ref = array_backend.asarray(td, p, v_ref)
+    td = thermo.array.celsius_to_kelvin(td)
+    p = p * 100.0
+
+    q = thermo.array.specific_humidity_from_dewpoint(td, p)
+    assert array_backend.allclose(q, v_ref, rtol=1e-05)
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t,p,r,v_ref",
+    [
+        (
+            [-29.2884, -14.4118, -5.9235, 9.72339, 18.4514],
+            [300, 400, 500, 700, 850],
+            [
+                99.70488530734642,
+                100.25885732613531,
+                97.15956159465799,
+                71.37937968160273,
+                73.41420898756694,
+            ],
+            [
+                0.000845416891024797,
+                0.00277950354211498,
+                0.00464489207661245,
+                0.0076785187585422,
+                0.0114808182580539,
+            ],
+        )
+    ],
+)
+def test_specific_humidity_from_relative_humidity(t, p, r, v_ref, array_backend):
+    t, p, r, v_ref = array_backend.asarray(t, p, r, v_ref)
+    t = thermo.array.celsius_to_kelvin(t)
+    p = p * 100.0
+
+    q = thermo.array.specific_humidity_from_relative_humidity(t, r, p)
+    assert array_backend.allclose(q, v_ref)
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t,r,v_ref",
     [
         (
             [20.0, 20, 0, 35, 5, -15, 25, 25],
@@ -462,28 +487,21 @@ def test_specific_humidity_from_relative_humidity():
         (20.0, 52.5224541378, 10.0),
     ],
 )
-def test_dewpoint_from_relative_humidity(t, r, expected_values):
+def test_dewpoint_from_relative_humidity(t, r, v_ref, array_backend):
     # reference was tested with an online relhum calculator at:
     # https://bmcnoldy.rsmas.miami.edu/Humidity.html
 
-    multi = isinstance(t, list)
-    if multi:
-        t = np.array(t)
-        r = np.array(r)
-        expected_values = np.array(expected_values)
-
+    t, r, v_ref = array_backend.asarray(t, r, v_ref)
     t = thermo.array.celsius_to_kelvin(t)
-    v_ref = thermo.array.celsius_to_kelvin(expected_values)
+    v_ref = thermo.array.celsius_to_kelvin(v_ref)
 
     td = thermo.array.dewpoint_from_relative_humidity(t, r)
-    if multi:
-        assert np.allclose(td, v_ref, equal_nan=True)
-    else:
-        assert np.isclose(td, v_ref, equal_nan=True)
+    assert array_backend.allclose(td, v_ref, equal_nan=True)
 
 
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
-    "q,p,expected_values",
+    "q,p,v_ref",
     [
         (
             [0.0169461501, 0.0155840075, 0.0134912382, 0.0083409720, 0.0057268584, 0.0025150791, 0],
@@ -493,75 +511,79 @@ def test_dewpoint_from_relative_humidity(t, r, expected_values):
         (0.0169461501, 967.508, 21.78907),
     ],
 )
-def test_dewpoint_from_specific_humidity(q, p, expected_values):
-    multi = isinstance(q, list)
-    if multi:
-        q = np.array(q)
-        p = np.array(p)
-        expected_values = np.array(expected_values)
-
+def test_dewpoint_from_specific_humidity(q, p, v_ref, array_backend):
+    q, p, v_ref = array_backend.asarray(q, p, v_ref)
     p = p * 100.0
-    v_ref = thermo.array.celsius_to_kelvin(expected_values)
+    v_ref = thermo.array.celsius_to_kelvin(v_ref)
 
     td = thermo.array.dewpoint_from_specific_humidity(q, p)
-    if multi:
-        assert np.allclose(td, v_ref, equal_nan=True)
-    else:
-        assert np.isclose(td, v_ref, equal_nan=True)
+    assert array_backend.allclose(td, v_ref, equal_nan=True)
 
 
-def test_virtual_temperature():
-    t = np.array([286.4, 293.4])
-    # w = np.array([0.02, 0.03])
-    q = np.array([0.0196078431, 0.0291262136])
-    v_ref = np.array([289.8130240470, 298.5937453245])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t,q,v_ref",
+    [([286.4, 293.4], [0.0196078431, 0.0291262136], [289.8130240470, 298.5937453245])],
+)
+def test_virtual_temperature(t, q, v_ref, array_backend):
+    t, q, v_ref = array_backend.asarray(t, q, v_ref)
     tv = thermo.array.virtual_temperature(t, q)
-    np.testing.assert_allclose(tv, v_ref)
+    assert array_backend.allclose(tv, v_ref)
 
 
-def test_virtual_potential_temperature_temperature():
-    t = np.array([286.4, 293.4])
-    # w = np.array([0.02, 0.03])
-    q = np.array([0.0196078431, 0.0291262136])
-    p = np.array([100300.0, 95000.0])
-    v_ref = np.array([289.5651110613, 303.0015650834])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t,q,p,v_ref",
+    [([286.4, 293.4], [0.0196078431, 0.0291262136], [100300.0, 95000.0], [289.5651110613, 303.0015650834])],
+)
+def test_virtual_potential_temperature_temperature(t, q, p, v_ref, array_backend):
+    t, q, p, v_ref = array_backend.asarray(t, q, p, v_ref)
     tv = thermo.array.virtual_potential_temperature(t, q, p)
-    np.testing.assert_allclose(tv, v_ref)
+    assert array_backend.allclose(tv, v_ref)
 
 
-def test_potential_temperature():
-    t = np.array([252.16, 298.16])
-    p = np.array([72350, 100500])
-    v_ref = np.array([276.588026, 297.735455])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t,p,v_ref",
+    [([252.16, 298.16], [72350, 100500], [276.588026, 297.735455])],
+)
+def test_potential_temperature(t, p, v_ref, array_backend):
+    t, p, v_ref = array_backend.asarray(t, p, v_ref)
     th = thermo.array.potential_temperature(t, p)
-    np.testing.assert_allclose(th, v_ref)
+    assert array_backend.allclose(th, v_ref)
 
 
-def test_temperature_from_potential_temperature():
-    p = np.array([72350, 100500])
-    th = np.array([276.588026, 297.735455])
-    v_ref = np.array([252.16, 298.16])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "p,th,v_ref",
+    [([72350, 100500], [276.588026, 297.735455], [252.16, 298.16])],
+)
+def test_temperature_from_potential_temperature(p, th, v_ref, array_backend):
+    p, th, v_ref = array_backend.asarray(p, th, v_ref)
     t = thermo.array.temperature_from_potential_temperature(th, p)
-    np.testing.assert_allclose(t, v_ref)
+    assert array_backend.allclose(t, v_ref)
 
 
-def test_temperature_on_dry_adibat():
-    t_def = np.array([252.16, 298.16])
-    p_def = np.array([72350, 100500])
-    p = np.array([700, 500]) * 100
-    v_ref = np.array([249.792414, 244.246863])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t_def,p_def, p, v_ref",
+    [
+        ([252.16, 298.16], [72350, 100500], [700, 500], [249.792414, 244.246863]),
+        (252.16, 72350, [700, 500], [249.792414, 226.898581]),
+    ],
+)
+def test_temperature_on_dry_adibat(t_def, p_def, p, v_ref, array_backend):
+    p_def, t_def, p, v_ref = array_backend.asarray(p_def, t_def, p, v_ref)
+    p = p * 100.0
+
     t = thermo.array.temperature_on_dry_adiabat(p, t_def, p_def)
-    np.testing.assert_allclose(t, v_ref)
+    assert array_backend.allclose(t, v_ref)
 
     # cross checking
-    th1 = thermo.array.potential_temperature(t_def, p_def)
-    th2 = thermo.array.potential_temperature(t, p)
-    np.testing.assert_allclose(th1, th2)
-
-    # multiple values along a single adiabat
-    v_ref = np.array([249.792414, 226.898581])
-    t = thermo.array.temperature_on_dry_adiabat(p, t_def[0], p_def[0])
-    np.testing.assert_allclose(t, v_ref)
+    if not callable(t.size) and t_def.size > 1:
+        th1 = thermo.array.potential_temperature(t_def, p_def)
+        th2 = thermo.array.potential_temperature(t, p)
+        assert array_backend.allclose(th1, th2)
 
 
 def test_pressure_on_dry_adibat():

@@ -17,6 +17,7 @@ C3I = 22.587
 C4I = -0.7
 T0 = 273.16
 TI = T0 - 23
+
 PHASES = ["mixed", "water", "ice"]
 
 
@@ -82,7 +83,8 @@ def _es_mixed(t, xp):
 
     # mixed range
     m_mask = ~(i_mask | w_mask)
-    alpha = xp.square(t[m_mask] - TI) / xp.square(T0 - TI)
+
+    alpha = xp.square((t[m_mask] - TI) / (T0 - TI))
     svp[m_mask] = alpha * _es_water(t[m_mask], xp) + (1.0 - alpha) * _es_ice(t[m_mask], xp)
     return svp
 

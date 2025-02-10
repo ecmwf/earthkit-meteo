@@ -822,7 +822,7 @@ def potential_temperature(t, p):
 
     """
     xp = array_namespace(t, p)
-    return t * xp.power(constants.p0 / p, constants.kappa)
+    return t * xp.pow(constants.p0 / p, constants.kappa)
 
 
 def temperature_from_potential_temperature(th, p):
@@ -851,7 +851,7 @@ def temperature_from_potential_temperature(th, p):
 
     """
     xp = array_namespace(th, p)
-    return th * xp.power(p / constants.p0, constants.kappa)
+    return th * xp.pow(p / constants.p0, constants.kappa)
 
 
 def pressure_on_dry_adiabat(t, t_def, p_def):
@@ -882,7 +882,7 @@ def pressure_on_dry_adiabat(t, t_def, p_def):
 
     """
     xp = array_namespace(t, t_def, p_def)
-    return p_def * xp.power(t / t_def, 1 / constants.kappa)
+    return p_def * xp.pow(t / t_def, 1 / constants.kappa)
 
 
 def temperature_on_dry_adiabat(p, t_def, p_def):
@@ -913,7 +913,7 @@ def temperature_on_dry_adiabat(p, t_def, p_def):
 
     """
     xp = array_namespace(p, t_def, p_def)
-    return t_def * xp.power(p / p_def, constants.kappa)
+    return t_def * xp.pow(p / p_def, constants.kappa)
 
 
 def lcl_temperature(t, td, method="davies"):
@@ -1106,9 +1106,9 @@ class _EptComp:
         #     p = np.full(ept.shape, p)
 
         tw = ept.copy()
-        pp = xp.power(p / constants.p0, constants.kappa)
+        pp = xp.pow(p / constants.p0, constants.kappa)
         te = ept * pp
-        c_te = xp.power(t0 / te, _EptComp.c_lambda)
+        c_te = xp.pow(t0 / te, _EptComp.c_lambda)
 
         # initial guess
         mask = c_te > _D(p)
@@ -1135,7 +1135,7 @@ class _EptComp:
 
         for i in range(max_iter):
             ths = _ThermoState(t=tw, p=p)
-            ths.c_tw = xp.power(t0 / ths.t, _EptComp.c_lambda)
+            ths.c_tw = xp.pow(t0 / ths.t, _EptComp.c_lambda)
             ths.es = saturation_vapour_pressure(ths.t)
             if self.is_mixing_ratio_based():
                 ths.ws = mixing_ratio_from_vapour_pressure(ths.es, ths.p)
@@ -1213,14 +1213,14 @@ class _EptCompBolton35(_EptComp):
             w = mixing_ratio_from_dewpoint(ths.td, ths.p)
         else:
             w = mixing_ratio_from_specific_humidity(ths.q)
-        th = ths.t * xp.power(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * w))
+        th = ths.t * xp.pow(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * w))
         return th * xp.exp(self.K0 * w / t_lcl)
 
     def _th_sat(self, ths):
         xp = ths.ns
         if ths.ws is None:
             ths.ws = saturation_mixing_ratio(ths.t, ths.p)
-        return ths.t * xp.power(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * ths.ws))
+        return ths.t * xp.pow(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * ths.ws))
 
     def _G_sat(self, ths, scale=1.0):
         if ths.ws is None:
@@ -1241,7 +1241,7 @@ class _EptCompBolton35(_EptComp):
         xp = ths.ns
         return (
             ths.c_tw
-            * xp.power(ths.p / constants.p0, self.K3 * ths.ws)
+            * xp.pow(ths.p / constants.p0, self.K3 * ths.ws)
             * xp.exp(self._G_sat(ths, scale=-self.c_lambda))
         )
 
@@ -1278,7 +1278,7 @@ class _EptCompBolton39(_EptComp):
             w = mixing_ratio_from_specific_humidity(ths.q)
 
         e = vapour_pressure_from_mixing_ratio(w, ths.p)
-        th = potential_temperature(ths.t, ths.p - e) * xp.power(ths.t / t_lcl, self.K4 * w)
+        th = potential_temperature(ths.t, ths.p - e) * xp.pow(ths.t / t_lcl, self.K4 * w)
         return th * xp.exp((self.K0 / t_lcl - self.K1) * w * (1.0 + self.K2 * w))
 
     def _th_sat(self, ths):
