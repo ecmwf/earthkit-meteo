@@ -586,47 +586,60 @@ def test_temperature_on_dry_adibat(t_def, p_def, p, v_ref, array_backend):
         assert array_backend.allclose(th1, th2)
 
 
-def test_pressure_on_dry_adibat():
-    t_def = np.array([252.16, 298.16])
-    p_def = np.array([72350, 100500])
-    t = np.array([249.792414, 244.246863])
-    v_ref = np.array([700, 500]) * 100
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t_def,p_def,t,v_ref",
+    [
+        ([252.16, 298.16], [72350, 100500], [249.792414, 244.246863], [70000.0, 50000.0]),
+        (252.16, 72350, [249.792414, 244.246863], [70000, 64709.699161]),
+    ],
+)
+def test_pressure_on_dry_adibat(t_def, p_def, t, v_ref, array_backend):
+    p_def, t_def, t, v_ref = array_backend.asarray(p_def, t_def, t, v_ref)
+
     p = thermo.array.pressure_on_dry_adiabat(t, t_def, p_def)
-    np.testing.assert_allclose(p, v_ref)
+    assert array_backend.allclose(p, v_ref)
 
     # cross checking
-    th1 = thermo.array.potential_temperature(t_def, p_def)
-    th2 = thermo.array.potential_temperature(t, p)
-    np.testing.assert_allclose(th1, th2)
-
-    # multiple values along a single adiabat
-    v_ref = np.array([70000, 64709.699161])
-    p = thermo.array.pressure_on_dry_adiabat(t, t_def[0], p_def[0])
-    np.testing.assert_allclose(p, v_ref)
+    if not callable(t.size) and t_def.size > 1:
+        th1 = thermo.array.potential_temperature(t_def, p_def)
+        th2 = thermo.array.potential_temperature(t, p)
+        assert array_backend.allclose(th1, th2)
 
 
-def test_lcl():
-    t = np.array([10, 30, 43, 20]) + 273.16
-    td = np.array([-2, 26, 5, 28]) + 273.16
-    p = np.array([95000, 100500, 100100, 100200])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t,td,p,t_ref, p_ref,,method",
+    [
+        (
+            [10, 30, 43, 20],
+            [-2, 26, 5, 28],
+            [95000, 100500, 100100, 100200],
+            [268.706024, 298.200936, 270.517934, 303.138144],
+            [79081.766347, 94862.350635, 57999.83367, 112654.210439],
+            "davies",
+        ),
+        (
+            [10, 30, 43, 20],
+            [-2, 26, 5, 28],
+            [95000, 100500, 100100, 100200],
+            [268.683018, 298.182282, 270.531264, 303.199544],
+            [79058.068785, 94841.581142, 58009.838027, 112734.100243],
+            "bolton",
+        ),
+    ],
+)
+def test_lcl(t, td, p, t_ref, p_ref, method, array_backend):
+    t, td, p, t_ref, p_ref = array_backend.asarray(t, td, p, t_ref, p_ref)
+    t = thermo.array.celsius_to_kelvin(t)
+    td = thermo.array.celsius_to_kelvin(td)
 
-    # davies
-    t_ref = np.array([268.706024, 298.200936, 270.517934, 303.138144])
-    p_ref = np.array([79081.766347, 94862.350635, 57999.83367, 112654.210439])
-    t_lcl = thermo.array.lcl_temperature(t, td, method="davies")
-    np.testing.assert_allclose(t_lcl, t_ref)
-    t_lcl, p_lcl = thermo.array.lcl(t, td, p, method="davies")
-    np.testing.assert_allclose(t_lcl, t_ref)
-    np.testing.assert_allclose(p_lcl, p_ref)
+    t_lcl = thermo.array.lcl_temperature(t, td, method=method)
+    assert array_backend.allclose(t_lcl, t_ref)
 
-    # bolton
-    t_ref = np.array([268.683018, 298.182282, 270.531264, 303.199544])
-    p_ref = np.array([79058.068785, 94841.581142, 58009.838027, 112734.100243])
-    t_lcl = thermo.array.lcl_temperature(t, td, method="bolton")
-    np.testing.assert_allclose(t_lcl, t_ref)
-    t_lcl, p_lcl = thermo.array.lcl(t, td, p, method="bolton")
-    np.testing.assert_allclose(t_lcl, t_ref)
-    np.testing.assert_allclose(p_lcl, p_ref)
+    t_lcl, p_lcl = thermo.array.lcl(t, td, p, method=method)
+    assert array_backend.allclose(t_lcl, t_ref)
+    assert array_backend.allclose(p_lcl, p_ref)
 
 
 def test_ept():
