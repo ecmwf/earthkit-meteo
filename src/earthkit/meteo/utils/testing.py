@@ -100,18 +100,35 @@ class CupyBackend(ArrayBackend):
         return False
 
 
+class JaxBackend(ArrayBackend):
+    name = "jax"
+
+    def __init__(self):
+        import jax.numpy as jarray
+
+        self.xp = jarray
+        self.dtype = jarray.float64
+
+    @staticmethod
+    def available():
+        return modules_installed("jax")
+
+
 _ARRAY_BACKENDS = {}
 for b in {NumpyBackend, PytorchBackend, CupyBackend}:
     if b.available():
         _ARRAY_BACKENDS[b.name] = b()
 
 
-ARRAY_BACKENDS = list(_ARRAY_BACKENDS.keys())
+ARRAY_BACKENDS = list(_ARRAY_BACKENDS.values())
 
 
 def get_array_backend(backend):
     if backend is None:
         backend = "numpy"
+
+    if isinstance(backend, list):
+        return [get_array_backend(b) for b in backend]
 
     if isinstance(backend, str):
         return _ARRAY_BACKENDS[backend]
