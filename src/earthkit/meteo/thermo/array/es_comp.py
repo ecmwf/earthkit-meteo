@@ -71,7 +71,7 @@ def _es_mixed(t, xp):
     #   svp = alpha * es_water + (1.0 - alpha) * es_ice
 
     t = xp.asarray(t)
-    svp = xp.zeros(t.shape)
+    svp = xp.zeros(t.shape, dtype=t.dtype)
 
     # ice range
     i_mask = t <= TI
@@ -99,7 +99,7 @@ def _es_ice_slope(t, xp):
 
 def _es_mixed_slope(t, xp):
     t = xp.asarray(t)
-    d_svp = xp.zeros(t.shape)
+    d_svp = xp.zeros(t.shape, dtype=t.dtype)
 
     # ice range
     i_mask = t <= TI
@@ -111,8 +111,8 @@ def _es_mixed_slope(t, xp):
 
     # mixed range
     m_mask = ~(i_mask | w_mask)
-    alpha = xp.square(t[m_mask] - TI) / xp.square(T0 - TI)
-    d_alpha = (2.0 / xp.square(T0 - TI)) * (t[m_mask] - TI)
+    alpha = xp.square((t[m_mask] - TI) / (T0 - TI))
+    d_alpha = (2.0 / (T0 - TI) ** 2) * (t[m_mask] - TI)
     t_m = t[m_mask]
     d_svp[m_mask] = (
         d_alpha * _es_water(t_m, xp)

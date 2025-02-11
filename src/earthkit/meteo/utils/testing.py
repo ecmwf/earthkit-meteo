@@ -7,6 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
+# A collection of functions to support pytest testing
+
+from abc import ABCMeta
+from abc import abstractmethod
 from importlib import import_module
 
 import numpy as np
@@ -21,26 +25,16 @@ def modules_installed(*modules):
     return True
 
 
-NO_PYTORCH = not modules_installed("torch")
-NO_CUPY = not modules_installed("cupy")
-if not NO_CUPY:
-    try:
-        import cupy as cp
-
-        a = cp.ones(2)
-    except Exception:
-        NO_CUPY = True
-
-
 def is_scalar(data):
     return isinstance(data, (int, float)) or data is not data
 
 
-class ArrayBackend:
-    ns = None
+class ArrayBackend(metaclass=ABCMeta):
+    name = None
+    xp = None
 
     def asarray(self, *data, **kwargs):
-        res = [self.ns.asarray(d, **kwargs) for d in data]
+        res = [self.xp.asarray(d, **kwargs) for d in data]
         r = res if len(res) > 1 else res[0]
         return r
 
@@ -49,34 +43,77 @@ class ArrayBackend:
             v = [self.asarray(a, dtype=self.dtype) for a in args]
         else:
             v = args
-        return self.ns.allclose(*v, **kwargs)
+        return self.xp.allclose(*v, **kwargs)
+
+    @staticmethod
+    @abstractmethod
+    def available():
+        return True
 
 
 class NumpyBackend(ArrayBackend):
+    name = "numpy"
+
     def __init__(self):
-        self.ns = np
+        self.xp = np
         self.dtype = np.float64
+
+    @staticmethod
+    def available():
+        return True
 
 
 class PytorchBackend(ArrayBackend):
+    name = "torch"
+
     def __init__(self):
         import torch
 
-        self.ns = torch
+        self.xp = torch
         self.dtype = torch.float64
+
+    @staticmethod
+    def available():
+        return modules_installed("torch")
 
 
 class CupyBackend(ArrayBackend):
+    name = "cupy"
+
     def __init__(self):
         import cupy
 
-        self.ns = cupy
+        self.xp = cupy
         self.dtype = cupy.float64
 
+    @staticmethod
+    def available():
+        if modules_installed("cupy"):
+            try:
+                import cupy as cp
 
-ARRAY_BACKENDS = [NumpyBackend()]
-if not NO_PYTORCH:
-    ARRAY_BACKENDS.append(PytorchBackend())
+                cp.ones(2)
+                return True
+            except Exception:
+                return False
 
-if not NO_CUPY:
-    ARRAY_BACKENDS.append(CupyBackend())
+        return False
+
+
+_ARRAY_BACKENDS = {}
+for b in {NumpyBackend, PytorchBackend, CupyBackend}:
+    if b.available():
+        _ARRAY_BACKENDS[b.name] = b()
+
+
+ARRAY_BACKENDS = list(_ARRAY_BACKENDS.keys())
+
+
+def get_array_backend(backend):
+    if backend is None:
+        backend = "numpy"
+
+    if isinstance(backend, str):
+        return _ARRAY_BACKENDS[backend]
+
+    return backend

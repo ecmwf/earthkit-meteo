@@ -14,12 +14,24 @@ import pytest
 
 from earthkit.meteo import thermo
 from earthkit.meteo.utils.testing import ARRAY_BACKENDS
+from earthkit.meteo.utils.testing import get_array_backend
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
 
 def data_file(name):
     return os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", name)
+
+
+def read_data_file(path):
+    import numpy as np
+
+    d = np.genfromtxt(
+        data_file(path),
+        delimiter=",",
+        names=True,
+    )
+    return d
 
 
 def save_test_reference(file_name, data):
@@ -35,24 +47,30 @@ def save_test_reference(file_name, data):
 class ThermoInputData:
     """Helper class to load thermo input data."""
 
-    def __init__(self, file_name="t_hum_p_data.csv"):
+    def __init__(self, array_backend, file_name="t_hum_p_data.csv"):
         self.file_name = file_name
 
-        d = np.genfromtxt(
-            data_file(self.file_name),
-            delimiter=",",
-            names=True,
-        )
-        self.t = d["t"]
-        self.td = d["td"]
-        self.r = d["r"]
-        self.q = d["q"]
-        self.p = d["p"]
+        d = read_data_file(self.file_name)
+
+        self.t = array_backend.asarray(d["t"])
+        self.td = array_backend.asarray(d["td"])
+        self.r = array_backend.asarray(d["r"])
+        self.q = array_backend.asarray(d["q"])
+        self.p = array_backend.asarray(d["p"])
+
+
+# @pytest.fixture
+# def array_backend(ab):
+#     if isinstance(ab, str):
+#         return get_array_backend(ab)
+#     return ab
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("t, v_ref", [([-10, 23.6], [263.16, 296.76])])
 def test_celsius_to_kelvin(t, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
+
     t, v_ref = array_backend.asarray(t, v_ref)
     tk = thermo.array.celsius_to_kelvin(t)
     assert array_backend.allclose(tk, v_ref)
@@ -61,6 +79,8 @@ def test_celsius_to_kelvin(t, v_ref, array_backend):
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("t, v_ref", [([263.16, 296.76], [-10, 23.6])])
 def test_kelvin_to_celsius(t, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
+
     t, v_ref = array_backend.asarray(t, v_ref)
     tc = thermo.array.kelvin_to_celsius(t)
     assert array_backend.allclose(tc, v_ref)
@@ -69,6 +89,8 @@ def test_kelvin_to_celsius(t, v_ref, array_backend):
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("q, v_ref", [([0.008, 0.018], [0.0080645161, 0.0183299389])])
 def test_mixing_ratio_from_specific_humidity(q, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
+
     q, v_ref = array_backend.asarray(q, v_ref)
     mr = thermo.array.mixing_ratio_from_specific_humidity(q)
     assert array_backend.allclose(mr, v_ref, equal_nan=True, rtol=1e-07)
@@ -77,6 +99,8 @@ def test_mixing_ratio_from_specific_humidity(q, v_ref, array_backend):
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("mr, v_ref", [([0.0080645161, 0.0183299389], [0.008, 0.018])])
 def test_specific_humidity_from_mixing_ratio(mr, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
+
     mr, v_ref = array_backend.asarray(mr, v_ref)
     q = thermo.array.specific_humidity_from_mixing_ratio(mr)
     assert array_backend.allclose(q, v_ref, equal_nan=True, rtol=1e-07)
@@ -85,6 +109,8 @@ def test_specific_humidity_from_mixing_ratio(mr, v_ref, array_backend):
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("q, p, v_ref", [([0.008, 0.018], [700, 1000], [895.992614, 2862.662152])])
 def test_vapour_pressure_from_specific_humidity(q, p, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
+
     q, p, v_ref = array_backend.asarray(q, p, v_ref)
     p = p * 100
     vp = thermo.array.vapour_pressure_from_specific_humidity(q, p)
@@ -96,6 +122,8 @@ def test_vapour_pressure_from_specific_humidity(q, p, v_ref, array_backend):
     "mr, p, v_ref", [([0.0080645161, 0.0183299389], [700, 1000], [895.992614, 2862.662152])]
 )
 def test_vapour_pressure_from_mixing_ratio(mr, p, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
+
     mr, p, v_ref = array_backend.asarray(mr, p, v_ref)
     p = p * 100
     vp = thermo.array.vapour_pressure_from_mixing_ratio(mr, p)
@@ -113,6 +141,7 @@ def test_vapour_pressure_from_mixing_ratio(mr, p, v_ref, array_backend):
     ],
 )
 def test_specific_humidity_from_vapour_pressure(vp, p, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     vp, p, v_ref = array_backend.asarray(vp, p, v_ref)
     p = p * 100
     q = thermo.array.specific_humidity_from_vapour_pressure(vp, p)
@@ -131,6 +160,7 @@ def test_specific_humidity_from_vapour_pressure(vp, p, v_ref, array_backend):
     ],
 )
 def test_mixing_ratio_from_vapour_pressure(vp, p, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     vp, p, v_ref = array_backend.asarray(vp, p, v_ref)
     p = p * 100
     mr = thermo.array.mixing_ratio_from_vapour_pressure(vp, p)
@@ -138,40 +168,49 @@ def test_mixing_ratio_from_vapour_pressure(vp, p, v_ref, array_backend):
     assert array_backend.allclose(mr, v_ref, equal_nan=True)
 
 
-def test_saturation_vapour_pressure():
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
+def test_saturation_vapour_pressure_1(phase, array_backend):
+    array_backend = get_array_backend(array_backend)
     ref_file = "sat_vp.csv"
-    phases = ["mixed", "water", "ice"]
+    # phases = ["mixed", "water", "ice"]
 
     # o = {"t": thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 49))}
     # for phase in ["mixed", "water", "ice"]:
     #     o[phase] = thermo.array.saturation_vapour_pressure(o["t"], phase=phase)
     # save_test_reference(ref_file, o)
 
-    d = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
-    )
+    d = read_data_file(ref_file)
 
-    for phase in phases:
-        svp = thermo.array.saturation_vapour_pressure(d["t"], phase=phase)
-        np.testing.assert_allclose(svp, d[phase])
+    t = array_backend.asarray(d["t"])
+    v_ref = array_backend.asarray(d[phase])
 
-    # scalar value
-    t = 267.16
-    v_ref = {
-        "mixed": 3.807622914202970037e02,
-        "water": 3.909282234208898785e02,
-        "ice": 3.685208149695831139e02,
-    }
-    for phase, v in v_ref.items():
-        svp = thermo.array.saturation_vapour_pressure(t, phase=phase)
-        np.testing.assert_allclose(svp, v)
+    svp = thermo.array.saturation_vapour_pressure(t, phase=phase)
+    assert array_backend.allclose(svp, v_ref)
 
 
-def test_saturation_mixing_ratio():
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t,v_ref,phase",
+    [
+        (267.16, 3.807622914202970037e02, "mixed"),
+        (267.16, 3.909282234208898785e02, "water"),
+        (267.16, 3.685208149695831139e02, "ice"),
+    ],
+)
+def test_saturation_vapour_pressure_2(t, v_ref, phase, array_backend):
+    array_backend = get_array_backend(array_backend)
+    t, v_ref = array_backend.asarray(t, v_ref)
+
+    svp = thermo.array.saturation_vapour_pressure(t, phase=phase)
+    assert array_backend.allclose(svp, v_ref)
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
+def test_saturation_mixing_ratio(phase, array_backend):
+    array_backend = get_array_backend(array_backend)
     ref_file = "sat_mr.csv"
-    phases = ["mixed", "water", "ice"]
 
     # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
     # p = [1000, 950, 850, 700]
@@ -183,20 +222,20 @@ def test_saturation_mixing_ratio():
     #     o[phase] = thermo.array.saturation_mixing_ratio(t, p, phase=phase)
     # save_test_reference(ref_file, o)
 
-    d = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
-    )
+    d = read_data_file(ref_file)
+    t = array_backend.asarray(d["t"])
+    p = array_backend.asarray(d["p"])
+    v_ref = array_backend.asarray(d[phase])
 
-    for phase in phases:
-        mr = thermo.array.saturation_mixing_ratio(d["t"], d["p"], phase=phase)
-        np.testing.assert_allclose(mr, d[phase])
+    mr = thermo.array.saturation_mixing_ratio(t, p, phase=phase)
+    assert array_backend.allclose(mr, v_ref)
 
 
-def test_saturation_specific_humidity():
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
+def test_saturation_specific_humidity(phase, array_backend):
+    array_backend = get_array_backend(array_backend)
     ref_file = "sat_q.csv"
-    phases = ["mixed", "water", "ice"]
 
     # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
     # p = [1000, 950, 850, 700]
@@ -208,40 +247,39 @@ def test_saturation_specific_humidity():
     #     o[phase] = thermo.array.saturation_specific_humidity(t, p, phase=phase)
     # save_test_reference(ref_file, o)
 
-    d = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
-    )
+    d = read_data_file(ref_file)
+    t = array_backend.asarray(d["t"])
+    p = array_backend.asarray(d["p"])
+    v_ref = array_backend.asarray(d[phase])
 
-    for phase in phases:
-        mr = thermo.array.saturation_specific_humidity(d["t"], d["p"], phase=phase)
-        np.testing.assert_allclose(mr, d[phase])
+    q = thermo.array.saturation_specific_humidity(t, p, phase=phase)
+    assert array_backend.allclose(q, v_ref)
 
 
-def test_saturation_vapour_pressure_slope():
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
+def test_saturation_vapour_pressure_slope(phase, array_backend):
+    array_backend = get_array_backend(array_backend)
     ref_file = "sat_vp_slope.csv"
-    phases = ["mixed", "water", "ice"]
 
     # o = {"t": thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 49))}
     # for phase in ["mixed", "water", "ice"]:
     #     o[phase] = thermo.array.saturation_vapour_pressure_slope(o["t"], phase=phase)
     # save_test_reference(ref_file, o)
 
-    d = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
-    )
+    d = read_data_file(ref_file)
+    t = array_backend.asarray(d["t"])
+    v_ref = array_backend.asarray(d[phase])
 
-    for phase in phases:
-        svp = thermo.array.saturation_vapour_pressure_slope(d["t"], phase=phase)
-        np.testing.assert_allclose(svp, d[phase])
+    svp = thermo.array.saturation_vapour_pressure_slope(t, phase=phase)
+    assert array_backend.allclose(svp, v_ref)
 
 
-def test_saturation_mixing_ratio_slope():
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
+def test_saturation_mixing_ratio_slope_1(phase, array_backend):
+    array_backend = get_array_backend(array_backend)
     ref_file = "sat_mr_slope.csv"
-    phases = ["mixed", "water", "ice"]
 
     # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
     # p = [1000, 950, 850, 700]
@@ -253,34 +291,33 @@ def test_saturation_mixing_ratio_slope():
     #     o[phase] = thermo.array.saturation_mixing_ratio_slope(t, p, phase=phase)
     # save_test_reference(ref_file, o)
 
-    d = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
-    )
+    d = read_data_file(ref_file)
+    t = array_backend.asarray(d["t"])
+    p = array_backend.asarray(d["p"])
+    v_ref = array_backend.asarray(d[phase])
 
-    for phase in phases:
-        svp = thermo.array.saturation_mixing_ratio_slope(d["t"], d["p"], phase=phase)
-        np.testing.assert_allclose(svp, d[phase])
+    svp = thermo.array.saturation_mixing_ratio_slope(t, p, phase=phase)
+    assert array_backend.allclose(svp, v_ref)
 
-    v_ref = np.array([np.nan])
-    t = thermo.array.celsius_to_kelvin(np.array([200]))
-    p = np.array([1000])
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t,p,v_ref",
+    [(283.0, 1e5, 0.0005189819), (600.0, 1e5, np.nan), ([200 + 273.16], [100000.0], [np.nan])],
+)
+def test_saturation_mixing_ratio_slope_numbers(t, p, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
+    t, p, v_ref = array_backend.asarray(t, p, v_ref)
     svp = thermo.array.saturation_mixing_ratio_slope(t, p, phase="mixed")
-    np.testing.assert_allclose(svp, v_ref)
-
-    # numbers
-    t = [283.0, 600.0]
-    p = [1e5, 1e5]
-    v_ref = [0.0005189819, np.nan]
-    for i in range(len(t)):
-        svp = thermo.array.saturation_mixing_ratio_slope(t[i], p[i], phase="mixed")
-        np.testing.assert_allclose(svp, v_ref[i])
+    assert array_backend.allclose(svp, v_ref, equal_nan=True)
 
 
-def test_saturation_specific_humidity_slope():
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
+def test_saturation_specific_humidity_slope_1(phase, array_backend):
+    array_backend = get_array_backend(array_backend)
     ref_file = "sat_q_slope.csv"
-    phases = ["mixed", "water", "ice"]
+    # phases = ["mixed", "water", "ice"]
 
     # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
     # p = [1000, 950, 850, 700]
@@ -292,41 +329,38 @@ def test_saturation_specific_humidity_slope():
     #     o[phase] = thermo.array.saturation_specific_humidity_slope(t, p, phase=phase)
     # save_test_reference(ref_file, o)
 
-    d = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
-    )
+    d = read_data_file(ref_file)
+    t = array_backend.asarray(d["t"])
+    p = array_backend.asarray(d["p"])
+    v_ref = array_backend.asarray(d[phase])
 
-    for phase in phases:
-        svp = thermo.array.saturation_specific_humidity_slope(d["t"], d["p"], phase=phase)
-        np.testing.assert_allclose(svp, d[phase])
+    svp = thermo.array.saturation_specific_humidity_slope(t, p, phase=phase)
+    assert array_backend.allclose(svp, v_ref)
 
-    v_ref = np.array([np.nan])
-    t = thermo.array.celsius_to_kelvin(np.array([200]))
-    p = np.array([1000])
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "t,p,v_ref",
+    [(283.0, 1e5, 0.0005111349), (600.0, 1e5, np.nan), ([200 + 273.16], [100000.0], [np.nan])],
+)
+def test_saturation_specific_humidity_slope_number(t, p, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
+    t, p, v_ref = array_backend.asarray(t, p, v_ref)
     svp = thermo.array.saturation_specific_humidity_slope(t, p, phase="mixed")
-    np.testing.assert_allclose(svp, v_ref)
-
-    # numbers
-    t = [283.0, 600.0]
-    p = [1e5, 1e5]
-    v_ref = [0.0005111349, np.nan]
-    for i in range(len(t)):
-        svp = thermo.array.saturation_specific_humidity_slope(t[i], p[i], phase="mixed")
-        np.testing.assert_allclose(svp, v_ref[i])
+    assert array_backend.allclose(svp, v_ref, equal_nan=True)
 
 
-def test_temperature_from_saturation_vapour_pressure_1():
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_temperature_from_saturation_vapour_pressure_1(array_backend):
+    array_backend = get_array_backend(array_backend)
     ref_file = "sat_vp.csv"
-    d = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
-    )
+    d = read_data_file(ref_file)
 
-    t = thermo.array.temperature_from_saturation_vapour_pressure(d["water"])
-    assert np.allclose(t, d["t"], equal_nan=True)
+    svp = array_backend.asarray(d["water"])
+    v_ref = array_backend.asarray(d["t"])
+
+    t = thermo.array.temperature_from_saturation_vapour_pressure(svp)
+    assert array_backend.allclose(t, v_ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
@@ -337,7 +371,8 @@ def test_temperature_from_saturation_vapour_pressure_1():
         (0, np.nan),
     ],
 )
-def test_temperature_from_saturation_vapour_pressure_2(es, v_ref, array_backend):
+def test_temperature_from_saturation_vapour_pressure_numbers(es, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     es, v_ref = array_backend.asarray(es, v_ref)
     t = thermo.array.temperature_from_saturation_vapour_pressure(es)
     assert array_backend.allclose(t, v_ref, equal_nan=True)
@@ -364,11 +399,11 @@ def test_temperature_from_saturation_vapour_pressure_2(es, v_ref, array_backend)
     ],
 )
 def test_relative_humidity_from_dewpoint(t, td, v_ref, array_backend):
-    # reference was tested with an online relhum calculator at:
-    # https://bmcnoldy.rsmas.miami.edu/Humidity.html
-
+    array_backend = get_array_backend(array_backend)
+    t, td, v_ref = array_backend.asarray(t, td, v_ref)
     t = thermo.array.celsius_to_kelvin(t)
     td = thermo.array.celsius_to_kelvin(td)
+
     r = thermo.array.relative_humidity_from_dewpoint(t, td)
     assert array_backend.allclose(r, v_ref, rtol=1e-05)
 
@@ -398,6 +433,7 @@ def test_relative_humidity_from_dewpoint(t, td, v_ref, array_backend):
     ],
 )
 def test_relative_humidity_from_specific_humidity(t, p, q, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     t, p, q, v_ref = array_backend.asarray(t, p, q, v_ref)
     t = thermo.array.celsius_to_kelvin(t)
     p = p * 100.0
@@ -425,6 +461,7 @@ def test_relative_humidity_from_specific_humidity(t, p, q, v_ref, array_backend)
     ],
 )
 def test_specific_humidity_from_dewpoint(td, p, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     td, p, v_ref = array_backend.asarray(td, p, v_ref)
     td = thermo.array.celsius_to_kelvin(td)
     p = p * 100.0
@@ -458,6 +495,7 @@ def test_specific_humidity_from_dewpoint(td, p, v_ref, array_backend):
     ],
 )
 def test_specific_humidity_from_relative_humidity(t, p, r, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     t, p, r, v_ref = array_backend.asarray(t, p, r, v_ref)
     t = thermo.array.celsius_to_kelvin(t)
     p = p * 100.0
@@ -491,6 +529,7 @@ def test_dewpoint_from_relative_humidity(t, r, v_ref, array_backend):
     # reference was tested with an online relhum calculator at:
     # https://bmcnoldy.rsmas.miami.edu/Humidity.html
 
+    array_backend = get_array_backend(array_backend)
     t, r, v_ref = array_backend.asarray(t, r, v_ref)
     t = thermo.array.celsius_to_kelvin(t)
     v_ref = thermo.array.celsius_to_kelvin(v_ref)
@@ -512,6 +551,7 @@ def test_dewpoint_from_relative_humidity(t, r, v_ref, array_backend):
     ],
 )
 def test_dewpoint_from_specific_humidity(q, p, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     q, p, v_ref = array_backend.asarray(q, p, v_ref)
     p = p * 100.0
     v_ref = thermo.array.celsius_to_kelvin(v_ref)
@@ -526,6 +566,7 @@ def test_dewpoint_from_specific_humidity(q, p, v_ref, array_backend):
     [([286.4, 293.4], [0.0196078431, 0.0291262136], [289.8130240470, 298.5937453245])],
 )
 def test_virtual_temperature(t, q, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     t, q, v_ref = array_backend.asarray(t, q, v_ref)
     tv = thermo.array.virtual_temperature(t, q)
     assert array_backend.allclose(tv, v_ref)
@@ -537,6 +578,7 @@ def test_virtual_temperature(t, q, v_ref, array_backend):
     [([286.4, 293.4], [0.0196078431, 0.0291262136], [100300.0, 95000.0], [289.5651110613, 303.0015650834])],
 )
 def test_virtual_potential_temperature_temperature(t, q, p, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     t, q, p, v_ref = array_backend.asarray(t, q, p, v_ref)
     tv = thermo.array.virtual_potential_temperature(t, q, p)
     assert array_backend.allclose(tv, v_ref)
@@ -548,6 +590,7 @@ def test_virtual_potential_temperature_temperature(t, q, p, v_ref, array_backend
     [([252.16, 298.16], [72350, 100500], [276.588026, 297.735455])],
 )
 def test_potential_temperature(t, p, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     t, p, v_ref = array_backend.asarray(t, p, v_ref)
     th = thermo.array.potential_temperature(t, p)
     assert array_backend.allclose(th, v_ref)
@@ -559,6 +602,7 @@ def test_potential_temperature(t, p, v_ref, array_backend):
     [([72350, 100500], [276.588026, 297.735455], [252.16, 298.16])],
 )
 def test_temperature_from_potential_temperature(p, th, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     p, th, v_ref = array_backend.asarray(p, th, v_ref)
     t = thermo.array.temperature_from_potential_temperature(th, p)
     assert array_backend.allclose(t, v_ref)
@@ -573,6 +617,7 @@ def test_temperature_from_potential_temperature(p, th, v_ref, array_backend):
     ],
 )
 def test_temperature_on_dry_adibat(t_def, p_def, p, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     p_def, t_def, p, v_ref = array_backend.asarray(p_def, t_def, p, v_ref)
     p = p * 100.0
 
@@ -595,6 +640,7 @@ def test_temperature_on_dry_adibat(t_def, p_def, p, v_ref, array_backend):
     ],
 )
 def test_pressure_on_dry_adibat(t_def, p_def, t, v_ref, array_backend):
+    array_backend = get_array_backend(array_backend)
     p_def, t_def, t, v_ref = array_backend.asarray(p_def, t_def, t, v_ref)
 
     p = thermo.array.pressure_on_dry_adiabat(t, t_def, p_def)
@@ -630,6 +676,7 @@ def test_pressure_on_dry_adibat(t_def, p_def, t, v_ref, array_backend):
     ],
 )
 def test_lcl(t, td, p, t_ref, p_ref, method, array_backend):
+    array_backend = get_array_backend(array_backend)
     t, td, p, t_ref, p_ref = array_backend.asarray(t, td, p, t_ref, p_ref)
     t = thermo.array.celsius_to_kelvin(t)
     td = thermo.array.celsius_to_kelvin(td)
@@ -642,11 +689,13 @@ def test_lcl(t, td, p, t_ref, p_ref, method, array_backend):
     assert array_backend.allclose(p_lcl, p_ref)
 
 
-def test_ept():
-    data = ThermoInputData()
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("method", ["ifs", "bolton35", "bolton39"])
+def test_ept(method, array_backend):
+    array_backend = get_array_backend(array_backend)
+    data = ThermoInputData(array_backend)
 
     ref_file = "eqpt.csv"
-    methods = ["ifs", "bolton35", "bolton39"]
 
     # o = {}
     # for m in methods:
@@ -656,45 +705,43 @@ def test_ept():
     #     )
     # save_test_reference(ref_file, o)
 
-    ref = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
-    )
+    ref = read_data_file(ref_file)
 
-    for m in methods:
-        pt = thermo.array.ept_from_dewpoint(data.t, data.td, data.p, method=m)
-        np.testing.assert_allclose(pt, ref[m + "_td"], err_msg=f"method={m}")
-        pt = thermo.array.ept_from_specific_humidity(data.t, data.q, data.p, method=m)
-        np.testing.assert_allclose(pt, ref[m + "_q"], err_msg=f"method={m}")
+    pt = thermo.array.ept_from_dewpoint(data.t, data.td, data.p, method=method)
+    v_ref = array_backend.asarray(ref[method + "_td"])
+    assert array_backend.allclose(pt, v_ref), f"td {method=}"
+
+    pt = thermo.array.ept_from_specific_humidity(data.t, data.q, data.p, method=method)
+    v_ref = array_backend.asarray(ref[method + "_q"])
+    assert array_backend.allclose(pt, v_ref), f"q {method=}"
 
 
-def test_saturation_ept():
-    data = ThermoInputData()
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("method", ["ifs", "bolton35", "bolton39"])
+def test_saturation_ept(method, array_backend):
+    array_backend = get_array_backend(array_backend)
+    data = ThermoInputData(array_backend)
 
     ref_file = "seqpt.csv"
-    methods = ["ifs", "bolton35", "bolton39"]
 
     # o = {}
     # for m in methods:
     #     o[m] = thermo.array.saturation_ept(data.t, data.p, method=m)
     # save_test_reference(ref_file, o)
 
-    ref = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
-    )
+    ref = read_data_file(ref_file)
 
-    for m in methods:
-        pt = thermo.array.saturation_ept(data.t, data.p, method=m)
-        np.testing.assert_allclose(pt, ref[m], err_msg=f"method={m}")
+    pt = thermo.array.saturation_ept(data.t, data.p, method=method)
+    v_ref = array_backend.asarray(ref[method])
+    assert array_backend.allclose(pt, v_ref), f"{method=}"
 
 
-def test_temperature_on_moist_adiabat():
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
+@pytest.mark.parametrize("t_method", ["bisect", "newton"])
+def test_temperature_on_moist_adiabat(ept_method, t_method, array_backend):
+    array_backend = get_array_backend(array_backend)
     ref_file = "t_on_most_adiabat.csv"
-    ept_methods = ["ifs", "bolton35", "bolton39"]
-    t_methods = ["bisect", "newton"]
 
     # ept = np.array([220, 250, 273.16, 300, 330, 360, 400, 500, 600, 700, 800, 900])
     # p = np.array([1010, 1000, 925, 850, 700, 500, 300]) * 100
@@ -706,26 +753,24 @@ def test_temperature_on_moist_adiabat():
     #         )
     # save_test_reference(ref_file, o)
 
-    ref = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
-    )
+    ref = read_data_file(ref_file)
+    ept = array_backend.asarray(ref["ept"])
+    p = array_backend.asarray(ref["p"])
 
-    for m_ept in ept_methods:
-        for m_t in t_methods:
-            pt = thermo.array.temperature_on_moist_adiabat(
-                ref["ept"], ref["p"], ept_method=m_ept, t_method=m_t
-            )
-            np.testing.assert_allclose(pt, ref[f"{m_ept}_{m_t}"], err_msg=f"method={m_ept}_{m_t}")
+    pt = thermo.array.temperature_on_moist_adiabat(ept, p, ept_method=ept_method, t_method=t_method)
+    v_ref = array_backend.asarray(ref[f"{ept_method}_{t_method}"])
+    assert array_backend.allclose(pt, v_ref, equal_nan=True), f"{ept_method=} {t_method=}"
 
 
-def test_wet_bulb_temperature():
-    data = ThermoInputData()
+# Since torch.sign() returns 0 for nan, some tests fail with torch, so it is disabled for now
+@pytest.mark.parametrize("array_backend", ["numpy"])
+@pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
+@pytest.mark.parametrize("t_method", ["bisect", "newton"])
+def test_wet_bulb_temperature(ept_method, t_method, array_backend):
+    array_backend = get_array_backend(array_backend)
+    data = ThermoInputData(array_backend)
 
     ref_file = "t_wet.csv"
-    ept_methods = ["ifs", "bolton35", "bolton39"]
-    t_methods = ["bisect", "newton"]
 
     # o = {}
     # for m_ept in ept_methods:
@@ -738,42 +783,35 @@ def test_wet_bulb_temperature():
     #         )
     # save_test_reference(ref_file, o)
 
-    ref = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
+    ref = read_data_file(ref_file)
+
+    pt = thermo.array.wet_bulb_temperature_from_dewpoint(
+        data.t, data.td, data.p, ept_method=ept_method, t_method=t_method
     )
 
-    for m_ept in ept_methods:
-        for m_t in t_methods:
-            pt = thermo.array.wet_bulb_temperature_from_dewpoint(
-                data.t, data.td, data.p, ept_method=m_ept, t_method=m_t
-            )
-            np.testing.assert_allclose(
-                pt,
-                ref[f"{m_ept}_{m_t}_td"],
-                rtol=1e-03,
-                atol=0,
-                err_msg=f"method={m_ept}_{m_t}_td",
-            )
-            pt = thermo.array.wet_bulb_temperature_from_specific_humidity(
-                data.t, data.q, data.p, ept_method=m_ept, t_method=m_t
-            )
-            np.testing.assert_allclose(
-                pt,
-                ref[f"{m_ept}_{m_t}_q"],
-                rtol=1e-03,
-                atol=0,
-                err_msg=f"method={m_ept}_{m_t}_q",
-            )
+    v_ref = array_backend.asarray(ref[f"{ept_method}_{t_method}_td"])
+    assert array_backend.allclose(
+        pt, v_ref, rtol=1e-03, atol=0, equal_nan=True
+    ), f"td {ept_method=} {t_method=}"
+
+    pt = thermo.array.wet_bulb_temperature_from_specific_humidity(
+        data.t, data.q, data.p, ept_method=ept_method, t_method=t_method
+    )
+
+    v_ref = array_backend.asarray(ref[f"{ept_method}_{t_method}_q"])
+    assert array_backend.allclose(
+        pt, v_ref, rtol=1e-03, atol=0, equal_nan=True
+    ), f"q {ept_method=} {t_method=}"
 
 
-def test_wet_bulb_potential_temperature():
-    data = ThermoInputData()
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
+@pytest.mark.parametrize("t_method", ["bisect", "newton", "direct"])
+def test_wet_bulb_potential_temperature(ept_method, t_method, array_backend):
+    array_backend = get_array_backend(array_backend)
+    data = ThermoInputData(array_backend)
 
     ref_file = "t_wetpt.csv"
-    ept_methods = ["ifs", "bolton35", "bolton39"]
-    t_methods = ["bisect", "newton", "direct"]
 
     # o = {}
     # for m_ept in ept_methods:
@@ -790,31 +828,22 @@ def test_wet_bulb_potential_temperature():
     #         )
     # save_test_reference(ref_file, o)
 
-    ref = np.genfromtxt(
-        data_file(ref_file),
-        delimiter=",",
-        names=True,
+    ref = read_data_file(ref_file)
+
+    pt = thermo.array.wet_bulb_potential_temperature_from_dewpoint(
+        data.t, data.td, data.p, ept_method=ept_method, t_method=t_method
     )
 
-    for m_ept in ept_methods:
-        for m_t in t_methods:
-            pt = thermo.array.wet_bulb_potential_temperature_from_dewpoint(
-                data.t, data.td, data.p, ept_method=m_ept, t_method=m_t
-            )
-            np.testing.assert_allclose(
-                pt,
-                ref[f"{m_ept}_{m_t}_td"],
-                rtol=1e-03,
-                atol=0,
-                err_msg=f"method={m_ept}_{m_t}_td",
-            )
-            pt = thermo.array.wet_bulb_potential_temperature_from_specific_humidity(
-                data.t, data.q, data.p, ept_method=m_ept, t_method=m_t
-            )
-            np.testing.assert_allclose(
-                pt,
-                ref[f"{m_ept}_{m_t}_q"],
-                rtol=1e-03,
-                atol=0,
-                err_msg=f"method={m_ept}_{m_t}_q",
-            )
+    v_ref = array_backend.asarray(ref[f"{ept_method}_{t_method}_td"])
+    assert array_backend.allclose(
+        pt, v_ref, rtol=1e-03, atol=0, equal_nan=True
+    ), f"td {ept_method=} {t_method=}"
+
+    pt = thermo.array.wet_bulb_potential_temperature_from_specific_humidity(
+        data.t, data.q, data.p, ept_method=ept_method, t_method=t_method
+    )
+
+    v_ref = array_backend.asarray(ref[f"{ept_method}_{t_method}_q"])
+    assert array_backend.allclose(
+        pt, v_ref, rtol=1e-03, atol=0, equal_nan=True
+    ), f"q {ept_method=} {t_method=}"

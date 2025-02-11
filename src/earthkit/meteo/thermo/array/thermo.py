@@ -191,7 +191,8 @@ def specific_humidity_from_vapour_pressure(e, p, eps=1e-4):
     xp = array_namespace(e, p)
     v = xp.asarray(p + (constants.epsilon - 1) * e)
     v[xp.asarray(p - e) < eps] = xp.nan
-    return constants.epsilon * e / v
+    x = constants.epsilon * e / v
+    return x
 
 
 def mixing_ratio_from_vapour_pressure(e, p, eps=1e-4):
@@ -822,6 +823,8 @@ def potential_temperature(t, p):
 
     """
     xp = array_namespace(t, p)
+    t = xp.asarray(t)
+    p = xp.asarray(p)
     return t * xp.pow(constants.p0 / p, constants.kappa)
 
 
@@ -1054,8 +1057,9 @@ class _EptComp:
         xp = array_namespace(ept, p)
         ept = xp.asarray(ept)
         p = xp.asarray(p)
+
         size = xp.size(ept) if xp.size(ept) > xp.size(p) else xp.size(p)
-        t = xp.full(size, constants.T0 - 20)
+        t = xp.full(size, constants.T0 - 20, dtype=ept.dtype)
 
         # if isinstance(p, np.ndarray):
         #     t = np.full(p.shape, constants.T0 - 20)
@@ -1071,6 +1075,7 @@ class _EptComp:
             t += xp.sign(ept * xp.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)) * dt
         # ths.t = t
         # return ept - self._th_sat(ths) * np.exp(self._G_sat(ths))
+
         return t
 
     def compute_t_on_ma_davies(self, ept, p):
@@ -1078,7 +1083,11 @@ class _EptComp:
 
         xp = array_namespace(ept, p)
         ept = xp.asarray(ept)
-        p = xp.full(ept.shape, p)
+        p = xp.asarray(p)
+        if xp.size(ept) > xp.size(p):
+            p = xp.full(xp.size(ept), p, dtype=ept.dtype)
+
+        # p = xp.full(ept.shape, p, dtype=ept.dtype)
 
         def _k1(pp):
             """Function k1 in the article."""
@@ -1098,14 +1107,7 @@ class _EptComp:
         A = 2675
         t0 = 273.16
 
-        # xp = array_namespace(ept, p)
-        # ept = xp.asarray(ept)
-        # p = xp.full(ept.shape, p)
-
-        # if not isinstance(p, np.ndarray):
-        #     p = np.full(ept.shape, p)
-
-        tw = ept.copy()
+        tw = xp.asarray(ept, copy=True)
         pp = xp.pow(p / constants.p0, constants.kappa)
         te = ept * pp
         c_te = xp.pow(t0 / te, _EptComp.c_lambda)
@@ -1128,10 +1130,6 @@ class _EptComp:
         tw[mask] = (_k1(pp[mask]) - 2.66) - (_k2(pp[mask]) - 1.21) * c_te[mask] + 0.58 / c_te[mask]
         # tw has to be converted to Kelvin
         tw = celsius_to_kelvin(tw)
-
-        # np.place(tw, tw > 362.16, 362.1)
-        # print(f"ept={ept}")
-        # print(f"tw={tw}")
 
         for i in range(max_iter):
             ths = _ThermoState(t=tw, p=p)
@@ -1156,7 +1154,7 @@ class _EptComp:
         # when ept is derived with the Bolton methods the iteration breaks down for extremely
         # hot and humid conditions (roughly about t > 50C and r > 95%) and results in negative
         # tw values!
-        xp.place(tw, tw <= 0, xp.nan)
+        tw[tw <= 0] = xp.nan
 
         # ths = _ThermoState(t=tw, p=p)
         # return ept - self._th_sat(ths) * np.exp(self._G_sat(ths))

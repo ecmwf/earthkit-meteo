@@ -28,6 +28,7 @@ classifiers = [
 ]
 dynamic = [ "version" ]
 dependencies = [
+  "array-api-compat",
   "numpy",
 ]
 optional-dependencies.test = [

@@ -8,6 +8,7 @@
 #
 
 import threading
+from functools import cached_property
 
 
 class ArrayNamespace:
@@ -28,15 +29,20 @@ class ArrayNamespace:
                         self._api = None
         return self._api
 
+    @cached_property
+    def numpy(self):
+        import array_api_compat.numpy as np
+
+        return np
+
     def namespace(self, arrays):
-        if not arrays:
-            import numpy as np
-
-            return np
-
         if self.api is not None:
-            return self.api.array_namespace(*arrays)
+            if not arrays:
+                return self.numpy
+            else:
+                return self.api.array_namespace(*arrays)
 
+        # Fallback to numpy
         import numpy as np
 
         if isinstance(arrays[0], np.ndarray):
