@@ -12,18 +12,18 @@ from earthkit.meteo.utils.array import array_namespace
 
 
 def speed(u, v):
-    r"""Computes the wind speed/vector magnitude.
+    r"""Compute the wind speed/vector magnitude.
 
     Parameters
     ----------
-    u: number or ndarray
+    u: array-like
         u wind/x vector component
-    v: number or ndarray
+    v: array-like
         v wind/y vector component (same units as ``u``)
 
     Returns
     -------
-    number or ndarray
+    array-like
         Wind speed/magnitude (same units as ``u`` and ``v``)
 
     """
@@ -61,16 +61,16 @@ def _direction_polar(u, v, to_positive):
 
 
 def direction(u, v, convention="meteo", to_positive=True):
-    r"""Computes the direction/angle of a vector quantity.
+    r"""Compute the direction/angle of a vector quantity.
 
     Parameters
     ----------
-    u: number or ndarray
+    u: array-like
         u wind/x vector component
-    v: number or ndarray
+    v: array-like
         v wind/y vector component (same units as ``u``)
     convention: str, optional
-        Specifies how the direction/angle is interpreted. The possible values are as follows:
+        Specify how the direction/angle is interpreted. The possible values are as follows:
 
         * "meteo": the direction is the meteorological wind direction (see below for explanation)
         * "polar": the direction is measured anti-clockwise from the x axis (East/right) to the vector
@@ -82,7 +82,7 @@ def direction(u, v, convention="meteo", to_positive=True):
 
     Returns
     -------
-    number or ndarray
+    array-like
         Direction/angle (degrees)
 
 
@@ -104,16 +104,16 @@ def direction(u, v, convention="meteo", to_positive=True):
 
 
 def xy_to_polar(x, y, convention="meteo"):
-    r"""Converts wind/vector data from xy representation to polar representation.
+    r"""Convert wind/vector data from xy representation to polar representation.
 
     Parameters
     ----------
-    x: number or ndarray
+    x: array-like
         u wind/x vector component
-    y: number or ndarray
+    y: array-like
         v wind/y vector component (same units as ``u``)
     convention: str
-        Specifies how the direction/angle component of the target polar coordinate
+        Specify how the direction/angle component of the target polar coordinate
         system is interpreted. The possible values are as follows:
 
         * "meteo": the direction is the meteorological wind direction (see :func:`direction` for explanation)
@@ -122,9 +122,9 @@ def xy_to_polar(x, y, convention="meteo"):
 
     Returns
     -------
-    number or ndarray
+    array-like
         Magnitude (same units as ``u``)
-    number or ndarray
+    array-like
         Direction (degrees)
 
 
@@ -153,16 +153,16 @@ def _polar_to_xy_polar(magnitude, direction):
 
 
 def polar_to_xy(magnitude, direction, convention="meteo"):
-    r"""Converts wind/vector data from polar representation to xy representation.
+    r"""Convert wind/vector data from polar representation to xy representation.
 
     Parameters
     ----------
-    magnitude: number or ndarray
+    magnitude: array-like
         Speed/magnitude of the vector
-    direction: number or ndarray
+    direction: array-like
         Direction of the vector (degrees)
     convention: str
-        Specifies how ``direction`` is interpreted. The possible values are as follows:
+        Specify how ``direction`` is interpreted. The possible values are as follows:
 
         * "meteo": ``direction`` is the meteorological wind direction
           (see :func:`direction` for explanation)
@@ -171,9 +171,9 @@ def polar_to_xy(magnitude, direction, convention="meteo"):
 
     Returns
     -------
-    number or ndarray
+    array-like
         X vector component (same units as ``magnitude``)
-    number or ndarray
+    array-like
         Y vector component (same units as ``magnitude``)
 
 
@@ -189,20 +189,20 @@ def polar_to_xy(magnitude, direction, convention="meteo"):
 
 
 def w_from_omega(omega, t, p):
-    r"""Computes the hydrostatic vertical velocity from pressure velocity, temperature and pressure.
+    r"""Compute the hydrostatic vertical velocity from pressure velocity, temperature and pressure.
 
     Parameters
     ----------
-    omega : number or ndarray
+    omega : array-like
         Hydrostatic pressure velocity (Pa/s)
-    t : number or ndarray
+    t : array-like
         Temperature (K)
-    p : number or ndarray
+    p : array-like
         Pressure (Pa)
 
     Returns
     -------
-    number or ndarray
+    array-like
         Hydrostatic vertical velocity (m/s)
 
 
@@ -222,16 +222,16 @@ def w_from_omega(omega, t, p):
 
 
 def coriolis(lat):
-    r"""Computes the Coriolis parameter.
+    r"""Compute the Coriolis parameter.
 
     Parameters
     ----------
-    lat : number or ndarray
+    lat : array-like
         Latitude (degrees)
 
     Returns
     -------
-    number or ndarray
+    array-like
         The Coriolis parameter (:math:`s^{-1}`)
 
 
@@ -255,14 +255,14 @@ def windrose(speed, direction, sectors=16, speed_bins=None, percent=True):
 
     Parameters
     ----------
-    speed : number or ndarray
+    speed : array-like
         Speed
-    direction : number or ndarray
+    direction : array-like
         Meteorological wind direction (degrees). See :func:`direction` for details.
         Values must be between 0 and 360.
     sectors: number
         Number of sectors the 360 degrees direction range is split into. See below for details.
-    speed_bin: list or ndarray
+    speed_bin: array-like
         Speed bins
     percent: bool
         If False, returns the number of valid samples in each bin. If True, returns
@@ -272,12 +272,12 @@ def windrose(speed, direction, sectors=16, speed_bins=None, percent=True):
 
     Returns
     -------
-    2d-ndarray
+    2d array-like
        The bi-dimensional histogram of ``speed`` and ``direction``.  Values in
        ``speed`` are histogrammed along the first dimension and values in ``direction``
        are histogrammed along the second dimension.
 
-    ndarray
+    array-like
         The direction bins (i.e. the sectors) (degrees)
 
 

@@ -18,7 +18,7 @@ from earthkit.meteo.utils.array import array_namespace
 
 
 def celsius_to_kelvin(t):
-    """Converts temperature values from Celsius to Kelvin.
+    """Convert temperature values from Celsius to Kelvin.
 
     Parameters
     ----------
@@ -35,7 +35,7 @@ def celsius_to_kelvin(t):
 
 
 def kelvin_to_celsius(t):
-    """Converts temperature values from Kelvin to Celsius.
+    """Convert temperature values from Kelvin to Celsius.
 
     Parameters
     ----------
@@ -52,7 +52,7 @@ def kelvin_to_celsius(t):
 
 
 def specific_humidity_from_mixing_ratio(w):
-    r"""Computes the specific humidity from mixing ratio.
+    r"""Compute the specific humidity from mixing ratio.
 
     Parameters
     ----------
@@ -77,7 +77,7 @@ def specific_humidity_from_mixing_ratio(w):
 
 
 def mixing_ratio_from_specific_humidity(q):
-    r"""Computes the mixing ratio from specific humidity.
+    r"""Compute the mixing ratio from specific humidity.
 
     Parameters
     ----------
@@ -102,7 +102,7 @@ def mixing_ratio_from_specific_humidity(q):
 
 
 def vapour_pressure_from_specific_humidity(q, p):
-    r"""Computes the vapour pressure from specific humidity.
+    r"""Compute the vapour pressure from specific humidity.
 
     Parameters
     ----------
@@ -131,7 +131,7 @@ def vapour_pressure_from_specific_humidity(q, p):
 
 
 def vapour_pressure_from_mixing_ratio(w, p):
-    r"""Computes the vapour pressure from mixing ratio.
+    r"""Compute the vapour pressure from mixing ratio.
 
     Parameters
     ----------
@@ -159,7 +159,7 @@ def vapour_pressure_from_mixing_ratio(w, p):
 
 
 def specific_humidity_from_vapour_pressure(e, p, eps=1e-4):
-    r"""Computes the specific humidity from vapour pressure.
+    r"""Compute the specific humidity from vapour pressure.
 
     Parameters
     ----------
@@ -196,7 +196,7 @@ def specific_humidity_from_vapour_pressure(e, p, eps=1e-4):
 
 
 def mixing_ratio_from_vapour_pressure(e, p, eps=1e-4):
-    r"""Computes the mixing ratio from vapour pressure.
+    r"""Compute the mixing ratio from vapour pressure.
 
     Parameters
     ----------
@@ -232,14 +232,14 @@ def mixing_ratio_from_vapour_pressure(e, p, eps=1e-4):
 
 
 def saturation_vapour_pressure(t, phase="mixed"):
-    r"""Computes the saturation vapour pressure from temperature with respect to a phase.
+    r"""Compute the saturation vapour pressure from temperature with respect to a phase.
 
     Parameters
     ----------
     t: array-like
         Temperature (K)
     phase: str, optional
-        Defines the phase with respect to the saturation vapour pressure is computed.
+        Define the phase with respect to the saturation vapour pressure is computed.
         It is either “water”, “ice” or “mixed”.
 
     Returns
@@ -279,7 +279,7 @@ def saturation_vapour_pressure(t, phase="mixed"):
 
 
 def saturation_mixing_ratio(t, p, phase="mixed"):
-    r"""Computes the saturation mixing ratio from temperature with respect to a phase.
+    r"""Compute the saturation mixing ratio from temperature with respect to a phase.
 
     Parameters
     ----------
@@ -288,7 +288,7 @@ def saturation_mixing_ratio(t, p, phase="mixed"):
     p: array-like
         Pressure (Pa)
     phase: str
-        Defines the phase with respect to the :func:`saturation_vapour_pressure` is computed.
+        Define the phase with respect to the :func:`saturation_vapour_pressure` is computed.
         It is either “water”, “ice” or “mixed”.
 
     Returns
@@ -310,7 +310,7 @@ def saturation_mixing_ratio(t, p, phase="mixed"):
 
 
 def saturation_specific_humidity(t, p, phase="mixed"):
-    r"""Computes the saturation specific humidity from temperature with respect to a phase.
+    r"""Compute the saturation specific humidity from temperature with respect to a phase.
 
     Parameters
     ----------
@@ -319,7 +319,7 @@ def saturation_specific_humidity(t, p, phase="mixed"):
     p: array-like
         Pressure (Pa)
     phase: str, optional
-        Defines the phase with respect to the :func:`saturation_vapour_pressure` is computed.
+        Define the phase with respect to the :func:`saturation_vapour_pressure` is computed.
         It is either “water”, “ice” or “mixed”.
 
     Returns
@@ -341,14 +341,14 @@ def saturation_specific_humidity(t, p, phase="mixed"):
 
 
 def saturation_vapour_pressure_slope(t, phase="mixed"):
-    r"""Computes the slope of saturation vapour pressure with respect to temperature.
+    r"""Compute the slope of saturation vapour pressure with respect to temperature.
 
     Parameters
     ----------
     t: array-like
         Temperature (K)
     phase: str, optional
-        Defines the phase with respect to the computation will be performed.
+        Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
         for details.
 
@@ -364,7 +364,7 @@ def saturation_vapour_pressure_slope(t, phase="mixed"):
 
 
 def saturation_mixing_ratio_slope(t, p, es=None, es_slope=None, phase="mixed", eps=1e-4):
-    r"""Computes the slope of saturation mixing ratio with respect to temperature.
+    r"""Compute the slope of saturation mixing ratio with respect to temperature.
 
     Parameters
     ----------
@@ -377,7 +377,7 @@ def saturation_mixing_ratio_slope(t, p, es=None, es_slope=None, phase="mixed", e
     es_slope: array-like or None, optional
         :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` (Pa/K)
     phase: str, optional
-        Defines the phase with respect to the computation will be performed.
+        Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
         for details.
     eps: number
@@ -415,7 +415,7 @@ def saturation_mixing_ratio_slope(t, p, es=None, es_slope=None, phase="mixed", e
 
 
 def saturation_specific_humidity_slope(t, p, es=None, es_slope=None, phase="mixed", eps=1e-4):
-    r"""Computes the slope of saturation specific humidity with respect to temperature.
+    r"""Compute the slope of saturation specific humidity with respect to temperature.
 
     Parameters
     ----------
@@ -428,7 +428,7 @@ def saturation_specific_humidity_slope(t, p, es=None, es_slope=None, phase="mixe
     es_slope: array-like or None, optional
         :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` (Pa/K)
     phase: str, optional
-        Defines the phase with respect to the computation will be performed.
+        Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
         for details.
     eps: number
@@ -491,7 +491,7 @@ def temperature_from_saturation_vapour_pressure(es):
 
 
 def relative_humidity_from_dewpoint(t, td):
-    r"""Computes the relative humidity from dewpoint temperature.
+    r"""Compute the relative humidity from dewpoint temperature.
 
     Parameters
     ----------
@@ -521,7 +521,7 @@ def relative_humidity_from_dewpoint(t, td):
 
 
 def relative_humidity_from_specific_humidity(t, q, p):
-    r"""Computes the relative humidity from specific humidity.
+    r"""Compute the relative humidity from specific humidity.
 
     Parameters
     ----------
@@ -556,7 +556,7 @@ def relative_humidity_from_specific_humidity(t, q, p):
 
 
 def specific_humidity_from_dewpoint(td, p):
-    r"""Computes the specific humidity from dewpoint.
+    r"""Compute the specific humidity from dewpoint.
 
     Parameters
     ----------
@@ -591,7 +591,7 @@ def specific_humidity_from_dewpoint(td, p):
 
 
 def mixing_ratio_from_dewpoint(td, p):
-    r"""Computes the mixing ratio from dewpoint.
+    r"""Compute the mixing ratio from dewpoint.
 
     Parameters
     ----------
@@ -626,7 +626,7 @@ def mixing_ratio_from_dewpoint(td, p):
 
 
 def specific_humidity_from_relative_humidity(t, r, p):
-    r"""Computes the specific humidity from relative_humidity.
+    r"""Compute the specific humidity from relative_humidity.
 
     Parameters
     ----------
@@ -735,7 +735,7 @@ def dewpoint_from_specific_humidity(q, p):
 
 
 def virtual_temperature(t, q):
-    r"""Computes the virtual temperature from temperature and specific humidity.
+    r"""Compute the virtual temperature from temperature and specific humidity.
 
     Parameters
     ----------
@@ -764,7 +764,7 @@ def virtual_temperature(t, q):
 
 
 def virtual_potential_temperature(t, q, p):
-    r"""Computes the virtual potential temperature from temperature and specific humidity.
+    r"""Compute the virtual potential temperature from temperature and specific humidity.
 
     Parameters
     ----------
@@ -798,7 +798,7 @@ def virtual_potential_temperature(t, q, p):
 
 
 def potential_temperature(t, p):
-    r"""Computes the potential temperature.
+    r"""Compute the potential temperature.
 
     Parameters
     ----------
@@ -829,7 +829,7 @@ def potential_temperature(t, p):
 
 
 def temperature_from_potential_temperature(th, p):
-    r"""Computes the temperature from potential temperature.
+    r"""Compute the temperature from potential temperature.
 
     Parameters
     ----------
@@ -858,7 +858,7 @@ def temperature_from_potential_temperature(th, p):
 
 
 def pressure_on_dry_adiabat(t, t_def, p_def):
-    r"""Computes the pressure on a dry adiabat.
+    r"""Compute the pressure on a dry adiabat.
 
     Parameters
     ----------
@@ -889,7 +889,7 @@ def pressure_on_dry_adiabat(t, t_def, p_def):
 
 
 def temperature_on_dry_adiabat(p, t_def, p_def):
-    r"""Computes the temperature on a dry adiabat.
+    r"""Compute the temperature on a dry adiabat.
 
     Parameters
     ----------
@@ -920,7 +920,7 @@ def temperature_on_dry_adiabat(p, t_def, p_def):
 
 
 def lcl_temperature(t, td, method="davies"):
-    r"""Computes the Lifting Condenstaion Level (LCL) temperature from dewpoint.
+    r"""Compute the Lifting Condenstaion Level (LCL) temperature from dewpoint.
 
     Parameters
     ----------
@@ -968,7 +968,7 @@ def lcl_temperature(t, td, method="davies"):
 
 
 def lcl(t, td, p, method="davies"):
-    r"""Computes the temperature and pressure of the Lifting Condenstaion Level (LCL) from dewpoint.
+    r"""Compute the temperature and pressure of the Lifting Condenstaion Level (LCL) from dewpoint.
 
     Parameters
     ----------
@@ -1326,7 +1326,7 @@ _EptComp.CM = {
 
 
 def ept_from_dewpoint(t, td, p, method="ifs"):
-    r"""Computes the equivalent potential temperature from dewpoint.
+    r"""Compute the equivalent potential temperature from dewpoint.
 
     Parameters
     ----------
@@ -1390,7 +1390,7 @@ def ept_from_dewpoint(t, td, p, method="ifs"):
 
 
 def ept_from_specific_humidity(t, q, p, method="ifs"):
-    r"""Computes the equivalent potential temperature from specific humidity.
+    r"""Compute the equivalent potential temperature from specific humidity.
 
     Parameters
     ----------
@@ -1418,7 +1418,7 @@ def ept_from_specific_humidity(t, q, p, method="ifs"):
 
 
 def saturation_ept(t, p, method="ifs"):
-    r"""Computes the saturation equivalent potential temperature.
+    r"""Compute the saturation equivalent potential temperature.
 
     Parameters
     ----------
@@ -1472,7 +1472,7 @@ def saturation_ept(t, p, method="ifs"):
 
 
 def temperature_on_moist_adiabat(ept, p, ept_method="ifs", t_method="bisect"):
-    r"""Computes the temperature on a moist adiabat (pseudoadiabat)
+    r"""Compute the temperature on a moist adiabat (pseudoadiabat)
 
     Parameters
     ----------
@@ -1512,7 +1512,7 @@ def temperature_on_moist_adiabat(ept, p, ept_method="ifs", t_method="bisect"):
 
 
 def wet_bulb_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_method="bisect"):
-    r"""Computes the pseudo adiabatic wet bulb temperature from dewpoint.
+    r"""Compute the pseudo adiabatic wet bulb temperature from dewpoint.
 
     Parameters
     ----------
@@ -1552,7 +1552,7 @@ def wet_bulb_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_method="bis
 
 
 def wet_bulb_temperature_from_specific_humidity(t, q, p, ept_method="ifs", t_method="bisect"):
-    r"""Computes the pseudo adiabatic wet bulb temperature from specific humidity.
+    r"""Compute the pseudo adiabatic wet bulb temperature from specific humidity.
 
     Parameters
     ----------
@@ -1593,7 +1593,7 @@ def wet_bulb_temperature_from_specific_humidity(t, q, p, ept_method="ifs", t_met
 
 
 def wet_bulb_potential_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_method="direct"):
-    r"""Computes the pseudo adiabatic wet bulb potential temperature from dewpoint.
+    r"""Compute the pseudo adiabatic wet bulb potential temperature from dewpoint.
 
     Parameters
     ----------
@@ -1637,7 +1637,7 @@ def wet_bulb_potential_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_m
 
 
 def wet_bulb_potential_temperature_from_specific_humidity(t, q, p, ept_method="ifs", t_method="direct"):
-    r"""Computes the pseudo adiabatic wet bulb potential temperature from specific humidity.
+    r"""Compute the pseudo adiabatic wet bulb potential temperature from specific humidity.
 
     Parameters
     ----------

@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+# Methods implementing the computations related to saturation vapour pressure and its slope
 
 from earthkit.meteo.utils.array import array_namespace
 
@@ -28,6 +29,47 @@ def check_phase(phase):
 
 
 def compute_es(t, phase):
+    r"""Compute the saturation vapour pressure from temperature with respect to a phase.
+
+    Parameters
+    ----------
+    t: array-like
+        Temperature (K)
+    phase: str, optional
+        Define the phase with respect to the saturation vapour pressure is computed.
+        It is either “water”, “ice” or “mixed”.
+
+    Returns
+    -------
+    array-like
+        Saturation vapour pressure (Pa)
+
+
+    The algorithm was taken from the IFS model [IFS-CY47R3-PhysicalProcesses]_ (see Chapter 12).
+    It uses the following formula when ``phase`` is "water" or "ice":
+
+    .. math::
+
+        e_{sat} = a_{1}\;exp \left(a_{3}\frac{t-273.16}{t-a_{4}}\right)
+
+    where the parameters are set as follows:
+
+    * ``phase`` = "water": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =17.502 and :math:`a_{4}` =32.19 K
+    * ``phase`` = "ice": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =22.587 and :math:`a_{4}` =-0.7 K
+
+    When ``phase`` is "mixed" the formula is based on the value of ``t``:
+
+    * if :math:`t <= t_{i}`: the formula for ``phase`` = "ice" is used (:math:`t_{i} = 250.16 K`)
+    * if :math:`t >= t_{0}`: the formula for ``phase`` = "water" is used (:math:`t_{0} = 273.16 K`)
+    * for the range :math:`t_{i} < t < t_{0}` an interpolation is used between the "ice" and "water" phases:
+
+    .. math::
+
+        \alpha(t) e_{wsat}(t) + (1 - \alpha(t)) e_{isat}(t)
+
+    with :math:`\alpha(t) = (\frac{t-t_{i}}{t_{0}-t_{i}})^2`.
+
+    """
     xp = array_namespace(t)
     if phase == "mixed":
         return _es_mixed(t, xp)
@@ -38,6 +80,23 @@ def compute_es(t, phase):
 
 
 def compute_slope(t, phase):
+    r"""Computes the slope of saturation vapour pressure with respect to temperature.
+
+    Parameters
+    ----------
+    t: array-like
+        Temperature (K)
+    phase: str, optional
+        Defines the phase with respect to the computation will be performed.
+        It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
+        for details.
+
+    Returns
+    -------
+    array-like
+        Slope of saturation vapour pressure (Pa/K)
+
+    """
     xp = array_namespace(t)
     if phase == "mixed":
         return _es_mixed_slope(t, xp)
@@ -48,6 +107,24 @@ def compute_slope(t, phase):
 
 
 def compute_t_from_es(es):
+    r"""Compute the temperature from saturation vapour pressure.
+
+    Parameters
+    ----------
+    es: array-like
+        :func:`saturation_vapour_pressure` (Pa)
+
+    Returns
+    -------
+    array-like
+        Temperature (K). For zero ``es`` values returns nan.
+
+
+    The computation is always based on the "water" phase of
+    the :func:`saturation_vapour_pressure` formulation irrespective of the
+    phase ``es`` was computed to.
+
+    """
     xp = array_namespace(es)
     v = xp.log(es / C1)
     return (v * C4W - C3W * T0) / (v - C3W)

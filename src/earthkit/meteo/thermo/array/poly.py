@@ -31,6 +31,7 @@ def polyval(x, c):
     values : array-like
         The value(s) of the polynomial at the given point(s).
 
+
     Comments
     --------
     Based on the ``numpy.polynomal.polinomial.polyval`` function.

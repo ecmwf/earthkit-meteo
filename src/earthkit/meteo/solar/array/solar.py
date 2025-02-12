@@ -56,9 +56,9 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
     ----------
     date: datetime.datetime
         Date
-    lat: float array
+    latitudes: array-like
         Latitude [degrees]
-    lon: float array
+    longitudes: array-like
         Longitude [degrees]
 
     Returns
@@ -192,25 +192,20 @@ def cos_solar_zenith_angle_integrated(
     ----------
     begin_date: datetime.datetime
     end_date: datetime.datetime
-    lat: int darray
+    lat: array-like
         Latitude [degrees].
-    lon: int darray
+    lon: array-like
         Longitude [degrees].
-    tbegin: int
-        Offset in hours from forecast time to begin of time interval for integration.
-    tend: int
-        Offset in hours from forecast time to end of time interval for integration.
     intervals_per_hour: int
         Number of time integrations per hour.
     integration order: int
-        Order of gauss integration, valid = (1, 2, 3, 4)
+        Order of Gaussian integration, valid = (1, 2, 3, 4)
 
     Returns
     -------
     float array
         Average of cosine of the solar zenith angle during interval [degrees]. Based on
-        numerical integration using the 3 point
-        `Gauss integration <https://en.wikipedia.org/wiki/Gaussian_quadrature>`_ rule.
+        numerical integration using the 3 point [Gaussian_Quadrature]_ rule.
         [Hogan_and_Hirahara2015]_, [Biricombe2022]_
 
     """
