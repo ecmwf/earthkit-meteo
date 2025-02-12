@@ -306,8 +306,11 @@ def windrose(speed, direction, sectors=16, speed_bins=None, percent=True):
     dir_step = 360.0 / sectors
     dir_bins = xp.linspace(int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2)
 
-    # TODO: histogram2d is not part of the array API standard
-    res = xp.histogram2d(speed, direction, bins=[speed_bins, dir_bins], density=False)[0]
+    # TODO: the original code used np.histogram2d. However, it is neither part of the
+    # array API standard nor available in torch. However, histogramdd is available in both
+    # numpy and torch, so the current implementation uses histogramdd.
+    # res = xp.histogram2d(speed, direction, bins=[speed_bins, dir_bins], density=False)[0]
+    res = xp.histogramdd(xp.stack([speed, direction]).T, bins=[speed_bins, dir_bins], density=False)[0]
 
     # unify the north bins
     res[:, 0] = res[:, 0] + res[:, -1]
