@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-import numpy as np
+from earthkit.meteo.utils.array import array_namespace
 
 
 def nanaverage(data, weights=None, **kwargs):
@@ -15,41 +15,47 @@ def nanaverage(data, weights=None, **kwargs):
 
     Parameters
     ----------
-    data : numpy array
-    weights: Weights to apply to the data for averaging.
-            Weights will be normalised and must correspond to the
-            shape of the numpy data array and axis/axes that is/are
-            averaged over.
+    data: array-like
+        Data to average.
+    weights: array-like, None
+        Weights to apply to the data for averaging.
+        Weights will be normalised and must correspond to the
+        shape of the numpy data array and axis/axes that is/are
+        averaged over.
     axis: axis/axes to compute the nanaverage over.
     kwargs: any other np.nansum kwargs
 
     Returns
     -------
-    numpy array
-        mean of data (along axis) where nan-values are ignored
+    array-like
+        Mean of data (along axis) where nan-values are ignored
         and weights applied if provided.
     """
+    xp = array_namespace(data)
+    data = xp.asarray(data)
+
     if weights is not None:
+        weights = xp.asarray(weights)
         # set weights to nan where data is nan:
-        this_weights = np.ones(data.shape) * weights
-        this_weights[np.isnan(data)] = np.nan
+        this_weights = xp.ones(data.shape) * weights
+        this_weights[xp.isnan(data)] = xp.nan
         # Weights must be scaled to the sum of valid
         #  weights for each relevant axis:
-        this_denom = np.nansum(this_weights, **kwargs)
+        this_denom = xp.nansum(this_weights, **kwargs)
         # If averaging over an axis then we must add dummy
         # dimension[s] to the denominator to make compatible
         # with the weights.
         if kwargs.get("axis", None) is not None:
             reshape = list(this_weights.shape)
             reshape[kwargs.get("axis")] = 1
-            this_denom = this_denom.reshape(reshape)
+            this_denom = xp.reshape(this_denom, reshape)
 
         # Scale weights to mean of valid weights:
         this_weights = this_weights / this_denom
         # Apply weights to data:
-        nanaverage = np.nansum(data * this_weights, **kwargs)
+        nanaverage = xp.nansum(data * this_weights, **kwargs)
     else:
         # If no weights, then nanmean will suffice
-        nanaverage = np.nanmean(data, **kwargs)
+        nanaverage = xp.nanmean(data, **kwargs)
 
     return nanaverage

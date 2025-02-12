@@ -13,6 +13,8 @@ from typing import Union
 
 import numpy as np
 
+from earthkit.meteo.utils.array import array_namespace
+
 
 def iter_quantiles(
     arr: np.ndarray,
@@ -42,38 +44,42 @@ def iter_quantiles(
     Iterable[numpy array]
         Quantiles, in increasing order if `which` is an `int`, otherwise in the order specified
     """
+
     if method not in ("sort", "numpy_bulk", "numpy"):
         raise ValueError(f"Invalid method {method!r}, expected 'sort', 'numpy_bulk', or 'numpy'")
 
+    xp = array_namespace(arr)
+    arr = xp.asarray(arr)
+
     if isinstance(which, int):
         n = which
-        qs = np.linspace(0.0, 1.0, n + 1)
+        qs = xp.linspace(0.0, 1.0, n + 1)
     else:
-        qs = np.asarray(which)
+        qs = xp.asarray(which)
 
     if method == "numpy_bulk":
-        quantiles = np.quantile(arr, qs, axis=axis)
+        quantiles = xp.quantile(arr, qs, axis=axis)
         yield from quantiles
         return
 
     if method == "sort":
-        arr = np.asarray(arr)
-        arr.sort(axis=axis)
-        missing = np.isnan(arr).any(axis=axis)
+        arr = xp.asarray(arr)
+        arr = xp.sort(arr, axis=axis)
+        missing = xp.any(xp.isnan(arr), axis=axis)
 
     for q in qs:
         if method == "numpy":
-            yield np.quantile(arr, q, axis=axis)
+            yield xp.quantile(arr, q, axis=axis)
 
         elif method == "sort":
             m = arr.shape[axis]
             f = (m - 1) * q
             j = int(f)
             x = f - j
-            quantile = arr.take(j, axis=axis)
+            quantile = xp.take(arr, xp.asarray(j), axis=axis)
             quantile *= 1 - x
-            tmp = arr.take(min(j + 1, m - 1), axis=axis)
+            tmp = xp.take(arr, xp.asarray(min(j + 1, m - 1)), axis=axis)
             tmp *= x
             quantile += tmp
-            quantile[missing] = np.nan
+            quantile[missing] = xp.nan
             yield quantile
