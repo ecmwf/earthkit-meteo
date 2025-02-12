@@ -45,6 +45,13 @@ class ArrayBackend(metaclass=ABCMeta):
             v = args
         return self.xp.allclose(*v, **kwargs)
 
+    def isclose(self, *args, **kwargs):
+        if is_scalar(args[0]):
+            v = [self.asarray(a, dtype=self.dtype) for a in args]
+        else:
+            v = args
+        return self.xp.isclose(*v, **kwargs)
+
     @staticmethod
     @abstractmethod
     def available():
