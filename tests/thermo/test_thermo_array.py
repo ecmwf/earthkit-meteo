@@ -7,6 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
+"""
+Tests for the array level thermo functions
+"""
+
 import os
 
 import numpy as np
@@ -16,6 +20,7 @@ from earthkit.meteo import thermo
 from earthkit.meteo.utils.testing import ARRAY_BACKENDS
 from earthkit.meteo.utils.testing import get_array_backend
 
+# this is needed for the test data generation
 # np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
 

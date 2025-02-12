@@ -7,6 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
+"""
+Tests for the high level thermo functions
+"""
+
 import numpy as np
 
 from earthkit.meteo import thermo

@@ -7,9 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-import numpy as np
-
 from earthkit.meteo import constants
+from earthkit.meteo.utils.array import array_namespace
 
 
 def speed(u, v):
@@ -28,24 +27,34 @@ def speed(u, v):
         Wind speed/magnitude (same units as ``u`` and ``v``)
 
     """
-    return np.hypot(u, v)
+    xp = array_namespace(u, v)
+    u = xp.asarray(u)
+    v = xp.asarray(v)
+    return xp.hypot(u, v)
 
 
 def _direction_meteo(u, v):
-    minus_pi2 = -np.pi / 2.0
-    d = np.arctan2(v, u)
-    d = np.asarray(d)
+    xp = array_namespace(u, v)
+    u = xp.asarray(u)
+    v = xp.asarray(v)
+
+    minus_pi2 = -xp.pi / 2.0
+    d = xp.arctan2(v, u)
+    d = xp.asarray(d)
     m = d <= minus_pi2
     d[m] = (minus_pi2 - d[m]) * constants.degree
     m = ~m
-    d[m] = (1.5 * np.pi - d[m]) * constants.degree
+    d[m] = (1.5 * xp.pi - d[m]) * constants.degree
     return d
 
 
 def _direction_polar(u, v, to_positive):
-    d = np.arctan2(v, u) * constants.degree
+    xp = array_namespace(u, v)
+    u = xp.asarray(u)
+    v = xp.asarray(v)
+    d = xp.arctan2(v, u) * constants.degree
     if to_positive:
-        d = np.asarray(d)
+        d = xp.asarray(d)
         m = d < 0
         d[m] = 360.0 + d[m]
     return d
@@ -126,13 +135,21 @@ def xy_to_polar(x, y, convention="meteo"):
 
 
 def _polar_to_xy_meteo(magnitude, direction):
+    xp = array_namespace(magnitude, direction)
+    magnitude = xp.asarray(magnitude)
+    direction = xp.asarray(direction)
+
     a = (270.0 - direction) * constants.radian
-    return magnitude * np.cos(a), magnitude * np.sin(a)
+    return magnitude * xp.cos(a), magnitude * xp.sin(a)
 
 
 def _polar_to_xy_polar(magnitude, direction):
+    xp = array_namespace(magnitude, direction)
+    magnitude = xp.asarray(magnitude)
+    direction = xp.asarray(direction)
+
     a = direction * constants.radian
-    return magnitude * np.cos(a), magnitude * np.sin(a)
+    return magnitude * xp.cos(a), magnitude * xp.sin(a)
 
 
 def polar_to_xy(magnitude, direction, convention="meteo"):
@@ -228,10 +245,12 @@ def coriolis(lat):
     (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
 
     """
-    return 2 * constants.omega * np.sin(lat * constants.radian)
+    xp = array_namespace(lat)
+    lat = xp.asarray(lat)
+    return 2 * constants.omega * xp.sin(lat * constants.radian)
 
 
-def windrose(speed, direction, sectors=16, speed_bins=[], percent=True):
+def windrose(speed, direction, sectors=16, speed_bins=None, percent=True):
     """Generate windrose data.
 
     Parameters
@@ -269,6 +288,8 @@ def windrose(speed, direction, sectors=16, speed_bins=[], percent=True):
         :width: 350px
 
     """
+    speed_bins = speed_bins if speed_bins is not None else []
+
     if len(speed_bins) < 2:
         raise ValueError("windrose(): speed_bins must have at least 2 elements!")
 
@@ -276,12 +297,17 @@ def windrose(speed, direction, sectors=16, speed_bins=[], percent=True):
     if sectors < 1:
         raise ValueError("windrose(): sectors must be greater than 1!")
 
-    speed = np.atleast_1d(speed)
-    direction = np.atleast_1d(direction)
-    dir_step = 360.0 / sectors
-    dir_bins = np.linspace(int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2)
+    xp = array_namespace(speed, direction)
 
-    res = np.histogram2d(speed, direction, bins=[speed_bins, dir_bins], density=False)[0]
+    # TODO: atleast_1d is not part of the array API standard
+    speed = xp.atleast_1d(speed)
+    direction = xp.atleast_1d(direction)
+
+    dir_step = 360.0 / sectors
+    dir_bins = xp.linspace(int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2)
+
+    # TODO: histogram2d is not part of the array API standard
+    res = xp.histogram2d(speed, direction, bins=[speed_bins, dir_bins], density=False)[0]
 
     # unify the north bins
     res[:, 0] = res[:, 0] + res[:, -1]

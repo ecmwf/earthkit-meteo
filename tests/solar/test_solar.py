@@ -7,6 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
+
+"""
+Tests for the high level solar functions
+"""
+
 import datetime
 
 import numpy as np
