@@ -7,11 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Tests for the high level wind functions
-"""
-
-
 import numpy as np
 import pytest
 
