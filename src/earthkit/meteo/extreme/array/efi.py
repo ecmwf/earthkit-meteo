@@ -7,10 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-import numpy as np
-
 # import numba
 # from numba import float64, float32
+
+from earthkit.meteo.utils.array import array_namespace
 
 
 def efi(clim, ens, eps=-0.1):
@@ -18,68 +18,73 @@ def efi(clim, ens, eps=-0.1):
 
     Parameters
     ----------
-    clim: numpy array (nclim, npoints)
+    clim: array-like (nclim, npoints)
         Sorted per-point climatology
-    ens: numpy array (nens, npoints)
+    ens: array-like (nens, npoints)
         Ensemble forecast
     eps: (float)
         Epsilon factor for zero values
 
     Returns
     -------
-    numpy array (npoints)
+    array-like (npoints)
         EFI values
     """
+
+    xp = array_namespace(clim, ens)
+    clim = xp.asarray(clim)
+    ens = xp.asarray(ens)
+
     # locate missing values
-    missing_mask = np.logical_or(np.sum(np.isnan(clim), axis=0), np.sum(np.isnan(ens), axis=0))
+    missing_mask = xp.logical_or(xp.sum(xp.isnan(clim), axis=0), xp.sum(xp.isnan(ens), axis=0))
 
     # Compute fraction of the forecast below climatology
     nclim, npoints = clim.shape
     nens, npoints_ens = ens.shape
     assert npoints == npoints_ens
-    frac = np.zeros_like(clim)
+    frac = xp.zeros_like(clim)
     ##################################
     for icl in range(nclim):
-        frac[icl, :] = np.sum(ens[:, :] <= clim[icl, np.newaxis, :], axis=0)
+        frac[icl, :] = xp.sum(ens[:, :] <= clim[icl, xp.newaxis, :], axis=0)
     ##################################
     frac /= nens
 
     # Compute formula coefficients
-    p = np.linspace(0.0, 1.0, nclim)
+    p = xp.linspace(0.0, 1.0, nclim)
     dp = 1 / (nclim - 1)
-    dFdp = np.diff(frac, axis=0) / dp
+    dFdp = xp.diff(frac, axis=0) / dp
 
-    acosdiff = np.diff(np.arccos(np.sqrt(p)))
-    proddiff = np.diff(np.sqrt(p * (1.0 - p)))
+    acosdiff = xp.diff(xp.arccos(xp.sqrt(p)))
+    proddiff = xp.diff(xp.sqrt(p * (1.0 - p)))
 
     acoef = (1.0 - 2.0 * p[:-1]) * acosdiff + proddiff
 
     # compute EFI from coefficients
-    efi = np.zeros(npoints)
+    efi = xp.zeros(npoints)
     ##################################
     if eps > 0:
-        efimax = np.zeros(npoints)
+        efimax = xp.zeros(npoints)
         for icl in range(nclim - 1):
             mask = clim[icl + 1, :] > eps
-            dEFI = np.where(
+            dEFI = xp.where(
                 mask,
                 (2.0 * frac[icl, :] - 1.0) * acosdiff[icl] + acoef[icl] * dFdp[icl, :] - proddiff[icl],
                 0.0,
             )
-            defimax = np.where(mask, -acosdiff[icl] - proddiff[icl], 0.0)
+            defimax = xp.where(mask, -acosdiff[icl] - proddiff[icl], 0.0)
             efi += dEFI
             efimax += defimax
-        efimax = np.fmax(efimax, eps)
+        efimax = xp.fmax(efimax, xp.asarray(eps))
         efi /= efimax
     else:
         for icl in range(nclim - 1):
             dEFI = (2.0 * frac[icl, :] - 1.0) * acosdiff[icl] + acoef[icl] * dFdp[icl, :] - proddiff[icl]
             efi += dEFI
-        efi *= 2.0 / np.pi
+        efi *= 2.0 / xp.pi
     ##################################
 
     # apply missing values
-    efi[missing_mask] = np.nan
+    efi[missing_mask] = xp.nan
 
     return efi
 

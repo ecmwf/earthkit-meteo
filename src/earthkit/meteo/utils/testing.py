@@ -33,6 +33,16 @@ class ArrayBackend(metaclass=ABCMeta):
     name = None
     xp = None
 
+    @abstractmethod
+    def _make_sample(self):
+        return None
+
+    @property
+    def namespace(self):
+        from .array import array_namespace
+
+        return array_namespace(self._make_sample())
+
     def asarray(self, *data, **kwargs):
         res = [self.xp.asarray(d, **kwargs) for d in data]
         r = res if len(res) > 1 else res[0]
@@ -65,6 +75,11 @@ class NumpyBackend(ArrayBackend):
         self.xp = np
         self.dtype = np.float64
 
+    def _make_sample(self):
+        import numpy as np
+
+        return np.ones(2)
+
     @staticmethod
     def available():
         return True
@@ -79,6 +94,11 @@ class PytorchBackend(ArrayBackend):
         self.xp = torch
         self.dtype = torch.float64
 
+    def _make_sample(self):
+        import torch
+
+        return torch.ones(2)
+
     @staticmethod
     def available():
         return modules_installed("torch")
@@ -92,6 +112,11 @@ class CupyBackend(ArrayBackend):
 
         self.xp = cupy
         self.dtype = cupy.float64
+
+    def _make_sample(self):
+        import cupy
+
+        return cupy.ones(2)
 
     @staticmethod
     def available():
@@ -115,6 +140,11 @@ class JaxBackend(ArrayBackend):
 
         self.xp = jarray
         self.dtype = jarray.float64
+
+    def _make_sample(self):
+        import jax.numpy as jarray
+
+        return jarray.ones(2)
 
     @staticmethod
     def available():
