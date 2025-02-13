@@ -1044,7 +1044,7 @@ class _EptComp:
         return self._th_sat(ths) * xp.exp(self._G_sat(ths))
 
     def compute_wbpt(self, ept):
-        from .poly import polyval
+        from earthkit.meteo.utils.compat import polyval
 
         xp = array_namespace(ept)
         t0 = 273.16
@@ -1069,17 +1069,20 @@ class _EptComp:
         #     t = constants.T0 - 20
         max_iter = 12
         dt = 120.0
+
+        from earthkit.meteo.utils.compat import sign
+
         for _ in range(max_iter):
             ths = _ThermoState(t=t, p=p)
             dt /= 2.0
-            t += xp.sign(ept * xp.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)) * dt
+            t += sign(ept * xp.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)) * dt
         # ths.t = t
         # return ept - self._th_sat(ths) * np.exp(self._G_sat(ths))
 
         return t
 
     def compute_t_on_ma_davies(self, ept, p):
-        from .poly import polyval
+        from earthkit.meteo.utils.compat import polyval
 
         xp = array_namespace(ept, p)
         ept = xp.asarray(ept)

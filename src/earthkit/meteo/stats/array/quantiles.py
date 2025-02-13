@@ -66,9 +66,11 @@ def iter_quantiles(
         arr = xp.asarray(arr)
         arr = xp.sort(arr, axis=axis)
         missing = xp.any(xp.isnan(arr), axis=axis)
+        print("missing", missing.shape)
 
     for q in qs:
         if method == "numpy":
+            q = xp.asarray(q, dtype=arr.dtype)
             yield xp.quantile(arr, q, axis=axis)
 
         elif method == "sort":
@@ -81,5 +83,5 @@ def iter_quantiles(
             tmp = xp.take(arr, xp.asarray(min(j + 1, m - 1)), axis=axis)
             tmp *= x
             quantile += tmp
-            quantile[missing] = xp.nan
+            quantile[xp.reshape(missing, quantile.shape)] = xp.nan
             yield quantile

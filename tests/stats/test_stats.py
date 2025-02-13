@@ -91,7 +91,10 @@ def test_nanaverage(data, weights, v_ref, kwargs, array_backend):
             ],
             [0.5, 1.0],
             {},
-            # TODO: check the reference values
+            # TODO: check if the commented or uncommented data block below is the
+            # correct reference data. The commented data block is the one that
+            # was present in the original test, but the results were not tested
+            # against it, so it is not clear if it is correct.
             # [
             #     [3, 5, 6.15, 1.25, 12, 2, 4, 4, 4],
             #     [5, 19, 12, 3, 45, 48, 8, 9, 7],
@@ -136,6 +139,7 @@ def test_quantiles_core(data, which, kwargs, v_ref, method, array_backend):
         assert array_backend.allclose(d, v_ref[i], rtol=1e-4), f"i={i}, d={d}, v_ref={v_ref[i]}"
 
 
+# TODO: reimplement this test to use reference values
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 def test_quantiles_nans(array_backend):
     arr = np.random.rand(100, 100, 100)

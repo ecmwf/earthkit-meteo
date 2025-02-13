@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+from .array import array_namespace
+
 
 def polyval(x, c):
     """Evaluation of a polynomial using Horner's scheme.
@@ -40,3 +42,12 @@ def polyval(x, c):
     for i in range(2, len(c) + 1):
         c0 = c[-i] + c0 * x
     return c0
+
+
+def sign(x, *args, **kwargs):
+    xp = array_namespace(x)
+    x = xp.asarray(x)
+    r = xp.sign(x, *args, **kwargs)
+    if not xp.isnan(xp.sign(xp.asarray(xp.nan))):
+        r[xp.isnan(x)] = xp.nan
+    return r

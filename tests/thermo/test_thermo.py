@@ -18,7 +18,6 @@ import pytest
 
 from earthkit.meteo import thermo
 from earthkit.meteo.utils.testing import ARRAY_BACKENDS
-from earthkit.meteo.utils.testing import get_array_backend
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
@@ -727,8 +726,7 @@ def test_temperature_on_moist_adiabat(ept_method, t_method, array_backend):
     assert array_backend.allclose(pt, v_ref, equal_nan=True), f"{ept_method=} {t_method=}"
 
 
-# Since torch.sign() returns 0 for nan, some tests fail with torch, so it is disabled for now
-@pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
 @pytest.mark.parametrize("t_method", ["bisect", "newton"])
 def test_wet_bulb_temperature(ept_method, t_method, array_backend):

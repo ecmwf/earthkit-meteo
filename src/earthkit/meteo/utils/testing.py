@@ -11,9 +11,8 @@
 
 from abc import ABCMeta
 from abc import abstractmethod
+from functools import cached_property
 from importlib import import_module
-
-import numpy as np
 
 
 def modules_installed(*modules):
@@ -31,36 +30,51 @@ def is_scalar(data):
 
 class ArrayBackend(metaclass=ABCMeta):
     name = None
-    xp = None
 
     @abstractmethod
     def _make_sample(self):
         return None
 
-    @property
+    @cached_property
     def namespace(self):
+        """The array-api-compat namespace associated with the backend"""
         from .array import array_namespace
 
         return array_namespace(self._make_sample())
 
     def asarray(self, *data, **kwargs):
-        res = [self.xp.asarray(d, **kwargs) for d in data]
+        res = [self.namespace.asarray(d, **kwargs) for d in data]
         r = res if len(res) > 1 else res[0]
         return r
 
     def allclose(self, *args, **kwargs):
         if is_scalar(args[0]):
-            v = [self.asarray(a, dtype=self.dtype) for a in args]
+            dtype = self.float64
+            v = [self.asarray(a, dtype=dtype) for a in args]
         else:
             v = args
-        return self.xp.allclose(*v, **kwargs)
+        return self.namespace.allclose(*v, **kwargs)
 
     def isclose(self, *args, **kwargs):
         if is_scalar(args[0]):
-            v = [self.asarray(a, dtype=self.dtype) for a in args]
+            dtype = self.float64
+            v = [self.asarray(a, dtype=dtype) for a in args]
         else:
             v = args
-        return self.xp.isclose(*v, **kwargs)
+        return self.namespace.isclose(*v, **kwargs)
+
+    @cached_property
+    def float64(self):
+        return self.dtypes.get("float64")
+
+    @cached_property
+    def float32(self):
+        return self.dtypes.get("float32")
+
+    @property
+    @abstractmethod
+    def dtypes(self):
+        pass
 
     @staticmethod
     @abstractmethod
@@ -71,14 +85,16 @@ class ArrayBackend(metaclass=ABCMeta):
 class NumpyBackend(ArrayBackend):
     name = "numpy"
 
-    def __init__(self):
-        self.xp = np
-        self.dtype = np.float64
-
     def _make_sample(self):
         import numpy as np
 
         return np.ones(2)
+
+    @cached_property
+    def dtypes(self):
+        import numpy
+
+        return {"float64": numpy.float64, "float32": numpy.float32}
 
     @staticmethod
     def available():
@@ -88,16 +104,16 @@ class NumpyBackend(ArrayBackend):
 class PytorchBackend(ArrayBackend):
     name = "torch"
 
-    def __init__(self):
-        import torch
-
-        self.xp = torch
-        self.dtype = torch.float64
-
     def _make_sample(self):
         import torch
 
         return torch.ones(2)
+
+    @cached_property
+    def dtypes(self):
+        import torch
+
+        return {"float64": torch.float64, "float32": torch.float32}
 
     @staticmethod
     def available():
@@ -107,16 +123,16 @@ class PytorchBackend(ArrayBackend):
 class CupyBackend(ArrayBackend):
     name = "cupy"
 
-    def __init__(self):
-        import cupy
-
-        self.xp = cupy
-        self.dtype = cupy.float64
-
     def _make_sample(self):
         import cupy
 
         return cupy.ones(2)
+
+    @cached_property
+    def dtypes(self):
+        import cupy as cp
+
+        return {"float64": cp.float64, "float32": cp.float32}
 
     @staticmethod
     def available():
@@ -135,12 +151,6 @@ class CupyBackend(ArrayBackend):
 class JaxBackend(ArrayBackend):
     name = "jax"
 
-    def __init__(self):
-        import jax.numpy as jarray
-
-        self.xp = jarray
-        self.dtype = jarray.float64
-
     def _make_sample(self):
         import jax.numpy as jarray
 
@@ -150,9 +160,17 @@ class JaxBackend(ArrayBackend):
     def available():
         return modules_installed("jax")
 
+    @cached_property
+    def dtypes(self):
+        import jax.numpy as jarray
+
+        return {"float64": jarray.float64, "float32": jarray.float32}
+
+
+# TODO: add support for jax and cupy
 
 _ARRAY_BACKENDS = {}
-for b in {NumpyBackend, PytorchBackend, CupyBackend}:
+for b in {NumpyBackend, PytorchBackend}:
     if b.available():
         _ARRAY_BACKENDS[b.name] = b()
 

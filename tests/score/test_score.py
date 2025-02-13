@@ -85,23 +85,25 @@ def _get_crps_data():
 @pytest.mark.parametrize("obs,ens,v_ref", [_get_crps_data()])
 def test_crps_meteo(obs, ens, v_ref, array_backend):
     obs, ens, v_ref = array_backend.asarray(obs, ens, v_ref)
+    xp = array_backend.namespace
 
     c = score.crps(ens.T, obs[0])
 
     for i in range(ens.shape[0]):
         assert array_backend.isclose(c[i], v_ref[i]), f"i={i}"
 
-    assert array_backend.isclose(array_backend.xp.mean(c), array_backend.xp.mean(v_ref))
+    assert array_backend.isclose(xp.mean(c), xp.mean(v_ref))
 
 
 @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
 @pytest.mark.parametrize("obs,ens,v_ref", [_get_crps_data()])
 def test_crps_quaver2(obs, ens, v_ref, array_backend):
     obs, ens, v_ref = array_backend.asarray(obs, ens, v_ref)
+    xp = array_backend.namespace
 
     c = crps_quaver2(ens.T, obs[0])
 
     for i in range(ens.shape[0]):
         assert array_backend.isclose(c[i], v_ref[i]), f"i={i}"
 
-    assert array_backend.isclose(array_backend.xp.mean(c), array_backend.xp.mean(v_ref))
+    assert array_backend.isclose(xp.mean(c), xp.mean(v_ref))
