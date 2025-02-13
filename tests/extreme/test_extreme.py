@@ -15,7 +15,6 @@ import pytest
 
 from earthkit.meteo import extreme
 from earthkit.meteo.utils.testing import ARRAY_BACKENDS
-from earthkit.meteo.utils.testing import get_array_backend
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -82,7 +81,7 @@ def test_efi_nan(array_backend):
     assert xp.isnan(efi[0])
 
 
-@pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, [-2.14617638, -1.3086723])])
 def test_sot_highlevel(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
@@ -90,11 +89,14 @@ def test_sot_highlevel(clim, ens, v_ref, array_backend):
     sot_upper = extreme.sot(clim, ens, 90)
     sot_lower = extreme.sot(clim, ens, 10)
 
+    v_ref = array_backend.asarray(v_ref, dtype=sot_upper.dtype)
+
     assert array_backend.allclose(sot_upper[0], v_ref[0])
     assert array_backend.allclose(sot_lower[0], v_ref[1])
 
 
-@pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+# @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
 @pytest.mark.parametrize(
     "clim,ens,v_ref",
     [
@@ -107,6 +109,8 @@ def test_sot_core(clim, ens, v_ref, array_backend):
     sot_upper = extreme.array.sot(clim, ens, 90)
     sot_lower = extreme.array.sot(clim, ens, 10)
 
+    v_ref = array_backend.asarray(v_ref, dtype=sot_upper.dtype)
+
     # print(sot_upper)
     # print(sot_lower)
 
@@ -114,17 +118,21 @@ def test_sot_core(clim, ens, v_ref, array_backend):
     assert array_backend.allclose(sot_lower[0], v_ref[1])
 
 
-@pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+# @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
 @pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])])
 def test_sot_perc(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
 
     sot = extreme.array.sot(clim, ens, 90, eps=1e4)
 
+    v_ref = array_backend.asarray(v_ref, dtype=sot.dtype)
+
     assert array_backend.allclose(sot[0], v_ref[0], equal_nan=True)
 
 
-@pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+# @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
 @pytest.mark.parametrize(
     "qc_tail,qc,qf,kwargs,v_ref",
     [
@@ -159,6 +167,8 @@ def test_sot_func(qc_tail, qc, qf, kwargs, v_ref, array_backend):
     qc_tail, qc, qf, v_ref = array_backend.asarray(qc_tail, qc, qf, v_ref)
 
     sot = extreme.array.sot_func(qc_tail, qc, qf, **kwargs)
+
+    v_ref = array_backend.asarray(v_ref, dtype=sot.dtype)
 
     assert array_backend.allclose(sot, v_ref, equal_nan=True)
 

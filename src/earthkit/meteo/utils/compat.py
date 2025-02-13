@@ -51,3 +51,10 @@ def sign(x, *args, **kwargs):
     if not xp.isnan(xp.sign(xp.asarray(xp.nan))):
         r[xp.isnan(x)] = xp.nan
     return r
+
+
+def percentile(a, q, **kwargs):
+    xp = array_namespace(a)
+    if hasattr(xp, "percentile"):
+        return xp.percentile(a, q, **kwargs)
+    return xp.quantile(a, q / 100, **kwargs)

@@ -43,7 +43,13 @@ class ArrayBackend(metaclass=ABCMeta):
         return array_namespace(self._make_sample())
 
     def asarray(self, *data, **kwargs):
+        # TODO: add support for dtype
         res = [self.namespace.asarray(d, **kwargs) for d in data]
+        # if "dtype" not in kwargs:
+        #     dtype = res[0].dtype
+        #     for i in range(1, len(res)):
+        #         res[i] = self.namespace.asarray(res[i], dtype=dtype)
+
         r = res if len(res) > 1 else res[0]
         return r
 
