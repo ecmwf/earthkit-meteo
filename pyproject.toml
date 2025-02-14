@@ -1,5 +1,6 @@
 [build-system]
-requires = [ "setuptools>=61", "setuptools-scm>=8" ]
+build-backend = "setuptools.build_meta"
+requires = [ "setuptools>=61", "setuptools-scm>=8", "wheel" ]
 
 [project]
 name = "earthkit-meteo"
