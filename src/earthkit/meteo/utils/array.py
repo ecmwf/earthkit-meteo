@@ -7,53 +7,72 @@
 # nor does it submit to any jurisdiction.
 #
 
-import threading
-from functools import cached_property
+from functools import partial
+
+import array_api_compat
 
 
-class ArrayNamespace:
-    def __init__(self):
-        self._api = False
-        self.lock = threading.Lock()
+def numpy_namespace():
+    """Return the patched version of the array-api-compat numpy namespace."""
+    import earthkit.meteo.utils.namespace.numpy as xp
 
-    @property
-    def api(self):
-        if self._api is False:
-            with self.lock:
-                if self._api is False:
-                    try:
-                        import array_api_compat
+    return xp
 
-                        self._api = array_api_compat
-                    except Exception:
-                        self._api = None
-        return self._api
 
-    @cached_property
-    def numpy(self):
-        import array_api_compat.numpy as np
+def torch_namespace():
+    """Return the patched version of the array-api-compat numpy namespace."""
+    import earthkit.meteo.utils.namespace.torch as xp
 
-        return np
+    return xp
 
-    def namespace(self, arrays):
-        if self.api is not None:
-            if not arrays:
-                return self.numpy
-            else:
-                return self.api.array_namespace(*arrays)
 
-        # Fallback to numpy
-        import numpy as np
+def other_namespace(xp):
+    """Return the patched version of an array-api-compat namespace."""
+    if not hasattr(xp, "polyval"):
+        from .compute import polyval
 
-        if isinstance(arrays[0], np.ndarray):
-            return np
-        else:
-            raise ValueError("Can't find namespace for array. Please install array_api_compat package")
+        xp.polyval = partial(polyval, xp)
+    if not hasattr(xp, "percentile"):
+        from .compute import percentile
+
+        xp.percentile = partial(percentile, xp)
+
+    return xp
 
 
 def array_namespace(*args):
+    """Return the array namespace of the arguments.
+
+    Parameters
+    ----------
+    *args: tuple
+        Scalar or array-like arguments.
+
+    Returns
+    -------
+    xp: module
+        The array-api-compat namespace of the array-like arguments. The namespace
+        returned from array_api_compat.array_namespace(*args) is patched with
+        extra/modified methods. When only a scalar is passed, the numpy namespace
+        is returned.
+
+    Notes
+    -----
+    The array namespace is extended with the following methods when necessary:
+        - polyval: evaluate a polynomial (available in numpy)
+        - percentile: compute the nth percentile of the data along the
+          specified axis (available in numpy)
+    Some other methods may be reimplemented for a given namespace to ensure correct
+    behaviour. E.g. sign() for torch.
+    """
     arrays = [a for a in args if hasattr(a, "shape")]
-    return _NAMESPACE.namespace(arrays)
-
-
-_NAMESPACE = ArrayNamespace()
+    if not arrays:
+        return numpy_namespace()
+    else:
+        xp = array_api_compat.array_namespace(*arrays)
+        if array_api_compat.is_numpy_namespace(xp):
+            return numpy_namespace()
+        elif array_api_compat.is_torch_namespace(xp):
+            return torch_namespace()
+        else:
+            return other_namespace(xp)

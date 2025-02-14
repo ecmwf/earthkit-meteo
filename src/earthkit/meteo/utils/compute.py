@@ -7,10 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .array import array_namespace
+"""Additional methods made available in an the array-api-compat namespace.
+"""
 
 
-def polyval(x, c):
+def polyval(xp, x, c):
     """Evaluation of a polynomial using Horner's scheme.
 
     If ``c`` is of length ``n + 1``, this function returns the value
@@ -20,6 +21,8 @@ def polyval(x, c):
 
     Parameters
     ----------
+    xp: array namespace
+        The array namespace to use.
     x: array-like
         The values(s) at which to evaluate the polynomial. Its elements must
         support addition and multiplication with with themselves and with
@@ -36,7 +39,7 @@ def polyval(x, c):
 
     Comments
     --------
-    Based on the ``numpy.polynomal.polinomial.polyval`` function.
+    Based on the ``numpy.polynomal.polynomial.polyval`` function.
     """
     c0 = c[-1] + x * 0
     for i in range(2, len(c) + 1):
@@ -44,17 +47,12 @@ def polyval(x, c):
     return c0
 
 
-def sign(x, *args, **kwargs):
-    xp = array_namespace(x)
-    x = xp.asarray(x)
-    r = xp.sign(x, *args, **kwargs)
-    if not xp.isnan(xp.sign(xp.asarray(xp.nan))):
-        r[xp.isnan(x)] = xp.nan
-    return r
+def percentile(xp, a, q, **kwargs):
+    """Compute percentiles by calling the quantile function.
 
-
-def percentile(a, q, **kwargs):
-    xp = array_namespace(a)
-    if hasattr(xp, "percentile"):
-        return xp.percentile(a, q, **kwargs)
+    Parameters
+    ----------
+    xp: array namespace
+        The array namespace to use.
+    """
     return xp.quantile(a, q / 100, **kwargs)

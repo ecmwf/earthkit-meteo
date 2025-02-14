@@ -1044,14 +1044,12 @@ class _EptComp:
         return self._th_sat(ths) * xp.exp(self._G_sat(ths))
 
     def compute_wbpt(self, ept):
-        from earthkit.meteo.utils.compat import polyval
-
         xp = array_namespace(ept)
         t0 = 273.16
         x = ept / t0
         a = [7.101574, -20.68208, 16.11182, 2.574631, -5.205688]
         b = [1.0, -3.552497, 3.781782, -0.6899655, -0.5929340]
-        return ept - xp.exp(polyval(x, a) / polyval(x, b))
+        return ept - xp.exp(xp.polyval(x, a) / xp.polyval(x, b))
 
     def compute_t_on_ma_stipanuk(self, ept, p):
         xp = array_namespace(ept, p)
@@ -1070,20 +1068,16 @@ class _EptComp:
         max_iter = 12
         dt = 120.0
 
-        from earthkit.meteo.utils.compat import sign
-
         for _ in range(max_iter):
             ths = _ThermoState(t=t, p=p)
             dt /= 2.0
-            t += sign(ept * xp.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)) * dt
+            t += xp.sign(ept * xp.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)) * dt
         # ths.t = t
         # return ept - self._th_sat(ths) * np.exp(self._G_sat(ths))
 
         return t
 
     def compute_t_on_ma_davies(self, ept, p):
-        from earthkit.meteo.utils.compat import polyval
-
         xp = array_namespace(ept, p)
         ept = xp.asarray(ept)
         p = xp.asarray(p)
@@ -1095,12 +1089,12 @@ class _EptComp:
         def _k1(pp):
             """Function k1 in the article."""
             a = [-53.737, 137.81, -38.5]
-            return polyval(pp, a)
+            return xp.polyval(pp, a)
 
         def _k2(pp):
             """Function k2 in the article."""
             a = [-0.384, 56.831, -4.392]
-            return polyval(pp, a)
+            return xp.polyval(pp, a)
 
         def _D(p):
             """Function D in the article."""
