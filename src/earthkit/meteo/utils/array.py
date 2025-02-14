@@ -51,7 +51,7 @@ def array_namespace(*args):
     Returns
     -------
     xp: module
-        The array-api-compat namespace of the array-like arguments. The namespace
+        The array-api-compat namespace of the arguments. The namespace
         returned from array_api_compat.array_namespace(*args) is patched with
         extra/modified methods. When only a scalar is passed, the numpy namespace
         is returned.
