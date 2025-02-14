@@ -26,9 +26,9 @@ def torch_namespace():
     return xp
 
 
+# TODO: maybe this is not necessary
 def other_namespace(xp):
     """Return the patched version of an array-api-compat namespace."""
-    # TODO: maybe this is not necessary
     if not hasattr(xp, "histogram2d"):
         from .compute import histogram2d
 
@@ -67,6 +67,7 @@ def array_namespace(*args):
         - polyval: evaluate a polynomial (available in numpy)
         - percentile: compute the nth percentile of the data along the
           specified axis (available in numpy)
+        - histogram2d: compute a 2D histogram (available in numpy)
     Some other methods may be reimplemented for a given namespace to ensure correct
     behaviour. E.g. sign() for torch.
     """
