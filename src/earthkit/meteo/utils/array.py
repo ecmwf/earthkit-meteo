@@ -20,7 +20,7 @@ def numpy_namespace():
 
 
 def torch_namespace():
-    """Return the patched version of the array-api-compat numpy namespace."""
+    """Return the patched version of the array-api-compat torch namespace."""
     import earthkit.meteo.utils.namespace.torch as xp
 
     return xp
