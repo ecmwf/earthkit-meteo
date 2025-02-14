@@ -69,6 +69,9 @@ class ArrayBackend(metaclass=ABCMeta):
             v = args
         return self.namespace.isclose(*v, **kwargs)
 
+    def astype(self, *args, **kwargs):
+        return self.namespace.astype(*args, **kwargs)
+
     @cached_property
     def float64(self):
         return self.dtypes.get("float64")

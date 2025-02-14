@@ -56,3 +56,18 @@ def percentile(xp, a, q, **kwargs):
         The array namespace to use.
     """
     return xp.quantile(a, q / 100, **kwargs)
+
+
+def histogram2d(xp, x, y, *args, **kwargs):
+    """Compute a 2D histogram.
+
+    Parameters
+    ----------
+    xp: array namespace
+        The array namespace to use.
+    x: array-like
+        An array containing the x coordinates of the points to be histogrammed.
+    y: array-like
+        An array containing the y coordinates of the points to be histogrammed.
+    """
+    return xp.histogramdd(xp.stack([x, y]).T, *args, **kwargs)

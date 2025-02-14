@@ -12,7 +12,6 @@ import pytest
 
 from earthkit.meteo import wind
 from earthkit.meteo.utils.testing import ARRAY_BACKENDS
-from earthkit.meteo.utils.testing import get_array_backend
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
@@ -191,7 +190,7 @@ def test_coriolis(lat, v_ref, array_backend):
 
 
 # histogram2d is not available in torch, so we skip this test for now
-@pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "sp,d,sectors,sp_bins,percent,v_ref,dir_bin_ref",
     [
@@ -280,12 +279,18 @@ def test_coriolis(lat, v_ref, array_backend):
 def test_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref, array_backend):
     sp, d, sp_bins, v_ref, dir_bin_ref = array_backend.asarray(sp, d, sp_bins, v_ref, dir_bin_ref)
 
+    dir_bin_ref = array_backend.namespace.astype(dir_bin_ref, sp.dtype)
+
     r = wind.windrose(sp, d, sectors=sectors, speed_bins=sp_bins, percent=percent)
+
+    dir_bin_ref = array_backend.astype(dir_bin_ref, r[0].dtype)
+    v_ref = array_backend.astype(v_ref, r[1].dtype)
+
     assert array_backend.allclose(r[0], v_ref, equal_nan=True, rtol=1e-04)
     assert array_backend.allclose(r[1], dir_bin_ref, equal_nan=True, rtol=1e-04)
 
 
-@pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "sp,d,sectors,sp_bins", [(3.4, 90.01, 0, [0, 1]), (3.4, 90.01, 6, [0]), (3.4, 90.01, 6, None)]
 )

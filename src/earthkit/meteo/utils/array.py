@@ -28,6 +28,11 @@ def torch_namespace():
 
 def other_namespace(xp):
     """Return the patched version of an array-api-compat namespace."""
+    # TODO: maybe this is not necessary
+    if not hasattr(xp, "histogram2d"):
+        from .compute import histogram2d
+
+        xp.histogram2d = partial(histogram2d, xp)
     if not hasattr(xp, "polyval"):
         from .compute import polyval
 
