@@ -12,8 +12,8 @@ from functools import partial
 import array_api_compat.torch as _xp
 from array_api_compat.torch import *  # noqa: F403
 
-from ..compute import percentile
-from ..compute import polyval
+from earthkit.meteo.utils.compute import percentile
+from earthkit.meteo.utils.compute import polyval
 
 # make these methods available on the namespace
 percentile = partial(percentile, _xp)
