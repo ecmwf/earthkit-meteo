@@ -1,7 +1,9 @@
 # earthkit-meteo
 
-<!--
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-meteo.svg)](https://pypi.python.org/pypi/earthkit-meteo/) -->
+<img src="https://github.com/ecmwf/logos/raw/refs/heads/main/logos/earthkit/earthkit-meteo-light.svg" width="160">
+
+[![PyPI version fury.io](https://badge.fury.io/py/earthkit-meteo.svg)](https://pypi.python.org/pypi/earthkit-meteo/)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-meteo.svg)](https://pypi.python.org/pypi/earthkit-meteo/)
 
 **DISCLAIMER**
 This project is **BETA** and will be **Experimental** for the foreseeable future.
