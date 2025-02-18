@@ -90,7 +90,7 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 html_css_files = ["style.css"]
 
-# html_logo = "_static/earthkit-meteo.png"
+html_logo = "https://github.com/ecmwf/logos/raw/refs/heads/main/logos/earthkit/earthkit-meteo-dark.svg"
 
 
 def setup(app):
