@@ -74,30 +74,19 @@ def test_quantiles_nans():
     assert np.all(np.isclose(sort, numpy, equal_nan=True))
 
 
-def test_MaximumStatistics():
-    ms = stats.MaximumStatistics([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
+def test_MaximumValueDistribution():
+    dist = stats.MaximumValueDistribution.fit([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
     # Extreme ends of distribution
-    np.testing.assert_allclose(ms.probability_of_threshold(0.0), 1.0)
-    np.testing.assert_allclose(ms.probability_of_threshold(100.0), 0.0)
+    np.testing.assert_allclose(dist.cdf(0.0), 1.0)
+    np.testing.assert_allclose(dist.cdf(100.0), 0.0)
     # Test identity when calling method followed by inverse method
-    thresholds = np.linspace(4.0, 10.0, 21)
-    np.testing.assert_allclose(
-        ms.threshold_of_probability(ms.probability_of_threshold(thresholds)), thresholds
-    )
-    np.testing.assert_allclose(
-        ms.threshold_of_return_period(ms.return_period_of_threshold(thresholds)), thresholds
-    )
+    values = np.linspace(4.0, 10.0, 21)
+    np.testing.assert_allclose(dist.ppf(dist.cdf(values)), values)
+    probs = np.linspace(0.01, 0.99, 21)
+    np.testing.assert_allclose(dist.cdf(dist.ppf(probs)), probs)
 
 
-def test_MaximumStatistics_with_frequency():
-    freq = np.timedelta64(24 * 60 * 60, "s")
-    sample = [4.0, 3.0, 5.5, 6.0, 7.0, 5.3, 2.1]
-    ms = stats.MaximumStatistics(sample, freq=freq)
-    # Return periods should be scaled by the given frequency
-    assert ms.return_period_of_threshold(6.0).dtype == freq.dtype
-
-
-def test_MaximumStatistics_along_axis():
+def test_MaximumValueDistribution_along_axis():
     sample = [
         [0.3, 3.0, 30.0],
         [0.5, 5.0, 50.0],
@@ -107,9 +96,23 @@ def test_MaximumStatistics_along_axis():
         [0.6, 6.0, 60.0],
         [0.7, 7.0, 70.0],
     ]
-    ms = stats.MaximumStatistics(sample, axis=0)
-    rp = ms.threshold_of_probability([0.0, 0.3, 0.6, 1.0])
-    assert rp.shape == (4, 3)
+    dist = stats.MaximumValueDistribution.fit(sample, axis=0)
+    values = dist.ppf([0.01, 0.3, 0.5, 0.6, 0.99])
+    assert values.shape == (5, 3)
     # Results should scale with values
-    np.testing.assert_allclose(rp[:, 0] * 10.0, rp[:, 1])
-    np.testing.assert_allclose(rp[:, 1] * 10.0, rp[:, 2])
+    np.testing.assert_allclose(values[:, 0] * 10.0, values[:, 1])
+    np.testing.assert_allclose(values[:, 1] * 10.0, values[:, 2])
+
+
+def test_return_period_identity():
+    dist = stats.MaximumValueDistribution.fit([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
+    values = np.linspace(4.0, 10.0, 21)
+    np.testing.assert_allclose(stats.value_of_return_period(dist, stats.return_period(dist, values)), values)
+
+
+def test_return_period_with_frequency():
+    freq = np.timedelta64(24 * 60 * 60, "s")
+    sample = [4.0, 3.0, 5.5, 6.0, 7.0, 5.3, 2.1]
+    dist = stats.MaximumValueDistribution.fit(sample, freq=freq)
+    # Return periods should be scaled by the given frequency
+    assert stats.return_period(dist, 6.0).dtype == freq.dtype

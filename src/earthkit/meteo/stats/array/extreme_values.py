@@ -7,107 +7,143 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .distributions import MaxGumbel
+import numpy as np
+
+try:
+    from scipy.stats import lmoment
+except ImportError:
+    from ._polyfill import lmoment
 
 
-class MaximumStatistics:
-    """Recurrence statistics for a sample of maximum values.
+def _expand_dims_after(arr, ndim):
+    return np.expand_dims(arr, axis=list(range(-ndim, 0)))
 
-    All statistics are computed from a fitted continuous probability
-    distribution. Results will only be meaningful if this fitted distribution
-    is representative of the sample statistics.
 
-    Use, e.g., to compute expected return periods of extreme precipitation or
-    flooding events based on past observations.
+class MaximumValueDistribution:
+    """Gumbel distribution for extreme value statistics.
 
     Parameters
     ----------
-    sample: array_like
-        Input maximum values. Samples must be representative of intervals
-        of equal length (freq) along the axis of computation (axis).
-    axis: int
-        The axis along which to compute the statistics.
-    freq: number | timedelta
-        Temporal frequency of the input data. Used to scale return periods.
-        Defaults to 1, i.e., no scaling applied. Note: when supplying a numpy
-        timedelta64, the unit carries over to return periods.
-    dist: ContinuousDistribution
-        Continuous probability distribution fitted to the input data.
+    mu: Number | array_like
+        Offset parameter.
+    sigma: Number | array_like
+        Scale parameter.
+    freq: None | Number | timedelta
+        Temporal frequency (duration between values, technically the inverse
+        frequency) of the represented data. Provides additional context, e.g.,
+        to scale return periods computed from the distribution.
     """
 
-    def __init__(self, sample, axis=0, freq=1.0, dist=MaxGumbel):
-        self._sample = sample
-        self._dist = dist.fit(sample, axis=axis)
-        self._freq = freq
+    def __init__(self, mu, sigma, freq=None):
+        self.mu, self.sigma = np.broadcast_arrays(mu, sigma)
+        self.freq = freq
+
+    @classmethod
+    def fit(cls, sample, axis=0, freq=None):
+        """Gumbel distribution with parameters fitted to a sample of values.
+
+        Results derived from the fitted distribution will only be meaningful
+        if it is representative of the sample statistics.
+
+        Parameters
+        ----------
+        sample: array_like
+            Sample values.
+        axis: int
+            The axis along which to compute the parameters.
+        freq: None | Number | timedelta
+            Temporal frequency (duration between values) of the sample.
+        """
+        lmom = lmoment(sample, axis=axis, order=[1, 2])
+        sigma = lmom[1] / np.log(2)
+        mu = lmom[0] - sigma * 0.5772
+        return cls(mu, sigma, freq=freq)
 
     @property
-    def dist(self):
-        """Estimated continuous probability distribution for the data."""
-        return self._dist
+    def shape(self):
+        """Tuple of dimensions."""
+        return self.mu.shape
 
     @property
-    def freq(self):
-        """Temporal frequency used for scaling return periods."""
-        return self._freq
+    def ndim(self):
+        """Number of dimensions."""
+        return self.mu.ndim
 
-    def probability_of_threshold(self, threshold):
-        """Probability of threshold exceedance.
-
-        Parameters
-        ----------
-        threshold: Number | array_like
-            Input threshold.
-
-        Returns
-        -------
-        array_like
-            The probability ([0, 1]) of a value to exceed the input threshold
-            in a time interval.
-        """
-        return self.dist.cdf(threshold)
-
-    def return_period_of_threshold(self, threshold):
-        """Return period of threshold exceedance.
+    def cdf(self, x):
+        """Evaluate the cumulative distribution function (CDF).
 
         Parameters
         ----------
-        threshold: Number | array_like
-            Input threshold.
+        x: Number | array_like
+            Input value.
 
         Returns
         -------
-        array_like
-            The return period of the input threshold.
+        Number | array_like
+            The probability that a random variable X from the distribution is
+            less than or equal to the input x.
         """
-        return self.freq / self.probability_of_threshold(threshold)
+        x = _expand_dims_after(x, self.ndim)
+        return 1.0 - np.exp(-np.exp((self.mu - x) / self.sigma))
 
-    def threshold_of_probability(self, probability):
-        """Threshold of a given probability of exceedance.
+    def ppf(self, p):
+        """Evaluate the percent point function (PPF; inverse CDF).
 
         Parameters
         ----------
-        probability: Number | array_like
-            Input probability.
+        p: Number | array_like
+            Probability in interval [0, 1].
 
         Returns
         -------
-        array_like
-            Threshold with exceedance probability equal to the input
-            probability.
+        Number | array_like
+            x such that the probability of a random variable from the
+            distribution taking a value less than or equal to x is p.
         """
-        return self.dist.ppf(probability)
+        p = _expand_dims_after(p, self.ndim)
+        return self.mu - self.sigma * np.log(-np.log(1.0 - p))
 
-    def threshold_of_return_period(self, return_period):
-        """Threshold of a given return period.
 
-        Parameters
-        ----------
-        return_period: Number | array_like
-            Input return period.
+def return_period(dist, value):
+    """Return period of a value given a distribution of extremes.
 
-        Returns
-        -------
-        array_like
-            Threshold with return period equal to the input return period.
-        """
-        return self.threshold_of_probability(self.freq / return_period)
+    Use, e.g., to compute expected return periods of extreme precipitation or
+    flooding events based on a timeseries of past observations.
+
+    Parameters
+    ----------
+    dist: MaximumValueDistribution
+        Probability distribution.
+    value: Number | array_like
+        Input value(s).
+
+    Returns
+    -------
+    array_like
+        The return period of the input value, scaled with the frequency
+        information of the distribution if attached.
+    """
+    freq = 1.0 if dist.freq is None else dist.freq
+    return freq / dist.cdf(value)
+
+
+def value_of_return_period(dist, return_period):
+    """Value for a given return period of a distribution of extremes.
+
+    Parameters
+    ----------
+    dist: MaximumValueDistribution
+        Probability distribution.
+    return_period: Number | array_like
+        Input return period. Must be compatible with the frequency information
+        of the distribution if attached.
+    freq: number | timedelta
+        Temporal frequency of the input dataUsed to scale return periods.
+
+    Returns
+    -------
+    array_like
+        Value with return period equal to the input return period.
+    """
+    freq = 1.0 if dist.freq is None else dist.freq
+    return dist.ppf(freq / return_period)

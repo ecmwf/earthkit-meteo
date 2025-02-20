@@ -9,6 +9,7 @@
 
 from . import array
 
+MaximumValueDistribution = array.MaximumValueDistribution
 
-def MaximumStatistics(*args, **kwargs):
-    return array.MaximumStatistics(*args, **kwargs)
+return_period = array.return_period
+value_of_return_period = array.value_of_return_period
