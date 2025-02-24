@@ -27,6 +27,10 @@ Davies-Jones, R., (2008). An Efficient and Accurate Method for Computing the Wet
 along Pseudoadiabats. Mon. Wea. Rev., 136, 2764-2785, doi: `10.1175/2007MWR2224.1 <https://doi.org/10.1175/2007MWR2224.1>`_
 
 
+.. [Gaussian_Quadrature]
+Gaussian quadrature.  URL: https://en.wikipedia.org/wiki/Gaussian_quadrature
+
+
 .. [Hersbach2000]
 
 Hersbach, H., (2000). Decomposition of the Continuous Ranked Probability Score for Ensemble Prediction Systems. Weather and Forecasting 15: 559-570.
