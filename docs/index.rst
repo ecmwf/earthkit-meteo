@@ -31,6 +31,7 @@ Welcome to earthkit-meteo's documentation
    :caption: Documentation
 
    _api/meteo/index
+   examples.rst
    references.rst
 
 .. toctree::
