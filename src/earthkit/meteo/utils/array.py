@@ -42,6 +42,11 @@ def other_namespace(xp):
 
         xp.percentile = partial(percentile, xp)
 
+    if not hasattr(xp, "seterr"):
+        from .compute import seterr
+
+        xp.seterr = partial(seterr, xp)
+
     return xp
 
 

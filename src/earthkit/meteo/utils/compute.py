@@ -71,3 +71,16 @@ def histogram2d(xp, x, y, *args, **kwargs):
         An array containing the y coordinates of the points to be histogrammed.
     """
     return xp.histogramdd(xp.stack([x, y]).T, *args, **kwargs)
+
+
+def seterr(xp, *args, **kwargs):
+    """Set how floating-point errors are handled.
+
+    Just a placeholder for the numpy function.
+
+    Parameters
+    ----------
+    xp: array namespace
+        The array namespace to use.
+    """
+    return dict()

@@ -40,20 +40,15 @@ def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
     qf = xp.asarray(qf)
 
     # TODO: check if this is necessary
+    # NOTE: work for numpy but not for other backends
     # avoid divided by zero warning
-    try:
-        err = xp.seterr(divide="ignore", invalid="ignore")
-    except Exception:
-        pass
+    err = xp.seterr(divide="ignore", invalid="ignore")
 
     min_den = xp.fmax(xp.asarray(eps), xp.asarray(0))
     sot = xp.where(xp.abs(qc_tail - qc) > min_den, (qf - qc_tail) / (qc_tail - qc), xp.nan)
 
     # revert to original error state
-    try:
-        xp.seterr(**err)
-    except Exception:
-        pass
+    xp.seterr(**err)
 
     mask_missing = xp.isnan(sot)
 

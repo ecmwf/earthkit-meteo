@@ -15,11 +15,13 @@ from array_api_compat.torch import *  # noqa: F403
 from earthkit.meteo.utils.compute import histogram2d
 from earthkit.meteo.utils.compute import percentile
 from earthkit.meteo.utils.compute import polyval
+from earthkit.meteo.utils.compute import seterr
 
 # make these methods available on the namespace
 histogram2d = partial(histogram2d, _xp)
 percentile = partial(percentile, _xp)
 polyval = partial(polyval, _xp)
+seterr = partial(seterr, _xp)
 
 
 def sign(x, *args, **kwargs):
