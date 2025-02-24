@@ -9,7 +9,7 @@
 
 from . import array
 
-MaximumValueDistribution = array.MaximumValueDistribution
+GumbelDistribution = array.GumbelDistribution
 
-return_period = array.return_period
-value_of_return_period = array.value_of_return_period
+value_to_return_period = array.value_to_return_period
+return_period_to_value = array.return_period_to_value

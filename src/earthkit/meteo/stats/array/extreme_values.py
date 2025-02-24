@@ -19,7 +19,7 @@ def _expand_dims_after(arr, ndim):
     return np.expand_dims(arr, axis=list(range(-ndim, 0)))
 
 
-class MaximumValueDistribution:
+class GumbelDistribution:
     """Gumbel distribution for extreme value statistics.
 
     Parameters
@@ -104,7 +104,7 @@ class MaximumValueDistribution:
         return self.mu - self.sigma * np.log(-np.log(1.0 - p))
 
 
-def return_period(dist, value):
+def value_to_return_period(dist, value):
     """Return period of a value given a distribution of extremes.
 
     Use, e.g., to compute expected return periods of extreme precipitation or
@@ -127,7 +127,7 @@ def return_period(dist, value):
     return freq / dist.cdf(value)
 
 
-def value_of_return_period(dist, return_period):
+def return_period_to_value(dist, return_period):
     """Value for a given return period of a distribution of extremes.
 
     Parameters

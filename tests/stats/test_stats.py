@@ -74,8 +74,8 @@ def test_quantiles_nans():
     assert np.all(np.isclose(sort, numpy, equal_nan=True))
 
 
-def test_MaximumValueDistribution():
-    dist = stats.MaximumValueDistribution.fit([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
+def test_GumbelDistribution():
+    dist = stats.GumbelDistribution.fit([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
     # Extreme ends of distribution
     np.testing.assert_allclose(dist.cdf(0.0), 1.0)
     np.testing.assert_allclose(dist.cdf(100.0), 0.0)
@@ -86,7 +86,7 @@ def test_MaximumValueDistribution():
     np.testing.assert_allclose(dist.cdf(dist.ppf(probs)), probs)
 
 
-def test_MaximumValueDistribution_along_axis():
+def test_GumbelDistribution_along_axis():
     sample = [
         [0.3, 3.0, 30.0],
         [0.5, 5.0, 50.0],
@@ -96,7 +96,7 @@ def test_MaximumValueDistribution_along_axis():
         [0.6, 6.0, 60.0],
         [0.7, 7.0, 70.0],
     ]
-    dist = stats.MaximumValueDistribution.fit(sample, axis=0)
+    dist = stats.GumbelDistribution.fit(sample, axis=0)
     values = dist.ppf([0.01, 0.3, 0.5, 0.6, 0.99])
     assert values.shape == (5, 3)
     # Results should scale with values
@@ -105,14 +105,16 @@ def test_MaximumValueDistribution_along_axis():
 
 
 def test_return_period_identity():
-    dist = stats.MaximumValueDistribution.fit([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
+    dist = stats.GumbelDistribution.fit([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
     values = np.linspace(4.0, 10.0, 21)
-    np.testing.assert_allclose(stats.value_of_return_period(dist, stats.return_period(dist, values)), values)
+    np.testing.assert_allclose(
+        stats.return_period_to_value(dist, stats.value_to_return_period(dist, values)), values
+    )
 
 
 def test_return_period_with_frequency():
     freq = np.timedelta64(24 * 60 * 60, "s")
     sample = [4.0, 3.0, 5.5, 6.0, 7.0, 5.3, 2.1]
-    dist = stats.MaximumValueDistribution.fit(sample, freq=freq)
+    dist = stats.GumbelDistribution.fit(sample, freq=freq)
     # Return periods should be scaled by the given frequency
-    assert stats.return_period(dist, 6.0).dtype == freq.dtype
+    assert stats.value_to_return_period(dist, 6.0).dtype == freq.dtype
