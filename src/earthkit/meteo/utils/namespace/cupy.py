@@ -7,8 +7,15 @@
 # nor does it submit to any jurisdiction.
 #
 
+from functools import partial
 
+import array_api_compat.cupy as _xp
 from array_api_compat.cupy import *  # noqa: F403
 
 # make polyval available on the namespace
 from cupy.polynomial.polynomial import polyval  # noqa: F401
+
+from earthkit.meteo.utils.compute import seterr
+
+# make these methods available on the namespace
+seterr = partial(seterr, _xp)

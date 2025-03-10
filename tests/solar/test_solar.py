@@ -61,14 +61,20 @@ def test_cos_solar_zenith_angle_1(date, lat, lon, v_ref, array_backend):
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "begin_date,end_date,lat,lon,integration_order,v_ref",
-    [(datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 1, 0.3110738757),
-    (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 2, 0.3110738757),
-    (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 3, 0.3110738757),
-    (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 4, 0.3110738757)],
+    [
+        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 1, 0.3110738757),
+        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 2, 0.3110738757),
+        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 3, 0.3110738757),
+        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 4, 0.3110738757),
+    ],
 )
-def test_cos_solar_zenith_angle_integrated(begin_date, end_date, lat, lon, integration_order, v_ref, array_backend):
+def test_cos_solar_zenith_angle_integrated(
+    begin_date, end_date, lat, lon, integration_order, v_ref, array_backend
+):
     lat, lon, v_ref = array_backend.asarray(lat, lon, v_ref)
-    v = solar.cos_solar_zenith_angle_integrated(begin_date, end_date, lat, lon, integration_order=integration_order)
+    v = solar.cos_solar_zenith_angle_integrated(
+        begin_date, end_date, lat, lon, integration_order=integration_order
+    )
     v_ref = array_backend.asarray(v_ref, dtype=v.dtype)
     assert array_backend.allclose(v, v_ref)
 

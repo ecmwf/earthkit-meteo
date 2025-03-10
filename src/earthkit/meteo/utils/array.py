@@ -33,7 +33,6 @@ def cupy_namespace():
     return xp
 
 
-
 # TODO: maybe this is not necessary
 def other_namespace(xp):
     """Return the patched version of an array-api-compat namespace."""
