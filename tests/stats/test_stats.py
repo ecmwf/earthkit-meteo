@@ -7,16 +7,25 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
+import sys
+
 import numpy as np
 import pytest
 
 from earthkit.meteo import stats
 from earthkit.meteo.utils.testing import ARRAY_BACKENDS
-
-# from earthkit.meteo.utils.testing import get_array_backend
-
+from earthkit.meteo.utils.testing import skip_array_backend
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
+
+
+def _get_quantile_data():
+    here = os.path.dirname(__file__)
+    sys.path.insert(0, here)
+    from _quantile import q_test_array
+
+    return q_test_array
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
@@ -140,24 +149,17 @@ def test_quantiles_core(data, which, kwargs, v_ref, method, array_backend):
 
 
 # TODO: reimplement this test to use reference values
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_quantiles_nans(array_backend):
-    arr = np.random.rand(100, 100, 100)
-    arr.ravel()[np.random.choice(arr.size, 100000, replace=False)] = np.nan
-
+# TODO: this! test fails with cupy. The reason is that cupy.quantile works differently
+#       than np.quantile when nans are present
+@pytest.mark.parametrize("array_backend", skip_array_backend("cupy"))
+@pytest.mark.parametrize("arr", [_get_quantile_data()])
+def test_quantiles_nans(arr, array_backend):
     arr = array_backend.asarray(arr)
     qs = [0.0, 0.25, 0.5, 0.75, 1.0]
 
     r1 = [quantile for quantile in stats.iter_quantiles(arr, qs, method="sort")]
     r2 = [quantile for quantile in stats.iter_quantiles(arr, qs, method="numpy")]
-    for d1, d2 in zip(r1, r2):
-        assert array_backend.allclose(d1, d2, equal_nan=True)
+    for i, (d1, d2) in enumerate(zip(r1, r2)):
+        assert array_backend.allclose(d1, d2, equal_nan=True), f"quantile={qs[i]}"
 
-    # assert np.all(np.isclose(sort, numpy, equal_nan=True))
-
-    # arr = np.random.rand(100, 100, 100)
-    # arr.ravel()[np.random.choice(arr.size, 100000, replace=False)] = np.nan
-    # qs = [0.0, 0.25, 0.5, 0.75, 1.0]
-    # sort = [quantile for quantile in stats.iter_quantiles(arr.copy(), qs, method="sort")]
-    # numpy = [quantile for quantile in stats.iter_quantiles(arr.copy(), qs, method="numpy")]
-    # assert np.all(np.isclose(sort, numpy, equal_nan=True))
+    

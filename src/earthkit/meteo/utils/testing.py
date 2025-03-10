@@ -188,7 +188,21 @@ for b in {NumpyBackend, CupyBackend}:
 ARRAY_BACKENDS = list(_ARRAY_BACKENDS.values())
 
 
-def get_array_backend(backend):
+def skip_array_backend(skip):
+    if not isinstance(skip, (list, tuple)):
+        skip = [skip]
+
+    if not skip:
+        return ARRAY_BACKENDS
+
+    res = []
+    for k, v in _ARRAY_BACKENDS.items():
+        if k not in skip:
+            res.append(v)
+    return res
+
+
+def get_array_backend(backend, skip=None):
     if backend is None:
         backend = "numpy"
 
