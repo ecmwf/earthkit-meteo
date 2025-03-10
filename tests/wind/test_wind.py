@@ -8,270 +8,296 @@
 #
 
 import numpy as np
+import pytest
 
 from earthkit.meteo import wind
+from earthkit.meteo.utils.testing import ARRAY_BACKENDS
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
 
-def test_speed():
-    u = np.array([0, 1, 1, 1, 0, -1, -1, -1, 0, np.nan, 1, np.nan])
-    v = np.array([1, 1, 0, -1, -1, -1, 0, 1, 0, 1, np.nan, np.nan])
-    v_ref = np.array(
-        [
-            1.0,
-            1.4142135624,
-            1.0,
-            1.4142135624,
-            1.0,
-            1.4142135624,
-            1.0,
-            1.4142135624,
-            0.0,
-            np.nan,
-            np.nan,
-            np.nan,
-        ]
-    )
-
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "u,v,v_ref",
+    [
+        (
+            [0, 1, 1, 1, 0, -1, -1, -1, 0, np.nan, 1, np.nan],
+            [1, 1, 0, -1, -1, -1, 0, 1, 0, 1, np.nan, np.nan],
+            [
+                1.0,
+                1.4142135624,
+                1.0,
+                1.4142135624,
+                1.0,
+                1.4142135624,
+                1.0,
+                1.4142135624,
+                0.0,
+                np.nan,
+                np.nan,
+                np.nan,
+            ],
+        )
+    ],
+)
+def test_wind_speed(u, v, v_ref, array_backend):
+    u, v, v_ref = array_backend.asarray(u, v, v_ref)
     sp = wind.speed(u, v)
-    np.testing.assert_allclose(sp, v_ref)
+    assert array_backend.allclose(sp, v_ref, equal_nan=True)
 
 
-def test_direction():
-    # meteo
-    u = np.array([0, 1, 1, 1, 0, -1, -1, -1, 0, np.nan, 1, np.nan])
-    v = np.array([1, 1, 0, -1, -1, -1, 0, 1, 0, 1, np.nan, np.nan])
-    v_ref = np.array([180.0, 225, 270, 315, 0, 45, 90, 135, 270, np.nan, np.nan, np.nan])
-    d = wind.direction(u, v, convention="meteo")
-    np.testing.assert_allclose(d, v_ref)
-
-    v_ref = np.array(
-        [
-            90,
-            45,
-            0,
-            315,
-            270,
-            225,
-            180,
-            135.0,
-            0,
-            np.nan,
-            np.nan,
-            np.nan,
-        ]
-    )
-
-    # polar
-    d = wind.direction(u, v, convention="polar")
-    np.testing.assert_allclose(d, v_ref)
-
-    v_ref = np.array(
-        [
-            90,
-            45,
-            0,
-            -45,
-            -90,
-            -135,
-            180,
-            135,
-            0,
-            np.nan,
-            np.nan,
-            np.nan,
-        ]
-    )
-
-    d = wind.direction(u, v, convention="polar", to_positive=False)
-    np.testing.assert_allclose(d, v_ref)
-
-    # numbers
-    u = [1.0, 1]
-    v = [1.0, np.nan]
-    v_ref = [225, np.nan]
-    for i in range(len(u)):
-        d = wind.direction(u[i], v[i], convention="meteo")
-        np.testing.assert_allclose(d, v_ref[i])
-
-    v_ref = [45, np.nan]
-    for i in range(len(u)):
-        d = wind.direction(u[i], v[i], convention="polar")
-        np.testing.assert_allclose(d, v_ref[i])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "u,v,kwargs,v_ref",
+    [
+        (
+            [0, 1, 1, 1, 0, -1, -1, -1, 0, np.nan, 1, np.nan],
+            [1, 1, 0, -1, -1, -1, 0, 1, 0, 1, np.nan, np.nan],
+            {"convention": "meteo"},
+            [180.0, 225, 270, 315, 0, 45, 90, 135, 270, np.nan, np.nan, np.nan],
+        ),
+        (
+            [0, 1, 1, 1, 0, -1, -1, -1, 0, np.nan, 1, np.nan],
+            [1, 1, 0, -1, -1, -1, 0, 1, 0, 1, np.nan, np.nan],
+            {"convention": "polar"},
+            [
+                90,
+                45,
+                0,
+                315,
+                270,
+                225,
+                180,
+                135.0,
+                0,
+                np.nan,
+                np.nan,
+                np.nan,
+            ],
+        ),
+        (
+            [0, 1, 1, 1, 0, -1, -1, -1, 0, np.nan, 1, np.nan],
+            [1, 1, 0, -1, -1, -1, 0, 1, 0, 1, np.nan, np.nan],
+            {"convention": "polar", "to_positive": False},
+            [
+                90,
+                45,
+                0,
+                -45,
+                -90,
+                -135,
+                180,
+                135,
+                0,
+                np.nan,
+                np.nan,
+                np.nan,
+            ],
+        ),
+        (1.0, 1.0, {"convention": "meteo"}, 225.0),
+        (1.0, np.nan, {"convention": "meteo"}, np.nan),
+        (1.0, 1.0, {"convention": "polar"}, 45.0),
+        (1.0, np.nan, {"convention": "polar"}, np.nan),
+    ],
+)
+def test_wind_direction(u, v, v_ref, kwargs, array_backend):
+    u, v, v_ref = array_backend.asarray(u, v, v_ref)
+    d = wind.direction(u, v, **kwargs)
+    assert array_backend.allclose(d, v_ref, equal_nan=True)
 
 
-def test_xy_to_polar():
-    u = np.array([0, 1, 1, 1, 0, -1, -1, -1, 0, np.nan, 1, np.nan])
-    v = np.array([1, 1, 0, -1, -1, -1, 0, 1, 0, 1, np.nan, np.nan])
-    sp_ref = np.array(
-        [
-            1.0,
-            1.4142135624,
-            1.0,
-            1.4142135624,
-            1.0,
-            1.4142135624,
-            1.0,
-            1.4142135624,
-            0.0,
-            np.nan,
-            np.nan,
-            np.nan,
-        ]
-    )
-    d_ref = np.array([180.0, 225, 270, 315, 0, 45, 90, 135, 270, np.nan, np.nan, np.nan])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "u,v,sp_ref,d_ref",
+    [
+        (
+            [0, 1, 1, 1, 0, -1, -1, -1, 0, np.nan, 1, np.nan],
+            [1, 1, 0, -1, -1, -1, 0, 1, 0, 1, np.nan, np.nan],
+            [
+                1.0,
+                1.4142135624,
+                1.0,
+                1.4142135624,
+                1.0,
+                1.4142135624,
+                1.0,
+                1.4142135624,
+                0.0,
+                np.nan,
+                np.nan,
+                np.nan,
+            ],
+            [180.0, 225, 270, 315, 0, 45, 90, 135, 270, np.nan, np.nan, np.nan],
+        )
+    ],
+)
+def test_wind_xy_to_polar(u, v, sp_ref, d_ref, array_backend):
+    u, v, sp_ref, d_ref = array_backend.asarray(u, v, sp_ref, d_ref)
     sp, d = wind.xy_to_polar(u, v)
-    np.testing.assert_allclose(sp, sp_ref)
-    np.testing.assert_allclose(d, d_ref)
+    assert array_backend.allclose(sp, sp_ref, equal_nan=True)
+    assert array_backend.allclose(d, d_ref, equal_nan=True)
 
 
-def test_polar_to_xy():
-    sp = np.array(
-        [
-            1.0,
-            1.4142135624,
-            1.0,
-            1.4142135624,
-            1.0,
-            1.4142135624,
-            1.0,
-            1.4142135624,
-            0.0,
-            np.nan,
-            1,
-            np.nan,
-        ]
-    )
-    d = np.array([180.0, 225, 270, 315, 0, 45, 90, 135, 270, 1, np.nan, np.nan])
-    u_ref = np.array([0, 1, 1, 1, 0, -1, -1, -1, 0, np.nan, np.nan, np.nan])
-    v_ref = np.array([1, 1, 0, -1, -1, -1, 0, 1, 0, np.nan, np.nan, np.nan])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "sp,d,u_ref, v_ref",
+    [
+        (
+            [
+                1.0,
+                1.4142135624,
+                1.0,
+                1.4142135624,
+                1.0,
+                1.4142135624,
+                1.0,
+                1.4142135624,
+                0.0,
+                np.nan,
+                1,
+                np.nan,
+            ],
+            [180.0, 225, 270, 315, 0, 45, 90, 135, 270, 1, np.nan, np.nan],
+            [0, 1, 1, 1, 0, -1, -1, -1, 0, np.nan, np.nan, np.nan],
+            [1, 1, 0, -1, -1, -1, 0, 1, 0, np.nan, np.nan, np.nan],
+        )
+    ],
+)
+def test_wind_polar_to_xy(sp, d, u_ref, v_ref, array_backend):
+    sp, d, u_ref, v_ref = array_backend.asarray(sp, d, u_ref, v_ref)
     u, v = wind.polar_to_xy(sp, d)
-    np.testing.assert_allclose(u, u_ref, atol=1e-7)
-    np.testing.assert_allclose(v, v_ref, atol=1e-7)
+    assert array_backend.allclose(u, u_ref, equal_nan=True, atol=1e-7)
+    assert array_backend.allclose(v, v_ref, equal_nan=True, atol=1e-7)
 
 
-def test_w_from_omega():
-    omega = np.array([1.2, 21.3])
-    t = np.array([285.6, 261.1])
-    p = np.array([1000, 850]) * 100
-    v_ref = np.array([-0.1003208031, -1.9152219066])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "omega,t,p,v_ref", [([1.2, 21.3], [285.6, 261.1], [1000, 850], [-0.1003208031, -1.9152219066])]
+)
+def test_w_from_omega(omega, t, p, v_ref, array_backend):
+    omega, t, p, v_ref = array_backend.asarray(omega, t, p, v_ref)
+    p = p * 100.0
     w = wind.w_from_omega(omega, t, p)
-    np.testing.assert_allclose(w, v_ref)
+    assert array_backend.allclose(w, v_ref)
 
 
-def test_coriolis():
-    lat = np.array([-20, 0, 50])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("lat, v_ref", [([-20, 0, 50], [-0.0000498810, 0.0, 0.0001117217])])
+def test_coriolis(lat, v_ref, array_backend):
+    lat, v_ref = array_backend.asarray(lat, v_ref)
     c = wind.coriolis(lat)
-    v_ref = np.array([-0.0000498810, 0.0, 0.0001117217])
-    np.testing.assert_allclose(c, v_ref, rtol=1e-04)
+    assert array_backend.allclose(c, v_ref, rtol=1e-04)
 
 
-def test_windrose():
-    sp = np.array([3.5, 1, 1.1, 2.1, 0.1, 0.0, 2.4, 1.9, 1.7, 3.9, 3.1, 2.1, np.nan, np.nan])
-    d = np.array([1.0, 29, 31, 93.0, 121, 171, 189, 245, 240.11, 311, 359.1, np.nan, 11, np.nan])
-    sp_bins = [0, 1, 2, 3, 4]
-
-    # count
-    v_ref = np.array(
-        [
+# histogram2d is not available in torch, so we skip this test for now
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "sp,d,sectors,sp_bins,percent,v_ref,dir_bin_ref",
+    [
+        (
+            [3.5, 1, 1.1, 2.1, 0.1, 0.0, 2.4, 1.9, 1.7, 3.9, 3.1, 2.1, np.nan, np.nan],
+            [1.0, 29, 31, 93.0, 121, 171, 189, 245, 240.11, 311, 359.1, np.nan, 11, np.nan],
+            6,
+            [0, 1, 2, 3, 4],
+            False,
             [
-                0.0000000000,
-                0.0000000000,
-                1.0000000000,
-                1.0000000000,
-                0.0000000000,
-                0.0000000000,
+                [0.0000000000, 0.0000000000, 1.0000000000, 1.0000000000, 0.0000000000, 0.0000000000],
+                [1.0000000000, 1.0000000000, 0.0000000000, 0.0000000000, 2.0000000000, 0.0000000000],
+                [0.0000000000, 0.0000000000, 1.0000000000, 1.0000000000, 0.0000000000, 0.0000000000],
+                [
+                    2.0000000000,
+                    0.0000000000,
+                    0.0000000000,
+                    0.0000000000,
+                    0.0000000000,
+                    1.0000000000,
+                ],
             ],
             [
-                1.0000000000,
-                1.0000000000,
-                0.0000000000,
-                0.0000000000,
-                2.0000000000,
-                0.0000000000,
+                -30.0000000000,
+                30.0000000000,
+                90.0000000000,
+                150.0000000000,
+                210.0000000000,
+                270.0000000000,
+                330.0000000000,
             ],
+        ),
+        (
+            [3.5, 1, 1.1, 2.1, 0.1, 0.0, 2.4, 1.9, 1.7, 3.9, 3.1, 2.1, np.nan, np.nan],
+            [1.0, 29, 31, 93.0, 121, 171, 189, 245, 240.11, 311, 359.1, np.nan, 11, np.nan],
+            6,
+            [0, 1, 2, 3, 4],
+            True,
+            np.array(
+                [
+                    [0.0000000000, 0.0000000000, 1.0000000000, 1.0000000000, 0.0000000000, 0.0000000000],
+                    [1.0000000000, 1.0000000000, 0.0000000000, 0.0000000000, 2.0000000000, 0.0000000000],
+                    [0.0000000000, 0.0000000000, 1.0000000000, 1.0000000000, 0.0000000000, 0.0000000000],
+                    [
+                        2.0000000000,
+                        0.0000000000,
+                        0.0000000000,
+                        0.0000000000,
+                        0.0000000000,
+                        1.0000000000,
+                    ],
+                ]
+            )
+            * 100
+            / 11.0,
             [
-                0.0000000000,
-                0.0000000000,
-                1.0000000000,
-                1.0000000000,
-                0.0000000000,
-                0.0000000000,
+                -30.0000000000,
+                30.0000000000,
+                90.0000000000,
+                150.0000000000,
+                210.0000000000,
+                270.0000000000,
+                330.0000000000,
             ],
+        ),
+        (
+            3.4,
+            90.01,
+            6,
+            [0, 5],
+            False,
+            [[0, 0, 1, 0, 0, 0]],
             [
-                2.0000000000,
-                0.0000000000,
-                0.0000000000,
-                0.0000000000,
-                0.0000000000,
-                1.0000000000,
+                -30.0000000000,
+                30.0000000000,
+                90.0000000000,
+                150.0000000000,
+                210.0000000000,
+                270.0000000000,
+                330.0000000000,
             ],
-        ]
-    )
-    dir_bin_ref = np.array(
-        [
-            -30.0000000000,
-            30.0000000000,
-            90.0000000000,
-            150.0000000000,
-            210.0000000000,
-            270.0000000000,
-            330.0000000000,
-        ]
-    )
+        ),
+        (3.4, 90.01, 1, [0, 5], False, [[1]], [-180.0000000000, 180.0000000000]),
+    ],
+)
+def test_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref, array_backend):
+    sp, d, sp_bins, v_ref, dir_bin_ref = array_backend.asarray(sp, d, sp_bins, v_ref, dir_bin_ref)
 
-    r = wind.windrose(sp, d, sectors=6, speed_bins=sp_bins, percent=False)
-    np.testing.assert_allclose(r[0], v_ref, rtol=1e-04)
-    np.testing.assert_allclose(r[1], dir_bin_ref, rtol=1e-04)
+    dir_bin_ref = array_backend.namespace.astype(dir_bin_ref, sp.dtype)
 
-    # percent
-    v_ref = v_ref * 100 / 11.0
-    r = wind.windrose(sp, d, sectors=6, speed_bins=sp_bins, percent=True)
-    np.testing.assert_allclose(r[0], v_ref, rtol=1e-04)
-    np.testing.assert_allclose(r[1], dir_bin_ref, rtol=1e-04)
+    r = wind.windrose(sp, d, sectors=sectors, speed_bins=sp_bins, percent=percent)
 
-    # numbers
-    sp = 3.4
-    d = 90.01
-    sp_bins = [0, 5]
-    v_ref = np.array([[0, 0, 1, 0, 0, 0]])
+    dir_bin_ref = array_backend.astype(dir_bin_ref, r[0].dtype)
+    v_ref = array_backend.astype(v_ref, r[1].dtype)
 
-    r = wind.windrose(sp, d, sectors=6, speed_bins=sp_bins, percent=False)
-    np.testing.assert_allclose(r[0], v_ref, rtol=1e-04)
-    np.testing.assert_allclose(r[1], dir_bin_ref, rtol=1e-04)
+    assert array_backend.allclose(r[0], v_ref, equal_nan=True, rtol=1e-04)
+    assert array_backend.allclose(r[1], dir_bin_ref, equal_nan=True, rtol=1e-04)
 
-    # single sector
-    sp = 3.4
-    d = 90.01
-    sp_bins = [0, 5]
-    v_ref = np.array([[1]])
-    dir_bin_ref = np.array([-180.0000000000, 180.0000000000])
 
-    r = wind.windrose(sp, d, sectors=1, speed_bins=sp_bins, percent=False)
-    np.testing.assert_allclose(r[0], v_ref, rtol=1e-04)
-    np.testing.assert_allclose(r[1], dir_bin_ref, rtol=1e-04)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "sp,d,sectors,sp_bins", [(3.4, 90.01, 0, [0, 1]), (3.4, 90.01, 6, [0]), (3.4, 90.01, 6, None)]
+)
+def test_windrose_invalid(sp, d, sectors, sp_bins, array_backend):
+    if sp_bins is not None:
+        sp_bins = array_backend.asarray(sp_bins)
+    sp, d = array_backend.asarray(sp, d)
 
-    # invalid arguments
-    sp = 3.4
-    d = 90.01
-
-    sp_bins = [0, 1]
-    try:
-        r = wind.windrose(sp, d, sectors=0, speed_bins=sp_bins, percent=False)
-        assert False
-    except ValueError:
-        pass
-
-    sp_bins = [0]
-    try:
-        r = wind.windrose(sp, d, sectors=6, speed_bins=sp_bins, percent=False)
-        assert False
-    except ValueError:
-        pass
-
-    try:
-        r = wind.windrose(sp, d, sectors=6, percent=False)
-        assert False
-    except ValueError:
-        pass
+    with pytest.raises(ValueError):
+        wind.windrose(sp, d, sectors=sectors, speed_bins=sp_bins, percent=False)
