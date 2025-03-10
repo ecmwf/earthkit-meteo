@@ -161,5 +161,3 @@ def test_quantiles_nans(arr, array_backend):
     r2 = [quantile for quantile in stats.iter_quantiles(arr, qs, method="numpy")]
     for i, (d1, d2) in enumerate(zip(r1, r2)):
         assert array_backend.allclose(d1, d2, equal_nan=True), f"quantile={qs[i]}"
-
-    
