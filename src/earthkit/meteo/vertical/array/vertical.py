@@ -16,6 +16,7 @@ from typing import Union
 import numpy as np
 from numpy.typing import NDArray
 
+from earthkit.meteo import constants
 from earthkit.meteo.thermo import specific_gas_consant
 
 def pressure_at_model_levels(
@@ -121,4 +122,70 @@ def relative_geopotential_thickness(alpha: NDArray[Any], q: NDArray[Any], T: NDA
 
     return dphi
 
+def pressure_at_height_level(
+    height: float, q: NDArray[Any], T: NDArray[Any], sp: NDArray[Any], A: NDArray[Any], B: NDArray[Any]
+) -> Union[float, NDArray[Any]]:
+    """Calculates the pressure at a height level given in meters above surface.
+    This is done by finding the model level above and below the specified height
+    and interpolating the pressure.
 
+    Parameters
+    ----------
+    height : number
+        height (in meters) above the surface for which the pressure needs to be computed
+    q : ndarray
+        specific humidity (kg/kg) at model full-levels
+    T : ndarray
+        temperature (K) at model full-levels
+    sp : ndarray
+        surface pressure (Pa)
+    A : ndarray
+        A-coefficients defining the model levels
+    B : ndarray
+        B-coefficients defining the model levels
+
+    Returns
+    -------
+    number or ndarray
+        pressure (Pa) at the given height level
+    """
+
+    # geopotential thickness of the height level
+    tdphi = height * constants.g
+
+    # pressure(-related) variables
+    p_full, p_half, _, alpha = model_level_pressure(A, B, sp)
+
+    # relative geopot. thickness of full levels
+    dphi = relative_geopotential_thickness(alpha, q, T)
+
+    # find the model full level right above the height level
+    i_phi = (tdphi > dphi).sum(0)
+
+    # initialize the output array
+    p_height = np.zeros_like(i_phi, dtype=np.float64)
+
+    # define mask: requested height is below the lowest model full-level
+    mask = i_phi == 0
+
+    # CASE 1: requested height is below the lowest model full-level
+    # --> interpolation between surface pressure and lowest model full-level
+    p_height[mask] = (p_half[-1, ...] + tdphi / dphi[-1, ...] * (p_full[-1, ...] - p_half[-1, ...]))[mask]
+
+    # CASE 2: requested height is above the lowest model full-level
+    # --> interpolation between between model full-level above and below
+
+    # define some indices for masking and readability
+    i_lev = alpha.shape[0] - i_phi - 1  # convert phi index to model level index
+    indices = np.indices(i_lev.shape)
+    masked_indices = tuple(dim[~mask] for dim in indices)
+    above = (i_lev[~mask],) + masked_indices
+    below = (i_lev[~mask] + 1,) + masked_indices
+
+    dphi_above = dphi[above]
+    dphi_below = dphi[below]
+
+    factor = (tdphi - dphi_above) / (dphi_below - dphi_above)
+    p_height[~mask] = p_full[above] + factor * (p_full[below] - p_full[above])
+
+    return p_height
