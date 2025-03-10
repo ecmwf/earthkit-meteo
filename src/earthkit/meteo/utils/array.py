@@ -26,6 +26,14 @@ def torch_namespace():
     return xp
 
 
+def cupy_namespace():
+    """Return the patched version of the array-api-compat cupy namespace."""
+    import earthkit.meteo.utils.namespace.cupy as xp
+
+    return xp
+
+
+
 # TODO: maybe this is not necessary
 def other_namespace(xp):
     """Return the patched version of an array-api-compat namespace."""
@@ -85,5 +93,7 @@ def array_namespace(*args):
             return numpy_namespace()
         elif array_api_compat.is_torch_namespace(xp):
             return torch_namespace()
+        elif array_api_compat.is_cupy_namespace(xp):
+            return cupy_namespace()
         else:
             return other_namespace(xp)

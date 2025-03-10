@@ -179,7 +179,8 @@ class JaxBackend(ArrayBackend):
 # TODO: add support for jax and cupy
 
 _ARRAY_BACKENDS = {}
-for b in {NumpyBackend, PytorchBackend}:
+# for b in {NumpyBackend, PytorchBackend}:
+for b in {NumpyBackend, CupyBackend}:
     if b.available():
         _ARRAY_BACKENDS[b.name] = b()
 

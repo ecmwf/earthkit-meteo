@@ -111,7 +111,7 @@ def _integrate(
     # Gauss-Integration coefficients
     if integration_order == 3:  # default, good speed and accuracy (3 points)
         _C1 = xp.sqrt(xp.asarray(5.0 / 9.0))
-        E = xp.asarray([-_C1, 0.0, _C1])
+        E = xp.asarray([-_C1, xp.asarray(0.0), _C1])
         W = xp.asarray([5.0 / 9.0, 8.0 / 9.0, 5.0 / 9.0])
     elif integration_order == 1:  # fastest, worse accuracy (1 point)
         E = xp.asarray([0.0])
