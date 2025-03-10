@@ -16,6 +16,8 @@ from typing import Union
 import numpy as np
 from numpy.typing import NDArray
 
+from earthkit.meteo.thermo import specific_gas_consant
+
 def pressure_at_model_levels(
     A: NDArray[Any], B: NDArray[Any], surface_pressure: Union[float, NDArray[Any]]
 ) -> Tuple[NDArray[Any], NDArray[Any], NDArray[Any], NDArray[Any]]:
@@ -94,3 +96,29 @@ def pressure_at_model_levels(
     p_full_level = np.apply_along_axis(lambda m: np.convolve(m, np.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level)
 
     return p_full_level, p_half_level, delta, alpha
+
+def relative_geopotential_thickness(alpha: NDArray[Any], q: NDArray[Any], T: NDArray[Any]) -> NDArray[Any]:
+    """Calculates the geopotential thickness w.r.t the surface on model full-levels.
+
+    Parameters
+    ----------
+    alpha : ndarray
+        alpha term of pressure calculations
+    q : ndarray
+        specific humidity (in kg/kg) on model full-levels
+    T : ndarray
+        temperature (in Kelvin) on model full-levels
+
+    Returns
+    -------
+    ndarray
+        geopotential thickness of model full-levels w.r.t. the surface
+    """
+
+    R = calc_specific_gas_constant(q)
+    dphi = np.cumsum(np.flip(alpha * R * T, axis=0), axis=0)
+    dphi = np.flip(dphi, axis=0)
+
+    return dphi
+
+
