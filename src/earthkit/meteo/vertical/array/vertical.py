@@ -20,7 +20,7 @@ from earthkit.meteo import constants
 from earthkit.meteo.thermo import specific_gas_consant
 
 def pressure_at_model_levels(
-    A: NDArray[Any], B: NDArray[Any], surface_pressure: Union[float, NDArray[Any]]
+    A: NDArray[Any], B: NDArray[Any], sp: Union[float, NDArray[Any]]
 ) -> Tuple[NDArray[Any], NDArray[Any], NDArray[Any], NDArray[Any]]:
     r"""Computes:
      - pressure at the model full- and half-levels
@@ -33,7 +33,7 @@ def pressure_at_model_levels(
         A-coefficients defining the model levels
     B : ndarray
         B-coefficients defining the model levels
-    surface_pressure : number or ndarray
+    sp : number or ndarray
         surface pressure (Pa)
 
     Returns
@@ -59,16 +59,16 @@ def pressure_at_model_levels(
     PRESSURE_TOA = 0.1  # safety when highest pressure level = 0.0
 
     # make the calculation agnostic to the number of dimensions
-    ndim = surface_pressure.ndim
+    ndim = sp.ndim
     new_shape_half = (A.shape[0],) + (1,) * ndim
     A_reshaped = A.reshape(new_shape_half)
     B_reshaped = B.reshape(new_shape_half)
 
     # calculate pressure on model half-levels
-    p_half_level = A_reshaped + B_reshaped * surface_pressure[np.newaxis, ...]
+    p_half_level = A_reshaped + B_reshaped * sp[np.newaxis, ...]
 
     # calculate delta
-    new_shape_full = (A.shape[0] - 1,) + surface_pressure.shape
+    new_shape_full = (A.shape[0] - 1,) + sp.shape
     delta = np.zeros(new_shape_full)
     delta[1:, ...] = np.log(p_half_level[2:, ...] / p_half_level[1:-1, ...])
 
