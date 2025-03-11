@@ -180,7 +180,7 @@ class JaxBackend(ArrayBackend):
 
 _ARRAY_BACKENDS = {}
 # for b in {NumpyBackend, PytorchBackend}:
-for b in {NumpyBackend, CupyBackend}:
+for b in {NumpyBackend, PytorchBackend, CupyBackend}:
     if b.available():
         _ARRAY_BACKENDS[b.name] = b()
 
