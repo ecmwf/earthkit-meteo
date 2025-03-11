@@ -12,25 +12,45 @@ from functools import partial
 import array_api_compat
 
 
-def numpy_namespace():
-    """Return the patched version of the array-api-compat numpy namespace."""
-    import earthkit.meteo.utils.namespace.numpy as xp
-
-    return xp
+class ArrayNamespace:
+    pass
 
 
-def torch_namespace():
-    """Return the patched version of the array-api-compat torch namespace."""
-    import earthkit.meteo.utils.namespace.torch as xp
+class NumpyNamespace(ArrayNamespace):
+    def match(self, xp):
+        return array_api_compat.is_numpy_namespace(xp)
 
-    return xp
+    def __call__(self):
+        """Return the patched version of the array-api-compat numpy namespace."""
+        import earthkit.meteo.utils.namespace.numpy as xp
+
+        return xp
 
 
-def cupy_namespace():
-    """Return the patched version of the array-api-compat cupy namespace."""
-    import earthkit.meteo.utils.namespace.cupy as xp
+class TorchNamespace(ArrayNamespace):
+    def match(self, xp):
+        return array_api_compat.is_torch_namespace(xp)
 
-    return xp
+    def __call__(self):
+        """Return the patched version of the array-api-compat numpy namespace."""
+        import earthkit.meteo.utils.namespace.torch as xp
+
+        return xp
+
+
+class CupyNamespace(ArrayNamespace):
+    def match(self, xp):
+        return array_api_compat.is_cupy_namespace(xp)
+
+    def __call__(self):
+        """Return the patched version of the array-api-compat numpy namespace."""
+        import earthkit.meteo.utils.namespace.cupy as xp
+
+        return xp
+
+
+NAMESPACES = [NumpyNamespace(), TorchNamespace(), CupyNamespace()]
+DEFAULT_NAMESPACE = NAMESPACES[0]
 
 
 # TODO: maybe this is not necessary
@@ -85,14 +105,11 @@ def array_namespace(*args):
     """
     arrays = [a for a in args if hasattr(a, "shape")]
     if not arrays:
-        return numpy_namespace()
+        return DEFAULT_NAMESPACE
     else:
         xp = array_api_compat.array_namespace(*arrays)
-        if array_api_compat.is_numpy_namespace(xp):
-            return numpy_namespace()
-        elif array_api_compat.is_torch_namespace(xp):
-            return torch_namespace()
-        elif array_api_compat.is_cupy_namespace(xp):
-            return cupy_namespace()
-        else:
-            return other_namespace(xp)
+        for ns in NAMESPACES:
+            if ns.match(xp):
+                return ns()
+
+        return other_namespace(xp)
