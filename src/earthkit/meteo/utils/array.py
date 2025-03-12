@@ -32,7 +32,7 @@ class TorchNamespace(ArrayNamespace):
         return array_api_compat.is_torch_namespace(xp)
 
     def __call__(self):
-        """Return the patched version of the array-api-compat numpy namespace."""
+        """Return the patched version of the array-api-compat torch namespace."""
         import earthkit.meteo.utils.namespace.torch as xp
 
         return xp
@@ -43,7 +43,7 @@ class CupyNamespace(ArrayNamespace):
         return array_api_compat.is_cupy_namespace(xp)
 
     def __call__(self):
-        """Return the patched version of the array-api-compat numpy namespace."""
+        """Return the patched version of the array-api-compat cupy namespace."""
         import earthkit.meteo.utils.namespace.cupy as xp
 
         return xp
