@@ -160,3 +160,6 @@ def wet_bulb_potential_temperature_from_dewpoint(*args, **kwargs):
 
 def wet_bulb_potential_temperature_from_specific_humidity(*args, **kwargs):
     return array.wet_bulb_potential_temperature_from_specific_humidity(*args, **kwargs)
+
+def specific_gas_constant(*arg, **kwargs):
+    return array.specific_gas_constant(*args, **kwargs)
