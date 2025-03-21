@@ -7,16 +7,5 @@
 # nor does it submit to any jurisdiction.
 #
 
-from . import array
 
-
-def pressure_at_model_levels(*args, **kwargs):
-    return array.pressure_at_model_levels(*args, **kwargs)
-
-
-def relative_geopotential_thickness(*arg, **kwargs):
-    return array.relative_geopotential_thickness(*arg, **kwargs)
-
-
-def pressure_at_height_level(*args, **kwargs):
-    return array.pressure_at_height_level(*args, **kwargs)
+# TODO: add tests

@@ -1730,8 +1730,9 @@ def wet_bulb_potential_temperature_from_specific_humidity(t, q, p, ept_method="i
     else:
         return temperature_on_moist_adiabat(ept, constants.p0, ept_method=ept_method, t_method=t_method)
 
+
 def specific_gas_constant(q):
-    """Computes the specific gas constant of moist air
+    """Computes the specific gas constant of moist air.
     (specific content of cloud particles and hydrometeors are neglected).
 
     Parameters
@@ -1747,4 +1748,3 @@ def specific_gas_constant(q):
 
     R = constants.Rd + (constants.Rv - constants.Rd) * q
     return R
-
