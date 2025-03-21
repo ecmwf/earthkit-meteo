@@ -7,9 +7,6 @@
 # nor does it submit to any jurisdiction.
 
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
 from typing import Tuple
 from typing import Union
 
@@ -17,7 +14,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from earthkit.meteo import constants
-from earthkit.meteo.thermo import specific_gas_consant
+
 
 def pressure_at_model_levels(
     A: NDArray[Any], B: NDArray[Any], sp: Union[float, NDArray[Any]]
@@ -82,21 +79,28 @@ def pressure_at_model_levels(
     # calculate alpha
     alpha = np.zeros(new_shape_full)
 
-    alpha[1:, ...] = 1.0 - p_half_level[1:-1, ...] / (p_half_level[2:, ...] - p_half_level[1:-1, ...]) * delta[1:, ...]
+    alpha[1:, ...] = (
+        1.0 - p_half_level[1:-1, ...] / (p_half_level[2:, ...] - p_half_level[1:-1, ...]) * delta[1:, ...]
+    )
 
     # pressure at highest half level <= 0.1
     if np.any(p_half_level[0, ...] <= PRESSURE_TOA):
         alpha[0, ...] = 1.0  # ARPEGE choice, ECMWF IFS uses log(2)
     # pressure at highest half level > 0.1
     else:
-        alpha[0, ...] = 1.0 - p_half_level[0, ...] / (p_half_level[1, ...] - p_half_level[0, ...]) * delta[0, ...]
+        alpha[0, ...] = (
+            1.0 - p_half_level[0, ...] / (p_half_level[1, ...] - p_half_level[0, ...]) * delta[0, ...]
+        )
 
     # calculate pressure on model full levels
     # TODO: is there a faster way to calculate the averages?
     # TODO: introduce option to calculate full levels in more complicated way
-    p_full_level = np.apply_along_axis(lambda m: np.convolve(m, np.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level)
+    p_full_level = np.apply_along_axis(
+        lambda m: np.convolve(m, np.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level
+    )
 
     return p_full_level, p_half_level, delta, alpha
+
 
 def relative_geopotential_thickness(alpha: NDArray[Any], q: NDArray[Any], T: NDArray[Any]) -> NDArray[Any]:
     """Calculates the geopotential thickness w.r.t the surface on model full-levels.
@@ -115,12 +119,14 @@ def relative_geopotential_thickness(alpha: NDArray[Any], q: NDArray[Any], T: NDA
     ndarray
         geopotential thickness of model full-levels w.r.t. the surface
     """
+    from earthkit.meteo import specific_gas_constant
 
-    R = calc_specific_gas_constant(q)
+    R = specific_gas_constant(q)
     dphi = np.cumsum(np.flip(alpha * R * T, axis=0), axis=0)
     dphi = np.flip(dphi, axis=0)
 
     return dphi
+
 
 def pressure_at_height_level(
     height: float, q: NDArray[Any], T: NDArray[Any], sp: NDArray[Any], A: NDArray[Any], B: NDArray[Any]
@@ -154,7 +160,7 @@ def pressure_at_height_level(
     tdphi = height * constants.g
 
     # pressure(-related) variables
-    p_full, p_half, _, alpha = model_level_pressure(A, B, sp)
+    p_full, p_half, _, alpha = pressure_at_model_levels(A, B, sp)
 
     # relative geopot. thickness of full levels
     dphi = relative_geopotential_thickness(alpha, q, T)
