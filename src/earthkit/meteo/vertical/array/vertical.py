@@ -217,7 +217,8 @@ def geopotential_height_from_geopotential(z):
 
         gh = \frac{z}{g}
 
-    where :math:`g` is the gravitational acceleration on the surface of the Earth (m/s2)
+    where :math:`g` is the gravitational acceleration on the surface of
+    the Earth (see :py:attr:`meteo.constants.g`)
     """
     h = z / constants.g
     return h
@@ -245,7 +246,7 @@ def geopotential_height_from_geometric_height(h, R_earth=constants.R_earth):
 
         gh = \frac{h\; R_{earth}}{R_{earth} + h}
 
-    where :math:`R_{earth}` is the average radius of the Earth (m)
+    where :math:`R_{earth}` is the average radius of the Earth (see :py:attr:`meteo.constants.R_earth`)
     """
     zh = h * R_earth / (R_earth + h)
     return zh
@@ -275,8 +276,9 @@ def geopotential_from_geometric_height(h, R_earth=constants.R_earth):
 
     where
 
-        * :math:`R_{earth}` is the average radius of the Earth (m)
-        * :math:`g` is the gravitational acceleration on the surface of the Earth (m/s2)
+        * :math:`R_{earth}` is the average radius of the Earth (see :py:attr:`meteo.constants.R_earth`)
+        * :math:`g` is the gravitational acceleration on the surface of
+          the Earth (see :py:attr:`meteo.constants.g`)
     """
     z = h * R_earth * constants.g / (R_earth + h)
     return z
@@ -304,9 +306,7 @@ def geometric_height_from_geopotential_height(gh, R_earth=constants.R_earth):
 
         h = \frac{R_{earth}\; gh}{R_{earth} - gh}
 
-    where
-
-        * :math:`R_{earth}` is the average radius of the Earth (m)
+    where :math:`R_{earth}` is the average radius of the Earth (see :py:attr:`meteo.constants.R_earth`)
     """
     h = R_earth * gh / (R_earth - gh)
     return h
@@ -336,8 +336,9 @@ def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
 
     where
 
-        * :math:`R_{earth}` is the average radius of the Earth (m)
-        * :math:`g` is the gravitational acceleration on the surface of the Earth (m/s2)
+        * :math:`R_{earth}` is the average radius of the Earth (see :py:attr:`meteo.constants.R_earth`)
+        * :math:`g` is the gravitational acceleration on the surface of
+          the Earth (see :py:attr:`meteo.constants.g`)
     """
     z = z / constants.g
     h = R_earth * z / (R_earth - z)
