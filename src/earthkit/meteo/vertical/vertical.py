@@ -20,3 +20,23 @@ def relative_geopotential_thickness(*arg, **kwargs):
 
 def pressure_at_height_level(*args, **kwargs):
     return array.pressure_at_height_level(*args, **kwargs)
+
+
+def geopotential_height_from_geopotential(*args, **kwargs):
+    return array.geopotential_height_from_geopotential(*args, **kwargs)
+
+
+def geopotential_height_from_geometric_height(*args, **kwargs):
+    return array.geopotential_height_from_geometric_height(*args, **kwargs)
+
+
+def geopotential_from_geometric_height(*args, **kwargs):
+    return array.geopotential_from_geometric_height(*args, **kwargs)
+
+
+def geometric_height_from_geopotential_height(*args, **kwargs):
+    return array.geometric_height_from_geopotential_height(*args, **kwargs)
+
+
+def geometric_height_from_geopotential(*args, **kwargs):
+    return array.geometric_height_from_geopotential(*args, **kwargs)
