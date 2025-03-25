@@ -19,7 +19,7 @@ from earthkit.meteo import constants
 def pressure_at_model_levels(
     A: NDArray[Any], B: NDArray[Any], sp: Union[float, NDArray[Any]]
 ) -> Tuple[NDArray[Any], NDArray[Any], NDArray[Any], NDArray[Any]]:
-    r"""Computes:
+    r"""Compute
      - pressure at the model full- and half-levels
      - delta: depth of log(pressure) at full levels
      - alpha: alpha term #TODO: more descriptive information.
@@ -103,7 +103,7 @@ def pressure_at_model_levels(
 
 
 def relative_geopotential_thickness(alpha: NDArray[Any], q: NDArray[Any], T: NDArray[Any]) -> NDArray[Any]:
-    """Calculates the geopotential thickness w.r.t the surface on model full-levels.
+    """Calculate the geopotential thickness w.r.t the surface on model full-levels.
 
     Parameters
     ----------
@@ -131,7 +131,7 @@ def relative_geopotential_thickness(alpha: NDArray[Any], q: NDArray[Any], T: NDA
 def pressure_at_height_level(
     height: float, q: NDArray[Any], T: NDArray[Any], sp: NDArray[Any], A: NDArray[Any], B: NDArray[Any]
 ) -> Union[float, NDArray[Any]]:
-    """Calculates the pressure at a height level given in meters above surface.
+    """Calculate the pressure at a height level given in meters above surface.
     This is done by finding the model level above and below the specified height
     and interpolating the pressure.
 
@@ -195,3 +195,151 @@ def pressure_at_height_level(
     p_height[~mask] = p_full[above] + factor * (p_full[below] - p_full[above])
 
     return p_height
+
+
+def geopotential_height_from_geopotential(z):
+    r"""Compute geopotential height from geopotential.
+
+    Parameters
+    ----------
+    z : ndarray
+        Geopotential (m2/s2)
+
+    Returns
+    -------
+    ndarray
+        Geopotential height (m)
+
+
+    The computation is based on the following definition:
+
+    .. math::
+
+        gh = \frac{z}{g}
+
+    where :math:`g` is the gravitational acceleration on the surface of
+    the Earth (see :py:attr:`meteo.constants.g`)
+    """
+    h = z / constants.g
+    return h
+
+
+def geopotential_height_from_geometric_height(h, R_earth=constants.R_earth):
+    r"""Compute the geopotential height from geometric height.
+
+    Parameters
+    ----------
+    h : ndarray
+        Geometric height with respect to the sea level (m)
+    R_earth : float, optional
+        Average radius of the Earth (m)
+
+    Returns
+    -------
+    ndarray
+        Geopotential height (m)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        gh = \frac{h\; R_{earth}}{R_{earth} + h}
+
+    where :math:`R_{earth}` is the average radius of the Earth (see :py:attr:`meteo.constants.R_earth`)
+    """
+    zh = h * R_earth / (R_earth + h)
+    return zh
+
+
+def geopotential_from_geometric_height(h, R_earth=constants.R_earth):
+    r"""Compute the geopotential from geometric height.
+
+    Parameters
+    ----------
+    h : ndarray
+        Geometric height with respect to the sea level (m)
+    R_earth : float, optional
+        Average radius of the Earth (m)
+
+    Returns
+    -------
+    ndarray
+        Geopotential (m2/s2)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        z = \frac{h\; g\; R_{earth}}{R_{earth} + h}
+
+    where
+
+        * :math:`R_{earth}` is the average radius of the Earth (see :py:attr:`meteo.constants.R_earth`)
+        * :math:`g` is the gravitational acceleration on the surface of
+          the Earth (see :py:attr:`meteo.constants.g`)
+    """
+    z = h * R_earth * constants.g / (R_earth + h)
+    return z
+
+
+def geometric_height_from_geopotential_height(gh, R_earth=constants.R_earth):
+    r"""Compute the geometric height from geopotential height.
+
+    Parameters
+    ----------
+    gh : ndarray
+        Geopotential height (m)
+    R_earth : float, optional
+        Average radius of the Earth (m)
+
+    Returns
+    -------
+    ndarray
+        Geometric height (m)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        h = \frac{R_{earth}\; gh}{R_{earth} - gh}
+
+    where :math:`R_{earth}` is the average radius of the Earth (see :py:attr:`meteo.constants.R_earth`)
+    """
+    h = R_earth * gh / (R_earth - gh)
+    return h
+
+
+def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
+    r"""Compute the geometric height from geopotential.
+
+    Parameters
+    ----------
+    z : ndarray
+        Geopotential (m2/s2)
+    R_earth : float, optional
+        Average radius of the Earth (m)
+
+    Returns
+    -------
+    ndarray
+        Geometric height (m)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        h = \frac{R_{earth} \frac{z}{g}}{R_{earth} - \frac{z}{g}}
+
+    where
+
+        * :math:`R_{earth}` is the average radius of the Earth (see :py:attr:`meteo.constants.R_earth`)
+        * :math:`g` is the gravitational acceleration on the surface of
+          the Earth (see :py:attr:`meteo.constants.g`)
+    """
+    z = z / constants.g
+    h = R_earth * z / (R_earth - z)
+    return h
