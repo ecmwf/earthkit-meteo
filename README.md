@@ -1,16 +1,42 @@
-# earthkit-meteo
+<p align="center">
+  <picture>
+    <source srcset="https://github.com/ecmwf/logos/raw/refs/heads/main/logos/earthkit/earthkit-meteo-dark.svg" media="(prefers-color-scheme: dark)">
+    <img src="https://github.com/ecmwf/logos/raw/refs/heads/main/logos/earthkit/earthkit-meteo-light.svg" height="120">
+  </picture>
+</p>
 
-<img src="https://github.com/ecmwf/logos/raw/refs/heads/main/logos/earthkit/earthkit-meteo-light.svg" width="160">
+<p align="center">
+  <a href="https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE">
+    <img src="https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE/foundation_badge.svg" alt="ECMWF Software EnginE">
+  </a>
+  <a href="https://github.com/ecmwf/codex/raw/refs/heads/main/Project Maturity">
+    <img src="https://github.com/ecmwf/codex/raw/refs/heads/main/Project Maturity/emerging_badge.svg" alt="Maturity Level">
+  </a>
+  <!-- <a href="https://codecov.io/gh/ecmwf/earthkit-hydro">
+    <img src="https://codecov.io/gh/ecmwf/earthkit-hydro/branch/develop/graph/badge.svg" alt="Code Coverage">
+  </a> -->
+  <a href="https://opensource.org/licenses/apache-2-0">
+    <img src="https://img.shields.io/badge/Licence-Apache 2.0-blue.svg" alt="Licence">
+  </a>
+  <a href="https://github.com/ecmwf/earthkit-regrid/releases">
+    <img src="https://img.shields.io/github/v/release/ecmwf/earthkit-regrid?color=purple&label=Release" alt="Latest Release">
+  </a>
+</p>
 
-[![PyPI version fury.io](https://badge.fury.io/py/earthkit-meteo.svg)](https://pypi.python.org/pypi/earthkit-meteo/)
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-meteo.svg)](https://pypi.python.org/pypi/earthkit-meteo/)
+<p align="center">
+  <a href="#quick-start">Quick Start</a>
+  •
+  <a href="#installation">Installation</a>
+  •
+  <a href="https://earthkit-meteo.readthedocs.io/en/latest/">Documentation</a>
+</p>
 
-**DISCLAIMER**
-This project is **BETA** and will be **Experimental** for the foreseeable future.
-Interfaces and functionality are likely to change, and the project itself may be scrapped.
-**DO NOT** use this software in any project/software that is operational.
+> \[!IMPORTANT\]
+> This software is **Emerging** and subject to ECMWF's guidelines on [Software Maturity](https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity).
 
-**earthkit-meteo** is a Python package providing meteorological computations using **numpy** input and output.
+**earthkit-meteo** is a Python package providing meteorological computations using **numpy** input and output. It is a component of [earthkit](https://github.com/ecmwf/earthkit).
+
+## Quick Start
 
 ```python
 from earthkit.meteo import thermo
@@ -22,9 +48,13 @@ p = np.array([850, 850]) * 100. # Pascals
 theta = thermo.potential_temperature(t, p)
 ```
 
-## Documentation
+## Installation
 
-The documentation can be found at https://earthkit-meteo.readthedocs.io/.
+Install from PyPI:
+
+```
+pip install earthkit-data
+```
 
 ## Install
 
@@ -44,10 +74,10 @@ $ conda install earthkit-meteo -c conda-forge
 
 This will bring in some necessary binary dependencies for you.
 
-## License
+## Licence
 
 ```
-Copyright 2022, European Centre for Medium Range Weather Forecasts.
+Copyright 2023, European Centre for Medium Range Weather Forecasts.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
