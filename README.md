@@ -50,14 +50,6 @@ theta = thermo.potential_temperature(t, p)
 
 ## Installation
 
-Install from PyPI:
-
-```
-pip install earthkit-data
-```
-
-## Install
-
 Install via `pip` with:
 
 ```
