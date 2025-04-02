@@ -18,8 +18,8 @@
   <a href="https://opensource.org/licenses/apache-2-0">
     <img src="https://img.shields.io/badge/Licence-Apache 2.0-blue.svg" alt="Licence">
   </a>
-  <a href="https://github.com/ecmwf/earthkit-regrid/releases">
-    <img src="https://img.shields.io/github/v/release/ecmwf/earthkit-regrid?color=purple&label=Release" alt="Latest Release">
+  <a href="https://github.com/ecmwf/earthkit-meteo/releases">
+    <img src="https://img.shields.io/github/v/release/ecmwf/earthkit-meteo?color=purple&label=Release" alt="Latest Release">
   </a>
 </p>
 
