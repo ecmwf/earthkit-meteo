@@ -107,3 +107,40 @@ def test_crps_quaver2(obs, ens, v_ref, array_backend):
         assert array_backend.isclose(c[i], v_ref[i]), f"i={i}"
 
     assert array_backend.isclose(xp.mean(c), xp.mean(v_ref))
+
+
+def _get_pearson_data():
+    here = os.path.dirname(__file__)
+    sys.path.insert(0, here)
+    from _pearson import SAMPLE_X
+    from _pearson import SAMPLE_Y
+
+    rs = np.array([1.0, -1.0, 0.0, 0.42, -0.13, np.nan])
+
+    SAMPLE_X = np.array(SAMPLE_X)
+    SAMPLE_Y = np.array(SAMPLE_Y)
+
+    crs = np.sqrt(1 - rs**2)
+    ymiss = SAMPLE_Y.copy()
+    ymiss[12:20] = np.nan
+    x = np.vstack([SAMPLE_X, SAMPLE_X, SAMPLE_X, SAMPLE_Y, SAMPLE_X, SAMPLE_X])
+    y = np.vstack(
+        [
+            SAMPLE_X,
+            -SAMPLE_X,
+            SAMPLE_Y,
+            crs[3] * SAMPLE_X + rs[3] * SAMPLE_Y,
+            rs[4] * SAMPLE_X + crs[4] * SAMPLE_Y,
+            ymiss,
+        ]
+    )
+    return x.tolist(), y.tolist(), rs.tolist()
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("x, y, v_ref", [_get_pearson_data()])
+def test_pearson(x, y, v_ref, array_backend):
+    x, y, v_ref = array_backend.asarray(x, y, v_ref)
+
+    r = score.pearson(x, y, axis=1)
+    np.testing.assert_allclose(r, v_ref, atol=1e-7)

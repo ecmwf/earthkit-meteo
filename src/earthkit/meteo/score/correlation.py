@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2024 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,10 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-# A collection of functions to support pytest testing
+from . import array
 
-# Array backends
-from earthkit.utils.testing import get_array_backend  # noqa: F401
-from earthkit.utils.testing import skip_array_backend  # noqa: F401
 
-ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy"], raise_on_missing=False)
+def pearson(*args, **kwargs):
+    return array.pearson(*args, **kwargs)
