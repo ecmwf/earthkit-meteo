@@ -10,8 +10,9 @@
 
 # import numpy as np
 
+from earthkit.utils.array import array_namespace
+
 from earthkit.meteo import constants
-from earthkit.meteo.utils.array import array_namespace
 
 # def _valid_number(x):
 #     return x is not None and not np.isnan(x)

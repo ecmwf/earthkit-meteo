@@ -12,8 +12,7 @@ from typing import List
 from typing import Union
 
 import numpy as np
-
-from earthkit.meteo.utils.array import array_namespace
+from earthkit.utils.array import array_namespace
 
 
 def iter_quantiles(

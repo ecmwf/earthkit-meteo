@@ -6,6 +6,7 @@ dependencies:
 - pip
 - numpy
 - pandas
+- earthkit-utils>=0.0.1
 - make
 - mypy
 - myst-parser

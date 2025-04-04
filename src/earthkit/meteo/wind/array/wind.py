@@ -7,8 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.utils.array import array_namespace
+
 from earthkit.meteo import constants
-from earthkit.meteo.utils.array import array_namespace
 
 
 def speed(u, v):

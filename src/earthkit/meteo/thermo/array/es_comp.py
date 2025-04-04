@@ -9,7 +9,7 @@
 
 # Methods implementing the computations related to saturation vapour pressure and its slope
 
-from earthkit.meteo.utils.array import array_namespace
+from earthkit.utils.array import array_namespace
 
 C1 = 611.21
 C3W = 17.502

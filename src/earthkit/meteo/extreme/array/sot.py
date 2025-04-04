@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.meteo.utils.array import array_namespace
+from earthkit.utils.array import array_namespace
 
 
 def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):

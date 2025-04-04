@@ -29,7 +29,7 @@ classifiers = [
 ]
 dynamic = [ "version" ]
 dependencies = [
-  "array-api-compat>=1.10",
+  "earthkit-utils>=0.0.1",
   "numpy",
 ]
 optional-dependencies.test = [

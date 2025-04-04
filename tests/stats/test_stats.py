@@ -151,7 +151,7 @@ def test_quantiles_core(data, which, kwargs, v_ref, method, array_backend):
 # TODO: reimplement this test to use reference values
 # TODO: this! test fails with cupy. The reason is that cupy.quantile works differently
 #       than np.quantile when nans are present
-@pytest.mark.parametrize("array_backend", skip_array_backend("cupy"))
+@pytest.mark.parametrize("array_backend", skip_array_backend(ARRAY_BACKENDS, "cupy"))
 @pytest.mark.parametrize("arr", [_get_quantile_data()])
 def test_quantiles_nans(arr, array_backend):
     arr = array_backend.asarray(arr)

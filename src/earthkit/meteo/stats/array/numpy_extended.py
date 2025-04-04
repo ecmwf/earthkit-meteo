@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.meteo.utils.array import array_namespace
+from earthkit.utils.array import array_namespace
 
 
 def nanaverage(data, weights=None, **kwargs):

@@ -10,7 +10,7 @@
 # import numba
 # from numba import float64, float32
 
-from earthkit.meteo.utils.array import array_namespace
+from earthkit.utils.array import array_namespace
 
 
 def efi(clim, ens, eps=-0.1):
