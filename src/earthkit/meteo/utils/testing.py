@@ -10,7 +10,6 @@
 # A collection of functions to support pytest testing
 
 # Array backends
-from earthkit.utils.testing import get_array_backend  # noqa: F401
-from earthkit.utils.testing import skip_array_backend  # noqa: F401
+from earthkit.utils.testing import get_array_backend
 
 ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy"], raise_on_missing=False)

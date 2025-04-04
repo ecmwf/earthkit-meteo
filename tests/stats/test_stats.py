@@ -12,10 +12,10 @@ import sys
 
 import numpy as np
 import pytest
+from earthkit.utils.testing import skip_array_backend
 
 from earthkit.meteo import stats
 from earthkit.meteo.utils.testing import ARRAY_BACKENDS
-from earthkit.meteo.utils.testing import skip_array_backend
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
