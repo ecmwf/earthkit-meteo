@@ -31,8 +31,8 @@ def pearson(x, y, axis=0):
     assert x.shape == y.shape
     x = x - xp.mean(x, axis=axis, keepdims=True)
     y = y - xp.mean(y, axis=axis, keepdims=True)
-    x /= xp.linalg.norm(x, axis=axis, keepdims=True)
-    y /= xp.linalg.norm(y, axis=axis, keepdims=True)
+    x /= xp.linalg.vector_norm(x, axis=axis, keepdims=True)
+    y /= xp.linalg.vector_norm(y, axis=axis, keepdims=True)
     x *= y
     return xp.sum(x, axis=axis)
 
