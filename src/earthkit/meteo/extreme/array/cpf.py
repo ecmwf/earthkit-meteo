@@ -7,15 +7,19 @@
 # nor does it submit to any jurisdiction.
 #
 
-import numpy as np
+from earthkit.utils.array import array_namespace
 
 
 def _cpf(clim, ens, epsilon=None):
+    xp = array_namespace(clim, ens)
+    clim = xp.asarray(clim)
+    ens = xp.asarray(ens)
+
     nclim, npoints = clim.shape
     nens, _ = ens.shape
 
-    cpf = np.ones(npoints, dtype=np.float32)
-    mask = np.zeros(npoints, dtype=np.bool_)
+    cpf = xp.ones(npoints, dtype=xp.float32)
+    mask = xp.zeros(npoints, dtype=xp.bool)
 
     for icl in range(1, nclim - 1):
         # quantile level of climatology
@@ -43,7 +47,7 @@ def _cpf(clim, ens, epsilon=None):
                     )
 
                     # populate matrix, no values below 0
-                    cpf[idx] = np.maximum(tau_i, 0)
+                    cpf[idx] = xp.maximum(tau_i, xp.asarray(0))
                     mask[idx] = True
 
                 # check crossing cases
@@ -63,7 +67,7 @@ def _cpf(clim, ens, epsilon=None):
                     )
 
                     # populate matrix, no values above 1
-                    cpf[idx] = np.minimum(tau_i, 1)
+                    cpf[idx] = xp.minimum(tau_i, xp.asarray(1))
 
                 # speed up process
                 break
@@ -83,9 +87,9 @@ def cpf(clim, ens, sort_clim=True, sort_ens=True, epsilon=None, symmetric=False)
 
     Parameters
     ----------
-    clim: numpy array (nclim, npoints)
+    clim: array-like (nclim, npoints)
         Per-point climatology
-    ens: numpy array (nens, npoints)
+    ens: array-like (nens, npoints)
         Ensemble forecast
     sort_clim: bool
         If True, sort the climatology first
@@ -100,17 +104,21 @@ def cpf(clim, ens, sort_clim=True, sort_ens=True, epsilon=None, symmetric=False)
 
     Returns
     -------
-    numpy array (npoints)
+    array-like (npoints)
         CPF values
     """
+    xp = array_namespace(clim, ens)
+    clim = xp.asarray(clim)
+    ens = xp.asarray(ens)
+
     _, npoints = clim.shape
     _, npoints_ens = ens.shape
     assert npoints == npoints_ens
 
     if sort_clim:
-        clim = np.sort(clim, axis=0)
+        clim = xp.sort(clim, axis=0)
     if sort_ens:
-        ens = np.sort(ens, axis=0)
+        ens = xp.sort(ens, axis=0)
 
     if symmetric:
         epsilon = None

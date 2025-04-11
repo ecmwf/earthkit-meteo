@@ -7,61 +7,71 @@
 # nor does it submit to any jurisdiction.
 #
 
-import numpy as np
+from earthkit.utils.array import array_namespace
 
 from earthkit.meteo import constants
 
 
 def speed(u, v):
-    r"""Computes the wind speed/vector magnitude.
+    r"""Compute the wind speed/vector magnitude.
 
     Parameters
     ----------
-    u: number or ndarray
+    u: array-like
         u wind/x vector component
-    v: number or ndarray
+    v: array-like
         v wind/y vector component (same units as ``u``)
 
     Returns
     -------
-    number or ndarray
+    array-like
         Wind speed/magnitude (same units as ``u`` and ``v``)
 
     """
-    return np.hypot(u, v)
+    xp = array_namespace(u, v)
+    u = xp.asarray(u)
+    v = xp.asarray(v)
+    return xp.hypot(u, v)
 
 
 def _direction_meteo(u, v):
-    minus_pi2 = -np.pi / 2.0
-    d = np.arctan2(v, u)
-    d = np.asarray(d)
+    xp = array_namespace(u, v)
+    u = xp.asarray(u)
+    v = xp.asarray(v)
+
+    minus_pi2 = -xp.pi / 2.0
+    d = xp.arctan2(v, u)
+    d = xp.asarray(d)
     m = d <= minus_pi2
     d[m] = (minus_pi2 - d[m]) * constants.degree
     m = ~m
-    d[m] = (1.5 * np.pi - d[m]) * constants.degree
+    d[m] = (1.5 * xp.pi - d[m]) * constants.degree
     return d
 
 
 def _direction_polar(u, v, to_positive):
-    d = np.arctan2(v, u) * constants.degree
+    xp = array_namespace(u, v)
+    u = xp.asarray(u)
+    v = xp.asarray(v)
+    d = xp.arctan2(v, u) * constants.degree
     if to_positive:
-        d = np.asarray(d)
+        d = xp.asarray(d)
         m = d < 0
         d[m] = 360.0 + d[m]
     return d
 
 
 def direction(u, v, convention="meteo", to_positive=True):
-    r"""Computes the direction/angle of a vector quantity.
+    r"""Compute the direction/angle of a vector quantity.
 
     Parameters
     ----------
-    u: number or ndarray
+    u: array-like
         u wind/x vector component
-    v: number or ndarray
+    v: array-like
         v wind/y vector component (same units as ``u``)
     convention: str, optional
-        Specifies how the direction/angle is interpreted. The possible values are as follows:
+        Specify how the direction/angle is interpreted. The possible values are as follows:
 
         * "meteo": the direction is the meteorological wind direction (see below for explanation)
         * "polar": the direction is measured anti-clockwise from the x axis (East/right) to the vector
@@ -73,7 +83,7 @@ def direction(u, v, convention="meteo", to_positive=True):
 
     Returns
     -------
-    number or ndarray
+    array-like
         Direction/angle (degrees)
 
 
@@ -95,16 +105,16 @@ def direction(u, v, convention="meteo", to_positive=True):
 
 
 def xy_to_polar(x, y, convention="meteo"):
-    r"""Converts wind/vector data from xy representation to polar representation.
+    r"""Convert wind/vector data from xy representation to polar representation.
 
     Parameters
     ----------
-    x: number or ndarray
+    x: array-like
         u wind/x vector component
-    y: number or ndarray
+    y: array-like
         v wind/y vector component (same units as ``u``)
     convention: str
-        Specifies how the direction/angle component of the target polar coordinate
+        Specify how the direction/angle component of the target polar coordinate
         system is interpreted. The possible values are as follows:
 
         * "meteo": the direction is the meteorological wind direction (see :func:`direction` for explanation)
@@ -113,9 +123,9 @@ def xy_to_polar(x, y, convention="meteo"):
 
     Returns
     -------
-    number or ndarray
+    array-like
         Magnitude (same units as ``u``)
-    number or ndarray
+    array-like
         Direction (degrees)
 
 
@@ -126,26 +136,34 @@ def xy_to_polar(x, y, convention="meteo"):
 
 
 def _polar_to_xy_meteo(magnitude, direction):
+    xp = array_namespace(magnitude, direction)
+    magnitude = xp.asarray(magnitude)
+    direction = xp.asarray(direction)
+
     a = (270.0 - direction) * constants.radian
-    return magnitude * np.cos(a), magnitude * np.sin(a)
+    return magnitude * xp.cos(a), magnitude * xp.sin(a)
 
 
 def _polar_to_xy_polar(magnitude, direction):
+    xp = array_namespace(magnitude, direction)
+    magnitude = xp.asarray(magnitude)
+    direction = xp.asarray(direction)
+
     a = direction * constants.radian
-    return magnitude * np.cos(a), magnitude * np.sin(a)
+    return magnitude * xp.cos(a), magnitude * xp.sin(a)
 
 
 def polar_to_xy(magnitude, direction, convention="meteo"):
-    r"""Converts wind/vector data from polar representation to xy representation.
+    r"""Convert wind/vector data from polar representation to xy representation.
 
     Parameters
     ----------
-    magnitude: number or ndarray
+    magnitude: array-like
         Speed/magnitude of the vector
-    direction: number or ndarray
+    direction: array-like
         Direction of the vector (degrees)
     convention: str
-        Specifies how ``direction`` is interpreted. The possible values are as follows:
+        Specify how ``direction`` is interpreted. The possible values are as follows:
 
         * "meteo": ``direction`` is the meteorological wind direction
           (see :func:`direction` for explanation)
@@ -154,9 +172,9 @@ def polar_to_xy(magnitude, direction, convention="meteo"):
 
     Returns
     -------
-    number or ndarray
+    array-like
         X vector component (same units as ``magnitude``)
-    number or ndarray
+    array-like
         Y vector component (same units as ``magnitude``)
 
 
@@ -172,20 +190,20 @@ def polar_to_xy(magnitude, direction, convention="meteo"):
 
 
 def w_from_omega(omega, t, p):
-    r"""Computes the hydrostatic vertical velocity from pressure velocity, temperature and pressure.
+    r"""Compute the hydrostatic vertical velocity from pressure velocity, temperature and pressure.
 
     Parameters
     ----------
-    omega : number or ndarray
+    omega : array-like
         Hydrostatic pressure velocity (Pa/s)
-    t : number or ndarray
+    t : array-like
         Temperature (K)
-    p : number or ndarray
+    p : array-like
         Pressure (Pa)
 
     Returns
     -------
-    number or ndarray
+    array-like
         Hydrostatic vertical velocity (m/s)
 
 
@@ -205,16 +223,16 @@ def w_from_omega(omega, t, p):
 
 
 def coriolis(lat):
-    r"""Computes the Coriolis parameter.
+    r"""Compute the Coriolis parameter.
 
     Parameters
     ----------
-    lat : number or ndarray
+    lat : array-like
         Latitude (degrees)
 
     Returns
     -------
-    number or ndarray
+    array-like
         The Coriolis parameter (:math:`s^{-1}`)
 
 
@@ -228,22 +246,24 @@ def coriolis(lat):
     (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
 
     """
-    return 2 * constants.omega * np.sin(lat * constants.radian)
+    xp = array_namespace(lat)
+    lat = xp.asarray(lat)
+    return 2 * constants.omega * xp.sin(lat * constants.radian)
 
 
-def windrose(speed, direction, sectors=16, speed_bins=[], percent=True):
+def windrose(speed, direction, sectors=16, speed_bins=None, percent=True):
     """Generate windrose data.
 
     Parameters
     ----------
-    speed : number or ndarray
+    speed : array-like
         Speed
-    direction : number or ndarray
+    direction : array-like
         Meteorological wind direction (degrees). See :func:`direction` for details.
         Values must be between 0 and 360.
     sectors: number
         Number of sectors the 360 degrees direction range is split into. See below for details.
-    speed_bin: list or ndarray
+    speed_bin: array-like
         Speed bins
     percent: bool
         If False, returns the number of valid samples in each bin. If True, returns
@@ -253,12 +273,12 @@ def windrose(speed, direction, sectors=16, speed_bins=[], percent=True):
 
     Returns
     -------
-    2d-ndarray
+    2d array-like
        The bi-dimensional histogram of ``speed`` and ``direction``.  Values in
        ``speed`` are histogrammed along the first dimension and values in ``direction``
        are histogrammed along the second dimension.
 
-    ndarray
+    array-like
         The direction bins (i.e. the sectors) (degrees)
 
 
@@ -269,6 +289,8 @@ def windrose(speed, direction, sectors=16, speed_bins=[], percent=True):
         :width: 350px
 
     """
+    speed_bins = speed_bins if speed_bins is not None else []
+
     if len(speed_bins) < 2:
         raise ValueError("windrose(): speed_bins must have at least 2 elements!")
 
@@ -276,12 +298,27 @@ def windrose(speed, direction, sectors=16, speed_bins=[], percent=True):
     if sectors < 1:
         raise ValueError("windrose(): sectors must be greater than 1!")
 
-    speed = np.atleast_1d(speed)
-    direction = np.atleast_1d(direction)
-    dir_step = 360.0 / sectors
-    dir_bins = np.linspace(int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2)
+    xp = array_namespace(speed, direction)
 
-    res = np.histogram2d(speed, direction, bins=[speed_bins, dir_bins], density=False)[0]
+    # TODO: atleast_1d is not part of the array API standard
+    speed = xp.atleast_1d(speed)
+    direction = xp.atleast_1d(direction)
+
+    dir_step = 360.0 / sectors
+    dir_bins = xp.asarray(
+        xp.linspace(int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2), dtype=speed.dtype
+    )
+    speed_bins = xp.asarray(speed_bins, dtype=speed.dtype)
+
+    # NOTE: np.histogram2d is only available in numpy. For other namespaces we use a fallback implementation
+    # based on histogramdd. (See utils.compute.histogram2d). However, neither histogram2d nor
+    # histogramdd are part of the array API standard.
+    res = xp.histogram2d(
+        speed,
+        direction,
+        bins=[speed_bins, dir_bins],
+        density=False,
+    )[0]
 
     # unify the north bins
     res[:, 0] = res[:, 0] + res[:, -1]
