@@ -1676,19 +1676,32 @@ def wet_bulb_potential_temperature_from_specific_humidity(t, q, p, ept_method="i
 
 
 def specific_gas_constant(q):
-    """Computes the specific gas constant of moist air.
-    (specific content of cloud particles and hydrometeors are neglected).
+    r"""Compute the specific gas constant of moist air.
+
+    Specific content of cloud particles and hydrometeors are neglected.
 
     Parameters
     ----------
-    q : number or ndarray
+    q: number or array-like
         Specific humidity (kg/kg)
 
     Returns
     -------
-    number or ndarray
-        specific gas constant of moist air
-    """
+    number or array-like
+        Specific gas constant of moist air (J kg-1 K-1)
 
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        R = R_{d} + (R_{v} - R_{d}) q
+
+    where:
+
+        * :math:`R_{d}` is the gas constant for dry air (see :data:`earthkit.meteo.constants.Rd`)
+        * :math:`R_{v}` is the gas constant for water vapour (see :data:`earthkit.meteo.constants.Rv`)
+
+    """
     R = constants.Rd + (constants.Rv - constants.Rd) * q
     return R

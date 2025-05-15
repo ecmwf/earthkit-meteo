@@ -808,3 +808,17 @@ def test_wet_bulb_potential_temperature(ept_method, t_method, array_backend):
     assert array_backend.allclose(
         pt, v_ref, rtol=1e-03, atol=0, equal_nan=True
     ), f"q {ept_method=} {t_method=}"
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "q,v_ref",
+    [
+        ([0.0, 0.0196078431, 0.0291262136], [287.0597, 290.4802941111, 292.1407767004]),
+        (0.0196078431, 290.4802941111),
+    ],
+)
+def test_specific_gas_constant(q, v_ref, array_backend):
+    q, v_ref = array_backend.asarray(q, v_ref)
+    r = thermo.array.specific_gas_constant(q)
+    assert array_backend.allclose(r, v_ref)
