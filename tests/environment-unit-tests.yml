@@ -5,6 +5,7 @@ channels:
 dependencies:
 - pip
 - numpy
+- earthkit-utils>=0.0.1
 - make
 - mypy
 - myst-parser

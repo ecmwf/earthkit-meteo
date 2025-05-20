@@ -7,13 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Verification functions.
+# A collection of functions to support pytest testing
 
-The API is split into two levels. The low level functions are in the ``array`` submodule and they
-can be used to operate on numpy arrays. The high level functions are still to be developed and
-planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets*.
-"""
+# Array backends
+from earthkit.utils.testing import get_array_backend
 
-from .correlation import *  # noqa
-from .crps import *  # noqa
+ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy"], raise_on_missing=False)
