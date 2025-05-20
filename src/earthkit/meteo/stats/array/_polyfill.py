@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-import numpy as np
+from earthkit.utils.array import array_namespace
 
 
 # Replacement for scipy.stats.lmoment from scipy v0.15
@@ -20,15 +20,16 @@ def lmoment(sample, order=(1, 2), axis=0):
 
     nmoments = 3
 
-    sample = np.asarray(sample)
+    xp = array_namespace(sample)
+    sample = xp.asarray(sample)
     # At least four values needed to make a sample L-moments estimation
     nvalues, *rest_shape = sample.shape
     if nvalues < 4:
         raise ValueError("Insufficient number of values to perform sample L-moments estimation")
 
-    sample = np.sort(sample, axis=0)  # ascending order
+    sample = xp.sort(sample, axis=0)  # ascending order
 
-    sums = np.zeros_like(sample, shape=(nmoments, *rest_shape))
+    sums = xp.zeros_like(sample, shape=(nmoments, *rest_shape))
 
     for i in range(1, nvalues + 1):
         z = i
@@ -61,4 +62,4 @@ def lmoment(sample, order=(1, 2), axis=0):
         sums[k - 1] = temp
         k = k - 1
 
-    return np.stack([sums[0], sums[1]])
+    return xp.stack([sums[0], sums[1]])

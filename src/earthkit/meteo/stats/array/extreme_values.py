@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-import numpy as np
+from earthkit.utils.array import array_namespace
 
 try:
     from scipy.stats import lmoment
@@ -15,8 +15,10 @@ except ImportError:
     from ._polyfill import lmoment
 
 
-def _expand_dims_after(arr, ndim):
-    return np.expand_dims(arr, axis=list(range(-ndim, 0)))
+def _expand_dims_after(arr, ndim, xp=None):
+    if xp is None:
+        xp = array_namespace(arr)
+    return xp.expand_dims(xp.asarray(arr), axis=list(range(-ndim, 0)))
 
 
 class GumbelDistribution:
@@ -35,7 +37,8 @@ class GumbelDistribution:
     """
 
     def __init__(self, mu, sigma, freq=None):
-        self.mu, self.sigma = np.broadcast_arrays(mu, sigma)
+        xp = array_namespace(mu, sigma)
+        self.mu, self.sigma = xp.broadcast_arrays(xp.asarray(mu), xp.asarray(sigma))
         self.freq = freq
 
     @classmethod
@@ -54,8 +57,9 @@ class GumbelDistribution:
         freq: None | Number | timedelta
             Temporal frequency (duration between values) of the sample.
         """
+        xp = array_namespace(sample)
         lmom = lmoment(sample, axis=axis, order=[1, 2])
-        sigma = lmom[1] / np.log(2)
+        sigma = lmom[1] / xp.log(2)
         mu = lmom[0] - sigma * 0.5772
         return cls(mu, sigma, freq=freq)
 
@@ -83,8 +87,9 @@ class GumbelDistribution:
             The probability that a random variable X from the distribution is
             less than or equal to the input x.
         """
-        x = _expand_dims_after(x, self.ndim)
-        return 1.0 - np.exp(-np.exp((self.mu - x) / self.sigma))
+        xp = array_namespace(x, self.mu, self.sigma)
+        x = _expand_dims_after(x, self.ndim, xp=xp)
+        return 1.0 - xp.exp(-xp.exp((xp.asarray(self.mu) - x) / xp.asarray(self.sigma)))
 
     def ppf(self, p):
         """Evaluate the percent point function (PPF; inverse CDF).
@@ -100,8 +105,9 @@ class GumbelDistribution:
             x such that the probability of a random variable from the
             distribution taking a value less than or equal to x is p.
         """
-        p = _expand_dims_after(p, self.ndim)
-        return self.mu - self.sigma * np.log(-np.log(1.0 - p))
+        xp = array_namespace(p, self.mu, self.sigma)
+        p = _expand_dims_after(p, self.ndim, xp=xp)
+        return xp.asarray(self.mu) - xp.asarray(self.sigma) * xp.log(-xp.log(1.0 - p))
 
 
 def value_to_return_period(dist, value):
