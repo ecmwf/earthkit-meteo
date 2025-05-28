@@ -10,7 +10,7 @@
 from earthkit.utils.array import array_namespace
 
 
-def crps(x, y):
+def crps(x, y, nan_policy='propagate'):
     """Compute Continuous Ranked Probability Score (CRPS).
 
     Parameters
@@ -34,6 +34,14 @@ def crps(x, y):
 
     # first sort ensemble
     x = xp.sort(x, axis=0)
+
+    isnan_mask = xp.any(xp.isnan(x), axis=0) | xp.isnan(y)
+
+    if nan_policy=='raise' and xp.any(isnan_mask):
+        raise ValueError(f"Missing values present in input and nan_policy={nan_policy}")
+    elif nan_policy=='omit':
+        x = x[..., ~isnan_mask]
+        y = y[~isnan_mask]
 
     # construct alpha and beta, size nens+1
     n_ens = x.shape[0]
@@ -60,5 +68,8 @@ def crps(x, y):
     # compute crps
     p_exp = xp.reshape(xp.arange(n_ens + 1) / float(n_ens), (n_ens + 1, *([1] * y.ndim)))
     crps = xp.sum(alpha * (p_exp**2) + beta * ((1 - p_exp) ** 2), axis=0)
+
+    if nan_policy=='propagate':
+        crps[isnan_mask] = xp.nan
 
     return crps
