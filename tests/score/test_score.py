@@ -82,17 +82,55 @@ def _get_crps_data():
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("nan_policy", ["raise", "propagate", "omit"])
 @pytest.mark.parametrize("obs,ens,v_ref", [_get_crps_data()])
-def test_crps_meteo(obs, ens, v_ref, array_backend):
+def test_crps_meteo(obs, ens, v_ref, array_backend, nan_policy):
     obs, ens, v_ref = array_backend.asarray(obs, ens, v_ref)
     xp = array_backend.namespace
 
-    c = score.crps(ens.T, obs[0])
+    c = score.crps(ens.T, obs[0], nan_policy)
 
     for i in range(ens.shape[0]):
         assert array_backend.isclose(c[i], v_ref[i]), f"i={i}"
 
     assert array_backend.isclose(xp.mean(c), xp.mean(v_ref))
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("nan_policy", ["raise", "propagate", "omit"])
+@pytest.mark.parametrize("obs,ens,v_ref", [_get_crps_data()])
+def test_crps_meteo_missing(obs, ens, v_ref, array_backend, nan_policy):
+    obs, ens, v_ref = array_backend.asarray(obs, ens, v_ref)
+    xp = array_backend.namespace
+
+    ens = ens.T
+    obs = obs[0]
+    obs[::2] = xp.nan
+    ens[0, ::3] = xp.nan
+
+    nan_mask = xp.any(xp.isnan(ens), axis=0) | xp.isnan(obs)
+
+    if nan_policy == "raise":
+        with pytest.raises(ValueError):
+            score.crps(ens, obs, nan_policy)
+    else:
+        c_all = score.crps(ens, obs, nan_policy)
+        c_non_missing = score.crps(ens[..., ~nan_mask], obs[~nan_mask])
+
+        if nan_policy == "omit":
+            for i in range(c_all.shape[0]):
+                assert array_backend.isclose(c_all[i], c_non_missing[i])
+        elif nan_policy == "propagate":
+            j = 0
+            for i in range(c_all.shape[0]):
+                if nan_mask[i]:
+                    assert xp.isnan(c_all[i])
+                else:
+                    assert array_backend.isclose(c_all[i], c_non_missing[j])
+                    j += 1
+
+        non_missing_crps = c_all[~xp.isnan(c_all)]
+        assert array_backend.isclose(xp.mean(non_missing_crps), xp.mean(c_non_missing))
 
 
 @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
