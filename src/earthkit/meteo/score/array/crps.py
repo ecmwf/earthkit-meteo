@@ -19,6 +19,9 @@ def crps(x, y, nan_policy="propagate"):
         Ensemble forecast
     y: array-like (n_points)
         Observation/analysis
+    nan_policy: str
+        Determines how to handle nans.
+        Options are 'raise', 'propagate', or 'omit'.
 
     Returns
     -------
@@ -28,6 +31,9 @@ def crps(x, y, nan_policy="propagate"):
 
     The method is described in [Hersbach2000]_.
     """
+    if nan_policy not in ["raise", "propagate", "omit"]:
+        raise ValueError("Invalid argument: nan_policy must be 'raise', 'propagate', or 'omit'.")
+
     xp = array_namespace(x, y)
     x = xp.asarray(x)
     y = xp.asarray(y)
