@@ -11,6 +11,24 @@ import numpy as np
 import pytest
 
 from earthkit.meteo import vertical
+from earthkit.meteo.utils.testing import ARRAY_BACKENDS
+from earthkit.meteo.utils.testing import NUMPY_BACKEND
+
+np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
+
+
+def _get_data():
+    import os
+    import sys
+
+    here = os.path.dirname(__file__)
+    sys.path.insert(0, here)
+    import _vertical_data
+
+    return _vertical_data
+
+
+DATA = _get_data()
 
 
 @pytest.mark.parametrize(
@@ -85,20 +103,74 @@ def test_geometric_height_from_geopotential(z, expected_value):
     assert np.allclose(r, expected_value)
 
 
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "zh,expected_value",
     [
-        (0, 0),
-        (5000, 5003.9269715243),
-        ([1000, 5000, 7000], [1000.1569802279, 5003.9269715243, 7007.6992829768]),
+        (0.0, 0.0),
+        (5000.0, 5003.9269715243),
+        ([1000.0, 5000.0, 7000.0], [1000.1569802279, 5003.9269715243, 7007.6992829768]),
     ],
 )
-def test_geometric_height_from_geopotential_height(zh, expected_value):
-    if isinstance(zh, list):
-        zh = np.asarray(zh)
+def test_geometric_height_from_geopotential_height(zh, expected_value, array_backend):
+    zh, expected_value = array_backend.asarray(zh, expected_value)
 
     r = vertical.geometric_height_from_geopotential_height(zh)
+    assert array_backend.allclose(r, expected_value)
 
-    r = np.asarray(r)
-    expected_value = np.asarray(expected_value)
-    assert np.allclose(r, expected_value)
+
+@pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
+def test_pressure_at_model_levels(array_backend):
+    sp = 100000.0  # surface pressure in Pa
+
+    A = DATA.A
+    B = DATA.B
+    ref_p_full = DATA.p_full
+    ref_p_half = DATA.p_half
+    ref_delta = DATA.delta
+    ref_alpha = DATA.alpha
+
+    sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B = array_backend.asarray(
+        sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B
+    )
+
+    p_full, p_half, delta, alpha = vertical.pressure_at_model_levels(A, B, sp)
+
+    assert array_backend.allclose(p_full, ref_p_full)
+    assert array_backend.allclose(p_half, ref_p_half)
+    assert array_backend.allclose(delta, ref_delta)
+    assert array_backend.allclose(alpha, ref_alpha)
+
+
+@pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
+def test_relative_geopotential_thickness(array_backend):
+
+    A = DATA.A
+    B = DATA.B
+    alpha = DATA.alpha
+    t = DATA.t
+    q = DATA.q
+    z_ref = DATA.z
+
+    z_ref, t, q, alpha, A, B = array_backend.asarray(z_ref, t, q, alpha, A, B)
+
+    z = vertical.relative_geopotential_thickness(alpha, q, t)
+
+    assert array_backend.allclose(z, z_ref)
+
+
+@pytest.mark.skipif(True, reason="Method needs to be fixed")
+@pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
+def test_pressure_at_height_level(array_backend):
+    sp = 100000.0  # surface pressure in Pa
+    h = 5000.0  # height in meters above surface
+    A = DATA.A
+    B = DATA.B
+    t = DATA.t
+    q = DATA.q
+
+    sp, h, t, q, A, B = array_backend.asarray(sp, h, t, q, A, B)
+
+    vertical.pressure_at_height_level(h, q, t, sp, A, B)
+
+    # print(p)

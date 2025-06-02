@@ -119,7 +119,7 @@ def relative_geopotential_thickness(alpha: NDArray[Any], q: NDArray[Any], T: NDA
     ndarray
         geopotential thickness of model full-levels w.r.t. the surface
     """
-    from earthkit.meteo import specific_gas_constant
+    from earthkit.meteo.thermo import specific_gas_constant
 
     R = specific_gas_constant(q)
     dphi = np.cumsum(np.flip(alpha * R * T, axis=0), axis=0)
