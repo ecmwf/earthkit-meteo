@@ -119,7 +119,7 @@ def relative_geopotential_thickness(alpha: NDArray[Any], q: NDArray[Any], T: NDA
     ndarray
         geopotential thickness of model full-levels w.r.t. the surface
     """
-    from earthkit.meteo import specific_gas_constant
+    from earthkit.meteo.thermo import specific_gas_constant
 
     R = specific_gas_constant(q)
     dphi = np.cumsum(np.flip(alpha * R * T, axis=0), axis=0)
@@ -183,13 +183,19 @@ def pressure_at_height_level(
 
     # define some indices for masking and readability
     i_lev = alpha.shape[0] - i_phi - 1  # convert phi index to model level index
+    i_lev = i_phi
     indices = np.indices(i_lev.shape)
     masked_indices = tuple(dim[~mask] for dim in indices)
     above = (i_lev[~mask],) + masked_indices
     below = (i_lev[~mask] + 1,) + masked_indices
 
+    print(f"{above=} {below=}")
+
     dphi_above = dphi[above]
     dphi_below = dphi[below]
+
+    print(f"{dphi_above=} {dphi_below=}")
+    print(dphi_above / 9.81, dphi_below / 9.81)
 
     factor = (tdphi - dphi_above) / (dphi_below - dphi_above)
     p_height[~mask] = p_full[above] + factor * (p_full[below] - p_full[above])
