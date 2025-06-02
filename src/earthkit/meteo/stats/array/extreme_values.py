@@ -50,7 +50,7 @@ class GumbelDistribution:
 
         Parameters
         ----------
-        sample: array_like
+        sample: numpy.ndarray
             Sample values.
         axis: int
             The axis along which to compute the parameters.
