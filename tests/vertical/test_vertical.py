@@ -148,7 +148,7 @@ def test_relative_geopotential_thickness(array_backend):
     assert array_backend.allclose(z, z_ref)
 
 
-@pytest.mark.skipif(True, reason="Method needs to be fixed")
+# @pytest.mark.skipif(True, reason="Method needs to be fixed")
 @pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
 def test_pressure_at_height_level(array_backend):
     sp = 100000.0  # surface pressure in Pa
@@ -160,4 +160,9 @@ def test_pressure_at_height_level(array_backend):
 
     sp, h, t, q, A, B = array_backend.asarray(sp, h, t, q, A, B)
 
-    vertical.pressure_at_height_level(h, q, t, sp, A, B)
+    # xp = array_backend.namespace
+    # t = xp.flip(t)
+    # q = xp.flip(q)
+
+    p = vertical.pressure_at_height_level(h, q, t, sp, A, B)
+    print("p", p)

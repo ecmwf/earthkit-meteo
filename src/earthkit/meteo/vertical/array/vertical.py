@@ -189,13 +189,8 @@ def pressure_at_height_level(
     above = (i_lev[~mask],) + masked_indices
     below = (i_lev[~mask] + 1,) + masked_indices
 
-    print(f"{above=} {below=}")
-
     dphi_above = dphi[above]
     dphi_below = dphi[below]
-
-    print(f"{dphi_above=} {dphi_below=}")
-    print(dphi_above / 9.81, dphi_below / 9.81)
 
     factor = (tdphi - dphi_above) / (dphi_below - dphi_above)
     p_height[~mask] = p_full[above] + factor * (p_full[below] - p_full[above])
@@ -208,12 +203,12 @@ def geopotential_height_from_geopotential(z):
 
     Parameters
     ----------
-    z : ndarray
+    z : array-like
         Geopotential (m2/s2)
 
     Returns
     -------
-    ndarray
+    array-like
         Geopotential height (m)
 
 
@@ -235,14 +230,14 @@ def geopotential_height_from_geometric_height(h, R_earth=constants.R_earth):
 
     Parameters
     ----------
-    h : ndarray
+    h : array-like
         Geometric height with respect to the sea level (m)
     R_earth : float, optional
         Average radius of the Earth (m)
 
     Returns
     -------
-    ndarray
+    array-like
         Geopotential height (m)
 
 
@@ -263,14 +258,14 @@ def geopotential_from_geometric_height(h, R_earth=constants.R_earth):
 
     Parameters
     ----------
-    h : ndarray
+    h : array-like
         Geometric height with respect to the sea level (m)
     R_earth : float, optional
         Average radius of the Earth (m)
 
     Returns
     -------
-    ndarray
+    array-like
         Geopotential (m2/s2)
 
 
@@ -295,14 +290,14 @@ def geometric_height_from_geopotential_height(gh, R_earth=constants.R_earth):
 
     Parameters
     ----------
-    gh : ndarray
+    gh : array-like
         Geopotential height (m)
     R_earth : float, optional
         Average radius of the Earth (m)
 
     Returns
     -------
-    ndarray
+    array-like
         Geometric height (m)
 
 
@@ -323,14 +318,14 @@ def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
 
     Parameters
     ----------
-    z : ndarray
+    z : array-like
         Geopotential (m2/s2)
     R_earth : float, optional
         Average radius of the Earth (m)
 
     Returns
     -------
-    ndarray
+    array-like
         Geometric height (m)
 
 
