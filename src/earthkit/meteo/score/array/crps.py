@@ -10,7 +10,7 @@
 from earthkit.utils.array import array_namespace
 
 
-def crps(x, y):
+def crps(x, y, nan_policy="propagate"):
     """Compute Continuous Ranked Probability Score (CRPS).
 
     Parameters
@@ -19,6 +19,9 @@ def crps(x, y):
         Ensemble forecast
     y: array-like (n_points)
         Observation/analysis
+    nan_policy: str
+        Determines how to handle nans.
+        Options are 'raise', 'propagate', or 'omit'.
 
     Returns
     -------
@@ -28,12 +31,23 @@ def crps(x, y):
 
     The method is described in [Hersbach2000]_.
     """
+    if nan_policy not in ["raise", "propagate", "omit"]:
+        raise ValueError("Invalid argument: nan_policy must be 'raise', 'propagate', or 'omit'.")
+
     xp = array_namespace(x, y)
     x = xp.asarray(x)
     y = xp.asarray(y)
 
     # first sort ensemble
     x = xp.sort(x, axis=0)
+
+    isnan_mask = xp.any(xp.isnan(x), axis=0) | xp.isnan(y)
+
+    if nan_policy == "raise" and xp.any(isnan_mask):
+        raise ValueError(f"Missing values present in input and nan_policy={nan_policy}")
+    elif nan_policy == "omit":
+        x = x[..., ~isnan_mask]
+        y = y[~isnan_mask]
 
     # construct alpha and beta, size nens+1
     n_ens = x.shape[0]
@@ -60,5 +74,8 @@ def crps(x, y):
     # compute crps
     p_exp = xp.reshape(xp.arange(n_ens + 1) / float(n_ens), (n_ens + 1, *([1] * y.ndim)))
     crps = xp.sum(alpha * (p_exp**2) + beta * ((1 - p_exp) ** 2), axis=0)
+
+    if nan_policy == "propagate":
+        crps[isnan_mask] = xp.nan
 
     return crps
