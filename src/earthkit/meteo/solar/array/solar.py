@@ -20,7 +20,11 @@ WARNING: This code is incomplete and not tested. DO NOT USE.
 
 
 def julian_day(date):
-    delta = date - datetime.datetime(date.year, 1, 1)
+    if date.tzinfo is not None and date.tzinfo.utcoffset(date) is not None:
+        year_start = datetime.datetime(date.year, 1, 1, tzinfo=date.tzinfo)
+    else:
+        year_start = datetime.datetime(date.year, 1, 1)
+    delta = date - year_start
     return delta.days + delta.seconds / 86400.0
 
 
