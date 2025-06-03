@@ -136,7 +136,7 @@ def test_pressure_at_model_levels(array_backend):
     assert array_backend.allclose(alpha, ref_alpha)
 
 
-@pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 def test_relative_geopotential_thickness(array_backend):
 
     A = DATA.A
@@ -165,12 +165,38 @@ def test_relative_geopotential_thickness(array_backend):
         (50000.0, 84.2265165561),
     ],
 )
-def test_pressure_at_height_level(h, p_ref, array_backend):
+def test_pressure_at_height_level_all(h, p_ref, array_backend):
     sp = 101183.94696484  # surface pressure in Pa
     A = DATA.A
     B = DATA.B
     t = DATA.t
     q = DATA.q
+
+    sp, h, t, q, A, B = array_backend.asarray(sp, h, t, q, A, B)
+
+    p = vertical.pressure_at_height_level(h, q, t, sp, A, B, alpha_top="ifs")
+    assert array_backend.isclose(p, p_ref)
+
+
+@pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
+@pytest.mark.parametrize(
+    "h,p_ref",
+    [
+        (0, 101183.94696484),
+        (1, 101171.8606369517),
+        (100.0, 99979.6875841272),
+        (5000.0, 53738.035306025726),
+    ],
+)
+def test_pressure_at_height_level_part(h, p_ref, array_backend):
+    sp = 101183.94696484  # surface pressure in Pa
+
+    # get only levels from 90 to 136
+    part = slice(90, None)  # Use only the first two levels of A and B
+    A = DATA.A[part]
+    B = DATA.B[part]
+    t = DATA.t[part]
+    q = DATA.q[part]
 
     sp, h, t, q, A, B = array_backend.asarray(sp, h, t, q, A, B)
 

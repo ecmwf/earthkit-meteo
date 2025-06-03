@@ -124,7 +124,7 @@ def pressure_at_model_levels(
 
 
 def relative_geopotential_thickness(
-    alpha: NDArray[Any], delta: NDArray[Any], q: NDArray[Any], T: NDArray[Any]
+    alpha: NDArray[Any], delta: NDArray[Any], q: NDArray[Any], t: NDArray[Any]
 ) -> NDArray[Any]:
     """Calculate the geopotential thickness w.r.t the surface on model full-levels.
 
@@ -146,17 +146,17 @@ def relative_geopotential_thickness(
     """
     from earthkit.meteo.thermo import specific_gas_constant
 
-    xp = array_namespace(alpha, delta, q, T)
+    xp = array_namespace(alpha, delta, q, t)
 
     R = specific_gas_constant(q)
-    d = R * T
+    d = R * t
 
     # compute geopotential thickness on half levels from 1 to NLEV-1
     dphi_half = xp.cumulative_sum(xp.flip(delta[1:] * d[1:], axis=0), axis=0)
     dphi_half = xp.flip(dphi_half, axis=0)
 
     # compute geopotential thickness on full levels
-    dphi = np.zeros_like(d)
+    dphi = xp.zeros_like(d)
     dphi[:-1, ...] = dphi_half + alpha[:-1, ...] * d[:-1, ...]
     dphi[-1, ...] = alpha[-1, ...] * d[-1, ...]
 
