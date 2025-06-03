@@ -109,9 +109,10 @@ def test_geometric_height_from_geopotential_height(zh, expected_value, array_bac
 
 
 @pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
-def test_pressure_at_model_levels(array_backend):
-    sp = 100000.0  # surface pressure in Pa
+@pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+def test_pressure_at_model_levels(index, array_backend):
 
+    sp = DATA.p_surf
     A = DATA.A
     B = DATA.B
     ref_p_full = DATA.p_full
@@ -123,7 +124,18 @@ def test_pressure_at_model_levels(array_backend):
         sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B
     )
 
-    p_full, p_half, delta, alpha = vertical.pressure_at_model_levels(A, B, sp)
+    sp = sp[index[1]]
+    ref_p_full = ref_p_full[index]
+    ref_p_half = ref_p_half[index]
+    ref_delta = ref_delta[index]
+    ref_alpha = ref_alpha[index]
+
+    p_full, p_half, delta, alpha = vertical.pressure_at_model_levels(A, B, sp, alpha_top="ifs")
+
+    # print("p_full", repr(p_full))
+    # print("p_half", repr(p_half))
+    # print("delta", repr(delta))
+    # print("alpha", repr(alpha))
 
     assert array_backend.allclose(p_full, ref_p_full)
     assert array_backend.allclose(p_half, ref_p_half)
@@ -131,28 +143,46 @@ def test_pressure_at_model_levels(array_backend):
     assert array_backend.allclose(alpha, ref_alpha)
 
 
-@pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
-def test_relative_geopotential_thickness(array_backend):
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+def test_relative_geopotential_thickness(index, array_backend):
 
     A = DATA.A
     B = DATA.B
     alpha = DATA.alpha
+    delta = DATA.delta
     t = DATA.t
     q = DATA.q
     z_ref = DATA.z
 
-    z_ref, t, q, alpha, A, B = array_backend.asarray(z_ref, t, q, alpha, A, B)
+    z_ref, t, q, alpha, delta, A, B = array_backend.asarray(z_ref, t, q, alpha, delta, A, B)
 
-    z = vertical.relative_geopotential_thickness(alpha, q, t)
+    alpha = alpha[index]
+    delta = delta[index]
+    t = t[index]
+    q = q[index]
+    z_ref = z_ref[index]
+
+    z = vertical.relative_geopotential_thickness(alpha, delta, t, q)
+    # print("z", repr(z))
+    # print("z_ref", repr(z_ref))
 
     assert array_backend.allclose(z, z_ref)
 
 
-@pytest.mark.skipif(True, reason="Method needs to be fixed")
 @pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
-def test_pressure_at_height_level(array_backend):
-    sp = 100000.0  # surface pressure in Pa
-    h = 5000.0  # height in meters above surface
+@pytest.mark.parametrize(
+    "h,p_ref",
+    [
+        (0, 101183.94696484),
+        (1, 101171.8606369517),
+        (100.0, 99979.6875841272),
+        (5000.0, 53738.035306025726),
+        (50000.0, 84.2265165561),
+    ],
+)
+def test_pressure_at_height_level_all(h, p_ref, array_backend):
+    sp = DATA.p_surf
     A = DATA.A
     B = DATA.B
     t = DATA.t
@@ -160,4 +190,61 @@ def test_pressure_at_height_level(array_backend):
 
     sp, h, t, q, A, B = array_backend.asarray(sp, h, t, q, A, B)
 
-    vertical.pressure_at_height_level(h, q, t, sp, A, B)
+    sp = sp[0]  # use only the first surface pressure value
+    t = t[:, 0]
+    q = q[:, 0]
+
+    p = vertical.pressure_at_height_level(h, t, q, sp, A, B, alpha_top="ifs")
+    assert array_backend.isclose(p, p_ref)
+
+
+@pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
+@pytest.mark.parametrize(
+    "h,p_ref",
+    [
+        (0, 101183.94696484),
+        (1, 101171.8606369517),
+        (100.0, 99979.6875841272),
+        (5000.0, 53738.035306025726),
+    ],
+)
+def test_pressure_at_height_level_part(h, p_ref, array_backend):
+    # get only levels from 90 to 136/137
+    part = slice(90, None)
+
+    sp = DATA.p_surf
+    A = DATA.A
+    B = DATA.B
+    t = DATA.t
+    q = DATA.q
+
+    assert len(A) == len(B) == len(t) + 1 == len(q) + 1
+
+    sp, h, t, q, A, B = array_backend.asarray(sp, h, t, q, A, B)
+
+    sp = sp[0]
+    A = A[part]
+    B = B[part]
+    t = t[part, 0]
+    q = q[part, 0]
+
+    p = vertical.pressure_at_height_level(h, t, q, sp, A, B, alpha_top="ifs")
+    assert array_backend.isclose(p, p_ref)
+
+
+@pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
+def test_pressure_at_height_level_multi_point(array_backend):
+    h = 5000.0  # height in m
+    sp = DATA.p_surf
+    A = DATA.A
+    B = DATA.B
+    t = DATA.t
+    q = DATA.q
+
+    assert len(A) == len(B) == len(t) + 1 == len(q) + 1
+    sp, h, t, q, A, B = array_backend.asarray(sp, h, t, q, A, B)
+
+    p_ref = np.array([53738.035306025726, 27290.9128315574])
+
+    p = vertical.pressure_at_height_level(h, t, q, sp, A, B, alpha_top="ifs")
+    assert array_backend.allclose(p, p_ref)
