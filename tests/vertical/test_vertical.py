@@ -46,6 +46,18 @@ def test_geopotential_height_from_geopotential(z, expected_value, array_backend)
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "h,expected_value",
+    [(0.0, 0.0), (101.97162129779284, 1000.0), ([101.9716212978, 1019.7162129779], [1000.0, 10000.0])],
+)
+def test_geopotential_from_geopotential_height(h, expected_value, array_backend):
+    h, expected_value = array_backend.asarray(h, expected_value)
+
+    r = vertical.geopotential_from_geopotential_height(h)
+    assert array_backend.allclose(r, expected_value)
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "h,expected_value",
     [
         (0.0, 0.0),
         (5102.664476187331, 50000.0),

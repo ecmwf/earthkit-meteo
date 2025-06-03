@@ -22,6 +22,7 @@ from earthkit.meteo.utils.testing import ARRAY_BACKENDS
     [
         (datetime.datetime(2024, 4, 22), 112.0),
         (datetime.datetime(2024, 4, 22, 12, 0, 0), 112.5),
+        (datetime.datetime(2024, 4, 22, 12, tzinfo=datetime.timezone(datetime.timedelta(hours=1))), 112.5),
     ],
 )
 def test_julian_day(date, expected_value):

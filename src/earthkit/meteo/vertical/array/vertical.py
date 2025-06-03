@@ -344,6 +344,33 @@ def geopotential_height_from_geopotential(z):
     return h
 
 
+def geopotential_from_geopotential_height(h):
+    r"""Compute geopotential height from geopotential.
+
+    Parameters
+    ----------
+    z : array-like
+        Geopotential (m2/s2)
+
+    Returns
+    -------
+    array-like
+        Geopotential height (m)
+
+
+    The computation is based on the following definition:
+
+    .. math::
+
+        z = gh\; g
+
+    where :math:`g` is the gravitational acceleration on the surface of
+    the Earth (see :py:attr:`meteo.constants.g`)
+    """
+    z = h * constants.g
+    return z
+
+
 def geopotential_height_from_geometric_height(h, R_earth=constants.R_earth):
     r"""Compute the geopotential height from geometric height.
 

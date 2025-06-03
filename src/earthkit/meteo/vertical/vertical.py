@@ -26,6 +26,10 @@ def geopotential_height_from_geopotential(*args, **kwargs):
     return array.geopotential_height_from_geopotential(*args, **kwargs)
 
 
+def geopotential_from_geopotential_height(*args, **kwargs):
+    return array.geopotential_from_geopotential_height(*args, **kwargs)
+
+
 def geopotential_height_from_geometric_height(*args, **kwargs):
     return array.geopotential_height_from_geometric_height(*args, **kwargs)
 
