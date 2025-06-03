@@ -50,6 +50,14 @@ def pressure_at_model_levels(
         Alpha at full levels
 
 
+    Notes
+    -----
+    ``A`` and ``B`` must contain the same model half-levels in an ascending order. The model
+    level range must be contiguous and must include the bottom-most model
+    half-level (surface), but not all the levels must be present. E.g. if the vertical
+    coordinate system has 137 model levels using only a subset of levels between
+    e.g. 137-96 is allowed.
+
     For details on the returned parameters see [IFS-CY47R3-Dynamics]_ (page 7-8).
 
     The pressure on the model-levels is calculated as:
@@ -67,6 +75,12 @@ def pressure_at_model_levels(
         - :math:`p_{k}` is the pressure at the full-levels
         - :math:`A_{k+1/2}` and :math:`B_{k+1/2}` are the A- and B-coefficients defining
           the model levels.
+
+    See also
+    --------
+    pressure_at_model_levels
+    relative_geopotential_thickness
+
     """
     # constants
     PRESSURE_TOA = 0.1  # safety when highest pressure level = 0.0
@@ -124,7 +138,7 @@ def pressure_at_model_levels(
 
 
 def relative_geopotential_thickness(
-    alpha: NDArray[Any], delta: NDArray[Any], q: NDArray[Any], t: NDArray[Any]
+    alpha: NDArray[Any], delta: NDArray[Any], t: NDArray[Any], q: NDArray[Any]
 ) -> NDArray[Any]:
     """Calculate the geopotential thickness w.r.t the surface on model full-levels.
 
@@ -132,17 +146,34 @@ def relative_geopotential_thickness(
     ----------
     alpha : array-like
         alpha term of pressure calculations
+    t : array-like
+        specific humidity on model full-levels (kg/kg).  First dimension must
+        correspond to the model full-levels.
     q : array-like
-        specific humidity on model full-levels (kg/kg)
-    T : array-like
-        temperature on model full-levels (K)
+        temperature on model full-levels (K).  First dimension must
+        correspond to the model full-levels.
 
     Returns
     -------
     array-like
         geopotential thickness of model full-levels w.r.t. the surface
 
-    For details see [IFS-CY47R3-Dynamics]_ (page 7-8).
+    Notes
+    -----
+    ``t`` and ``q`` must contain the same model levels in an ascending order. The model
+    level range must be contiguous and must include the bottom-most level, but not all
+    the levels must be present. E.g. if the vertical coordinate system has 137 model
+    levels using only a subset of levels between e.g. 137-96 is allowed.
+
+    ``alpha`` and ``delta`` must be defined on the same levels as ``t`` and ``q``. These
+    values can be calculated using :func:`pressure_at_model_levels`.
+
+    The computations are described in [IFS-CY47R3-Dynamics]_ (page 7-8).
+
+    See also
+    --------
+    pressure_at_model_levels
+
     """
     from earthkit.meteo.thermo import specific_gas_constant
 
@@ -152,21 +183,21 @@ def relative_geopotential_thickness(
     d = R * t
 
     # compute geopotential thickness on half levels from 1 to NLEV-1
-    dphi_half = xp.cumulative_sum(xp.flip(delta[1:] * d[1:], axis=0), axis=0)
+    dphi_half = xp.cumulative_sum(xp.flip(d[1:, ...] * delta[1:, ...], axis=0), axis=0)
     dphi_half = xp.flip(dphi_half, axis=0)
 
     # compute geopotential thickness on full levels
     dphi = xp.zeros_like(d)
-    dphi[:-1, ...] = dphi_half + alpha[:-1, ...] * d[:-1, ...]
-    dphi[-1, ...] = alpha[-1, ...] * d[-1, ...]
+    dphi[:-1, ...] = dphi_half + d[:-1, ...] * alpha[:-1, ...]
+    dphi[-1, ...] = d[-1, ...] * alpha[-1, ...]
 
     return dphi
 
 
 def pressure_at_height_level(
     height: float,
+    t: NDArray[Any],
     q: NDArray[Any],
-    T: NDArray[Any],
     sp: NDArray[Any],
     A: NDArray[Any],
     B: NDArray[Any],
@@ -177,14 +208,26 @@ def pressure_at_height_level(
     This is done by finding the model level above and below the specified height
     and interpolating the pressure with linear interpolation.
 
+    ``t`` and ``q`` must contain the same model levels in an ascending order. The model
+    level range must be contiguous and must include the bottom-most level, but not all the
+    levels must be present. E.g. if the vertical coordinate system has 137 model
+    levels using only a subset of levels between e.g. 137-96 is allowed.
+
+    ``A`` and ``B`` must be defined on the model half-levels corresponding to the model
+    full-levels in ``t`` and ``q``. So the number of levels in ``A`` and ``B`` must be one
+    more than the number of levels in ``t`` and ``q``.
+
+
     Parameters
     ----------
     height : number
         height above the surface for which the pressure needs to be computed (m)
+    t : ndarray
+        temperature at model full-levels (K). First dimension must
+        correspond to the model full-levels.
     q : ndarray
-        specific humidity at model full-levels (kg/kg)
-    T : ndarray
-        temperature at model full-levels (K)
+        specific humidity at model full-levels (kg/kg). First dimension must
+        correspond to the model full-levels.
     sp : ndarray
         surface pressure (Pa)
     A : ndarray
@@ -192,12 +235,35 @@ def pressure_at_height_level(
     B : ndarray
         B-coefficients defining the model levels
     alpha_top : str, optional
-        Option passed to :func:`pressure_at_model_levels`. The possible values are: "ifs" (default) or "arpege".
+        Option passed to :func:`pressure_at_model_levels`. The possible values
+        are: "ifs" (default) or "arpege".
 
     Returns
     -------
     number or ndarray
         pressure at the given height level (Pa)
+
+    Notes
+    -----
+
+    ``t`` and ``q`` must contain the same model levels in an ascending order. The model
+    level range must be contiguous and must include the bottom-most level, but not all the
+    levels must be present. E.g. if the vertical coordinate system has 137 model
+    levels using only a subset of levels between e.g. 137-96 is allowed.
+
+    ``A`` and ``B`` must be defined on the model half-levels corresponding to the model
+    full-levels in ``t`` and ``q``. So the number of levels in ``A`` and ``B`` must be one
+    more than the number of levels in ``t`` and ``q``.
+
+    The pressure at height level is calculated by finding the model level above and
+    below the specified height and interpolating the pressure with linear interpolation.
+
+    See also
+    --------
+    pressure_at_model_levels
+    relative_geopotential_thickness
+
+
     """
     # geopotential thickness of the height level
     tdphi = height * constants.g
@@ -208,7 +274,7 @@ def pressure_at_height_level(
     p_full, p_half, delta, alpha = pressure_at_model_levels(A, B, sp, alpha_top=alpha_top)
 
     # relative geopotential thickness of full levels
-    dphi = relative_geopotential_thickness(alpha, delta, q, T)
+    dphi = relative_geopotential_thickness(alpha, delta, t, q)
 
     # find the model full level right above the height level
     i_phi = (tdphi < dphi).sum(0)
