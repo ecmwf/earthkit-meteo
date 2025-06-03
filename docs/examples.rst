@@ -10,4 +10,4 @@ Here is a list of example notebooks to illustrate how to use earthkit-meteo.
     :maxdepth: 1
     :glob:
 
-    examples/*.ipynb
+    examples/return_period.ipynb
