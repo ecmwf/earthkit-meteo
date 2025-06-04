@@ -9,7 +9,7 @@ Version 0.4.0
 Array formats
 -----------------------
 
-Made almost all of the methods array format agnostic with support for Numpy, Torch and CuPY arrays/tensors as an input. The array backend is automatically detected from the input data type.
+Made almost all of the methods array format agnostic with support for Numpy, Torch and CuPy arrays/tensors as an input. The array backend is automatically detected from the input data type.
 
 .. code-block:: python
 
@@ -31,10 +31,11 @@ Made almost all of the methods array format agnostic with support for Numpy, Tor
 
     theta = thermo.potential_temperature(t, p)
 
+
 New features
 -----------------------
 
-- Added the new submodule: :py:mod:`meteo.vertical`
+- Added the :py:mod:`meteo.vertical` submodule
 - Added the :py:meth:`meteo.stats.array.value_to_return_period` and :py:meth:`meteo.stats.array.return_period_to_value` methods. They are based on a Gumbel-distribution fit to the sample data (:pr:`29`). See the following notebook example:
 
     - :ref:`/examples/return_period.ipynb`.
