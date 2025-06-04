@@ -207,19 +207,6 @@ def pressure_at_height_levels(
 ) -> Union[float, NDArray[Any]]:
     """Calculate the pressure at a height above the surface from model full-levels.
 
-    This is done by finding the model level above and below the specified height
-    and interpolating the pressure with linear interpolation.
-
-    ``t`` and ``q`` must contain the same model levels in an ascending order. The model
-    level range must be contiguous and must include the bottom-most level, but not all the
-    levels must be present. E.g. if the vertical coordinate system has 137 model
-    levels using only a subset of levels between e.g. 137-96 is allowed.
-
-    ``A`` and ``B`` must be defined on the model half-levels corresponding to the model
-    full-levels in ``t`` and ``q``. So the number of levels in ``A`` and ``B`` must be one
-    more than the number of levels in ``t`` and ``q``.
-
-
     Parameters
     ----------
     height : number
