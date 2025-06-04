@@ -18,6 +18,7 @@ dependencies:
 - sphinx_rtd_theme
 - sphinxcontrib-apidoc
 - sphinx-issues
+- sphinx-copybutton
 - nbformat
 - nbconvert
 - nbsphinx

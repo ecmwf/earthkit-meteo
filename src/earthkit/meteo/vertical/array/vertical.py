@@ -33,9 +33,9 @@ def pressure_at_model_levels(
     sp : number or ndarray
         Surface pressure (Pa)
     alpha_top : str, optional
-        Option to initialise alpha on the topmost half level. The possible values are:
-        - "ifs": alpha is set to log(2). See [IFS-CY47R3-Dynamics]_
-        (page 7) for details.
+        Option to initialise alpha on the top of the model atmosphere (first half-level in vertical coordinate system). The possible values are:
+
+        - "ifs": alpha is set to log(2). See [IFS-CY47R3-Dynamics]_ (page 7) for details.
         - "arpege": alpha is set to 1.0
 
     Returns
@@ -78,7 +78,7 @@ def pressure_at_model_levels(
 
     See also
     --------
-    pressure_at_model_levels
+    pressure_at_height_levels
     relative_geopotential_thickness
 
     """
@@ -146,6 +146,8 @@ def relative_geopotential_thickness(
     ----------
     alpha : array-like
         alpha term of pressure calculations
+    delta : array-like
+        delta term of pressure calculations
     t : array-like
         specific humidity on model full-levels (kg/kg).  First dimension must
         correspond to the model full-levels.
@@ -194,7 +196,7 @@ def relative_geopotential_thickness(
     return dphi
 
 
-def pressure_at_height_level(
+def pressure_at_height_levels(
     height: float,
     t: NDArray[Any],
     q: NDArray[Any],

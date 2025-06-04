@@ -193,7 +193,7 @@ def test_relative_geopotential_thickness(index, array_backend):
         (50000.0, 84.2265165561),
     ],
 )
-def test_pressure_at_height_level_all(h, p_ref, array_backend):
+def test_pressure_at_height_levels_all(h, p_ref, array_backend):
     sp = DATA.p_surf
     A = DATA.A
     B = DATA.B
@@ -206,7 +206,7 @@ def test_pressure_at_height_level_all(h, p_ref, array_backend):
     t = t[:, 0]
     q = q[:, 0]
 
-    p = vertical.pressure_at_height_level(h, t, q, sp, A, B, alpha_top="ifs")
+    p = vertical.pressure_at_height_levels(h, t, q, sp, A, B, alpha_top="ifs")
     assert array_backend.isclose(p, p_ref)
 
 
@@ -220,7 +220,7 @@ def test_pressure_at_height_level_all(h, p_ref, array_backend):
         (5000.0, 53738.035306025726),
     ],
 )
-def test_pressure_at_height_level_part(h, p_ref, array_backend):
+def test_pressure_at_height_levels_part(h, p_ref, array_backend):
     # get only levels from 90 to 136/137
     part = slice(90, None)
 
@@ -240,12 +240,12 @@ def test_pressure_at_height_level_part(h, p_ref, array_backend):
     t = t[part, 0]
     q = q[part, 0]
 
-    p = vertical.pressure_at_height_level(h, t, q, sp, A, B, alpha_top="ifs")
+    p = vertical.pressure_at_height_levels(h, t, q, sp, A, B, alpha_top="ifs")
     assert array_backend.isclose(p, p_ref)
 
 
 @pytest.mark.parametrize("array_backend", [NUMPY_BACKEND])
-def test_pressure_at_height_level_multi_point(array_backend):
+def test_pressure_at_height_levels_multi_point(array_backend):
     h = 5000.0  # height in m
     sp = DATA.p_surf
     A = DATA.A
@@ -258,5 +258,5 @@ def test_pressure_at_height_level_multi_point(array_backend):
 
     p_ref = np.array([53738.035306025726, 27290.9128315574])
 
-    p = vertical.pressure_at_height_level(h, t, q, sp, A, B, alpha_top="ifs")
+    p = vertical.pressure_at_height_levels(h, t, q, sp, A, B, alpha_top="ifs")
     assert array_backend.allclose(p, p_ref)

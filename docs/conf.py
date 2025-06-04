@@ -12,6 +12,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath("./"))
 sys.path.insert(0, os.path.abspath("../"))
+sys.path.append(os.path.abspath("./_ext"))
 
 # -- Project information -----------------------------------------------------
 
@@ -37,6 +38,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "autoapi.extension",
     "sphinx_issues",
+    "sphinx_copybutton",
+    "xref",
 ]
 
 # autodoc configuration
@@ -91,6 +94,27 @@ html_static_path = ["_static"]
 html_css_files = ["style.css"]
 
 html_logo = "https://github.com/ecmwf/logos/raw/refs/heads/main/logos/earthkit/earthkit-meteo-dark.svg"
+
+
+xref_links = {
+    "earthkit": ("earthkit", "https://earthkit.readthedocs.io/en/latest/"),
+    "earthkit-data": (
+        "earthkit-data",
+        "https://earthkit-data.readthedocs.io/en/latest/",
+    ),
+    "earthkit-plots": (
+        "earthkit-plots",
+        "https://earthkit-plots.readthedocs.io/en/latest/",
+    ),
+    "fieldlist": (
+        "fieldlist",
+        "https://earthkit-data.readthedocs.io/en/latest/guide/data_format/grib.html",
+    ),
+    "field": (
+        "field",
+        "https://earthkit-data.readthedocs.io/en/latest/guide/data_format/grib.html",
+    ),
+}
 
 
 def setup(app):

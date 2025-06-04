@@ -19,20 +19,30 @@ Release|
     This software is **Incubating** and subject to ECMWF's guidelines on `Software Maturity <https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity>`_.
 
 
+**earthkit-meteo** is a Python package providing meteorological computations using array input (Numpy, Torch and CuPy) and output. It is part of the :xref:`earthkit` ecosystem.
+
+
 Quick start
 -----------
-
-**earthkit-meteo** is a Python package providing meteorological computations using array input (Numpy, Torch and CuPy) and output. It is a component of [earthkit](https://github.com/ecmwf/earthkit).
 
 .. code-block:: python
 
     from earthkit.meteo import thermo
+
+    # using Numpy arrays
     import numpy as np
 
     t = np.array([264.12, 261.45])  # Kelvins
     p = np.array([850, 850]) * 100.0  # Pascals
-
     theta = thermo.potential_temperature(t, p)
+
+    # using Torch tensors
+    import torch
+
+    t = torch.tensor([264.12, 261.45])  # Kelvins
+    p = torch.tensor([850.0, 850.0]) * 100.0  # Pascals
+    theta = thermo.potential_temperature(t, p)
+
 
 
 .. toctree::

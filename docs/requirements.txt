@@ -8,3 +8,4 @@ nbsphinx
 setuptools
 sphinx-autoapi
 sphinx-issues
+sphinx-copybutton
