@@ -7,22 +7,21 @@
 # nor does it submit to any jurisdiction.
 #
 
-import numpy as np
+from earthkit.utils.array import array_namespace
 
 
 def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
-    """Compute basic Shift of Tails (SOT)
-    using already computed percentiles
+    """Compute basic Shift of Tails (SOT) using already computed percentiles
 
     Parameters
     ----------
-    qc_tail: numpy array (npoints)
+    qc_tail: array-like (npoints)
         Tail percentile value (99% or 1%)
         Model climatology
-    qc: numpy array (npoints)
+    qc: array-like (npoints)
         Upper or lower percentile (at 90% or 10%)
         Model climatology
-    qf: numpy array (npoints)
+    qf: array-like(npoints)
         Upper or lower percentile (at 90% or 10%)
         Ensemble forecast
     eps: (float)
@@ -32,24 +31,31 @@ def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
 
     Returns
     -------
-    numpy array (npoints)
+    array-like (npoints)
         SOT values
     """
-    # avoid divided by zero warning
-    err = np.seterr(divide="ignore", invalid="ignore")
+    xp = array_namespace(qc_tail, qc, qf)
+    qc_tail = xp.asarray(qc_tail)
+    qc = xp.asarray(qc)
+    qf = xp.asarray(qf)
 
-    min_den = np.fmax(eps, 0)
-    sot = np.where(np.fabs(qc_tail - qc) > min_den, (qf - qc_tail) / (qc_tail - qc), np.nan)
+    # TODO: check if this is necessary
+    # NOTE: work for numpy but not for other backends
+    # avoid divided by zero warning
+    err = xp.seterr(divide="ignore", invalid="ignore")
+
+    min_den = xp.fmax(xp.asarray(eps), xp.asarray(0))
+    sot = xp.where(xp.abs(qc_tail - qc) > min_den, (qf - qc_tail) / (qc_tail - qc), xp.nan)
 
     # revert to original error state
-    np.seterr(**err)
+    xp.seterr(**err)
 
-    mask_missing = np.isnan(sot)
+    mask_missing = xp.isnan(sot)
 
     # upper and lower bounds
-    mask2 = np.logical_and(np.logical_not(mask_missing), sot < lower_bound)
+    mask2 = xp.logical_and(xp.logical_not(mask_missing), sot < lower_bound)
     sot[mask2] = lower_bound
-    mask3 = np.logical_and(np.logical_not(mask_missing), sot > upper_bound)
+    mask3 = xp.logical_and(xp.logical_not(mask_missing), sot > upper_bound)
     sot[mask3] = upper_bound
 
     return sot
@@ -62,9 +68,9 @@ def sot(clim, ens, perc, eps=-1e4):
 
     Parameters
     ----------
-    clim: numpy array (nclim, npoints)
+    clim: array-like (nclim, npoints)
         Model climatology (percentiles)
-    ens: numpy array (nens, npoints)
+    ens: array-like (nens, npoints)
         Ensemble forecast
     perc: int
         Percentile value (typically 10 or 90)
@@ -73,10 +79,15 @@ def sot(clim, ens, perc, eps=-1e4):
 
     Returns
     -------
-    numpy array (npoints)
+    array-like (npoints)
         SOT values
     """
-    if not (isinstance(perc, int) or isinstance(perc, np.int64)) or (perc < 2 or perc > 98):
+    xp = array_namespace(clim, ens, perc)
+    clim = xp.asarray(clim)
+    ens = xp.asarray(ens)
+    # perc = xp.asarray(perc)
+
+    if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (perc < 2 or perc > 98):
         raise Exception("Percentile value should be and Integer between 2 and 98, is {}".format(perc))
 
     if clim.shape[0] != 101:
@@ -87,10 +98,10 @@ def sot(clim, ens, perc, eps=-1e4):
     qc = clim[perc]
     # if eps>0, set to zero everything below eps
     if eps > 0:
-        ens = np.where(ens < eps, 0.0, ens)
-        qc = np.where(qc < eps, 0.0, qc)
+        ens = xp.where(ens < eps, 0.0, ens)
+        qc = xp.where(qc < eps, 0.0, qc)
 
-    qf = np.percentile(ens, q=perc, axis=0)
+    qf = xp.percentile(ens, q=perc, axis=0)
     if perc > 50:
         qc_tail = clim[99]
     elif perc < 50:
@@ -112,9 +123,9 @@ def sot_unsorted(clim, ens, perc, eps=-1e4):
 
     Parameters
     ----------
-    clim: numpy array (nclim, npoints)
+    clim: array-like (nclim, npoints)
         Model climatology (percentiles)
-    ens: numpy array (nens, npoints)
+    ens: array-like (nens, npoints)
         Ensemble forecast
     perc: int
         Percentile value (typically 10 or 90)
@@ -123,10 +134,15 @@ def sot_unsorted(clim, ens, perc, eps=-1e4):
 
     Returns
     -------
-    numpy array (npoints)
+    array-like (npoints)
         SOT values
     """
-    if not (isinstance(perc, int) or isinstance(perc, np.int64)) or (perc < 2 or perc > 98):
+    xp = array_namespace(clim, ens, perc)
+    clim = xp.asarray(clim)
+    ens = xp.asarray(ens)
+    perc = xp.asarray(perc)
+
+    if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (perc < 2 or perc > 98):
         raise Exception("Percentile value should be and Integer between 2 and 98, is {}".format(perc))
 
     if clim.shape[0] != 101:
@@ -135,11 +151,11 @@ def sot_unsorted(clim, ens, perc, eps=-1e4):
         )
 
     if eps > 0:
-        ens = np.where(ens < eps, 0.0, ens)
-        clim = np.where(clim < eps, 0.0, clim)
+        ens = xp.where(ens < eps, 0.0, ens)
+        clim = xp.where(clim < eps, 0.0, clim)
 
-    qf = np.percentile(ens, q=perc, axis=0)
-    qc = np.percentile(clim, q=perc, axis=0)
+    qf = xp.percentile(ens, q=perc, axis=0)
+    qc = xp.percentile(clim, q=perc, axis=0)
     if perc > 50:
         perc_tail = 99
     elif perc < 50:
@@ -148,7 +164,7 @@ def sot_unsorted(clim, ens, perc, eps=-1e4):
         raise Exception(
             "Percentile value to be computed cannot be 50 for sot, has to be in the upper or lower half"
         )
-    qc_tail = np.percentile(clim, q=perc_tail, axis=0)
+    qc_tail = xp.percentile(clim, q=perc_tail, axis=0)
 
     sot = sot_func(qc_tail, qc, qf, eps=eps)
 

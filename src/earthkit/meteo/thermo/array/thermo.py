@@ -8,26 +8,27 @@
 #
 
 
-import numpy as np
+# import numpy as np
+
+from earthkit.utils.array import array_namespace
 
 from earthkit.meteo import constants
 
-
-def _valid_number(x):
-    return x is not None and not np.isnan(x)
+# def _valid_number(x):
+#     return x is not None and not np.isnan(x)
 
 
 def celsius_to_kelvin(t):
-    """Converts temperature values from Celsius to Kelvin.
+    """Convert temperature values from Celsius to Kelvin.
 
     Parameters
     ----------
-    t : number or ndarray
+    t : number or array-like
         Temperature in Celsius units
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Temperature in Kelvin units
 
     """
@@ -35,16 +36,16 @@ def celsius_to_kelvin(t):
 
 
 def kelvin_to_celsius(t):
-    """Converts temperature values from Kelvin to Celsius.
+    """Convert temperature values from Kelvin to Celsius.
 
     Parameters
     ----------
-    t : number or ndarray
+    t : number or array-like
         Temperature in Kelvin units
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Temperature in Celsius units
 
     """
@@ -52,16 +53,16 @@ def kelvin_to_celsius(t):
 
 
 def specific_humidity_from_mixing_ratio(w):
-    r"""Computes the specific humidity from mixing ratio.
+    r"""Compute the specific humidity from mixing ratio.
 
     Parameters
     ----------
-    w : number or ndarray
+    w : number or array-like
         Mixing ratio (kg/kg)
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Specific humidity (kg/kg)
 
 
@@ -77,16 +78,16 @@ def specific_humidity_from_mixing_ratio(w):
 
 
 def mixing_ratio_from_specific_humidity(q):
-    r"""Computes the mixing ratio from specific humidity.
+    r"""Compute the mixing ratio from specific humidity.
 
     Parameters
     ----------
-    q : number or ndarray
+    q : number or array-like
         Specific humidity (kg/kg)
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Mixing ratio (kg/kg)
 
 
@@ -102,18 +103,18 @@ def mixing_ratio_from_specific_humidity(q):
 
 
 def vapour_pressure_from_specific_humidity(q, p):
-    r"""Computes the vapour pressure from specific humidity.
+    r"""Compute the vapour pressure from specific humidity.
 
     Parameters
     ----------
-    q: number or ndarray
+    q: number or array-like
         Specific humidity (kg/kg)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Vapour pressure (Pa)
 
 
@@ -126,23 +127,23 @@ def vapour_pressure_from_specific_humidity(q, p):
     with :math:`\epsilon =  R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
-    c = constants.epsilon * (1 / constants.epsilon - 1)
+    c = constants.epsilon * (1.0 / constants.epsilon - 1.0)
     return (p * q) / (constants.epsilon + c * q)
 
 
 def vapour_pressure_from_mixing_ratio(w, p):
-    r"""Computes the vapour pressure from mixing ratio.
+    r"""Compute the vapour pressure from mixing ratio.
 
     Parameters
     ----------
-    w: number or ndarray
+    w: number or array-like
         Mixing ratio (kg/kg)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Vapour pressure (Pa)
 
 
@@ -159,20 +160,20 @@ def vapour_pressure_from_mixing_ratio(w, p):
 
 
 def specific_humidity_from_vapour_pressure(e, p, eps=1e-4):
-    r"""Computes the specific humidity from vapour pressure.
+    r"""Compute the specific humidity from vapour pressure.
 
     Parameters
     ----------
-    e: number or ndarray
+    e: number or array-like
         Vapour pressure (Pa)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
     eps: number
-        Where p - e < ``eps`` np.nan is returned.
+        Where p - e < ``eps`` nan is returned.
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Specific humidity (kg/kg)
 
 
@@ -188,26 +189,28 @@ def specific_humidity_from_vapour_pressure(e, p, eps=1e-4):
     if eps <= 0:
         raise ValueError(f"specific_humidity_from_vapour_pressure(): eps={eps} must be > 0")
 
-    v = np.asarray(p + (constants.epsilon - 1) * e)
-    v[np.asarray(p - e) < eps] = np.nan
-    return constants.epsilon * e / v
+    xp = array_namespace(e, p)
+    v = xp.asarray(p + (constants.epsilon - 1) * e)
+    v[xp.asarray(p - e) < eps] = xp.nan
+    x = constants.epsilon * e / v
+    return x
 
 
 def mixing_ratio_from_vapour_pressure(e, p, eps=1e-4):
-    r"""Computes the mixing ratio from vapour pressure.
+    r"""Compute the mixing ratio from vapour pressure.
 
     Parameters
     ----------
-    e: number or ndarray
+    e: number or array-like
         Vapour pressure (Pa)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
     eps: number
-        Where p - e < ``eps`` np.nan is returned.
+        Where p - e < ``eps`` nan is returned.
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Mixing ratio (kg/kg).
 
 
@@ -223,128 +226,26 @@ def mixing_ratio_from_vapour_pressure(e, p, eps=1e-4):
     if eps <= 0:
         raise ValueError(f"mixing_ratio_from_vapour_pressure(): eps={eps} must be > 0")
 
-    v = np.asarray(p - e)
-    v[v < eps] = np.nan
+    xp = array_namespace(e, p)
+    v = xp.asarray(p - e)
+    v[v < eps] = xp.nan
     return constants.epsilon * e / v
 
 
-class _EsComp:
-    c1 = 611.21
-    c3w = 17.502
-    c4w = 32.19
-    c3i = 22.587
-    c4i = -0.7
-    t0 = 273.16
-    ti = t0 - 23
-    PHASES = ["mixed", "water", "ice"]
-
-    def _check_phase(self, phase):
-        if phase not in _EsComp.PHASES:
-            raise ValueError(
-                f"saturation_vapour_pressure(): invalid phase={phase}! Allowed values = {_EsComp.PHASES}"
-            )
-        return True
-
-    def compute_es(self, t, phase):
-        self._check_phase(phase)
-        if phase == "mixed":
-            return self._es_mixed(t)
-        elif phase == "water":
-            return self._es_water(t)
-        elif phase == "ice":
-            return self._es_ice(t)
-
-    def compute_slope(self, t, phase):
-        self._check_phase(phase)
-        if phase == "mixed":
-            return self._es_mixed_slope(t)
-        elif phase == "water":
-            return self._es_water_slope(t)
-        elif phase == "ice":
-            return self._es_ice_slope(t)
-
-    def t_from_es(self, es):
-        v = np.log(es / self.c1)
-        return (v * self.c4w - self.c3w * self.t0) / (v - self.c3w)
-
-    def _es_water(self, t):
-        return self.c1 * np.exp(self.c3w * (t - self.t0) / (t - self.c4w))
-
-    def _es_ice(self, t):
-        return self.c1 * np.exp(self.c3i * (t - self.t0) / (t - self.c4i))
-
-    def _es_mixed(self, t):
-        # Fraction of liquid water (=alpha):
-        #   t <= ti => alpha=0
-        #   t > ti and t < t0 => alpha=(t-ti)/(t0-ti))^2
-        #   t >= t0 => alpha=1
-        #
-        # svp is interpolated between the ice and water phases:
-        #   svp = alpha * es_water + (1.0 - alpha) * es_ice
-
-        t = np.asarray(t)
-        svp = np.zeros(t.shape)
-
-        # ice range
-        i_mask = t <= self.ti
-        svp[i_mask] = self._es_ice(t[i_mask])
-
-        # water range
-        w_mask = t >= self.t0
-        svp[w_mask] = self._es_water(t[w_mask])
-
-        # mixed range
-        m_mask = ~(i_mask | w_mask)
-        alpha = np.square(t[m_mask] - self.ti) / np.square(self.t0 - self.ti)
-        svp[m_mask] = alpha * self._es_water(t[m_mask]) + (1.0 - alpha) * self._es_ice(t[m_mask])
-        return svp
-
-    def _es_water_slope(self, t):
-        return self._es_water(t) * (self.c3w * (self.t0 - self.c4w)) / np.square(t - self.c4w)
-
-    def _es_ice_slope(self, t):
-        return self._es_ice(t) * (self.c3i * (self.t0 - self.c4i)) / np.square(t - self.c4i)
-
-    def _es_mixed_slope(self, t):
-        t = np.asarray(t)
-        d_svp = np.zeros(t.shape)
-
-        # ice range
-        i_mask = t <= self.ti
-        d_svp[i_mask] = self._es_ice_slope(t[i_mask])
-
-        # water range
-        w_mask = t >= self.t0
-        d_svp[w_mask] = self._es_water_slope(t[w_mask])
-
-        # mixed range
-        m_mask = ~(i_mask | w_mask)
-        alpha = np.square(t[m_mask] - self.ti) / np.square(self.t0 - self.ti)
-        d_alpha = (2.0 / np.square(self.t0 - self.ti)) * (t[m_mask] - self.ti)
-        t_m = t[m_mask]
-        d_svp[m_mask] = (
-            d_alpha * self._es_water(t_m)
-            + alpha * self._es_water_slope(t_m)
-            - d_alpha * self._es_ice(t_m)
-            + (1.0 - alpha) * self._es_ice_slope(t_m)
-        )
-        return d_svp
-
-
 def saturation_vapour_pressure(t, phase="mixed"):
-    r"""Computes the saturation vapour pressure from temperature with respect to a phase.
+    r"""Compute the saturation vapour pressure from temperature with respect to a phase.
 
     Parameters
     ----------
-    t: ndarray
+    t: array-like
         Temperature (K)
     phase: str, optional
-        Defines the phase with respect to the saturation vapour pressure is computed.
+        Define the phase with respect to the saturation vapour pressure is computed.
         It is either “water”, “ice” or “mixed”.
 
     Returns
     -------
-    ndarray
+    array-like
         Saturation vapour pressure (Pa)
 
 
@@ -373,25 +274,27 @@ def saturation_vapour_pressure(t, phase="mixed"):
     with :math:`\alpha(t) = (\frac{t-t_{i}}{t_{0}-t_{i}})^2`.
 
     """
-    return _EsComp().compute_es(t, phase)
+    from .es_comp import compute_es
+
+    return compute_es(t, phase)
 
 
 def saturation_mixing_ratio(t, p, phase="mixed"):
-    r"""Computes the saturation mixing ratio from temperature with respect to a phase.
+    r"""Compute the saturation mixing ratio from temperature with respect to a phase.
 
     Parameters
     ----------
-    t: ndarray
+    t: array-like
         Temperature (K)
-    p: ndarray
+    p: array-like
         Pressure (Pa)
     phase: str
-        Defines the phase with respect to the :func:`saturation_vapour_pressure` is computed.
+        Define the phase with respect to the :func:`saturation_vapour_pressure` is computed.
         It is either “water”, “ice” or “mixed”.
 
     Returns
     -------
-    ndarray
+    array-like
         Saturation mixing ratio (kg/kg)
 
 
@@ -408,21 +311,21 @@ def saturation_mixing_ratio(t, p, phase="mixed"):
 
 
 def saturation_specific_humidity(t, p, phase="mixed"):
-    r"""Computes the saturation specific humidity from temperature with respect to a phase.
+    r"""Compute the saturation specific humidity from temperature with respect to a phase.
 
     Parameters
     ----------
-    t: ndarray
+    t: array-like
         Temperature (K)
-    p: ndarray
+    p: array-like
         Pressure (Pa)
     phase: str, optional
-        Defines the phase with respect to the :func:`saturation_vapour_pressure` is computed.
+        Define the phase with respect to the :func:`saturation_vapour_pressure` is computed.
         It is either “water”, “ice” or “mixed”.
 
     Returns
     -------
-    ndarray
+    array-like
         Saturation specific humidity (kg/kg)
 
 
@@ -439,49 +342,51 @@ def saturation_specific_humidity(t, p, phase="mixed"):
 
 
 def saturation_vapour_pressure_slope(t, phase="mixed"):
-    r"""Computes the slope of saturation vapour pressure with respect to temperature.
+    r"""Compute the slope of saturation vapour pressure with respect to temperature.
 
     Parameters
     ----------
-    t: ndarray
+    t: array-like
         Temperature (K)
     phase: str, optional
-        Defines the phase with respect to the computation will be performed.
+        Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
         for details.
 
     Returns
     -------
-    ndarray
+    array-like
         Slope of saturation vapour pressure (Pa/K)
 
     """
-    return _EsComp().compute_slope(t, phase)
+    from .es_comp import compute_slope
+
+    return compute_slope(t, phase)
 
 
 def saturation_mixing_ratio_slope(t, p, es=None, es_slope=None, phase="mixed", eps=1e-4):
-    r"""Computes the slope of saturation mixing ratio with respect to temperature.
+    r"""Compute the slope of saturation mixing ratio with respect to temperature.
 
     Parameters
     ----------
-    t: ndarray
+    t: array-like
         Temperature (K)
-    p: ndarray
+    p: array-like
         Pressure (Pa)
-    es: ndarray or None, optional
+    es: array-like or None, optional
         :func:`saturation_vapour_pressure` pre-computed for the given ``phase`` (Pa)
-    es_slope: ndarray or None, optional
+    es_slope: array-like or None, optional
         :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` (Pa/K)
     phase: str, optional
-        Defines the phase with respect to the computation will be performed.
+        Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
         for details.
     eps: number
-        Where p - es < ``eps`` np.nan is returned.
+        Where p - es < ``eps`` nan is returned.
 
     Returns
     -------
-    ndarray
+    array-like
         Slope of saturation mixing ratio (:math:`kg kg^{-1} K^{-1}`)
 
 
@@ -504,34 +409,35 @@ def saturation_mixing_ratio_slope(t, p, es=None, es_slope=None, phase="mixed", e
     if es_slope is None:
         es_slope = saturation_vapour_pressure_slope(t, phase=phase)
 
-    v = np.asarray(p - es)
-    v[v < eps] = np.nan
-    return constants.epsilon * es_slope * p / np.square(v)
+    xp = array_namespace(p, es)
+    v = xp.asarray(p - es)
+    v[v < eps] = xp.nan
+    return constants.epsilon * es_slope * p / xp.square(v)
 
 
 def saturation_specific_humidity_slope(t, p, es=None, es_slope=None, phase="mixed", eps=1e-4):
-    r"""Computes the slope of saturation specific humidity with respect to temperature.
+    r"""Compute the slope of saturation specific humidity with respect to temperature.
 
     Parameters
     ----------
-    t: ndarray
+    t: array-like
         Temperature (K)
-    p: ndarray
+    p: array-like
         Pressure (Pa)
-    es: ndarray or None, optional
+    es: array-like or None, optional
         :func:`saturation_vapour_pressure` pre-computed for the given ``phase`` (Pa)
-    es_slope: ndarray or None, optional
+    es_slope: array-like or None, optional
         :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` (Pa/K)
     phase: str, optional
-        Defines the phase with respect to the computation will be performed.
+        Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
         for details.
     eps: number
-        Where p - es < ``eps`` np.nan is returned.
+        Where p - es < ``eps`` nan is returned.
 
     Returns
     -------
-    ndarray
+    array-like
         Slope of saturation specific humidity (:math:`kg kg^{-1} K^{-1}`)
 
 
@@ -555,8 +461,9 @@ def saturation_specific_humidity_slope(t, p, es=None, es_slope=None, phase="mixe
     if es_slope is None:
         es_slope = saturation_vapour_pressure_slope(t, phase=phase)
 
-    v = np.asarray(np.square(p + es * (constants.epsilon - 1.0)))
-    v[np.asarray(p - es) < eps] = np.nan
+    xp = array_namespace(p, es)
+    v = xp.asarray(xp.square(p + es * (constants.epsilon - 1.0)))
+    v[xp.asarray(p - es) < eps] = xp.nan
     return constants.epsilon * es_slope * p / v
 
 
@@ -565,13 +472,13 @@ def temperature_from_saturation_vapour_pressure(es):
 
     Parameters
     ----------
-    es: ndarray
+    es: array-like
         :func:`saturation_vapour_pressure` (Pa)
 
     Returns
     -------
-    ndarray
-        Temperature (K). For zero ``es`` values returns np.nan.
+    array-like
+        Temperature (K). For zero ``es`` values returns nan.
 
 
     The computation is always based on the "water" phase of
@@ -579,22 +486,24 @@ def temperature_from_saturation_vapour_pressure(es):
     phase ``es`` was computed to.
 
     """
-    return _EsComp().t_from_es(es)
+    from .es_comp import compute_t_from_es
+
+    return compute_t_from_es(es)
 
 
 def relative_humidity_from_dewpoint(t, td):
-    r"""Computes the relative humidity from dewpoint temperature.
+    r"""Compute the relative humidity from dewpoint temperature.
 
     Parameters
     ----------
-    t: ndarray
+    t: array-like
         Temperature (K)
-    td: ndarray
+    td: array-like
         Dewpoint (K)
 
     Returns
     -------
-    ndarray
+    array-like
         Relative humidity (%)
 
 
@@ -613,20 +522,20 @@ def relative_humidity_from_dewpoint(t, td):
 
 
 def relative_humidity_from_specific_humidity(t, q, p):
-    r"""Computes the relative humidity from specific humidity.
+    r"""Compute the relative humidity from specific humidity.
 
     Parameters
     ----------
-    t: ndarray
+    t: array-like
         Temperature (K)
-    q: ndarray
+    q: array-like
         Specific humidity (kg/kg)
-    p: ndarray
+    p: array-like
         Pressure (Pa)
 
     Returns
     -------
-    ndarray
+    array-like
         Relative humidity (%)
 
 
@@ -648,18 +557,18 @@ def relative_humidity_from_specific_humidity(t, q, p):
 
 
 def specific_humidity_from_dewpoint(td, p):
-    r"""Computes the specific humidity from dewpoint.
+    r"""Compute the specific humidity from dewpoint.
 
     Parameters
     ----------
-    td: ndarray
+    td: array-like
         Dewpoint (K)
-    p: ndarray
+    p: array-like
         Pressure (Pa)
 
     Returns
     -------
-    ndarray
+    array-like
         Specific humidity (kg/kg)
 
 
@@ -683,18 +592,18 @@ def specific_humidity_from_dewpoint(td, p):
 
 
 def mixing_ratio_from_dewpoint(td, p):
-    r"""Computes the mixing ratio from dewpoint.
+    r"""Compute the mixing ratio from dewpoint.
 
     Parameters
     ----------
-    td: ndarray
+    td: array-like
         Dewpoint (K)
-    p: ndarray
+    p: array-like
         Pressure (Pa)
 
     Returns
     -------
-    ndarray
+    array-like
         Specific humidity (kg/kg)
 
 
@@ -718,20 +627,20 @@ def mixing_ratio_from_dewpoint(td, p):
 
 
 def specific_humidity_from_relative_humidity(t, r, p):
-    r"""Computes the specific humidity from relative_humidity.
+    r"""Compute the specific humidity from relative_humidity.
 
     Parameters
     ----------
-    t: ndarray
+    t: array-like
         Temperature (K)
-    r: ndarray
+    r: array-like
         Relative humidity(%)
-    p: ndarray
+    p: array-like
         Pressure (Pa)
 
     Returns
     -------
-    ndarray
+    array-like
         Specific humidity (kg/kg) units
 
 
@@ -759,15 +668,15 @@ def dewpoint_from_relative_humidity(t, r):
 
     Parameters
     ----------
-    t: ndarray
+    t: array-like
         Temperature (K)
-    r: ndarray
+    r: array-like
         Relative humidity (%)
 
     Returns
     -------
-    ndarray
-        Dewpoint temperature (K). For zero ``r`` values returns np.nan.
+    array-like
+        Dewpoint temperature (K). For zero ``r`` values returns nan.
 
 
     The computation starts with determining the the saturation vapour pressure over
@@ -795,15 +704,15 @@ def dewpoint_from_specific_humidity(q, p):
 
     Parameters
     ----------
-    q: ndarray
+    q: array-like
         Specific humidity (kg/kg)
-    p: ndarray
+    p: array-like
         Pressure (Pa)
 
     Returns
     -------
-    ndarray
-        Dewpoint temperature (K). For zero ``q`` values returns np.nan.
+    array-like
+        Dewpoint temperature (K). For zero ``q`` values returns nan.
 
 
     The computation starts with determining the the saturation vapour pressure over
@@ -827,18 +736,18 @@ def dewpoint_from_specific_humidity(q, p):
 
 
 def virtual_temperature(t, q):
-    r"""Computes the virtual temperature from temperature and specific humidity.
+    r"""Compute the virtual temperature from temperature and specific humidity.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature (K)s
-    q: number or ndarray
+    q: number or array-like
         Specific humidity (kg/kg)
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Virtual temperature (K)
 
 
@@ -856,20 +765,20 @@ def virtual_temperature(t, q):
 
 
 def virtual_potential_temperature(t, q, p):
-    r"""Computes the virtual potential temperature from temperature and specific humidity.
+    r"""Compute the virtual potential temperature from temperature and specific humidity.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature (K)
-    q: number or ndarray
+    q: number or array-like
         Specific humidity (kg/kg)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Virtual potential temperature (K)
 
 
@@ -890,18 +799,18 @@ def virtual_potential_temperature(t, q, p):
 
 
 def potential_temperature(t, p):
-    r"""Computes the potential temperature.
+    r"""Compute the potential temperature.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature (K)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Potential temperature (K)
 
 
@@ -914,22 +823,25 @@ def potential_temperature(t, p):
     with :math:`\kappa = R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    return t * np.power(constants.p0 / p, constants.kappa)
+    xp = array_namespace(t, p)
+    t = xp.asarray(t)
+    p = xp.asarray(p)
+    return t * xp.pow(constants.p0 / p, constants.kappa)
 
 
 def temperature_from_potential_temperature(th, p):
-    r"""Computes the temperature from potential temperature.
+    r"""Compute the temperature from potential temperature.
 
     Parameters
     ----------
-    th: number or ndarray
+    th: number or array-like
         Potential temperature (K)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Temperature (K)
 
 
@@ -942,24 +854,25 @@ def temperature_from_potential_temperature(th, p):
     with :math:`\kappa = R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    return th * np.power(p / constants.p0, constants.kappa)
+    xp = array_namespace(th, p)
+    return th * xp.pow(p / constants.p0, constants.kappa)
 
 
 def pressure_on_dry_adiabat(t, t_def, p_def):
-    r"""Computes the pressure on a dry adiabat.
+    r"""Compute the pressure on a dry adiabat.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature on the dry adiabat (K)
-    t_def: number or ndarray
+    t_def: number or array-like
         Temperature defining the dry adiabat (K)
-    p_def: number or ndarray
+    p_def: number or array-like
         Pressure defining the dry adiabat (Pa)
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Pressure on the dry adiabat (Pa)
 
 
@@ -972,24 +885,25 @@ def pressure_on_dry_adiabat(t, t_def, p_def):
     with :math:`\kappa =  R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    return p_def * np.power(t / t_def, 1 / constants.kappa)
+    xp = array_namespace(t, t_def, p_def)
+    return p_def * xp.pow(t / t_def, 1 / constants.kappa)
 
 
 def temperature_on_dry_adiabat(p, t_def, p_def):
-    r"""Computes the temperature on a dry adiabat.
+    r"""Compute the temperature on a dry adiabat.
 
     Parameters
     ----------
-    p: number or ndarray
+    p: number or array-like
         Pressure on the dry adiabat (Pa)
-    t_def: number or ndarray
+    t_def: number or array-like
         Temperature defining the dry adiabat (K)
-    p_def: number or ndarray
+    p_def: number or array-like
         Pressure defining the dry adiabat (Pa)
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Temperature on the dry adiabat (K)
 
 
@@ -1002,24 +916,25 @@ def temperature_on_dry_adiabat(p, t_def, p_def):
     with :math:`\kappa =  R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    return t_def * np.power(p / p_def, constants.kappa)
+    xp = array_namespace(p, t_def, p_def)
+    return t_def * xp.pow(p / p_def, constants.kappa)
 
 
 def lcl_temperature(t, td, method="davies"):
-    r"""Computes the Lifting Condenstaion Level (LCL) temperature from dewpoint.
+    r"""Compute the Lifting Condenstaion Level (LCL) temperature from dewpoint.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature at the start level (K)
-    td: number or ndarray
+    td: number or array-like
         Dewpoint at the start level (K)
     method: str, optional
         The computation method: "davies" or "bolton".
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Temperature of the LCL (K)
 
 
@@ -1047,21 +962,22 @@ def lcl_temperature(t, td, method="davies"):
         return t_lcl
     # Bolton formula
     elif method == "bolton":
-        return 56.0 + 1 / (1 / (td - 56) + np.log(t / td) / 800)
+        xp = array_namespace(t, td)
+        return 56.0 + 1 / (1 / (td - 56) + xp.log(t / td) / 800)
     else:
         raise ValueError(f"lcl_temperature: invalid method={method} specified!")
 
 
 def lcl(t, td, p, method="davies"):
-    r"""Computes the temperature and pressure of the Lifting Condenstaion Level (LCL) from dewpoint.
+    r"""Compute the temperature and pressure of the Lifting Condenstaion Level (LCL) from dewpoint.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature at the start level (K)
-    td: number or ndarray
+    td: number or array-like
         Dewpoint at the start level (K)
-    p: number or ndarray
+    p: number or array-like
         Pressure at the start level (Pa)
         method: str
     method: str, optional
@@ -1069,9 +985,9 @@ def lcl(t, td, p, method="davies"):
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Temperature of the LCL (K)
-    number or ndarray
+    number or array-like
         Pressure of the LCL (Pa)
 
 
@@ -1095,6 +1011,10 @@ class _ThermoState:
         self.es = None
         self.ws = None
         self.qs = None
+
+    @property
+    def ns(self):
+        return array_namespace(self.t, self.td, self.q, self.w, self.p)
 
 
 class _EptComp:
@@ -1121,42 +1041,61 @@ class _EptComp:
 
     def compute_ept_sat(self, t, p):
         ths = _ThermoState(t=t, p=p)
-        return self._th_sat(ths) * np.exp(self._G_sat(ths))
+        xp = ths.ns
+        return self._th_sat(ths) * xp.exp(self._G_sat(ths))
 
     def compute_wbpt(self, ept):
+        xp = array_namespace(ept)
         t0 = 273.16
         x = ept / t0
         a = [7.101574, -20.68208, 16.11182, 2.574631, -5.205688]
         b = [1.0, -3.552497, 3.781782, -0.6899655, -0.5929340]
-        return ept - np.exp(np.polynomial.polynomial.polyval(x, a) / np.polynomial.polynomial.polyval(x, b))
+        return ept - xp.exp(xp.polyval(x, a) / xp.polyval(x, b))
 
     def compute_t_on_ma_stipanuk(self, ept, p):
-        if isinstance(p, np.ndarray):
-            t = np.full(p.shape, constants.T0 - 20)
-        elif isinstance(ept, np.ndarray):
-            t = np.full(ept.shape, constants.T0 - 20)
-        else:
-            t = constants.T0 - 20
+        xp = array_namespace(ept, p)
+        ept = xp.asarray(ept)
+        p = xp.asarray(p)
+
+        size = xp.size(ept) if xp.size(ept) > xp.size(p) else xp.size(p)
+        t = xp.full(size, constants.T0 - 20, dtype=ept.dtype)
+
+        # if isinstance(p, np.ndarray):
+        #     t = np.full(p.shape, constants.T0 - 20)
+        # elif isinstance(ept, np.ndarray):
+        #     t = np.full(ept.shape, constants.T0 - 20)
+        # else:
+        #     t = constants.T0 - 20
         max_iter = 12
         dt = 120.0
+
         for _ in range(max_iter):
             ths = _ThermoState(t=t, p=p)
             dt /= 2.0
-            t += np.sign(ept * np.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)) * dt
+            t += xp.sign(ept * xp.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)) * dt
         # ths.t = t
         # return ept - self._th_sat(ths) * np.exp(self._G_sat(ths))
+
         return t
 
     def compute_t_on_ma_davies(self, ept, p):
+        xp = array_namespace(ept, p)
+        ept = xp.asarray(ept)
+        p = xp.asarray(p)
+        if xp.size(ept) > xp.size(p):
+            p = xp.full(xp.size(ept), p, dtype=ept.dtype)
+
+        # p = xp.full(ept.shape, p, dtype=ept.dtype)
+
         def _k1(pp):
             """Function k1 in the article."""
             a = [-53.737, 137.81, -38.5]
-            return np.polynomial.polynomial.polyval(pp, a)
+            return xp.polyval(pp, a)
 
         def _k2(pp):
             """Function k2 in the article."""
             a = [-0.384, 56.831, -4.392]
-            return np.polynomial.polynomial.polyval(pp, a)
+            return xp.polyval(pp, a)
 
         def _D(p):
             """Function D in the article."""
@@ -1166,17 +1105,14 @@ class _EptComp:
         A = 2675
         t0 = 273.16
 
-        if not isinstance(p, np.ndarray):
-            p = np.full(ept.shape, p)
-
-        tw = ept.copy()
-        pp = np.power(p / constants.p0, constants.kappa)
+        tw = xp.asarray(ept, copy=True)
+        pp = xp.pow(p / constants.p0, constants.kappa)
         te = ept * pp
-        c_te = np.power(t0 / te, _EptComp.c_lambda)
+        c_te = xp.pow(t0 / te, _EptComp.c_lambda)
 
         # initial guess
         mask = c_te > _D(p)
-        if np.any(mask):
+        if xp.any(mask):
             es = saturation_vapour_pressure(te[mask])
             ws = mixing_ratio_from_vapour_pressure(es, p[mask])
             d_es = saturation_vapour_pressure_slope(te[mask])
@@ -1193,13 +1129,9 @@ class _EptComp:
         # tw has to be converted to Kelvin
         tw = celsius_to_kelvin(tw)
 
-        # np.place(tw, tw > 362.16, 362.1)
-        # print(f"ept={ept}")
-        # print(f"tw={tw}")
-
         for i in range(max_iter):
             ths = _ThermoState(t=tw, p=p)
-            ths.c_tw = np.power(t0 / ths.t, _EptComp.c_lambda)
+            ths.c_tw = xp.pow(t0 / ths.t, _EptComp.c_lambda)
             ths.es = saturation_vapour_pressure(ths.t)
             if self.is_mixing_ratio_based():
                 ths.ws = mixing_ratio_from_vapour_pressure(ths.es, ths.p)
@@ -1217,10 +1149,10 @@ class _EptComp:
             tw -= (f_val - c_te) / (f_val * self._d_lnf(ths))
             # print(f"tw={tw}")
 
-        # when ept is derived with the Bolton methods the iteration breaks down for extremeley
+        # when ept is derived with the Bolton methods the iteration breaks down for extremely
         # hot and humid conditions (roughly about t > 50C and r > 95%) and results in negative
         # tw values!
-        np.place(tw, tw <= 0, np.nan)
+        tw[tw <= 0] = xp.nan
 
         # ths = _ThermoState(t=tw, p=p)
         # return ept - self._th_sat(ths) * np.exp(self._G_sat(ths))
@@ -1235,11 +1167,12 @@ class _EptCompIfs(_EptComp):
         return False
 
     def _ept(self, ths):
+        xp = ths.ns
         th = potential_temperature(ths.t, ths.p)
         t_lcl = lcl_temperature(ths.t, ths.td, method="davies")
         if ths.q is None:
             ths.q = specific_humidity_from_dewpoint(ths.td, ths.p)
-        return th * np.exp(self.K0 * ths.q / t_lcl)
+        return th * xp.exp(self.K0 * ths.q / t_lcl)
 
     def _th_sat(self, ths):
         return potential_temperature(ths.t, ths.p)
@@ -1257,7 +1190,8 @@ class _EptCompIfs(_EptComp):
         )
 
     def _f(self, ths):
-        return ths.c_tw * np.exp(self._G_sat(ths, scale=-self.c_lambda))
+        xp = ths.ns
+        return ths.c_tw * xp.exp(self._G_sat(ths, scale=-self.c_lambda))
 
     def _d_lnf(self, ths):
         return -self.c_lambda * (1 / ths.t + self._d_G_sat(ths))
@@ -1269,18 +1203,20 @@ class _EptCompBolton35(_EptComp):
         self.K3 = 0.28
 
     def _ept(self, ths):
+        xp = ths.ns
         t_lcl = lcl_temperature(ths.t, ths.td, method="bolton")
         if ths.q is None:
             w = mixing_ratio_from_dewpoint(ths.td, ths.p)
         else:
             w = mixing_ratio_from_specific_humidity(ths.q)
-        th = ths.t * np.power(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * w))
-        return th * np.exp(self.K0 * w / t_lcl)
+        th = ths.t * xp.pow(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * w))
+        return th * xp.exp(self.K0 * w / t_lcl)
 
     def _th_sat(self, ths):
+        xp = ths.ns
         if ths.ws is None:
             ths.ws = saturation_mixing_ratio(ths.t, ths.p)
-        return ths.t * np.power(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * ths.ws))
+        return ths.t * xp.pow(constants.p0 / ths.p, constants.kappa * (1 - self.K3 * ths.ws))
 
     def _G_sat(self, ths, scale=1.0):
         if ths.ws is None:
@@ -1288,8 +1224,9 @@ class _EptCompBolton35(_EptComp):
         return (scale * self.K0) * ths.ws / ths.t
 
     def _d_G_sat(self, ths):
+        xp = ths.ns
         return (
-            -self.K0 * ths.ws / np.square(ths.t)
+            -self.K0 * ths.ws / xp.square(ths.t)
             + self.K0 * saturation_mixing_ratio_slope(ths.t, ths.p) / ths.t
         )
 
@@ -1297,16 +1234,18 @@ class _EptCompBolton35(_EptComp):
         # print(f" c_tw={ths.c_tw}")
         # print(f" es_frac={ths.es / ths.p}")
         # print(f" exp={self._G_sat(ths, scale=-self.c_lambda)}")
+        xp = ths.ns
         return (
             ths.c_tw
-            * np.power(ths.p / constants.p0, self.K3 * ths.ws)
-            * np.exp(self._G_sat(ths, scale=-self.c_lambda))
+            * xp.pow(ths.p / constants.p0, self.K3 * ths.ws)
+            * xp.exp(self._G_sat(ths, scale=-self.c_lambda))
         )
 
     def _d_lnf(self, ths):
+        xp = ths.ns
         return -self.c_lambda * (
             1 / ths.t
-            + self.K3 * np.log(ths.p / constants.p0) * saturation_vapour_pressure_slope(ths.t)
+            + self.K3 * xp.log(ths.p / constants.p0) * saturation_vapour_pressure_slope(ths.t)
             + self._d_G_sat(ths)
         )
 
@@ -1327,6 +1266,7 @@ class _EptCompBolton39(_EptComp):
         self.K4 = 0.28
 
     def _ept(self, ths):
+        xp = ths.ns
         t_lcl = lcl_temperature(ths.t, ths.td, method="bolton")
         if ths.q is None:
             w = mixing_ratio_from_dewpoint(ths.td, ths.p)
@@ -1334,35 +1274,39 @@ class _EptCompBolton39(_EptComp):
             w = mixing_ratio_from_specific_humidity(ths.q)
 
         e = vapour_pressure_from_mixing_ratio(w, ths.p)
-        th = potential_temperature(ths.t, ths.p - e) * np.power(ths.t / t_lcl, self.K4 * w)
-        return th * np.exp((self.K0 / t_lcl - self.K1) * w * (1.0 + self.K2 * w))
+        th = potential_temperature(ths.t, ths.p - e) * xp.pow(ths.t / t_lcl, self.K4 * w)
+        return th * xp.exp((self.K0 / t_lcl - self.K1) * w * (1.0 + self.K2 * w))
 
     def _th_sat(self, ths):
         if ths.es is None:
+            xp = ths.ns
             ths.es = saturation_vapour_pressure(ths.t)
-            ths.es[ths.p - ths.es < 1e-4] = np.nan
+            ths.es[ths.p - ths.es < 1e-4] = xp.nan
         return potential_temperature(ths.t, ths.p - ths.es)
 
     def _G_sat(self, ths, scale=1.0):
         if ths.es is None:
+            xp = ths.ns
             ths.es = saturation_vapour_pressure(ths.t)
-            ths.es[ths.p - ths.es < 1e-4] = np.nan
+            ths.es[ths.p - ths.es < 1e-4] = xp.nan
         # print(f" es={ths.es}")
         ws = mixing_ratio_from_vapour_pressure(ths.es, ths.p)
         # print(f" ws={ws}")
         return ((scale * self.K0) / ths.t - (scale * self.K1)) * ws * (1.0 + self.K2 * ws)
 
     def _d_G_sat(self, ths):
+        xp = ths.ns
         # print(f" d_ws={saturation_mixing_ratio_slope(ths.t, ths.p)}")
-        return -self.K0 * (ths.ws + self.K2 * np.square(ths.ws)) / (np.square(ths.t)) + (
+        return -self.K0 * (ths.ws + self.K2 * xp.square(ths.ws)) / (xp.square(ths.t)) + (
             self.K0 / ths.t - self.K1
         ) * (1 + (2 * self.K2) * ths.ws) * saturation_mixing_ratio_slope(ths.t, ths.p)
 
     def _f(self, ths):
+        xp = ths.ns
         # print(f" c_tw={ths.c_tw}")
         # print(f" es_frac={ths.es / ths.p}")
         # print(f" exp={self._G_sat(ths, scale=-self.c_lambda)}")
-        return ths.c_tw * (1 - ths.es / ths.p) * np.exp(self._G_sat(ths, scale=-self.c_lambda))
+        return ths.c_tw * (1 - ths.es / ths.p) * xp.exp(self._G_sat(ths, scale=-self.c_lambda))
 
     def _d_lnf(self, ths):
         return -self.c_lambda * (
@@ -1380,22 +1324,22 @@ _EptComp.CM = {
 
 
 def ept_from_dewpoint(t, td, p, method="ifs"):
-    r"""Computes the equivalent potential temperature from dewpoint.
+    r"""Compute the equivalent potential temperature from dewpoint.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature (K)
-    td: number or ndarray
+    td: number or array-like
         Dewpoint (K)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
     method: str, optional
         Specifies the computation method. The possible values are: "ifs", "bolton35", "bolton39".
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Equivalent potential temperature (K)
 
 
@@ -1444,15 +1388,15 @@ def ept_from_dewpoint(t, td, p, method="ifs"):
 
 
 def ept_from_specific_humidity(t, q, p, method="ifs"):
-    r"""Computes the equivalent potential temperature from specific humidity.
+    r"""Compute the equivalent potential temperature from specific humidity.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature (K)
-    q: number or ndarray
+    q: number or array-like
         Specific humidity (kg/kg)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
     method: str, optional
         Specifies the computation method. The possible values are: "ifs",
@@ -1460,7 +1404,7 @@ def ept_from_specific_humidity(t, q, p, method="ifs"):
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Equivalent potential temperature (K)
 
 
@@ -1472,20 +1416,20 @@ def ept_from_specific_humidity(t, q, p, method="ifs"):
 
 
 def saturation_ept(t, p, method="ifs"):
-    r"""Computes the saturation equivalent potential temperature.
+    r"""Compute the saturation equivalent potential temperature.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature (K)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
     method: str, optional
         Specifies the computation method. The possible values are: "ifs", "bolton35", "bolton39".
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Saturation equivalent potential temperature (K)
 
 
@@ -1526,13 +1470,13 @@ def saturation_ept(t, p, method="ifs"):
 
 
 def temperature_on_moist_adiabat(ept, p, ept_method="ifs", t_method="bisect"):
-    r"""Computes the temperature on a moist adiabat (pseudoadiabat)
+    r"""Compute the temperature on a moist adiabat (pseudoadiabat)
 
     Parameters
     ----------
-    ept: number or ndarray
+    ept: number or array-like
         Equivalent potential temperature defining the moist adiabat (K)
-    p: number or ndarray
+    p: number or array-like
         Pressure on the moist adiabat (Pa)
     ept_method: str, optional
         Specifies the computation method that was used to compute ``ept``. The possible
@@ -1546,14 +1490,14 @@ def temperature_on_moist_adiabat(ept, p, ept_method="ifs", t_method="bisect"):
         * "newton": Newtons's method is used as defined by Eq (2.6) in [DaviesJones2008]_.
           For extremely hot and humid conditions (``ept`` > 800 K) depending on
           ``ept_method`` the computation might not be carried out
-          and np.nan will be returned.
+          and nan will be returned.
 
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Temperature on the moist adiabat (K). For values where the computation cannot
-        be carried out np.nan is returned.
+        be carried out nan is returned.
 
     """
     cm = _EptComp.make(ept_method)
@@ -1566,15 +1510,15 @@ def temperature_on_moist_adiabat(ept, p, ept_method="ifs", t_method="bisect"):
 
 
 def wet_bulb_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_method="bisect"):
-    r"""Computes the pseudo adiabatic wet bulb temperature from dewpoint.
+    r"""Compute the pseudo adiabatic wet bulb temperature from dewpoint.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature (K)
-    td: number or ndarray
+    td: number or array-like
         Dewpoint (K)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
     ept_method: str, optional
         Specifies the computation method for the equivalent potential temperature.
@@ -1589,7 +1533,7 @@ def wet_bulb_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_method="bis
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Wet bulb temperature (K)
 
 
@@ -1606,15 +1550,15 @@ def wet_bulb_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_method="bis
 
 
 def wet_bulb_temperature_from_specific_humidity(t, q, p, ept_method="ifs", t_method="bisect"):
-    r"""Computes the pseudo adiabatic wet bulb temperature from specific humidity.
+    r"""Compute the pseudo adiabatic wet bulb temperature from specific humidity.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature (K)
-    q: number or ndarray
+    q: number or array-like
         Specific humidity (kg/kg)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
     ept_method: str, optional
         Specifies the computation method for the equivalent potential temperature.
@@ -1630,7 +1574,7 @@ def wet_bulb_temperature_from_specific_humidity(t, q, p, ept_method="ifs", t_met
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Wet bulb temperature (K)
 
 
@@ -1647,15 +1591,15 @@ def wet_bulb_temperature_from_specific_humidity(t, q, p, ept_method="ifs", t_met
 
 
 def wet_bulb_potential_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_method="direct"):
-    r"""Computes the pseudo adiabatic wet bulb potential temperature from dewpoint.
+    r"""Compute the pseudo adiabatic wet bulb potential temperature from dewpoint.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature (K)
-    td: number or ndarray
+    td: number or array-like
         Dewpoint (K)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
     ept_method: str, optional
         Specifies the computation method for the equivalent potential temperature.
@@ -1671,7 +1615,7 @@ def wet_bulb_potential_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_m
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Wet bulb potential temperature (K)
 
 
@@ -1691,15 +1635,15 @@ def wet_bulb_potential_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_m
 
 
 def wet_bulb_potential_temperature_from_specific_humidity(t, q, p, ept_method="ifs", t_method="direct"):
-    r"""Computes the pseudo adiabatic wet bulb potential temperature from specific humidity.
+    r"""Compute the pseudo adiabatic wet bulb potential temperature from specific humidity.
 
     Parameters
     ----------
-    t: number or ndarray
+    t: number or array-like
         Temperature (K)
-    q: number or ndarray
+    q: number or array-like
         Specific humidity (kg/kg)
-    p: number or ndarray
+    p: number or array-like
         Pressure (Pa)
     ept_method: str, optional
         Specifies the computation method for the equivalent potential temperature.
@@ -1715,7 +1659,7 @@ def wet_bulb_potential_temperature_from_specific_humidity(t, q, p, ept_method="i
 
     Returns
     -------
-    number or ndarray
+    number or array-like
         Wet bulb potential temperature (K)
 
 
@@ -1729,3 +1673,35 @@ def wet_bulb_potential_temperature_from_specific_humidity(t, q, p, ept_method="i
         return _EptComp.make(ept_method).compute_wbpt(ept)
     else:
         return temperature_on_moist_adiabat(ept, constants.p0, ept_method=ept_method, t_method=t_method)
+
+
+def specific_gas_constant(q):
+    r"""Compute the specific gas constant of moist air.
+
+    Specific content of cloud particles and hydrometeors are neglected.
+
+    Parameters
+    ----------
+    q: number or array-like
+        Specific humidity (kg/kg)
+
+    Returns
+    -------
+    number or array-like
+        Specific gas constant of moist air (J kg-1 K-1)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        R = R_{d} + (R_{v} - R_{d}) q
+
+    where:
+
+        * :math:`R_{d}` is the gas constant for dry air (see :data:`earthkit.meteo.constants.Rd`)
+        * :math:`R_{v}` is the gas constant for water vapour (see :data:`earthkit.meteo.constants.Rv`)
+
+    """
+    R = constants.Rd + (constants.Rv - constants.Rd) * q
+    return R

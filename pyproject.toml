@@ -1,5 +1,6 @@
 [build-system]
-requires = [ "setuptools>=61", "setuptools-scm>=8" ]
+build-backend = "setuptools.build_meta"
+requires = [ "setuptools>=61", "setuptools-scm>=8", "wheel" ]
 
 [project]
 name = "earthkit-meteo"
@@ -22,11 +23,13 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dynamic = [ "version" ]
 dependencies = [
+  "earthkit-utils>=0.0.1",
   "numpy",
 ]
 optional-dependencies.test = [

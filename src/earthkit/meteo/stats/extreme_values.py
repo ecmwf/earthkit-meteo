@@ -7,10 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Statistical functions operating on numpy arrays.
-"""
+from . import array
 
-from .extreme_values import *  # noqa
-from .numpy_extended import *  # noqa
-from .quantiles import *  # noqa
+GumbelDistribution = array.GumbelDistribution
+
+value_to_return_period = array.value_to_return_period
+return_period_to_value = array.return_period_to_value

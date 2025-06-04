@@ -10,6 +10,7 @@
 import datetime
 
 import numpy as np
+from earthkit.utils.array import array_namespace
 
 DAYS_PER_YEAR = 365.25
 
@@ -19,7 +20,11 @@ WARNING: This code is incomplete and not tested. DO NOT USE.
 
 
 def julian_day(date):
-    delta = date - datetime.datetime(date.year, 1, 1)
+    if date.tzinfo is not None and date.tzinfo.utcoffset(date) is not None:
+        year_start = datetime.datetime(date.year, 1, 1, tzinfo=date.tzinfo)
+    else:
+        year_start = datetime.datetime(date.year, 1, 1)
+    delta = date - year_start
     return delta.days + delta.seconds / 86400.0
 
 
@@ -54,9 +59,9 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
     ----------
     date: datetime.datetime
         Date
-    lat: float array
+    latitudes: array-like
         Latitude [degrees]
-    lon: float array
+    longitudes: array-like
         Longitude [degrees]
 
     Returns
@@ -70,20 +75,26 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
     # declination angle + time correction for solar angle
     declination, time_correction = solar_declination_angle(date)
 
+    xp = array_namespace(latitudes, longitudes)
+    declination = xp.asarray(declination)
+    latitudes = xp.asarray(latitudes)
+    longitudes = xp.asarray(longitudes)
+
     # solar_declination_angle returns degrees
-    declination = np.deg2rad(declination)
+    # TODO: deg2rad() is not part of the array API standard
+    declination = xp.deg2rad(declination)
+    latitudes = xp.deg2rad(latitudes)
 
-    latitudes = np.deg2rad(latitudes)
-
-    sindec_sinlat = np.sin(declination) * np.sin(latitudes)
-    cosdec_coslat = np.cos(declination) * np.cos(latitudes)
+    sindec_sinlat = xp.sin(declination) * xp.sin(latitudes)
+    cosdec_coslat = xp.cos(declination) * xp.cos(latitudes)
 
     # solar hour angle [h.deg]
-    solar_angle = np.deg2rad((date.hour - 12) * 15 + longitudes + time_correction)
-    zenith_angle = sindec_sinlat + cosdec_coslat * np.cos(solar_angle)
+    # TODO: deg2rad() is not part of the array API standard
+    solar_angle = xp.deg2rad((date.hour - 12) * 15 + longitudes + time_correction)
+    zenith_angle = sindec_sinlat + cosdec_coslat * xp.cos(solar_angle)
 
     # Clip negative values
-    return np.clip(zenith_angle, 0, None)
+    return xp.clip(zenith_angle, 0.0, None)
 
 
 def _integrate(
@@ -96,31 +107,39 @@ def _integrate(
     intervals_per_hour=1,
     integration_order=3,
 ):
+    xp = array_namespace(latitudes, longitudes)
+    latitudes = xp.asarray(latitudes)
+    longitudes = xp.asarray(longitudes)
+
     # Gauss-Integration coefficients
     if integration_order == 3:  # default, good speed and accuracy (3 points)
-        E = np.array([-np.sqrt(3.0 / 5.0), 0.0, np.sqrt(3.0 / 5.0)])
-        W = np.array([5.0 / 9.0, 8.0 / 9.0, 5.0 / 9.0])
+        _C1 = xp.sqrt(xp.asarray(5.0 / 9.0))
+        E = xp.asarray([-_C1, xp.asarray(0.0), _C1])
+        W = xp.asarray([5.0 / 9.0, 8.0 / 9.0, 5.0 / 9.0])
     elif integration_order == 1:  # fastest, worse accuracy (1 point)
-        E = np.array([0.0])
-        W = np.array([2.0])
+        E = xp.asarray([0.0])
+        W = xp.asarray([2.0])
     elif integration_order == 2:  # faster, less accurate (2 points)
-        E = np.array([-1.0 / np.sqrt(3.0), 1.0 / np.sqrt(3.0)])
-        W = np.array([1.0, 1.0])
+        _C1 = xp.sqrt(xp.asarray(3.0))
+        E = xp.asarray([-1.0 / _C1, 1.0 / _C1])
+        W = xp.asarray([1.0, 1.0])
     elif integration_order == 4:  # slower, more accurate (4 points)
-        E = np.array(
+        _C1 = xp.sqrt(xp.asarray(6.0 / 5.0))
+        _C2 = xp.sqrt(xp.asarray(30))
+        E = xp.asarray(
             [
-                -np.sqrt(3.0 / 7.0 + 2.0 / 7.0 * np.sqrt(6.0 / 5.0)),
-                -np.sqrt(3.0 / 7.0 - 2.0 / 7.0 * np.sqrt(6.0 / 5.0)),
-                np.sqrt(3.0 / 7.0 - 2.0 / 7.0 * np.sqrt(6.0 / 5.0)),
-                np.sqrt(3.0 / 7.0 + 2.0 / 7.0 * np.sqrt(6.0 / 5.0)),
+                -xp.sqrt(3.0 / 7.0 + 2.0 / 7.0 * _C1),
+                -xp.sqrt(3.0 / 7.0 - 2.0 / 7.0 * _C1),
+                xp.sqrt(3.0 / 7.0 - 2.0 / 7.0 * _C1),
+                xp.sqrt(3.0 / 7.0 + 2.0 / 7.0 * _C1),
             ]
         )
-        W = np.array(
+        W = xp.asarray(
             [
-                (18 - np.sqrt(30)) / 36,
-                (18 + np.sqrt(30)) / 36,
-                (18 + np.sqrt(30)) / 36,
-                (18 - np.sqrt(30)) / 36,
+                (18 - _C2) / 36,
+                (18 + _C2) / 36,
+                (18 + _C2) / 36,
+                (18 - _C2) / 36,
             ]
         )
     else:
@@ -136,9 +155,9 @@ def _integrate(
 
     assert nsplits > 0
 
-    time_steps = np.linspace(0, interval_size_hours, num=nsplits + 1)
+    time_steps = xp.linspace(0, interval_size_hours, num=nsplits + 1)
 
-    integral = np.zeros_like(latitudes)
+    integral = xp.zeros_like(latitudes)
     for s in range(len(time_steps) - 1):
         ti = time_steps[s]
         tf = time_steps[s + 1]
@@ -153,7 +172,7 @@ def _integrate(
 
         for n in range(len(w)):
             integral += w[n] * func(
-                date + datetime.timedelta(hours=t[n]),
+                date + datetime.timedelta(hours=float(t[n])),
                 latitudes,
                 longitudes,
             )
@@ -176,25 +195,20 @@ def cos_solar_zenith_angle_integrated(
     ----------
     begin_date: datetime.datetime
     end_date: datetime.datetime
-    lat: int darray
+    lat: array-like
         Latitude [degrees].
-    lon: int darray
+    lon: array-like
         Longitude [degrees].
-    tbegin: int
-        Offset in hours from forecast time to begin of time interval for integration.
-    tend: int
-        Offset in hours from forecast time to end of time interval for integration.
     intervals_per_hour: int
         Number of time integrations per hour.
     integration order: int
-        Order of gauss integration, valid = (1, 2, 3, 4)
+        Order of Gaussian integration, valid = (1, 2, 3, 4)
 
     Returns
     -------
     float array
         Average of cosine of the solar zenith angle during interval [degrees]. Based on
-        numerical integration using the 3 point
-        `Gauss integration <https://en.wikipedia.org/wiki/Gaussian_quadrature>`_ rule.
+        numerical integration using the 3 point [Gaussian_Quadrature]_ rule.
         [Hogan_and_Hirahara2015]_, [Biricombe2022]_
 
     """

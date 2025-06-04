@@ -7,41 +7,19 @@
 # nor does it submit to any jurisdiction.
 #
 
-import numpy as np
+from earthkit.utils.array import array_namespace
 
 
-def cpf(clim, ens, sort_clim=True, sort_ens=True):
-    """Compute Crossing Point Forecast (CPF)
+def _cpf(clim, ens, epsilon=None):
+    xp = array_namespace(clim, ens)
+    clim = xp.asarray(clim)
+    ens = xp.asarray(ens)
 
-    WARNING: this code is experimental, use at your own risk!
-
-    Parameters
-    ----------
-    clim: numpy array (nclim, npoints)
-        Per-point climatology
-    ens: numpy array (nens, npoints)
-        Ensemble forecast
-    sort_clim: bool
-        If True, sort the climatology first
-    sort_ens: bool
-        If True, sort the ensemble first
-
-    Returns
-    -------
-    numpy array (npoints)
-        CPF values
-    """
     nclim, npoints = clim.shape
-    nens, npoints_ens = ens.shape
-    assert npoints == npoints_ens
+    nens, _ = ens.shape
 
-    cpf = np.ones(npoints, dtype=np.float32)
-    mask = np.zeros(npoints, dtype=np.bool_)
-
-    if sort_clim:
-        clim = np.sort(clim, axis=0)
-    if sort_ens:
-        ens = np.sort(ens, axis=0)
+    cpf = xp.ones(npoints, dtype=xp.float32)
+    mask = xp.zeros(npoints, dtype=xp.bool)
 
     for icl in range(1, nclim - 1):
         # quantile level of climatology
@@ -69,7 +47,7 @@ def cpf(clim, ens, sort_clim=True, sort_ens=True):
                     )
 
                     # populate matrix, no values below 0
-                    cpf[idx] = np.maximum(tau_i, 0)
+                    cpf[idx] = xp.maximum(tau_i, xp.asarray(0))
                     mask[idx] = True
 
                 # check crossing cases
@@ -89,9 +67,67 @@ def cpf(clim, ens, sort_clim=True, sort_ens=True):
                     )
 
                     # populate matrix, no values above 1
-                    cpf[idx] = np.minimum(tau_i, 1)
+                    cpf[idx] = xp.minimum(tau_i, xp.asarray(1))
 
                 # speed up process
                 break
 
+    if epsilon is not None:
+        # ens is assumed to be sorted at this point
+        mask = ens[-1, :] < epsilon
+        cpf[mask] = 0.0
+
     return cpf
+
+
+def cpf(clim, ens, sort_clim=True, sort_ens=True, epsilon=None, symmetric=False):
+    """Compute Crossing Point Forecast (CPF)
+
+    WARNING: this code is experimental, use at your own risk!
+
+    Parameters
+    ----------
+    clim: array-like (nclim, npoints)
+        Per-point climatology
+    ens: array-like (nens, npoints)
+        Ensemble forecast
+    sort_clim: bool
+        If True, sort the climatology first
+    sort_ens: bool
+        If True, sort the ensemble first
+    epsilon: float or None
+        If set, use this as a threshold for low-signal regions. Ignored if
+        `symmetric` is True
+    symmetric: bool
+        If True, make CPF values below 0.5 use a symmetric computation (CPF of
+        opposite values)
+
+    Returns
+    -------
+    array-like (npoints)
+        CPF values
+    """
+    xp = array_namespace(clim, ens)
+    clim = xp.asarray(clim)
+    ens = xp.asarray(ens)
+
+    _, npoints = clim.shape
+    _, npoints_ens = ens.shape
+    assert npoints == npoints_ens
+
+    if sort_clim:
+        clim = xp.sort(clim, axis=0)
+    if sort_ens:
+        ens = xp.sort(ens, axis=0)
+
+    if symmetric:
+        epsilon = None
+
+    cpf_direct = _cpf(clim, ens, epsilon)
+
+    if symmetric:
+        cpf_reverse = _cpf(-clim[::-1, :], -ens[::-1, :])
+        mask = cpf_direct < 0.5
+        cpf_direct[mask] = 1 - cpf_reverse[mask]
+
+    return cpf_direct

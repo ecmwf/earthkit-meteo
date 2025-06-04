@@ -7,12 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
+
 import datetime
 
 import numpy as np
 import pytest
 
 from earthkit.meteo import solar
+from earthkit.meteo.utils.testing import ARRAY_BACKENDS
 
 
 @pytest.mark.parametrize(
@@ -20,15 +22,17 @@ from earthkit.meteo import solar
     [
         (datetime.datetime(2024, 4, 22), 112.0),
         (datetime.datetime(2024, 4, 22, 12, 0, 0), 112.5),
+        (datetime.datetime(2024, 4, 22, 12, tzinfo=datetime.timezone(datetime.timedelta(hours=1))), 112.5),
     ],
 )
 def test_julian_day(date, expected_value):
     v = solar.julian_day(date)
+
     assert np.isclose(v, expected_value)
 
 
 @pytest.mark.parametrize(
-    "date,expected_value",
+    "date,v_ref",
     [
         (datetime.datetime(2024, 4, 22), (12.235799080498582, 0.40707190497656276)),
         (
@@ -37,29 +41,43 @@ def test_julian_day(date, expected_value):
         ),
     ],
 )
-def test_solar_declination_angle(date, expected_value):
+def test_solar_declination_angle(date, v_ref):
     declination, time_correction = solar.solar_declination_angle(date)
-    assert np.isclose(declination, expected_value[0])
-    assert np.isclose(time_correction, expected_value[1])
+    assert np.isclose(declination, v_ref[0])
+    assert np.isclose(time_correction, v_ref[1])
 
 
-def test_cos_solar_zenith_angle():
-    date = datetime.datetime(2024, 4, 22, 12, 0, 0)
-    latitudes = np.array([40.0])
-    longitudes = np.array([18.0])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "date,lat,lon,v_ref",
+    [(datetime.datetime(2024, 4, 22, 12, 0, 0), 40.0, 18.0, 0.8478445449796352)],
+)
+def test_cos_solar_zenith_angle_1(date, lat, lon, v_ref, array_backend):
+    lat, lon, v_ref = array_backend.asarray(lat, lon, v_ref)
+    v = solar.cos_solar_zenith_angle(date, lat, lon)
+    v_ref = array_backend.asarray(v_ref, dtype=v.dtype)
+    assert array_backend.allclose(v, v_ref)
 
-    v = solar.cos_solar_zenith_angle(date, latitudes, longitudes)
-    assert np.isclose(v[0], 0.8478445449796352)
 
-
-def test_cos_solar_zenith_angle_integrated():
-    begin_date = datetime.datetime(2024, 4, 22)
-    end_date = datetime.datetime(2024, 4, 23)
-    latitudes = np.array([40.0])
-    longitudes = np.array([18.0])
-
-    v = solar.cos_solar_zenith_angle_integrated(begin_date, end_date, latitudes, longitudes)
-    assert np.isclose(v[0], 0.3110738757)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "begin_date,end_date,lat,lon,integration_order,v_ref",
+    [
+        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 1, 0.3110738757),
+        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 2, 0.3110738757),
+        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 3, 0.3110738757),
+        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 4, 0.3110738757),
+    ],
+)
+def test_cos_solar_zenith_angle_integrated(
+    begin_date, end_date, lat, lon, integration_order, v_ref, array_backend
+):
+    lat, lon, v_ref = array_backend.asarray(lat, lon, v_ref)
+    v = solar.cos_solar_zenith_angle_integrated(
+        begin_date, end_date, lat, lon, integration_order=integration_order
+    )
+    v_ref = array_backend.asarray(v_ref, dtype=v.dtype)
+    assert array_backend.allclose(v, v_ref)
 
 
 def test_incoming_solar_radiation():
@@ -68,11 +86,12 @@ def test_incoming_solar_radiation():
     assert np.isclose(v, 4833557.3088814365)
 
 
-def test_toa_incident_solar_radiation():
-    begin_date = datetime.datetime(2024, 4, 22)
-    end_date = datetime.datetime(2024, 4, 23)
-    latitudes = np.array([40.0])
-    longitudes = np.array([18.0])
-
-    v = solar.toa_incident_solar_radiation(begin_date, end_date, latitudes, longitudes)
-    assert np.isclose(v, 1503617.8237746414)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize(
+    "begin_date,end_date,lat,lon,v_ref",
+    [(datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 1503617.8237746414)],
+)
+def test_toa_incident_solar_radiation(begin_date, end_date, lat, lon, v_ref, array_backend):
+    lat, lon, v_ref = array_backend.asarray(lat, lon, v_ref)
+    v = solar.toa_incident_solar_radiation(begin_date, end_date, lat, lon)
+    assert array_backend.allclose(v, v_ref)

@@ -7,4 +7,40 @@
 # nor does it submit to any jurisdiction.
 #
 
-# from . import array
+from . import array
+
+
+def pressure_at_model_levels(*args, **kwargs):
+    return array.pressure_at_model_levels(*args, **kwargs)
+
+
+def relative_geopotential_thickness(*arg, **kwargs):
+    return array.relative_geopotential_thickness(*arg, **kwargs)
+
+
+def pressure_at_height_levels(*args, **kwargs):
+    return array.pressure_at_height_levels(*args, **kwargs)
+
+
+def geopotential_height_from_geopotential(*args, **kwargs):
+    return array.geopotential_height_from_geopotential(*args, **kwargs)
+
+
+def geopotential_from_geopotential_height(*args, **kwargs):
+    return array.geopotential_from_geopotential_height(*args, **kwargs)
+
+
+def geopotential_height_from_geometric_height(*args, **kwargs):
+    return array.geopotential_height_from_geometric_height(*args, **kwargs)
+
+
+def geopotential_from_geometric_height(*args, **kwargs):
+    return array.geopotential_from_geometric_height(*args, **kwargs)
+
+
+def geometric_height_from_geopotential_height(*args, **kwargs):
+    return array.geometric_height_from_geopotential_height(*args, **kwargs)
+
+
+def geometric_height_from_geopotential(*args, **kwargs):
+    return array.geometric_height_from_geopotential(*args, **kwargs)

@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2024 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,10 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Statistical functions operating on numpy arrays.
-"""
+from . import array
 
-from .extreme_values import *  # noqa
-from .numpy_extended import *  # noqa
-from .quantiles import *  # noqa
+
+def pearson(*args, **kwargs):
+    return array.pearson(*args, **kwargs)
