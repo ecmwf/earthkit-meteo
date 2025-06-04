@@ -20,7 +20,6 @@ Made almost all of the methods array format agnostic with support for Numpy, Tor
 
     t = np.array([264.12, 261.45])
     p = np.array([850, 850]) * 100.0
-
     theta = thermo.potential_temperature(t, p)
 
     # Example with Torch tensor
@@ -28,7 +27,6 @@ Made almost all of the methods array format agnostic with support for Numpy, Tor
 
     t = torch.tensor([264.12, 261.45])
     p = torch.tensor([850.0, 850.0]) * 100.0
-
     theta = thermo.potential_temperature(t, p)
 
 

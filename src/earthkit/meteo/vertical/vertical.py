@@ -18,8 +18,8 @@ def relative_geopotential_thickness(*arg, **kwargs):
     return array.relative_geopotential_thickness(*arg, **kwargs)
 
 
-def pressure_at_height_level(*args, **kwargs):
-    return array.pressure_at_height_level(*args, **kwargs)
+def pressure_at_height_levels(*args, **kwargs):
+    return array.pressure_at_height_levels(*args, **kwargs)
 
 
 def geopotential_height_from_geopotential(*args, **kwargs):

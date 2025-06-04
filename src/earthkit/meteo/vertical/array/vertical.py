@@ -33,9 +33,9 @@ def pressure_at_model_levels(
     sp : number or ndarray
         Surface pressure (Pa)
     alpha_top : str, optional
-        Option to initialise alpha on the topmost half level. The possible values are:
-        - "ifs": alpha is set to log(2). See [IFS-CY47R3-Dynamics]_
-        (page 7) for details.
+        Option to initialise alpha on the top of the model atmosphere (first half-level in vertical coordinate system). The possible values are:
+
+        - "ifs": alpha is set to log(2). See [IFS-CY47R3-Dynamics]_ (page 7) for details.
         - "arpege": alpha is set to 1.0
 
     Returns
@@ -52,11 +52,11 @@ def pressure_at_model_levels(
 
     Notes
     -----
-    ``A`` and ``B`` must contain the same model half-levels in an ascending order. The model
-    level range must be contiguous and must include the bottom-most model
-    half-level (surface), but not all the levels must be present. E.g. if the vertical
-    coordinate system has 137 model levels using only a subset of levels between
-    e.g. 137-96 is allowed.
+    ``A`` and ``B`` must contain the same model half-levels in ascending order with
+    respect to the model level number. The model level range must be contiguous and
+    must include the bottom-most model half-level (surface), but not all the levels
+    must be present. E.g. if the vertical coordinate system has 137 model levels using
+    only a subset of levels between e.g. 137-96 is allowed.
 
     For details on the returned parameters see [IFS-CY47R3-Dynamics]_ (page 7-8).
 
@@ -78,7 +78,7 @@ def pressure_at_model_levels(
 
     See also
     --------
-    pressure_at_model_levels
+    pressure_at_height_levels
     relative_geopotential_thickness
 
     """
@@ -140,12 +140,14 @@ def pressure_at_model_levels(
 def relative_geopotential_thickness(
     alpha: NDArray[Any], delta: NDArray[Any], t: NDArray[Any], q: NDArray[Any]
 ) -> NDArray[Any]:
-    """Calculate the geopotential thickness w.r.t the surface on model full-levels.
+    """Calculate the geopotential thickness with respect to the surface on model full-levels.
 
     Parameters
     ----------
     alpha : array-like
         alpha term of pressure calculations
+    delta : array-like
+        delta term of pressure calculations
     t : array-like
         specific humidity on model full-levels (kg/kg).  First dimension must
         correspond to the model full-levels.
@@ -156,14 +158,14 @@ def relative_geopotential_thickness(
     Returns
     -------
     array-like
-        geopotential thickness of model full-levels w.r.t. the surface
+        geopotential thickness of model full-levels with respect to the surface
 
     Notes
     -----
-    ``t`` and ``q`` must contain the same model levels in an ascending order. The model
-    level range must be contiguous and must include the bottom-most level, but not all
-    the levels must be present. E.g. if the vertical coordinate system has 137 model
-    levels using only a subset of levels between e.g. 137-96 is allowed.
+    ``t`` and ``q`` must contain the same model levels in ascending order with respect to
+    the model level number. The model level range must be contiguous and must include the
+    bottom-most level, but not all the levels must be present. E.g. if the vertical coordinate
+    system has 137 model levels using only a subset of levels between e.g. 137-96 is allowed.
 
     ``alpha`` and ``delta`` must be defined on the same levels as ``t`` and ``q``. These
     values can be calculated using :func:`pressure_at_model_levels`.
@@ -194,7 +196,7 @@ def relative_geopotential_thickness(
     return dphi
 
 
-def pressure_at_height_level(
+def pressure_at_height_levels(
     height: float,
     t: NDArray[Any],
     q: NDArray[Any],
@@ -204,19 +206,6 @@ def pressure_at_height_level(
     alpha_top: str = "ifs",
 ) -> Union[float, NDArray[Any]]:
     """Calculate the pressure at a height above the surface from model full-levels.
-
-    This is done by finding the model level above and below the specified height
-    and interpolating the pressure with linear interpolation.
-
-    ``t`` and ``q`` must contain the same model levels in an ascending order. The model
-    level range must be contiguous and must include the bottom-most level, but not all the
-    levels must be present. E.g. if the vertical coordinate system has 137 model
-    levels using only a subset of levels between e.g. 137-96 is allowed.
-
-    ``A`` and ``B`` must be defined on the model half-levels corresponding to the model
-    full-levels in ``t`` and ``q``. So the number of levels in ``A`` and ``B`` must be one
-    more than the number of levels in ``t`` and ``q``.
-
 
     Parameters
     ----------
@@ -245,11 +234,10 @@ def pressure_at_height_level(
 
     Notes
     -----
-
-    ``t`` and ``q`` must contain the same model levels in an ascending order. The model
-    level range must be contiguous and must include the bottom-most level, but not all the
-    levels must be present. E.g. if the vertical coordinate system has 137 model
-    levels using only a subset of levels between e.g. 137-96 is allowed.
+    ``t`` and ``q`` must contain the same model levels in ascending order with respect to
+    the model level number. The model level range must be contiguous and must include the
+    bottom-most level, but not all the levels must be present. E.g. if the vertical coordinate
+    system has 137 model levels using only a subset of levels between e.g. 137-96 is allowed.
 
     ``A`` and ``B`` must be defined on the model half-levels corresponding to the model
     full-levels in ``t`` and ``q``. So the number of levels in ``A`` and ``B`` must be one
