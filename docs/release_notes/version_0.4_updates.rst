@@ -3,7 +3,7 @@ Version 0.4 Updates
 /////////////////////////
 
 
-Version 0.4.0
+Version 0.4.1
 ===============
 
 Array formats
