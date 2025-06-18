@@ -36,6 +36,50 @@ class BootstrapResult:
         return array_namespace(self.results)
 
 
+def resample(x, *args, sample_axis=0, n_iter=100, n_samples=None, randrange=random.randrange):
+    """Resample arrays for bootstrapping
+
+    Parameters
+    ----------
+    x, *args: array-like
+        Inputs to the wrapped function, sampled for bootstrapping. Must have
+        the same size along ``sample_axis``
+    sample_axis: int or list of int
+        Sample along this axis (either same for all or one per argument)
+    n_iter: int
+        Number of bootstrapping iterations
+    n_samples: int or None
+        Number of samples for each iteration. If None, use the number of
+        inputs (size of ``x`` along the sampling axis)
+    randrange: function (int -> int)
+        Random generator for integers: `randrange(n)` should return an
+        integer in `range(n)`
+
+    Yields
+    ------
+    tuple
+        Resampled arrays (one for each iteration)
+    """
+    args = (x,) + args
+    n_arrays = len(args)
+    if isinstance(sample_axis, int):
+        sample_axis = [sample_axis for _ in range(n_arrays)]
+    else:
+        assert len(sample_axis) == n_arrays, "sample_axis must have one element per input array"
+    xp = array_namespace(*args)
+    arrays = tuple((xp.asarray(arr), axis) for arr, axis in zip(args, sample_axis))
+    n_inputs = x.shape[sample_axis[0]]
+    assert all(
+        y.shape[axis] == n_inputs for y, axis in arrays
+    ), "Input arrays must have the same size along the sampling axis"
+    if n_samples is None:
+        n_samples = n_inputs
+    for _ in range(n_iter):
+        indices = [randrange(n_inputs) for _ in range(n_samples)]
+        sampled = tuple(xp.take(y, indices=indices, axis=axis) for y, axis in arrays)
+        yield sampled
+
+
 class Bootstrappable:
     def __init__(self, func):
         self.func = func
@@ -46,7 +90,6 @@ class Bootstrappable:
     def bootstrap(
         self,
         x,
-        y,
         *args,
         sample_axis=0,
         n_iter=100,
@@ -58,13 +101,11 @@ class Bootstrappable:
 
         Parameters
         ----------
-        x, y: array-like
+        x, *args: array-like
             Inputs to the wrapped function, sampled for bootstrapping. Must have
             the same size along ``sample_axis``
-        *args
-            Additional positional arguments to the wrapped function
-        sample_axis: int
-            Sample along this axis
+        sample_axis: int or list of int
+            Sample along this axis (either same for all or one per argument)
         n_iter: int
             Number of bootstrapping iterations
         n_samples: int or None
@@ -81,21 +122,16 @@ class Bootstrappable:
         BootstrapResult
             Aggregated results of the bootstrapping process
         """
-        xp = array_namespace(x, y)
-        x = xp.asarray(x)
-        y = xp.asarray(y)
-        n_inputs = x.shape[sample_axis]
-        assert (
-            y.shape[sample_axis] == n_inputs
-        ), "Input arrays must have the same size along the first dimension"
-        if n_samples is None:
-            n_samples = n_inputs
-        results = []
-        for _ in range(n_iter):
-            indices = [randrange(n_inputs) for _ in range(n_samples)]
-            x_sample = xp.take(x, indices=indices, axis=sample_axis)
-            y_sample = xp.take(y, indices=indices, axis=sample_axis)
-            results.append(self.func(x_sample, y_sample, *args, **kwargs))
+        xp = array_namespace(x, *args)
+        samples = resample(
+            x,
+            *args,
+            sample_axis=sample_axis,
+            n_iter=n_iter,
+            n_samples=n_samples,
+            randrange=randrange,
+        )
+        results = [self.func(*sampled, **kwargs) for sampled in samples]
         return BootstrapResult(n_iter, n_samples, xp.stack(results, axis=0))
 
 
@@ -112,13 +148,13 @@ def enable_bootstrap(func):
 
     ::
         @enable_bootstrap
-        def difference(x, y):
-            return y - x
+        def mse(x, y, axis=-1):
+            return np.mean(np.square(y - x), axis=axis)
 
         x = ...
         y = ...
-        difference(x, y)  # normal call, return y - x
-        bresult = difference.bootstrap(x, y)  # bootstrapping
+        mse(x, y)  # normal call, return MSE
+        bresult = mse.bootstrap(x, y)  # bootstrapping
         bresult.quantiles(0.2)
         bresult.sig_mask(0.05, 0.0)
     """
