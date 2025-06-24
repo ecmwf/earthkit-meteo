@@ -11,5 +11,6 @@
 Verification functions operating on numpy arrays.
 """
 
+from .bootstrap import *  # noqa
 from .correlation import *  # noqa
 from .crps import *  # noqa

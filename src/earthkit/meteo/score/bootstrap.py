@@ -4,6 +4,66 @@ from dataclasses import dataclass
 
 from earthkit.utils.array import array_namespace
 
+try:
+    import xarray as xr
+except ModuleNotFoundError:
+    xr = None
+
+from . import array
+
+
+def resample(x, *args, **kwargs):
+    if xr is not None and isinstance(x, xr.DataArray):
+        n_arrays = len(args) + 1
+        dim = kwargs.get("dim", None)
+        if dim is None:
+            raise TypeError("resample with xarray arguments requires 'dim'")
+        in_dims = [[dim] for _ in range(n_arrays)]
+        sample_dim = kwargs.get("sample_dim", "sample")
+        out_dims = [[sample_dim] for _ in range(n_arrays)]
+        return xr.apply_ufunc(
+            functools.partial(array.resample, sample_axis=-1, out_axis=-1, **kwargs),
+            x,
+            *args,
+            input_core_dims=in_dims,
+            output_core_dims=out_dims,
+        )
+
+    return array.resample(x, *args, **kwargs)
+
+
+def _bootstrap_xarray(
+    func,
+    *args,
+    dim=None,
+    sample_dim="sample",
+    n_iter=100,
+    n_samples=None,
+    randrange=random.randrange,
+    **kwargs,
+):
+    assert xr is not None
+    if dim is None:
+        raise TypeError("bootstrap with xarray arguments requires 'dim'")
+    n_inputs = args[0].sizes[dim]
+    assert all(
+        arr.sizes[dim] == n_inputs for arr in args
+    ), "Input arrays must have the same size along the sampling axis"
+    if n_samples is None:
+        n_samples = n_inputs
+    results = []
+    for _ in range(n_iter):
+        indices = [randrange(n_inputs) for _ in range(n_samples)]
+        sampled = tuple(arr.isel({dim: indices}) for arr in args)
+        results.append(func(*sampled, **kwargs))
+    return xr.concat(results, sample_dim)
+
+
+def bootstrap(func, x, *args, **kwargs):
+    if xr is not None and isinstance(x, xr.DataArray):
+        return _bootstrap_xarray(func, x, *args, **kwargs)
+    return array.bootstrap(func, x, *args, **kwargs)
+
 
 @dataclass
 class BootstrapResult:
@@ -34,50 +94,6 @@ class BootstrapResult:
     @property
     def _xp(self):
         return array_namespace(self.results)
-
-
-def resample(x, *args, sample_axis=0, n_iter=100, n_samples=None, randrange=random.randrange):
-    """Resample arrays for bootstrapping
-
-    Parameters
-    ----------
-    x, *args: array-like
-        Inputs to the wrapped function, sampled for bootstrapping. Must have
-        the same size along ``sample_axis``
-    sample_axis: int or list of int
-        Sample along this axis (either same for all or one per argument)
-    n_iter: int
-        Number of bootstrapping iterations
-    n_samples: int or None
-        Number of samples for each iteration. If None, use the number of
-        inputs (size of ``x`` along the sampling axis)
-    randrange: function (int -> int)
-        Random generator for integers: `randrange(n)` should return an
-        integer in `range(n)`
-
-    Yields
-    ------
-    tuple
-        Resampled arrays (one for each iteration)
-    """
-    args = (x,) + args
-    n_arrays = len(args)
-    if isinstance(sample_axis, int):
-        sample_axis = [sample_axis for _ in range(n_arrays)]
-    else:
-        assert len(sample_axis) == n_arrays, "sample_axis must have one element per input array"
-    xp = array_namespace(*args)
-    arrays = tuple((xp.asarray(arr), axis) for arr, axis in zip(args, sample_axis))
-    n_inputs = x.shape[sample_axis[0]]
-    assert all(
-        y.shape[axis] == n_inputs for y, axis in arrays
-    ), "Input arrays must have the same size along the sampling axis"
-    if n_samples is None:
-        n_samples = n_inputs
-    for _ in range(n_iter):
-        indices = [randrange(n_inputs) for _ in range(n_samples)]
-        sampled = tuple(xp.take(y, indices=indices, axis=axis) for y, axis in arrays)
-        yield sampled
 
 
 class Bootstrappable:
@@ -122,8 +138,8 @@ class Bootstrappable:
         BootstrapResult
             Aggregated results of the bootstrapping process
         """
-        xp = array_namespace(x, *args)
-        samples = resample(
+        results = bootstrap(
+            self.func,
             x,
             *args,
             sample_axis=sample_axis,
@@ -131,8 +147,7 @@ class Bootstrappable:
             n_samples=n_samples,
             randrange=randrange,
         )
-        results = [self.func(*sampled, **kwargs) for sampled in samples]
-        return BootstrapResult(n_iter, n_samples, xp.stack(results, axis=0))
+        return BootstrapResult(n_iter, n_samples, results)
 
 
 def enable_bootstrap(func):
