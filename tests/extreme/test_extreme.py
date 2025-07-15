@@ -74,8 +74,7 @@ def test_efi_xarray_core(clim, ens, kwargs, v_ref, array_backend):
         xr.DataArray(ens, dims=["number", "points"]), 
         **kwargs
     )
-    print("EFI", efi)
-    assert array_backend.allclose(efi[0].values, v_ref, rtol=1e-4)
+    assert array_backend.allclose(efi[0].data, v_ref, rtol=1e-4)
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
