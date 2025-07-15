@@ -29,11 +29,14 @@ def efi(clim: xr.DataArray, ens: xr.DataArray, eps=-0.1, ens_dim: str = "number"
     array-like (npoints)
         EFI values
     """
-
-    xp = array_namespace(clim.values, ens.values)
+    if clim_dim == ens_dim:
+        clim_dim = f"clim_{ens_dim}"
+        clim = clim.rename({ens_dim: clim_dim})
+        
+    xp = array_namespace(clim.data, ens.data)
 
     # locate missing values
-    missing_mask = xp.logical_or(xp.isnan(clim).sum(dim=clim_dim), xp.isnan(ens).sum(dim=ens_dim))
+    missing_mask = xr.ufuncs.logical_or(xr.ufuncs.isnan(clim).sum(dim=clim_dim), xr.ufuncs.isnan(ens).sum(dim=ens_dim))
 
     # Compute fraction of the forecast below climatology
     nclim, npoints = clim.shape
@@ -44,7 +47,7 @@ def efi(clim: xr.DataArray, ens: xr.DataArray, eps=-0.1, ens_dim: str = "number"
     # Compute formula coefficients
     p = xp.linspace(0.0, 1.0, nclim)
     dp = 1 / (nclim - 1)
-    dFdp = frac.diff(dim=clim_dim) / dp
+    dFdp = frac.diff(dim=clim_dim, label="lower") / dp
 
     acosdiff = xp.diff(xp.arccos(xp.sqrt(p)))
     proddiff = xp.diff(xp.sqrt(p * (1.0 - p)))
@@ -75,7 +78,7 @@ def efi(clim: xr.DataArray, ens: xr.DataArray, eps=-0.1, ens_dim: str = "number"
             .map(lambda ds: xr.where(ds.mask, -ds.acosdiff - ds.proddiff, 0.0))
             .sum(clim_dim)
         )
-        efimax = xp.fmax(efimax, xp.asarray(eps))
+        efimax = xr.ufuncs.fmax(efimax, xp.asarray(eps))
         efi /= efimax
     else:
         efi = (2.0 / np.pi) * mapped_ds.sum(clim_dim)
