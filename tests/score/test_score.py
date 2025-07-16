@@ -15,7 +15,7 @@ import xarray as xr
 import pytest
 
 from earthkit.meteo import score
-from earthkit.meteo.utils.testing import ARRAY_BACKENDS
+from earthkit.meteo.utils.testing import ARRAY_BACKENDS, XARRAY_BACKENDS
 from earthkit.meteo.utils.testing import get_array_backend
 
 
@@ -82,7 +82,7 @@ def _get_crps_data():
     return obs, ens, v_ref
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", XARRAY_BACKENDS)
 @pytest.mark.parametrize("nan_policy", ["raise", "propagate", "omit"])
 @pytest.mark.parametrize("obs,ens,v_ref", [_get_crps_data()])
 def test_crps_meteo(obs, ens, v_ref, array_backend, nan_policy):
@@ -102,7 +102,7 @@ def test_crps_meteo(obs, ens, v_ref, array_backend, nan_policy):
     assert array_backend.isclose(xp.mean(c), xp.mean(v_ref))
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", XARRAY_BACKENDS)
 @pytest.mark.parametrize("nan_policy", ["raise", "propagate", "omit"])
 @pytest.mark.parametrize("obs,ens,v_ref", [_get_crps_data()])
 def test_crps_meteo_missing(obs, ens, v_ref, array_backend, nan_policy):
@@ -118,10 +118,21 @@ def test_crps_meteo_missing(obs, ens, v_ref, array_backend, nan_policy):
 
     if nan_policy == "raise":
         with pytest.raises(ValueError):
-            score.crps(ens, obs, nan_policy)
+            score.crps(
+                xr.DataArray(ens, dims=["number", "points"]), 
+                xr.DataArray(obs, dims=["points"]), 
+                nan_policy, 
+            ).data
     else:
-        c_all = score.crps(ens, obs, nan_policy)
-        c_non_missing = score.crps(ens[..., ~nan_mask], obs[~nan_mask])
+        c_all = score.crps(
+                xr.DataArray(ens, dims=["number", "points"]), 
+                xr.DataArray(obs, dims=["points"]), 
+                nan_policy, 
+            ).data
+        c_non_missing = score.crps(
+                xr.DataArray(ens[..., ~nan_mask], dims=["number", "points"]), 
+                xr.DataArray(obs[~nan_mask], dims=["points"]), 
+        ).data
 
         if nan_policy == "omit":
             for i in range(c_all.shape[0]):
