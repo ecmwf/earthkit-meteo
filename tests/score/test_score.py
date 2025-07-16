@@ -11,12 +11,15 @@ import os
 import sys
 
 import numpy as np
-import xarray as xr
 import pytest
+import xarray as xr
 
 from earthkit.meteo import score
-from earthkit.meteo.utils.testing import ARRAY_BACKENDS, XARRAY_BACKENDS
-from earthkit.meteo.utils.testing import get_array_backend
+from earthkit.meteo.utils.testing import (
+    ARRAY_BACKENDS,
+    XARRAY_BACKENDS,
+    get_array_backend,
+)
 
 
 def crps_quaver2(x, y):
@@ -50,9 +53,13 @@ def crps_quaver2(x, y):
         lcond = esarr[0, :] > anarr
         aa[0, lcond] = 1.0
         bb[0, :] = np.where(lcond, esarr[0, :] - anarr, 0.0)
-        aa[1:-1, :] = np.where(esarr[1:, :] <= anarr, esarr[1:, :] - esarr[:-1, :], anarr - esarr[:-1, :])
+        aa[1:-1, :] = np.where(
+            esarr[1:, :] <= anarr, esarr[1:, :] - esarr[:-1, :], anarr - esarr[:-1, :]
+        )
         aa[1:-1, :][esarr[: n_ens - 1, :] > anarr] = 0.0  # this would be hard in xarray
-        bb[1:-1, :] = np.where(esarr[:-1, :] > anarr, esarr[1:, :] - esarr[:-1, :], esarr[1:, :] - anarr)
+        bb[1:-1, :] = np.where(
+            esarr[:-1, :] > anarr, esarr[1:, :] - esarr[:-1, :], esarr[1:, :] - anarr
+        )
         bb[1:-1, :][esarr[1:, :] <= anarr] = 0.0
         lcond = anarr > esarr[-1, :]
         aa[-1, :] = np.where(lcond, anarr - esarr[-1, :], 0.0)
@@ -75,9 +82,7 @@ def crps_quaver2(x, y):
 def _get_crps_data():
     here = os.path.dirname(__file__)
     sys.path.insert(0, here)
-    from _crps import ens
-    from _crps import obs
-    from _crps import v_ref
+    from _crps import ens, obs, v_ref
 
     return obs, ens, v_ref
 
@@ -90,9 +95,9 @@ def test_crps_meteo(obs, ens, v_ref, array_backend, nan_policy):
     xp = array_backend.namespace
 
     c = score.crps(
-        xr.DataArray(ens.T, dims=["number", "points"]), 
-        xr.DataArray(obs[0], dims=["points"]), 
-        nan_policy, 
+        xr.DataArray(ens.T, dims=["number", "points"]),
+        xr.DataArray(obs[0], dims=["points"]),
+        nan_policy,
         ens_dim="number",
     ).data
 
@@ -119,19 +124,19 @@ def test_crps_meteo_missing(obs, ens, v_ref, array_backend, nan_policy):
     if nan_policy == "raise":
         with pytest.raises(ValueError):
             score.crps(
-                xr.DataArray(ens, dims=["number", "points"]), 
-                xr.DataArray(obs, dims=["points"]), 
-                nan_policy, 
+                xr.DataArray(ens, dims=["number", "points"]),
+                xr.DataArray(obs, dims=["points"]),
+                nan_policy,
             ).data
     else:
         c_all = score.crps(
-                xr.DataArray(ens, dims=["number", "points"]), 
-                xr.DataArray(obs, dims=["points"]), 
-                nan_policy, 
-            ).data
+            xr.DataArray(ens, dims=["number", "points"]),
+            xr.DataArray(obs, dims=["points"]),
+            nan_policy,
+        ).data
         c_non_missing = score.crps(
-                xr.DataArray(ens[..., ~nan_mask], dims=["number", "points"]), 
-                xr.DataArray(obs[~nan_mask], dims=["points"]), 
+            xr.DataArray(ens[..., ~nan_mask], dims=["number", "points"]),
+            xr.DataArray(obs[~nan_mask], dims=["points"]),
         ).data
 
         if nan_policy == "omit":
@@ -167,8 +172,7 @@ def test_crps_quaver2(obs, ens, v_ref, array_backend):
 def _get_pearson_data():
     here = os.path.dirname(__file__)
     sys.path.insert(0, here)
-    from _pearson import SAMPLE_X
-    from _pearson import SAMPLE_Y
+    from _pearson import SAMPLE_X, SAMPLE_Y
 
     rs = np.array([1.0, -1.0, 0.0, 0.42, -0.13, np.nan])
 

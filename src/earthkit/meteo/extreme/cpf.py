@@ -11,12 +11,26 @@ import xarray as xr
 from . import array  # noqa
 
 
-def cpf(clim: xr.DataArray, ens: xr.DataArray, sort_clim: bool = True, sort_ens: bool = True, epsilon: bool = None, symmetric: bool = False, ens_dim: str = "number", clim_dim: str = "quantile") -> xr.DataArray:
+def cpf(
+    clim: xr.DataArray,
+    ens: xr.DataArray,
+    sort_clim: bool = True,
+    sort_ens: bool = True,
+    epsilon: bool = None,
+    symmetric: bool = False,
+    ens_dim: str = "number",
+    clim_dim: str = "quantile",
+) -> xr.DataArray:
     return xr.apply_ufunc(
-        array.cpf, 
-        clim.transpose(clim_dim, ...), 
-        ens.transpose(ens_dim, ...), 
+        array.cpf,
+        clim.transpose(clim_dim, ...),
+        ens.transpose(ens_dim, ...),
         input_core_dims=[clim.dims, ens.dims],
         output_core_dims=[ens[{ens_dim: 0}].dims],
-        kwargs={"sort_clim": sort_clim, "sort_ens": sort_ens, "epsilon": epsilon, "symmetric": symmetric},
+        kwargs={
+            "sort_clim": sort_clim,
+            "sort_ens": sort_ens,
+            "epsilon": epsilon,
+            "symmetric": symmetric,
+        },
     )

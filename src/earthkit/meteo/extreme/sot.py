@@ -12,22 +12,36 @@ import xarray as xr
 from . import array  # noqa
 
 
-def sot(clim: xr.DataArray, ens: xr.DataArray, perc: int, eps: float = -1e4, ens_dim: str = "number", clim_dim: str = "quantile") -> xr.DataArray:
+def sot(
+    clim: xr.DataArray,
+    ens: xr.DataArray,
+    perc: int,
+    eps: float = -1e4,
+    ens_dim: str = "number",
+    clim_dim: str = "quantile",
+) -> xr.DataArray:
     return xr.apply_ufunc(
-        array.sot, 
-        clim.transpose(clim_dim, ...), 
-        ens.transpose(ens_dim, ...), 
+        array.sot,
+        clim.transpose(clim_dim, ...),
+        ens.transpose(ens_dim, ...),
         input_core_dims=[clim.dims, ens.dims],
         output_core_dims=[ens[{ens_dim: 0}].dims],
         kwargs={"perc": perc, "eps": eps},
     )
 
 
-def sot_unsorted(clim: xr.DataArray, ens: xr.DataArray, perc: int, eps: float = -1e4, ens_dim: str = "number", clim_dim: str = "quantile") -> xr.DataArray:
+def sot_unsorted(
+    clim: xr.DataArray,
+    ens: xr.DataArray,
+    perc: int,
+    eps: float = -1e4,
+    ens_dim: str = "number",
+    clim_dim: str = "quantile",
+) -> xr.DataArray:
     return xr.apply_ufunc(
-        array.sot_unsorted, 
-        clim.transpose(clim_dim, ...), 
-        ens.transpose(ens_dim, ...), 
+        array.sot_unsorted,
+        clim.transpose(clim_dim, ...),
+        ens.transpose(ens_dim, ...),
         input_core_dims=[clim.dims, ens.dims],
         output_core_dims=[ens[{ens_dim: 0}].dims],
         kwargs={"perc": perc, "eps": eps},
