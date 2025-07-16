@@ -14,6 +14,7 @@ import os
 from earthkit.utils.testing import get_array_backend
 
 ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy"], raise_on_missing=False)
+XARRAY_BACKENDS = get_array_backend(["numpy", "cupy"], raise_on_missing=False)
 NUMPY_BACKEND = get_array_backend("numpy")
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))

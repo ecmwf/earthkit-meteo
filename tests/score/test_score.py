@@ -11,6 +11,7 @@ import os
 import sys
 
 import numpy as np
+import xarray as xr
 import pytest
 
 from earthkit.meteo import score
@@ -88,7 +89,12 @@ def test_crps_meteo(obs, ens, v_ref, array_backend, nan_policy):
     obs, ens, v_ref = array_backend.asarray(obs, ens, v_ref)
     xp = array_backend.namespace
 
-    c = score.crps(ens.T, obs[0], nan_policy)
+    c = score.crps(
+        xr.DataArray(ens.T, dims=["number", "points"]), 
+        xr.DataArray(obs[0], dims=["points"]), 
+        nan_policy, 
+        ens_dim="number",
+    ).data
 
     for i in range(ens.shape[0]):
         assert array_backend.isclose(c[i], v_ref[i]), f"i={i}"

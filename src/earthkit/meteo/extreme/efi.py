@@ -6,9 +6,17 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+import xarray as xr
 
 from . import array  # noqa
 
 
-def efi(*args, **kwargs):
-    return array.efi(*args, **kwargs)
+def efi(clim: xr.DataArray, ens: xr.DataArray, eps=-0.1, clim_dim: str = "quantile", ens_dim: str = "number") -> xr.DataArray:
+    return xr.apply_ufunc(
+        array.efi, 
+        clim.transpose(clim_dim, ...), 
+        ens.transpose(ens_dim, ...), 
+        input_core_dims=[clim.dims, ens.dims],
+        output_core_dims=[ens[{ens_dim: 0}].dims],
+        kwargs={"eps": eps}
+    )

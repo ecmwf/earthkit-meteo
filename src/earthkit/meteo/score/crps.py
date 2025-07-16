@@ -7,8 +7,19 @@
 # nor does it submit to any jurisdiction.
 #
 
+import xarray as xr
+
 from . import array
 
 
-def crps(*args, **kwargs):
-    return array.crps(*args, **kwargs)
+def crps(x: xr.DataArray, y: xr.DataArray, nan_policy="propagate", ens_dim: str = "number") -> xr.DataArray:
+    exclude_dims = set(y.dims) if nan_policy == "omit" else set()
+    return xr.apply_ufunc(
+        array.crps, 
+        x.transpose(ens_dim, ...), 
+        y, 
+        input_core_dims=[x.dims, y.dims],
+        output_core_dims=[x[{ens_dim: 0}].dims],
+        exclude_dims=exclude_dims,
+        kwargs={"nan_policy": nan_policy}
+    )

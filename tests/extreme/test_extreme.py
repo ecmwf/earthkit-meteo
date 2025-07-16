@@ -15,7 +15,7 @@ import xarray as xr
 import pytest
 
 from earthkit.meteo import extreme
-from earthkit.meteo.utils.testing import ARRAY_BACKENDS
+from earthkit.meteo.utils.testing import ARRAY_BACKENDS, XARRAY_BACKENDS
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -23,11 +23,14 @@ import _cpf  # noqa
 import _data  # noqa
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", XARRAY_BACKENDS)
 @pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, [-0.1838425040642013])])
 def test_highlevel_efi(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
-    efi = extreme.efi(clim, ens)
+    efi = extreme.efi(
+        xr.DataArray(clim, dims=["quantile", "points"]), 
+        xr.DataArray(ens, dims=["number", "points"]),
+    ).data
     assert array_backend.isclose(efi[0], v_ref[0])
 
 
@@ -50,31 +53,6 @@ def test_efi_core(clim, ens, kwargs, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
     efi = extreme.array.efi(clim, ens, **kwargs)
     assert array_backend.allclose(efi[0], v_ref, rtol=1e-4)
-
-
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-@pytest.mark.parametrize(
-    "clim,ens,kwargs,v_ref",
-    [
-        (_data.clim, _data.ens, {}, -0.1838425040642013),
-        (_data.clim, _data.ens, dict(eps=1e-4), -0.18384250406420133),
-        (
-            _data.clim_eps,
-            _data.ens_eps,
-            dict(eps=1e-4),
-            0.46039347745967046,
-        ),  # fortran code result is  0.4604220986366272
-        (_data.clim_eps2, _data.ens_eps2, dict(eps=1e-4), 0.6330071575726789),
-    ],
-)
-def test_efi_xarray_core(clim, ens, kwargs, v_ref, array_backend):
-    clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
-    efi = extreme.xarray.efi(
-        xr.DataArray(clim, dims=["quantile", "points"]), 
-        xr.DataArray(ens, dims=["number", "points"]), 
-        **kwargs
-    )
-    assert array_backend.allclose(efi[0].data, v_ref, rtol=1e-4)
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
@@ -107,43 +85,26 @@ def test_efi_nan(array_backend):
     assert xp.isnan(efi[0])
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", XARRAY_BACKENDS)
 @pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, [-2.14617638, -1.3086723])])
 def test_sot_highlevel(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
 
-    sot_upper = extreme.sot(clim, ens, 90)
-    sot_lower = extreme.sot(clim, ens, 10)
+    sot_upper = extreme.sot(
+        xr.DataArray(clim, dims=["quantile", "points"]), 
+        xr.DataArray(ens, dims=["number", "points"]),
+        90,
+    ).data
+    sot_lower = extreme.sot(
+        xr.DataArray(clim, dims=["quantile", "points"]), 
+        xr.DataArray(ens, dims=["number", "points"]),
+        10,
+    ).data
 
     v_ref = array_backend.asarray(v_ref, dtype=sot_upper.dtype)
 
     assert array_backend.allclose(sot_upper[0], v_ref[0])
     assert array_backend.allclose(sot_lower[0], v_ref[1])
-
-
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-# @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
-@pytest.mark.parametrize(
-    "clim,ens,v_ref",
-    [
-        (_data.clim, _data.ens, [-2.14617638, -1.3086723]),
-    ],
-)
-def test_sot_xarray_core(clim, ens, v_ref, array_backend):
-    clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
-    clim = xr.DataArray(clim, dims=["quantile", "points"])
-    ens = xr.DataArray(ens, dims=["number", "points"])
-
-    sot_upper = extreme.xarray.sot(clim, ens, 90)
-    sot_lower = extreme.xarray.sot(clim, ens, 10)
-
-    v_ref = array_backend.asarray(v_ref, dtype=sot_upper.dtype)
-
-    print(sot_upper)
-    print(sot_lower)
-
-    assert array_backend.allclose(sot_upper[0].values, v_ref[0])
-    assert array_backend.allclose(sot_lower[0].values, v_ref[1])
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
@@ -224,12 +185,16 @@ def test_sot_func(qc_tail, qc, qf, kwargs, v_ref, array_backend):
     assert array_backend.allclose(sot, v_ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", XARRAY_BACKENDS)
 @pytest.mark.parametrize("clim,ens,v_ref", [(_cpf.cpf_clim, _cpf.cpf_ens, _cpf.cpf_val)])
 def test_cpf_highlevel(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
 
-    cpf = extreme.cpf(clim, ens, sort_clim=True)
+    cpf = extreme.cpf(
+        xr.DataArray(clim, dims=["quantile", "points"]), 
+        xr.DataArray(ens, dims=["number", "points"]),
+        sort_clim=True,
+    ).data
 
     assert array_backend.allclose(cpf, v_ref)
 
