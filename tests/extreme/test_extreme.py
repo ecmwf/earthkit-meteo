@@ -15,7 +15,8 @@ import pytest
 import xarray as xr
 
 from earthkit.meteo import extreme
-from earthkit.meteo.utils.testing import ARRAY_BACKENDS, XARRAY_BACKENDS
+from earthkit.meteo.utils.testing import ARRAY_BACKENDS
+from earthkit.meteo.utils.testing import XARRAY_BACKENDS
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -24,9 +25,7 @@ import _data  # noqa
 
 
 @pytest.mark.parametrize("array_backend", XARRAY_BACKENDS)
-@pytest.mark.parametrize(
-    "clim,ens,v_ref", [(_data.clim, _data.ens, [-0.1838425040642013])]
-)
+@pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, [-0.1838425040642013])])
 def test_highlevel_efi(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
     efi = extreme.efi(
@@ -58,9 +57,7 @@ def test_efi_core(clim, ens, kwargs, v_ref, array_backend):
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-@pytest.mark.parametrize(
-    "clim,ens,v_ref", [(_data.clim, _data.ens, -0.18384250406420133)]
-)
+@pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, -0.18384250406420133)])
 def test_efi_sorted(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
 
@@ -90,9 +87,7 @@ def test_efi_nan(array_backend):
 
 
 @pytest.mark.parametrize("array_backend", XARRAY_BACKENDS)
-@pytest.mark.parametrize(
-    "clim,ens,v_ref", [(_data.clim, _data.ens, [-2.14617638, -1.3086723])]
-)
+@pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, [-2.14617638, -1.3086723])])
 def test_sot_highlevel(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
 
@@ -138,9 +133,7 @@ def test_sot_core(clim, ens, v_ref, array_backend):
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 # @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
-@pytest.mark.parametrize(
-    "clim,ens,v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])]
-)
+@pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])])
 def test_sot_perc(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
 
@@ -194,9 +187,7 @@ def test_sot_func(qc_tail, qc, qf, kwargs, v_ref, array_backend):
 
 
 @pytest.mark.parametrize("array_backend", XARRAY_BACKENDS)
-@pytest.mark.parametrize(
-    "clim,ens,v_ref", [(_cpf.cpf_clim, _cpf.cpf_ens, _cpf.cpf_val)]
-)
+@pytest.mark.parametrize("clim,ens,v_ref", [(_cpf.cpf_clim, _cpf.cpf_ens, _cpf.cpf_val)])
 def test_cpf_highlevel(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
 
