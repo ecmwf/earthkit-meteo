@@ -9,20 +9,14 @@
 import xarray as xr
 
 from . import array  # noqa
+from . import utils
 
 
 def efi(
-    clim: xr.DataArray,
-    ens: xr.DataArray,
+    clim: xr.DataArray | xr.Dataset,
+    ens: xr.DataArray | xr.Dataset,
     eps=-0.1,
-    clim_dim: str = "quantile",
+    clim_dim: str = "number",
     ens_dim: str = "number",
-) -> xr.DataArray:
-    return xr.apply_ufunc(
-        array.efi,
-        clim.transpose(clim_dim, ...),
-        ens.transpose(ens_dim, ...),
-        input_core_dims=[clim.dims, ens.dims],
-        output_core_dims=[ens[{ens_dim: 0}].dims],
-        kwargs={"eps": eps},
-    )
+) -> xr.DataArray | xr.Dataset:
+    return utils.wrapper(array.efi, clim, ens, clim_dim, ens_dim, eps=eps)

@@ -29,7 +29,7 @@ import _data  # noqa
 def test_highlevel_efi(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
     efi = extreme.efi(
-        xr.DataArray(clim, dims=["quantile", "points"]),
+        xr.DataArray(clim, dims=["number", "points"]),
         xr.DataArray(ens, dims=["number", "points"]),
     ).data
     assert array_backend.isclose(efi[0], v_ref[0])
@@ -95,9 +95,10 @@ def test_sot_highlevel(clim, ens, v_ref, array_backend):
         xr.DataArray(clim, dims=["quantile", "points"]),
         xr.DataArray(ens, dims=["number", "points"]),
         90,
+        clim_dim="quantile",
     ).data
     sot_lower = extreme.sot(
-        xr.DataArray(clim, dims=["quantile", "points"]),
+        xr.DataArray(clim, dims=["number", "points"]),
         xr.DataArray(ens, dims=["number", "points"]),
         10,
     ).data
@@ -192,7 +193,7 @@ def test_cpf_highlevel(clim, ens, v_ref, array_backend):
     clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
 
     cpf = extreme.cpf(
-        xr.DataArray(clim, dims=["quantile", "points"]),
+        xr.DataArray(clim, dims=["number", "points"]),
         xr.DataArray(ens, dims=["number", "points"]),
         sort_clim=True,
     ).data

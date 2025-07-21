@@ -9,28 +9,27 @@
 import xarray as xr
 
 from . import array  # noqa
+from . import utils
 
 
 def cpf(
-    clim: xr.DataArray,
-    ens: xr.DataArray,
+    clim: xr.DataArray | xr.Dataset,
+    ens: xr.DataArray | xr.Dataset,
     sort_clim: bool = True,
     sort_ens: bool = True,
     epsilon: bool = None,
     symmetric: bool = False,
+    clim_dim: str = "number",
     ens_dim: str = "number",
-    clim_dim: str = "quantile",
-) -> xr.DataArray:
-    return xr.apply_ufunc(
+) -> xr.DataArray | xr.Dataset:
+    return utils.wrapper(
         array.cpf,
-        clim.transpose(clim_dim, ...),
-        ens.transpose(ens_dim, ...),
-        input_core_dims=[clim.dims, ens.dims],
-        output_core_dims=[ens[{ens_dim: 0}].dims],
-        kwargs={
-            "sort_clim": sort_clim,
-            "sort_ens": sort_ens,
-            "epsilon": epsilon,
-            "symmetric": symmetric,
-        },
+        clim,
+        ens,
+        clim_dim,
+        ens_dim,
+        sort_clim=sort_clim,
+        sort_ens=sort_ens,
+        epsilon=epsilon,
+        symmetric=symmetric,
     )

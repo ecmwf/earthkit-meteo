@@ -14,12 +14,23 @@ from . import array
 
 def crps(x: xr.DataArray, y: xr.DataArray, nan_policy="propagate", ens_dim: str = "number") -> xr.DataArray:
     exclude_dims = set(y.dims) if nan_policy == "omit" else set()
-    return xr.apply_ufunc(
+    args = []
+    return_dataset = False
+    for arg, dim in [(x, ens_dim), (y, None)]:
+        if isinstance(arg, xr.Dataset):
+            arg = arg.to_dataarray().squeeze(dim="variable", drop=True)
+            return_dataset = True
+        if dim:
+            arg = arg.transpose(dim, ...)
+        args.append(arg)
+    out = xr.apply_ufunc(
         array.crps,
-        x.transpose(ens_dim, ...),
-        y,
-        input_core_dims=[x.dims, y.dims],
-        output_core_dims=[x[{ens_dim: 0}].dims],
+        *args,
+        input_core_dims=[x.dims for x in args],
+        output_core_dims=[args[0][{ens_dim: 0}].dims],
         exclude_dims=exclude_dims,
         kwargs={"nan_policy": nan_policy},
     )
+    if return_dataset:
+        out.to_dataset(name=list(x.data_vars.keys())[0])
+    return out

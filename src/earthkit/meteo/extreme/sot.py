@@ -10,39 +10,26 @@
 import xarray as xr
 
 from . import array  # noqa
+from . import utils
 
 
 def sot(
-    clim: xr.DataArray,
-    ens: xr.DataArray,
+    clim: xr.DataArray | xr.Dataset,
+    ens: xr.DataArray | xr.Dataset,
     perc: int,
     eps: float = -1e4,
+    clim_dim: str = "number",
     ens_dim: str = "number",
-    clim_dim: str = "quantile",
-) -> xr.DataArray:
-    return xr.apply_ufunc(
-        array.sot,
-        clim.transpose(clim_dim, ...),
-        ens.transpose(ens_dim, ...),
-        input_core_dims=[clim.dims, ens.dims],
-        output_core_dims=[ens[{ens_dim: 0}].dims],
-        kwargs={"perc": perc, "eps": eps},
-    )
+) -> xr.DataArray | xr.Dataset:
+    return utils.wrapper(array.sot, clim, ens, clim_dim, ens_dim, eps=eps, perc=perc)
 
 
 def sot_unsorted(
-    clim: xr.DataArray,
-    ens: xr.DataArray,
+    clim: xr.DataArray | xr.Dataset,
+    ens: xr.DataArray | xr.Dataset,
     perc: int,
     eps: float = -1e4,
+    clim_dim: str = "number",
     ens_dim: str = "number",
-    clim_dim: str = "quantile",
-) -> xr.DataArray:
-    return xr.apply_ufunc(
-        array.sot_unsorted,
-        clim.transpose(clim_dim, ...),
-        ens.transpose(ens_dim, ...),
-        input_core_dims=[clim.dims, ens.dims],
-        output_core_dims=[ens[{ens_dim: 0}].dims],
-        kwargs={"perc": perc, "eps": eps},
-    )
+) -> xr.DataArray | xr.Dataset:
+    return utils.wrapper(array.sot_unsorted, clim, ens, clim_dim, ens_dim, eps=eps, perc=perc)
