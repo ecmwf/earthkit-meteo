@@ -50,6 +50,10 @@ IFS Documentation CY47R3 - Part IV Physical processes, (2021). URL: https://www.
 
 IFS Documentation CY47R3 - Part III: Dynamics and numerical procedures, (2021). doi: `10.21957/b18qsx663 <http://dx.doi.org/10.21957/b18qsx663>`_
 
+.. [Kling2012]
+
+Kling, H., Fuchs, M., & Paulin, M. (2012). Runoff conditions in the upper Danube basin under an ensemble of climate change scenarios. Journal of hydrology, 424, 264-277. doi: `10.1016/j.jhydrol.2012.01.011 <https://doi.org/10.1016/j.jhydrol.2012.01.011>`_
+
 .. [Stipanuk1973]
 
 Stipanuk, G. S., (1973). Algorithms for Generating a Skew-T, Log P Diagram and Computing Selected Meteorological Quantities. Atmospheric Sciences Laboratory, U.S. Army Electronics Command. White Sands Missile Range, New Mexico 88002.
