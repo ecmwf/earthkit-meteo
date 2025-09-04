@@ -54,7 +54,7 @@ class _BaseKGE(abc.ABC):
                 "For a single time series, use x[None, :] and y[None, :]."
             )
 
-        isnan_mask = xp.any(xp.isnan(x), axis=1) | xp.any(xp.isnan(y), axis=1)
+        isnan_mask = xp.any(xp.isnan(x) | xp.isnan(y), axis=1)
 
         if nan_policy == "raise" and xp.any(isnan_mask):
             raise ValueError(f"Missing values present in input and nan_policy={nan_policy}")
@@ -64,12 +64,8 @@ class _BaseKGE(abc.ABC):
 
         components = self.compute_components(xp, x, y)
 
-        # KGE: 1 - sqrt(sum((c - 1)^2))
-        total = None
-        for c in components:
-            term = (c - 1) ** 2
-            total = term if total is None else total + term
-        kge_val = 1 - xp.sqrt(total)
+        sq = xp.stack([(c - 1) ** 2 for c in components], axis=0)
+        kge_val = 1 - xp.sqrt(xp.sum(sq, axis=0))
 
         if nan_policy == "propagate":
             kge_val = xp.where(isnan_mask, xp.nan, kge_val)
@@ -111,7 +107,7 @@ def kge(x, y, nan_policy="propagate", return_components=False):
     x: array-like (n_points, n_samples)
         Simulations for n_points points with n_samples samples each
     y: array-like (n_points, n_samples)
-        Observations/ references for n_points points with n_samples samples each
+        Observations/references for n_points points with n_samples samples each
     nan_policy: str
         Determines how to handle nans.
         Options are 'raise', 'propagate', or 'omit'.
@@ -125,7 +121,7 @@ def kge(x, y, nan_policy="propagate", return_components=False):
         If return_components is True, the returned array has shape (4, n_points)
         If nan_policy is 'omit', n_points is the number of points without nans
     """
-    return _KGE().compute(x, y, nan_policy, return_components)
+    return _KGE().compute(x=x, y=y, nan_policy=nan_policy, return_components=return_components)
 
 
 def kge_prime(x, y, nan_policy="propagate", return_components=False):
@@ -153,4 +149,4 @@ def kge_prime(x, y, nan_policy="propagate", return_components=False):
         If return_components is True, the returned array has shape (4, n_points)
         If nan_policy is 'omit', n_points is the number of points without nans
     """
-    return _KGEPrime().compute(x, y, nan_policy, return_components)
+    return _KGEPrime().compute(x=x, y=y, nan_policy=nan_policy, return_components=return_components)
