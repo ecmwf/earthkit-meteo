@@ -49,15 +49,15 @@ v_ref_kge_prime_components = [
         -0.7165881091,
         0.8050195736,
         # Edge-cases: simulation
-        np.nan,  # zero variance
-        -np.inf,  # zero mean
-        np.nan,  # inf
-        np.nan,  # -inf
+        np.nan,
+        -np.inf,
+        np.nan,
+        np.nan,
         # Edge-cases: observation
-        np.nan,  # zero variance
-        -np.inf,  # zero mean
-        np.nan,  # inf
-        np.nan,  # -inf
+        np.nan,
+        -np.inf,
+        np.nan,
+        np.nan,
     ],
     # rho
     [
@@ -68,15 +68,15 @@ v_ref_kge_prime_components = [
         -0.4622436417,
         0.9987024321,
         # Edge-cases: simulation
-        np.nan,  # zero variance
-        1.0,  # zero mean
-        np.nan,  # inf
-        np.nan,  # -inf
+        np.nan,
+        1.0,
+        np.nan,
+        np.nan,
         # Edge-cases: observation
-        np.nan,  # zero variance
-        1.0,  # zero mean
-        np.nan,  # inf
-        np.nan,  # -inf
+        np.nan,
+        1.0,
+        np.nan,
+        np.nan,
     ],
     # beta
     [
@@ -87,15 +87,15 @@ v_ref_kge_prime_components = [
         1.6197183099,
         0.8818181818,
         # Edge-cases: simulation
-        0.45454545,  # zero variance
-        0.0,  # zero mean
-        np.inf,  # inf
-        -np.inf,  # -inf
+        0.45454545,
+        0.0,
+        np.inf,
+        -np.inf,
         # Edge-cases: observation
-        2.2,  # zero variance
-        np.inf,  # zero mean
-        0,  # inf
-        0,  # -inf
+        2.2,
+        np.inf,
+        0,
+        0,
     ],
     # gamma
     [
@@ -106,14 +106,94 @@ v_ref_kge_prime_components = [
         0.3484883080,
         0.8449234356,
         # Edge-cases: simulation
-        0.0,  # zero variance
-        np.inf,  # zero mean
-        np.nan,  # inf
-        np.nan,  # -inf
+        0.0,
+        np.inf,
+        np.nan,
+        np.nan,
         # Edge-cases: observation
-        np.inf,  # zero variance
-        0.0,  # zero mean
-        np.nan,  # inf
-        np.nan,  # -inf
+        np.inf,
+        0.0,
+        np.nan,
+        np.nan,
+    ],
+]
+
+
+v_ref_kge_components = [
+    # KGE
+    [
+        1.0,
+        -0.46476861,
+        0.06826592,
+        -0.40116796,
+        -0.64678734,
+        0.71900442,
+        # Edge-cases: simulation
+        np.nan,
+        -0.00412373,
+        np.nan,
+        np.nan,
+        # Edge-cases: observation
+        np.nan,
+        -np.inf,
+        np.nan,
+        np.nan,
+    ],
+    # rho
+    [
+        1.0000000000,
+        0.5934940644,
+        0.3747797925,
+        -0.1795676428,
+        -0.4622436417,
+        0.9987024321,
+        # Edge-cases: simulation
+        np.nan,
+        1.0,
+        np.nan,
+        np.nan,
+        # Edge-cases: observation
+        np.nan,
+        1.0,
+        np.nan,
+        np.nan,
+    ],
+    # alpha
+    [
+        1.0,
+        0.18113070786957505,
+        1.6906124944445566,
+        0.5347125362695476,
+        0.5644528931691898,
+        0.7450688477363122,
+        # Edge-cases: simulation
+        0.0,
+        0.9090909090909091,
+        np.nan,
+        np.nan,
+        # Edge-cases: observation
+        np.inf,
+        1.0999999999999999,
+        np.nan,
+        np.nan,
+    ],
+    # beta
+    [
+        1.0000000000,
+        -0.1444444444,
+        0.9831932773,
+        0.4038461538,
+        1.6197183099,
+        0.8818181818,
+        # Edge-cases: simulation
+        0.45454545,
+        0.0,
+        np.inf,
+        -np.inf,
+        # Edge-cases: observation
+        2.2,
+        np.inf,
+        0,
+        0,
     ],
 ]

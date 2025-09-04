@@ -10,5 +10,9 @@
 from . import array
 
 
+def kge(*args, **kwargs):
+    return array.kge(*args, **kwargs)
+
+
 def kge_prime(*args, **kwargs):
     return array.kge_prime(*args, **kwargs)

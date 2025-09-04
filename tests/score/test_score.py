@@ -184,6 +184,16 @@ def test_pearson(x, y, v_ref, array_backend):
     np.testing.assert_allclose(r, v_ref, atol=1e-7)
 
 
+def _get_kge_data():
+    here = os.path.dirname(__file__)
+    sys.path.insert(0, here)
+    from _kge import obs
+    from _kge import sim
+    from _kge import v_ref_kge_components
+
+    return sim, obs, v_ref_kge_components
+
+
 def _get_kge_prime_data():
     here = os.path.dirname(__file__)
     sys.path.insert(0, here)
@@ -192,6 +202,21 @@ def _get_kge_prime_data():
     from _kge import v_ref_kge_prime_components
 
     return sim, obs, v_ref_kge_prime_components
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("nan_policy", ["raise", "propagate", "omit"])
+@pytest.mark.parametrize("return_components", [True, False])
+@pytest.mark.parametrize("sim,obs,v_ref_kge", [_get_kge_data()])
+@pytest.mark.filterwarnings("ignore:.*encountered in (divide|subtract)")
+def test_kge(sim, obs, v_ref_kge, array_backend, nan_policy, return_components):
+    sim, obs, v_ref_kge = array_backend.asarray(sim, obs, v_ref_kge)
+
+    if not return_components:
+        v_ref_kge = v_ref_kge[0]
+
+    c = score.kge(sim, obs, nan_policy=nan_policy, return_components=return_components)
+    assert array_backend.allclose(c, v_ref_kge, equal_nan=True), f"{c} != {v_ref_kge}"
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
@@ -212,10 +237,11 @@ def test_kge_prime(sim, obs, v_ref_kge_prime, array_backend, nan_policy, return_
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("nan_policy", ["raise", "propagate", "omit"])
 @pytest.mark.parametrize("return_components", [True, False])
+@pytest.mark.parametrize("kge_fn", [score.kge, score.kge_prime])
 @pytest.mark.parametrize("sim,obs,v_ref_kge_prime", [_get_kge_prime_data()])
 @pytest.mark.filterwarnings("ignore:.*encountered in (divide|subtract)")
-def test_kge_prime_missing(sim, obs, v_ref_kge_prime, array_backend, nan_policy, return_components):
-    sim, obs, v_ref_kge_prime = array_backend.asarray(sim, obs, v_ref_kge_prime)
+def test_kge_missing(sim, obs, v_ref_kge_prime, kge_fn, array_backend, nan_policy, return_components):
+    sim, obs = array_backend.asarray(sim, obs)
     xp = array_backend.namespace
 
     sim[:2, 1] = xp.nan
@@ -225,12 +251,10 @@ def test_kge_prime_missing(sim, obs, v_ref_kge_prime, array_backend, nan_policy,
 
     if nan_policy == "raise":
         with pytest.raises(ValueError):
-            score.kge_prime(sim, obs, nan_policy, return_components=return_components)
+            kge_fn(sim, obs, nan_policy, return_components=return_components)
     else:
-        c_all = score.kge_prime(sim, obs, nan_policy, return_components=return_components)
-        c_non_missing = score.kge_prime(
-            sim[~nan_mask, ...], obs[~nan_mask, ...], return_components=return_components
-        )
+        c_all = kge_fn(sim, obs, nan_policy, return_components=return_components)
+        c_non_missing = kge_fn(sim[~nan_mask, ...], obs[~nan_mask, ...], return_components=return_components)
 
         # TODO: Clean this up...
         if nan_policy == "omit":
