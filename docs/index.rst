@@ -56,6 +56,7 @@ Quick start
    :caption: Documentation
 
    _api/meteo/index
+   autoapi/earthkit/meteo/index
    references.rst
    development
 
