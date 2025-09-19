@@ -13,6 +13,7 @@ import sys
 sys.path.insert(0, os.path.abspath("./"))
 sys.path.insert(0, os.path.abspath("../"))
 sys.path.append(os.path.abspath("./_ext"))
+sys.path.insert(0, os.path.abspath("../../src"))
 
 # -- Project information -----------------------------------------------------
 
@@ -34,12 +35,10 @@ copyright = "%s, European Centre for Medium-Range Weather Forecasts (ECMWF)" % (
 extensions = [
     "sphinx_rtd_theme",
     "nbsphinx",
-    "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "autoapi.extension",
     "sphinx_issues",
     "sphinx_copybutton",
-    "sphinx.ext.viewcode",
     "xref",
 ]
 
