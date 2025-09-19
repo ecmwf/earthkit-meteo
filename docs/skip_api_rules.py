@@ -24,6 +24,10 @@ def _skip_api_items(app, what, name, obj, skip, options):
         skip = True
     elif what == "module" and any(x in name for x in [".utils"]):
         skip = True
+    elif what == "module" and ".array." in name:
+        skip = True
+    elif what == "module" and len(name.split(".")) > 3:
+        skip = True
     # elif what == "package" and ".array" not in name and len(name.split(".")) > 2:
     #     skip = True
     # elif what == "function" and ".array" not in name:
