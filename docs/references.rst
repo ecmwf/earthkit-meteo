@@ -28,6 +28,7 @@ along Pseudoadiabats. Mon. Wea. Rev., 136, 2764-2785, doi: `10.1175/2007MWR2224.
 
 
 .. [Gaussian_Quadrature]
+
 Gaussian quadrature.  URL: https://en.wikipedia.org/wiki/Gaussian_quadrature
 
 
