@@ -1540,7 +1540,7 @@ def wet_bulb_temperature_from_dewpoint(t, td, p, ept_method="ifs", t_method="bis
     The computation is based on Normand's rule [Wallace2006]_ (Chapter 3.5.6):
 
     * first the equivalent potential temperature is computed with the given
-    ``ept_method`` (using :func:`ept_from_dewpoint`). This defines the moist adiabat.
+      ``ept_method`` (using :func:`ept_from_dewpoint`). This defines the moist adiabat.
     * then the wet bulb potential temperature is determined as the temperature at
       pressure ``p`` on the moist adiabat with the given ``t_method``.
 

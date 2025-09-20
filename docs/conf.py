@@ -34,7 +34,6 @@ copyright = "%s, European Centre for Medium-Range Weather Forecasts (ECMWF)" % (
 extensions = [
     "sphinx_rtd_theme",
     "nbsphinx",
-    "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "autoapi.extension",
     "sphinx_issues",
@@ -46,7 +45,7 @@ extensions = [
 autodoc_typehints = "none"
 
 # autoapi configuration
-autoapi_dirs = ["../src/earthkit/meteo"]
+autoapi_dirs = ["../src/earthkit"]
 autoapi_ignore = ["*/_version.py", "sphinxext/*"]
 autoapi_options = [
     "members",
@@ -56,10 +55,11 @@ autoapi_options = [
     "imported-members",
     "inherited-members",
 ]
-autoapi_root = "_api"
+autoapi_root = "autoapi"
 autoapi_member_order = "alphabetical"
 autoapi_add_toctree_entry = False
 autoapi_own_page_level = "function"
+autoapi_python_use_implicit_namespaces = True
 
 # napoleon configuration
 napoleon_google_docstring = False

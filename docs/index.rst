@@ -55,7 +55,7 @@ Quick start
    :maxdepth: 1
    :caption: Documentation
 
-   _api/meteo/index
+   API Reference <autoapi/earthkit/meteo/index.rst>
    references.rst
    development
 
