@@ -14,10 +14,6 @@ from earthkit.utils.array import array_namespace
 
 DAYS_PER_YEAR = 365.25
 
-"""
-WARNING: This code is incomplete and not tested. DO NOT USE.
-"""
-
 
 def julian_day(date):
     if date.tzinfo is not None and date.tzinfo.utcoffset(date) is not None:
