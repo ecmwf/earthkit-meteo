@@ -17,3 +17,4 @@ planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets
 
 from .correlation import *  # noqa
 from .crps import *  # noqa
+from .kge import *  # noqa

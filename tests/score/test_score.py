@@ -182,3 +182,123 @@ def test_pearson(x, y, v_ref, array_backend):
 
     r = score.pearson(x, y, axis=1)
     np.testing.assert_allclose(r, v_ref, atol=1e-7)
+
+
+def _get_kge_data():
+    here = os.path.dirname(__file__)
+    sys.path.insert(0, here)
+    from _kge import obs
+    from _kge import sim
+    from _kge import v_ref_kge_components
+
+    return sim, obs, v_ref_kge_components
+
+
+def _get_kge_prime_data():
+    here = os.path.dirname(__file__)
+    sys.path.insert(0, here)
+    from _kge import obs
+    from _kge import sim
+    from _kge import v_ref_kge_prime_components
+
+    return sim, obs, v_ref_kge_prime_components
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("nan_policy", ["raise", "propagate", "omit"])
+@pytest.mark.parametrize("return_components", [True, False])
+@pytest.mark.parametrize("sim,obs,v_ref_kge", [_get_kge_data()])
+@pytest.mark.filterwarnings("ignore:.*encountered in (divide|subtract)")
+def test_kge(sim, obs, v_ref_kge, array_backend, nan_policy, return_components):
+    sim, obs, v_ref_kge = array_backend.asarray(sim, obs, v_ref_kge)
+
+    if not return_components:
+        v_ref_kge = v_ref_kge[0]
+
+    c = score.kge(sim, obs, nan_policy=nan_policy, return_components=return_components)
+    assert array_backend.allclose(c, v_ref_kge, equal_nan=True), f"{c} != {v_ref_kge}"
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("nan_policy", ["raise", "propagate", "omit"])
+@pytest.mark.parametrize("return_components", [True, False])
+@pytest.mark.parametrize("sim,obs,v_ref_kge_prime", [_get_kge_prime_data()])
+@pytest.mark.filterwarnings("ignore:.*encountered in (divide|subtract)")
+def test_kge_prime(sim, obs, v_ref_kge_prime, array_backend, nan_policy, return_components):
+    sim, obs, v_ref_kge_prime = array_backend.asarray(sim, obs, v_ref_kge_prime)
+
+    if not return_components:
+        v_ref_kge_prime = v_ref_kge_prime[0]
+
+    c = score.kge_prime(sim, obs, nan_policy=nan_policy, return_components=return_components)
+    assert array_backend.allclose(c, v_ref_kge_prime, equal_nan=True), f"{c} != {v_ref_kge_prime}"
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("return_components", [True, False])
+@pytest.mark.parametrize("kge_fn", [score.kge, score.kge_prime])
+@pytest.mark.parametrize("sim,obs,v_ref_kge_prime", [_get_kge_prime_data()])
+@pytest.mark.filterwarnings("ignore:.*encountered in (divide|subtract)")
+def test_kge_nan_policy_raise(sim, obs, v_ref_kge_prime, kge_fn, array_backend, return_components):
+    sim, obs = array_backend.asarray(sim, obs)
+    xp = array_backend.namespace
+
+    sim[:2, 1] = xp.nan
+
+    with pytest.raises(ValueError):
+        kge_fn(sim, obs, nan_policy="raise", return_components=return_components)
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("return_components", [True, False])
+@pytest.mark.parametrize("kge_fn", [score.kge, score.kge_prime])
+@pytest.mark.parametrize("sim,obs,v_ref_kge_prime", [_get_kge_prime_data()])
+@pytest.mark.filterwarnings("ignore:.*encountered in (divide|subtract)")
+def test_kge_nan_policy_omit(sim, obs, v_ref_kge_prime, kge_fn, array_backend, return_components):
+    sim, obs = array_backend.asarray(sim, obs)
+    xp = array_backend.namespace
+
+    sim[:2, 1] = xp.nan
+    obs[0, 2] = xp.nan
+
+    nan_mask = xp.any(xp.isnan(sim), axis=1) | xp.any(xp.isnan(obs), axis=1)
+
+    c_all = kge_fn(sim, obs, nan_policy="omit", return_components=return_components)
+    c_non_missing = kge_fn(sim[~nan_mask, ...], obs[~nan_mask, ...], return_components=return_components)
+
+    assert c_all.shape == c_non_missing.shape
+    assert array_backend.allclose(c_all, c_non_missing, equal_nan=True)
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("return_components", [True, False])
+@pytest.mark.parametrize("kge_fn", [score.kge, score.kge_prime])
+@pytest.mark.parametrize("sim,obs,v_ref_kge_prime", [_get_kge_prime_data()])
+@pytest.mark.filterwarnings("ignore:.*encountered in (divide|subtract)")
+def test_kge_nan_policy_propagate(sim, obs, v_ref_kge_prime, kge_fn, array_backend, return_components):
+    sim, obs = array_backend.asarray(sim, obs)
+    xp = array_backend.namespace
+
+    sim[:2, 1] = xp.nan
+    obs[0, 2] = xp.nan
+
+    nan_mask = xp.any(xp.isnan(sim), axis=1) | xp.any(xp.isnan(obs), axis=1)
+
+    def insert_nan_rows(values):
+        n_points = int(nan_mask.shape[0])
+        if return_components:
+            n_components = int(values.shape[0])
+            expected = xp.full((n_components, n_points), xp.nan, dtype=values.dtype)
+            expected[:, ~nan_mask] = values
+        else:
+            expected = xp.full((n_points,), xp.nan, dtype=values.dtype)
+            expected[~nan_mask] = values
+        return expected
+
+    c_all = kge_fn(sim, obs, nan_policy="propagate", return_components=return_components)
+    c_non_missing = kge_fn(sim[~nan_mask, ...], obs[~nan_mask, ...], return_components=return_components)
+
+    expected = insert_nan_rows(c_non_missing)
+
+    assert c_all.shape == expected.shape
+    assert array_backend.allclose(c_all, expected, equal_nan=True)

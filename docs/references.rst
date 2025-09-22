@@ -32,6 +32,10 @@ along Pseudoadiabats. Mon. Wea. Rev., 136, 2764-2785, doi: `10.1175/2007MWR2224.
 Gaussian quadrature.  URL: https://en.wikipedia.org/wiki/Gaussian_quadrature
 
 
+.. [Gupta2009]
+Gupta, H. V., Kling, H., Yilmaz, K. K., & Martinez, G. F. (2009). Decomposition of the mean squared error and NSE performance criteria: Implications for improving hydrological modelling. Journal of hydrology, 377(1-2), 80-91. doi: `10.1016/j.jhydrol.2009.08.003 <https://doi.org/10.1016/j.jhydrol.2009.08.003>`_
+
+
 .. [Hersbach2000]
 
 Hersbach, H., (2000). Decomposition of the Continuous Ranked Probability Score for Ensemble Prediction Systems. Weather and Forecasting 15: 559-570.
@@ -50,6 +54,10 @@ IFS Documentation CY47R3 - Part IV Physical processes, (2021). URL: https://www.
 .. [IFS-CY47R3-Dynamics]
 
 IFS Documentation CY47R3 - Part III: Dynamics and numerical procedures, (2021). doi: `10.21957/b18qsx663 <http://dx.doi.org/10.21957/b18qsx663>`_
+
+.. [Kling2012]
+
+Kling, H., Fuchs, M., & Paulin, M. (2012). Runoff conditions in the upper Danube basin under an ensemble of climate change scenarios. Journal of hydrology, 424, 264-277. doi: `10.1016/j.jhydrol.2012.01.011 <https://doi.org/10.1016/j.jhydrol.2012.01.011>`_
 
 .. [Stipanuk1973]
 
