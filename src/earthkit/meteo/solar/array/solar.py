@@ -12,6 +12,8 @@ import datetime
 import numpy as np
 from earthkit.utils.array import array_namespace
 
+from earthkit.meteo.constants import radian
+
 DAYS_PER_YEAR = 365.25
 
 
@@ -77,16 +79,14 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
     longitudes = xp.asarray(longitudes)
 
     # solar_declination_angle returns degrees
-    # TODO: deg2rad() is not part of the array API standard
-    declination = xp.deg2rad(declination)
-    latitudes = xp.deg2rad(latitudes)
+    declination = declination * radian
+    latitudes = latitudes * radian
 
     sindec_sinlat = xp.sin(declination) * xp.sin(latitudes)
     cosdec_coslat = xp.cos(declination) * xp.cos(latitudes)
 
     # solar hour angle [h.deg]
-    # TODO: deg2rad() is not part of the array API standard
-    solar_angle = xp.deg2rad((date.hour - 12) * 15 + longitudes + time_correction)
+    solar_angle = ((date.hour - 12) * 15 + longitudes + time_correction) * radian
     zenith_angle = sindec_sinlat + cosdec_coslat * xp.cos(solar_angle)
 
     # Clip negative values
