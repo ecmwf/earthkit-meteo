@@ -189,7 +189,8 @@ def test_cpf_highlevel(clim, ens, v_ref, array_backend):
     [
         (_cpf.cpf_clim, _cpf.cpf_ens, dict(sort_clim=True), _cpf.cpf_val),
         (_cpf.cpf_clim2, _cpf.cpf_ens2, dict(sort_clim=True, epsilon=0.5), _cpf.cpf_val2),  # eps
-        # (_cpf.cpf_clim3, _cpf.cpf_ens3, dict(sort_clim=True, symmetric=True), _cpf.cpf_val3),  # sym
+        (_cpf.cpf_clim3, _cpf.cpf_ens3, dict(sort_clim=True, symmetric=True), _cpf.cpf_val3),  # sym
+        (_cpf.cpf_clim, _cpf.cpf_ens, dict(sort_clim=True, from_zero=True), _cpf.cpf_val_fromzero),
     ],
 )
 def test_cpf_core(clim, ens, v_ref, kwargs, array_backend):

@@ -10,7 +10,7 @@
 from earthkit.utils.array import array_namespace
 
 
-def _cpf(clim, ens, epsilon=None):
+def _cpf(clim, ens, epsilon=None, from_zero=False):
     xp = array_namespace(clim, ens)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
@@ -18,20 +18,30 @@ def _cpf(clim, ens, epsilon=None):
     nclim, npoints = clim.shape
     nens, _ = ens.shape
 
-    cpf = xp.ones(npoints, dtype=xp.float32)
+    cpf = xp.zeros(npoints, dtype=xp.float32)
     mask = xp.zeros(npoints, dtype=xp.bool)
+    prim = xp.zeros(npoints, dtype=xp.bool)
+
+    # start scanning ensemble from iq_start
+    iq_start = 0 if from_zero else nens // 2
 
     for icl in range(1, nclim - 1):
         # quantile level of climatology
         tau_c = icl / (nclim - 1.0)
-        for iq in range(nens):
+        for iq in range(iq_start, nens):
             # quantile level of forecast
             tau_f = (iq + 1.0) / (nens + 1.0)
-            if tau_f >= tau_c:
-                # quantile values of forecast and climatology
-                qv_f = ens[iq, :]
-                qv_c = clim[icl, :]
 
+            # quantile values of forecast and climatology
+            qv_f = ens[iq, :]
+            qv_c = clim[icl, :]
+
+            # primary condition (to ensure crossing and not reverse-crossing)
+            if tau_f < tau_c:
+                idx = (qv_f >= qv_c) & (~mask)
+                prim[idx] = True
+
+            if tau_f >= tau_c:
                 # lowest climate quantile: interpolate between 2 consecutive quantiles
                 if iq < 2:
                     # quantile value and quantile level of climatology at previous
@@ -39,7 +49,7 @@ def _cpf(clim, ens, epsilon=None):
                     tau_c_2 = (icl - 1) / (nclim - 1)
 
                     # condition of crossing situtaion:
-                    idx = (qv_f < qv_c) & (qv_c_2 < qv_c)
+                    idx = (qv_f < qv_c) & (qv_c_2 < qv_c) & prim
 
                     # intersection between two lines
                     tau_i = (tau_c * (qv_c_2[idx] - qv_f[idx]) + tau_c_2 * (qv_f[idx] - qv_c[idx])) / (
@@ -51,7 +61,7 @@ def _cpf(clim, ens, epsilon=None):
                     mask[idx] = True
 
                 # check crossing cases
-                idx = (qv_f < qv_c) & (~mask)
+                idx = (qv_f < qv_c) & (~mask) & prim
                 cpf[idx] = tau_f
                 mask[idx] = True
 
@@ -60,7 +70,7 @@ def _cpf(clim, ens, epsilon=None):
                     qv_c_2 = clim[nclim - 1, :]
                     tau_c_2 = 1.0
 
-                    idx = (qv_f > qv_c) & (qv_c_2 > qv_c) & (~mask)
+                    idx = (qv_f > qv_c) & (qv_c_2 > qv_c) & (~mask) & prim
 
                     tau_i = (tau_c * (qv_c_2[idx] - qv_f[idx]) + tau_c_2 * (qv_f[idx] - qv_c[idx])) / (
                         qv_c_2[idx] - qv_c[idx]
@@ -80,7 +90,15 @@ def _cpf(clim, ens, epsilon=None):
     return cpf
 
 
-def cpf(clim, ens, sort_clim=True, sort_ens=True, epsilon=None, symmetric=False):
+def cpf(
+    clim,
+    ens,
+    sort_clim=True,
+    sort_ens=True,
+    epsilon=None,
+    symmetric=False,
+    from_zero=False,
+):
     """Compute Crossing Point Forecast (CPF)
 
     WARNING: this code is experimental, use at your own risk!
@@ -101,6 +119,9 @@ def cpf(clim, ens, sort_clim=True, sort_ens=True, epsilon=None, symmetric=False)
     symmetric: bool
         If True, make CPF values below 0.5 use a symmetric computation (CPF of
         opposite values)
+    from_zero: bool
+        If True, start looking for a crossing from the minimum, rather than the
+        median
 
     Returns
     -------
@@ -123,10 +144,10 @@ def cpf(clim, ens, sort_clim=True, sort_ens=True, epsilon=None, symmetric=False)
     if symmetric:
         epsilon = None
 
-    cpf_direct = _cpf(clim, ens, epsilon)
+    cpf_direct = _cpf(clim, ens, epsilon, from_zero)
 
     if symmetric:
-        cpf_reverse = _cpf(-clim[::-1, :], -ens[::-1, :])
+        cpf_reverse = _cpf(-clim[::-1, :], -ens[::-1, :], from_zero=from_zero)
         mask = cpf_direct < 0.5
         cpf_direct[mask] = 1 - cpf_reverse[mask]
 
