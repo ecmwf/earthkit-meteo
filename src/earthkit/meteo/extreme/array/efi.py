@@ -51,8 +51,7 @@ def efi(clim, ens, eps=-0.1):
 
     # Compute formula coefficients
     p = xp.linspace(0.0, 1.0, nclim)
-    dp = 1 / (nclim - 1)
-    dFdp = xp.diff(frac, axis=0) / dp
+    dFdp = xp.diff(frac, axis=0) * (nclim - 1)
 
     acosdiff = xp.diff(xp.acos(xp.sqrt(p)))
     proddiff = xp.diff(xp.sqrt(p * (1.0 - p)))
@@ -74,7 +73,7 @@ def efi(clim, ens, eps=-0.1):
             defimax = xp.where(mask, -acosdiff[icl] - proddiff[icl], 0.0)
             efi += dEFI
             efimax += defimax
-        efimax = xp.fmax(efimax, xp.asarray(eps))
+        efimax = xp.where(efimax > eps, efimax, eps)
         efi /= efimax
     else:
         for icl in range(nclim - 1):
