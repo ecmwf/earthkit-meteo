@@ -34,18 +34,27 @@
 > \[!IMPORTANT\]
 > This software is **Emerging** and subject to ECMWF's guidelines on [Software Maturity](https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity).
 
-**earthkit-meteo** is a Python package providing meteorological computations using **numpy** input and output. It is a component of [earthkit](https://github.com/ecmwf/earthkit).
+**earthkit-meteo** is a Python package providing meteorological computations using array input (Numpy, Torch and CuPy) and output.   It is part of the [earthkit](https://github.com/ecmwf/earthkit) ecosystem.
 
 ## Quick Start
 
 ```python
-from earthkit.meteo import thermo
-import numpy as np
 
-t = np.array([264.12, 261.45]) # Kelvins
-p = np.array([850, 850]) * 100. # Pascals
+    from earthkit.meteo import thermo
 
-theta = thermo.potential_temperature(t, p)
+    # using Numpy arrays
+    import numpy as np
+
+    t = np.array([264.12, 261.45])  # Kelvins
+    p = np.array([850, 850]) * 100.0  # Pascals
+    theta = thermo.potential_temperature(t, p)
+
+    # using Torch tensors
+    import torch
+
+    t = torch.tensor([264.12, 261.45])  # Kelvins
+    p = torch.tensor([850.0, 850.0]) * 100.0  # Pascals
+    theta = thermo.potential_temperature(t, p)
 ```
 
 ## Installation
@@ -56,15 +65,11 @@ Install via `pip` with:
 $ pip install earthkit-meteo
 ```
 
-More details, such as how to install any necessary binaries, can be found  at https://earthkit-meteo.readthedocs.io/en/latest/install.html.
-
 Alternatively, install via `conda` with:
 
 ```
 $ conda install earthkit-meteo -c conda-forge
 ```
-
-This will bring in some necessary binary dependencies for you.
 
 ## Licence
 
