@@ -62,7 +62,7 @@
 Install via `pip` with:
 
 ```
-$ python3 -m pip install earthkit-meteo
+$ pip install earthkit-meteo
 ```
 
 Alternatively, install via `conda` with:
