@@ -76,7 +76,7 @@ def direction(u, v, convention="meteo", to_positive=True):
         * "meteo": the direction is the meteorological wind direction (see below for explanation)
         * "polar": the direction is measured anti-clockwise from the x axis (East/right) to the vector
 
-    positive: bool, optional
+    to_positive: bool, optional
         If it is True the resulting values are mapped into the [0, 360] range when
         ``convention`` is "polar". Otherwise they lie in the [-180, 180] range.
 
