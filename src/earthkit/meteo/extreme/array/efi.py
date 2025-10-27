@@ -54,7 +54,7 @@ def efi(clim, ens, eps=-0.1):
     dp = 1 / (nclim - 1)
     dFdp = xp.diff(frac, axis=0) / dp
 
-    acosdiff = xp.diff(xp.arccos(xp.sqrt(p)))
+    acosdiff = xp.diff(xp.acos(xp.sqrt(p)))
     proddiff = xp.diff(xp.sqrt(p * (1.0 - p)))
 
     acoef = (1.0 - 2.0 * p[:-1]) * acosdiff + proddiff
