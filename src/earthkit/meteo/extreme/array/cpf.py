@@ -148,7 +148,7 @@ def cpf(
     cpf_direct = _cpf(clim, ens, epsilon, from_zero)
 
     if symmetric:
-        cpf_reverse = _cpf(-clim[::-1, :], -ens[::-1, :], from_zero=from_zero)
+        cpf_reverse = _cpf(-xp.flip(clim, axis=0), -xp.flip(ens, axis=0), from_zero=from_zero)
         mask = cpf_direct < 0.5
         cpf_direct[mask] = 1 - cpf_reverse[mask]
 
