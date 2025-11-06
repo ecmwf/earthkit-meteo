@@ -14,13 +14,14 @@ def _cpf(clim, ens, epsilon=None, from_zero=False):
     xp = array_namespace(clim, ens)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
+    device = xp.device(clim)
 
     nclim, npoints = clim.shape
     nens, _ = ens.shape
 
-    cpf = xp.zeros(npoints, dtype=xp.float32)
-    mask = xp.zeros(npoints, dtype=xp.bool)
-    prim = xp.zeros(npoints, dtype=xp.bool)
+    cpf = xp.zeros(npoints, dtype=xp.float32, device=device)
+    mask = xp.zeros(npoints, dtype=xp.bool, device=device)
+    prim = xp.zeros(npoints, dtype=xp.bool, device=device)
 
     # start scanning ensemble from iq_start
     iq_start = 0 if from_zero else nens // 2

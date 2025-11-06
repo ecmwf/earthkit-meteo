@@ -49,12 +49,13 @@ def iter_quantiles(
 
     xp = array_namespace(arr)
     arr = xp.asarray(arr)
+    device = xp.device(arr)
 
     if isinstance(which, int):
         n = which
-        qs = xp.linspace(0.0, 1.0, n + 1)
+        qs = xp.linspace(0.0, 1.0, n + 1, device=device)
     else:
-        qs = xp.asarray(which)
+        qs = xp.asarray(which, device=device)
 
     if method == "numpy_bulk":
         quantiles = xp.quantile(arr, qs, axis=axis)
