@@ -56,4 +56,4 @@ q_test_array = np.array(
             [0.6474237082, 0.7014179041, np.nan, 0.3952555796, 0.2498164288, np.nan],
         ],
     ]
-)
+).astype(np.float32)

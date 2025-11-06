@@ -9,14 +9,14 @@
 
 import numpy as np
 import pytest
+from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import wind
-from earthkit.meteo.utils.testing import ARRAY_BACKENDS
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "u,v,v_ref",
     [
@@ -40,13 +40,15 @@ np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
         )
     ],
 )
-def test_wind_speed(u, v, v_ref, array_backend):
-    u, v, v_ref = array_backend.asarray(u, v, v_ref)
+def test_wind_speed(u, v, v_ref, xp, device):
+    u = xp.asarray(u, device=device)
+    v = xp.asarray(v, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
     sp = wind.speed(u, v)
-    assert array_backend.allclose(sp, v_ref, equal_nan=True)
+    assert xp.allclose(sp, v_ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "u,v,kwargs,v_ref",
     [
@@ -100,13 +102,15 @@ def test_wind_speed(u, v, v_ref, array_backend):
         (1.0, np.nan, {"convention": "polar"}, np.nan),
     ],
 )
-def test_wind_direction(u, v, v_ref, kwargs, array_backend):
-    u, v, v_ref = array_backend.asarray(u, v, v_ref)
+def test_wind_direction(u, v, v_ref, kwargs, xp, device):
+    u = xp.asarray(u, device=device)
+    v = xp.asarray(v, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
     d = wind.direction(u, v, **kwargs)
-    assert array_backend.allclose(d, v_ref, equal_nan=True)
+    assert xp.allclose(d, v_ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "u,v,sp_ref,d_ref",
     [
@@ -131,14 +135,17 @@ def test_wind_direction(u, v, v_ref, kwargs, array_backend):
         )
     ],
 )
-def test_wind_xy_to_polar(u, v, sp_ref, d_ref, array_backend):
-    u, v, sp_ref, d_ref = array_backend.asarray(u, v, sp_ref, d_ref)
+def test_wind_xy_to_polar(u, v, sp_ref, d_ref, xp, device):
+    u = xp.asarray(u, device=device)
+    v = xp.asarray(v, device=device)
+    sp_ref = xp.asarray(sp_ref, device=device)
+    d_ref = xp.asarray(d_ref, device=device)
     sp, d = wind.xy_to_polar(u, v)
-    assert array_backend.allclose(sp, sp_ref, equal_nan=True)
-    assert array_backend.allclose(d, d_ref, equal_nan=True)
+    assert xp.allclose(sp, sp_ref, equal_nan=True)
+    assert xp.allclose(d, d_ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "sp,d,u_ref, v_ref",
     [
@@ -163,34 +170,41 @@ def test_wind_xy_to_polar(u, v, sp_ref, d_ref, array_backend):
         )
     ],
 )
-def test_wind_polar_to_xy(sp, d, u_ref, v_ref, array_backend):
-    sp, d, u_ref, v_ref = array_backend.asarray(sp, d, u_ref, v_ref)
+def test_wind_polar_to_xy(sp, d, u_ref, v_ref, xp, device):
+    u_ref = xp.asarray(u_ref, device=device)
+    d = xp.asarray(d, device=device)
+    sp = xp.asarray(sp, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
     u, v = wind.polar_to_xy(sp, d)
-    assert array_backend.allclose(u, u_ref, equal_nan=True, atol=1e-7)
-    assert array_backend.allclose(v, v_ref, equal_nan=True, atol=1e-7)
+    assert xp.allclose(u, u_ref, equal_nan=True, atol=1e-7)
+    assert xp.allclose(v, v_ref, equal_nan=True, atol=1e-7)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "omega,t,p,v_ref", [([1.2, 21.3], [285.6, 261.1], [1000, 850], [-0.1003208031, -1.9152219066])]
 )
-def test_w_from_omega(omega, t, p, v_ref, array_backend):
-    omega, t, p, v_ref = array_backend.asarray(omega, t, p, v_ref)
+def test_w_from_omega(omega, t, p, v_ref, xp, device):
+    v_ref = xp.asarray(v_ref, device=device)
+    omega = xp.asarray(omega, device=device)
+    t = xp.asarray(t, device=device)
+    p = xp.asarray(p, device=device)
     p = p * 100.0
     w = wind.w_from_omega(omega, t, p)
-    assert array_backend.allclose(w, v_ref)
+    assert xp.allclose(w, v_ref)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("lat, v_ref", [([-20, 0, 50], [-0.0000498810, 0.0, 0.0001117217])])
-def test_coriolis(lat, v_ref, array_backend):
-    lat, v_ref = array_backend.asarray(lat, v_ref)
+def test_coriolis(lat, v_ref, xp, device):
+    v_ref = xp.asarray(v_ref, device=device)
+    lat = xp.asarray(lat, device=device)
     c = wind.coriolis(lat)
-    assert array_backend.allclose(c, v_ref, rtol=1e-04)
+    assert xp.allclose(c, v_ref, rtol=1e-04)
 
 
 # histogram2d is not available in torch, so we skip this test for now
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "sp,d,sectors,sp_bins,percent,v_ref,dir_bin_ref",
     [
@@ -243,7 +257,7 @@ def test_coriolis(lat, v_ref, array_backend):
                         1.0000000000,
                     ],
                 ]
-            )
+            ).astype(np.float32)
             * 100
             / 11.0,
             [
@@ -276,28 +290,30 @@ def test_coriolis(lat, v_ref, array_backend):
         (3.4, 90.01, 1, [0, 5], False, [[1]], [-180.0000000000, 180.0000000000]),
     ],
 )
-def test_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref, array_backend):
-    sp, d, sp_bins, v_ref, dir_bin_ref = array_backend.asarray(sp, d, sp_bins, v_ref, dir_bin_ref)
+def test_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref, xp, device):
+    sp, d, sp_bins, v_ref, dir_bin_ref = (
+        xp.asarray(x, device=device) for x in [sp, d, sp_bins, v_ref, dir_bin_ref]
+    )
 
-    dir_bin_ref = array_backend.namespace.astype(dir_bin_ref, sp.dtype)
+    dir_bin_ref = xp.astype(dir_bin_ref, sp.dtype)
 
     r = wind.windrose(sp, d, sectors=sectors, speed_bins=sp_bins, percent=percent)
 
-    dir_bin_ref = array_backend.astype(dir_bin_ref, r[0].dtype)
-    v_ref = array_backend.astype(v_ref, r[1].dtype)
+    dir_bin_ref = xp.astype(dir_bin_ref, r[0].dtype)
+    v_ref = xp.astype(v_ref, r[1].dtype)
 
-    assert array_backend.allclose(r[0], v_ref, equal_nan=True, rtol=1e-04)
-    assert array_backend.allclose(r[1], dir_bin_ref, equal_nan=True, rtol=1e-04)
+    assert xp.allclose(r[0], v_ref, equal_nan=True, rtol=1e-04)
+    assert xp.allclose(r[1], dir_bin_ref, equal_nan=True, rtol=1e-04)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "sp,d,sectors,sp_bins", [(3.4, 90.01, 0, [0, 1]), (3.4, 90.01, 6, [0]), (3.4, 90.01, 6, None)]
 )
-def test_windrose_invalid(sp, d, sectors, sp_bins, array_backend):
+def test_windrose_invalid(sp, d, sectors, sp_bins, xp, device):
     if sp_bins is not None:
-        sp_bins = array_backend.asarray(sp_bins)
-    sp, d = array_backend.asarray(sp, d)
+        sp_bins = xp.asarray(sp_bins)
+    sp, d = xp.asarray(sp, device=device), xp.asarray(d, device=device)
 
     with pytest.raises(ValueError):
         wind.windrose(sp, d, sectors=sectors, speed_bins=sp_bins, percent=False)

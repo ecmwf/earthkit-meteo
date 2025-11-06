@@ -12,10 +12,9 @@ import sys
 
 import numpy as np
 import pytest
-from earthkit.utils.testing import skip_array_backend
+from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import stats
-from earthkit.meteo.utils.testing import ARRAY_BACKENDS
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
@@ -28,7 +27,7 @@ def _get_quantile_data():
     return q_test_array
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "data,weights,kwargs,v_ref",
     [
@@ -46,14 +45,14 @@ def _get_quantile_data():
         ),
     ],
 )
-def test_nanaverage(data, weights, v_ref, kwargs, array_backend):
-    data, v_ref = array_backend.asarray(data, v_ref)
+def test_nanaverage(xp, device, data, weights, v_ref, kwargs):
+    data, v_ref = xp.asarray(data, device=device), xp.asarray(v_ref, device=device)
 
     if weights is not None:
-        weights = array_backend.asarray(weights)
+        weights = xp.asarray(weights, device=device)
 
     r = stats.nanaverage(data, weights=weights, **kwargs)
-    assert array_backend.allclose(r, v_ref)
+    assert xp.allclose(r, v_ref)
 
     # NOTE: we used the following numpy code to compute the reference values!
     # when weight is None:
@@ -69,7 +68,7 @@ def test_nanaverage(data, weights, v_ref, kwargs, array_backend):
     # v_ref[:, 1] = np.nansum(data, axis=-1)[:, 1]
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("method", ["sort", "numpy_bulk", "numpy"])
 @pytest.mark.parametrize(
     "data,which,kwargs,v_ref",
@@ -135,8 +134,8 @@ def test_nanaverage(data, weights, v_ref, kwargs, array_backend):
         ),
     ],
 )
-def test_quantiles_core(data, which, kwargs, v_ref, method, array_backend):
-    data, v_ref = array_backend.asarray(data, v_ref)
+def test_quantiles_core(xp, device, data, which, kwargs, v_ref, method):
+    data, v_ref = xp.asarray(data, device=device), xp.asarray(v_ref, device=device)
 
     r = list(stats.iter_quantiles(data, which, method=method, **kwargs))
     assert len(r) == v_ref.shape[0]
@@ -145,21 +144,21 @@ def test_quantiles_core(data, which, kwargs, v_ref, method, array_backend):
         if d.ndim >= 2 and d.shape[-1] == 1:
             d = d[..., 0]
 
-        assert array_backend.allclose(d, v_ref[i], rtol=1e-4), f"i={i}, d={d}, v_ref={v_ref[i]}"
+        assert xp.allclose(d, v_ref[i], rtol=1e-4), f"i={i}, d={d}, v_ref={v_ref[i]}"
 
 
 # TODO: reimplement this test to use reference values
 # TODO: this! test fails with cupy. The reason is that cupy.quantile works differently
 #       than np.quantile when nans are present
-@pytest.mark.parametrize("array_backend", skip_array_backend(ARRAY_BACKENDS, "cupy"))
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("arr", [_get_quantile_data()])
-def test_quantiles_nans(arr, array_backend):
-    arr = array_backend.asarray(arr)
-    qs = [0.0, 0.25, 0.5, 0.75, 1.0]
+def test_quantiles_nans(xp, device, arr):
+    arr = xp.asarray(arr, device=device)
+    qs = xp.asarray([0.0, 0.25, 0.5, 0.75, 1.0], device=device)
     r1 = [quantile for quantile in stats.iter_quantiles(arr, qs, method="sort")]
     r2 = [quantile for quantile in stats.iter_quantiles(arr, qs, method="numpy")]
     for i, (d1, d2) in enumerate(zip(r1, r2)):
-        assert array_backend.allclose(d1, d2, equal_nan=True), f"quantile={qs[i]}"
+        assert xp.allclose(d1, d2, equal_nan=True), f"quantile={qs[i]}"
 
 
 def test_GumbelDistribution():
