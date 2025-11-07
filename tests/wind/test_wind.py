@@ -204,7 +204,15 @@ def test_coriolis(lat, v_ref, xp, device):
 
 
 # histogram2d is not available in torch, so we skip this test for now
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize(
+    "xp, device",
+    list(
+        filter(
+            lambda x: not (x[0]._earthkit_array_namespace_name == "torch" and "cuda" in x[1]),
+            NAMESPACE_DEVICES,
+        )
+    ),
+)
 @pytest.mark.parametrize(
     "sp,d,sectors,sp_bins,percent,v_ref,dir_bin_ref",
     [
