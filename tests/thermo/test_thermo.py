@@ -55,11 +55,11 @@ class ThermoInputData:
 
         d = read_data_file(self.file_name)
 
-        self.t = xp.asarray(d["t"].astype(np.float32), device=device)
-        self.td = xp.asarray(d["td"].astype(np.float32), device=device)
-        self.r = xp.asarray(d["r"].astype(np.float32), device=device)
-        self.q = xp.asarray(d["q"].astype(np.float32), device=device)
-        self.p = xp.asarray(d["p"].astype(np.float32), device=device)
+        self.t = xp.asarray(d["t"], device=device)
+        self.td = xp.asarray(d["td"], device=device)
+        self.r = xp.asarray(d["r"], device=device)
+        self.q = xp.asarray(d["q"], device=device)
+        self.p = xp.asarray(d["p"], device=device)
 
 
 # high level method call
@@ -179,8 +179,8 @@ def test_saturation_vapour_pressure_1(xp, device, phase):
 
     d = read_data_file(ref_file)
 
-    t = xp.asarray(d["t"].astype(np.float32), device=device)
-    v_ref = xp.asarray(d[phase].astype(np.float32), device=device)
+    t = xp.asarray(d["t"], device=device)
+    v_ref = xp.asarray(d[phase], device=device)
 
     svp = thermo.array.saturation_vapour_pressure(t, phase=phase)
     assert xp.allclose(svp, v_ref)
@@ -219,9 +219,9 @@ def test_saturation_mixing_ratio(phase, xp, device):
     # save_test_reference(ref_file, o)
 
     d = read_data_file(ref_file)
-    t = xp.asarray(d["t"].astype(np.float32), device=device)
-    p = xp.asarray(d["p"].astype(np.float32), device=device)
-    v_ref = xp.asarray(d[phase].astype(np.float32), device=device)
+    t = xp.asarray(d["t"], device=device)
+    p = xp.asarray(d["p"], device=device)
+    v_ref = xp.asarray(d[phase], device=device)
 
     mr = thermo.array.saturation_mixing_ratio(t, p, phase=phase)
     assert xp.allclose(mr, v_ref)
@@ -243,9 +243,9 @@ def test_saturation_specific_humidity(phase, xp, device):
     # save_test_reference(ref_file, o)
 
     d = read_data_file(ref_file)
-    t = xp.asarray(d["t"].astype(np.float32), device=device)
-    p = xp.asarray(d["p"].astype(np.float32), device=device)
-    v_ref = xp.asarray(d[phase].astype(np.float32), device=device)
+    t = xp.asarray(d["t"], device=device)
+    p = xp.asarray(d["p"], device=device)
+    v_ref = xp.asarray(d[phase], device=device)
 
     q = thermo.array.saturation_specific_humidity(t, p, phase=phase)
     assert xp.allclose(q, v_ref)
@@ -262,8 +262,8 @@ def test_saturation_vapour_pressure_slope(phase, xp, device):
     # save_test_reference(ref_file, o)
 
     d = read_data_file(ref_file)
-    t = xp.asarray(d["t"].astype(np.float32), device=device)
-    v_ref = xp.asarray(d[phase].astype(np.float32), device=device)
+    t = xp.asarray(d["t"], device=device)
+    v_ref = xp.asarray(d[phase], device=device)
 
     svp = thermo.array.saturation_vapour_pressure_slope(t, phase=phase)
     assert xp.allclose(svp, v_ref)
@@ -285,9 +285,9 @@ def test_saturation_mixing_ratio_slope_1(phase, xp, device):
     # save_test_reference(ref_file, o)
 
     d = read_data_file(ref_file)
-    t = xp.asarray(d["t"].astype(np.float32), device=device)
-    p = xp.asarray(d["p"].astype(np.float32), device=device)
-    v_ref = xp.asarray(d[phase].astype(np.float32), device=device)
+    t = xp.asarray(d["t"], device=device)
+    p = xp.asarray(d["p"], device=device)
+    v_ref = xp.asarray(d[phase], device=device)
 
     svp = thermo.array.saturation_mixing_ratio_slope(t, p, phase=phase)
     assert xp.allclose(svp, v_ref)
@@ -323,9 +323,9 @@ def test_saturation_specific_humidity_slope_1(phase, xp, device):
     # save_test_reference(ref_file, o)
 
     d = read_data_file(ref_file)
-    t = xp.asarray(d["t"].astype(np.float32), device=device)
-    p = xp.asarray(d["p"].astype(np.float32), device=device)
-    v_ref = xp.asarray(d[phase].astype(np.float32), device=device)
+    t = xp.asarray(d["t"], device=device)
+    p = xp.asarray(d["p"], device=device)
+    v_ref = xp.asarray(d[phase], device=device)
 
     svp = thermo.array.saturation_specific_humidity_slope(t, p, phase=phase)
     assert xp.allclose(svp, v_ref)
@@ -349,8 +349,8 @@ def test_temperature_from_saturation_vapour_pressure_1(xp, device):
     ref_file = "sat_vp.csv"
     d = read_data_file(ref_file)
 
-    svp = xp.asarray(d["water"].astype(np.float32), device=device)
-    v_ref = xp.asarray(d["t"].astype(np.float32), device=device)
+    svp = xp.asarray(d["water"], device=device)
+    v_ref = xp.asarray(d["t"], device=device)
 
     t = thermo.array.temperature_from_saturation_vapour_pressure(svp)
     assert xp.allclose(t, v_ref, equal_nan=True)
@@ -721,11 +721,11 @@ def test_ept(method, xp, device):
     ref = read_data_file(ref_file)
 
     pt = thermo.array.ept_from_dewpoint(data.t, data.td, data.p, method=method)
-    v_ref = xp.asarray(ref[method + "_td"].astype(np.float32), device=device)
+    v_ref = xp.asarray(ref[method + "_td"], device=device)
     assert xp.allclose(pt, v_ref), f"td {method=}"
 
     pt = thermo.array.ept_from_specific_humidity(data.t, data.q, data.p, method=method)
-    v_ref = xp.asarray(ref[method + "_q"].astype(np.float32), device=device)
+    v_ref = xp.asarray(ref[method + "_q"], device=device)
     assert xp.allclose(pt, v_ref), f"q {method=}"
 
 
@@ -744,7 +744,7 @@ def test_saturation_ept(method, xp, device):
     ref = read_data_file(ref_file)
 
     pt = thermo.array.saturation_ept(data.t, data.p, method=method)
-    v_ref = xp.asarray(ref[method].astype(np.float32), device=device)
+    v_ref = xp.asarray(ref[method], device=device)
     assert xp.allclose(pt, v_ref), f"{method=}"
 
 
@@ -765,12 +765,12 @@ def test_temperature_on_moist_adiabat(ept_method, t_method, xp, device):
     # save_test_reference(ref_file, o)
 
     ref = read_data_file(ref_file)
-    ept = xp.asarray(ref["ept"].astype(np.float32), device=device)
-    p = xp.asarray(ref["p"].astype(np.float32), device=device)
+    ept = xp.asarray(ref["ept"], device=device)
+    p = xp.asarray(ref["p"], device=device)
 
     pt = thermo.array.temperature_on_moist_adiabat(ept, p, ept_method=ept_method, t_method=t_method)
-    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}"].astype(np.float32), device=device)
-    assert xp.allclose(pt, v_ref, equal_nan=True, rtol=1e-4), f"{ept_method=} {t_method=}"
+    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}"], device=device)
+    assert xp.allclose(pt, v_ref, equal_nan=True), f"{ept_method=} {t_method=}"
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
@@ -798,15 +798,15 @@ def test_wet_bulb_temperature(ept_method, t_method, xp, device):
         data.t, data.td, data.p, ept_method=ept_method, t_method=t_method
     )
 
-    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_td"].astype(np.float32), device=device)
-    assert xp.allclose(pt, v_ref, rtol=1e-01, atol=0, equal_nan=True), f"td {ept_method=} {t_method=}"
+    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_td"], device=device)
+    assert xp.allclose(pt, v_ref, rtol=1e-03, atol=0, equal_nan=True), f"td {ept_method=} {t_method=}"
 
     pt = thermo.array.wet_bulb_temperature_from_specific_humidity(
         data.t, data.q, data.p, ept_method=ept_method, t_method=t_method
     )
 
-    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_q"].astype(np.float32), device=device)
-    assert xp.allclose(pt, v_ref, rtol=1e-01, atol=0, equal_nan=True), f"q {ept_method=} {t_method=}"
+    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_q"], device=device)
+    assert xp.allclose(pt, v_ref, rtol=1e-03, atol=0, equal_nan=True), f"q {ept_method=} {t_method=}"
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
@@ -838,14 +838,14 @@ def test_wet_bulb_potential_temperature(ept_method, t_method, xp, device):
         data.t, data.td, data.p, ept_method=ept_method, t_method=t_method
     )
 
-    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_td"].astype(np.float32), device=device)
+    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_td"], device=device)
     assert xp.allclose(pt, v_ref, rtol=1e-03, atol=0, equal_nan=True), f"td {ept_method=} {t_method=}"
 
     pt = thermo.array.wet_bulb_potential_temperature_from_specific_humidity(
         data.t, data.q, data.p, ept_method=ept_method, t_method=t_method
     )
 
-    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_q"].astype(np.float32), device=device)
+    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_q"], device=device)
     assert xp.allclose(pt, v_ref, rtol=1e-03, atol=0, equal_nan=True), f"q {ept_method=} {t_method=}"
 
 

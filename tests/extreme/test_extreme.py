@@ -98,8 +98,8 @@ def test_sot_highlevel(xp, device, clim, ens, v_ref):
 
     v_ref = xp.asarray(v_ref, dtype=sot_upper.dtype)
 
-    assert xp.allclose(sot_upper[0], v_ref[0], rtol=1e-4)
-    assert xp.allclose(sot_lower[0], v_ref[1], rtol=1e-4)
+    assert xp.allclose(sot_upper[0], v_ref[0])
+    assert xp.allclose(sot_lower[0], v_ref[1])
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
@@ -119,8 +119,8 @@ def test_sot_core(xp, device, clim, ens, v_ref):
 
     v_ref = xp.asarray(v_ref, dtype=sot_upper.dtype)
 
-    assert xp.allclose(sot_upper[0], v_ref[0], rtol=1e-4)
-    assert xp.allclose(sot_lower[0], v_ref[1], rtol=1e-4)
+    assert xp.allclose(sot_upper[0], v_ref[0])
+    assert xp.allclose(sot_lower[0], v_ref[1])
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)

@@ -257,7 +257,7 @@ def test_coriolis(lat, v_ref, xp, device):
                         1.0000000000,
                     ],
                 ]
-            ).astype(np.float32)
+            )
             * 100
             / 11.0,
             [
