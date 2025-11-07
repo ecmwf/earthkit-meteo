@@ -1058,7 +1058,7 @@ class _EptComp:
         p = xp.asarray(p)
 
         size = xp.size(ept) if xp.size(ept) > xp.size(p) else xp.size(p)
-        t = xp.full(size, constants.T0 - 20, dtype=ept.dtype)
+        t = xp.full(size, constants.T0 - 20, dtype=ept.dtype, device=xp.device(ept))
 
         # if isinstance(p, np.ndarray):
         #     t = np.full(p.shape, constants.T0 - 20)
@@ -1083,7 +1083,7 @@ class _EptComp:
         ept = xp.asarray(ept)
         p = xp.asarray(p)
         if xp.size(ept) > xp.size(p):
-            p = xp.full(xp.size(ept), p, dtype=ept.dtype)
+            p = xp.full(xp.size(ept), p, dtype=ept.dtype, device=xp.device(ept))
 
         # p = xp.full(ept.shape, p, dtype=ept.dtype)
 
