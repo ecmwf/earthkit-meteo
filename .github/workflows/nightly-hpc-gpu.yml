@@ -19,4 +19,4 @@ jobs:
         repository: ecmwf/earthkit-meteo@${{ github.event.pull_request.head.sha || github.sha }}
         build_config: .github/ci-hpc-gpu-config.yml
         python_version: "3.10"
-        python_toml_opt_dep_sections: gpu,test
+        python_toml_opt_dep_sections: test
