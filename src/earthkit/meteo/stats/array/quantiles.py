@@ -65,7 +65,7 @@ def iter_quantiles(
     if method == "sort":
         arr = xp.asarray(arr)
         arr = xp.sort(arr, axis=axis)
-        missing = xp.any(xp.isnan(arr), axis=axis)
+        missing = xp.any(xp.isnan(arr), axis=axis, keepdims=True)
 
     for q in qs:
         if method == "numpy":
@@ -77,10 +77,8 @@ def iter_quantiles(
             f = (m - 1) * q
             j = int(f)
             x = f - j
-            quantile = xp.take(arr, xp.asarray(j, device=device), axis=axis)
-            quantile *= 1 - x
-            tmp = xp.take(arr, xp.asarray(min(j + 1, m - 1), device=device), axis=axis)
-            tmp *= x
+            quantile = xp.take(arr, xp.asarray(j, device=device), axis=axis) * (1 - x)
+            tmp = xp.take(arr, xp.asarray(min(j + 1, m - 1), device=device), axis=axis) * x
             quantile += tmp
-            quantile[xp.reshape(missing, quantile.shape)] = xp.nan
+            quantile = xp.where(missing, xp.nan, quantile)
             yield quantile
