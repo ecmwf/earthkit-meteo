@@ -77,9 +77,9 @@ def iter_quantiles(
             f = (m - 1) * q
             j = int(f)
             x = f - j
-            quantile = xp.take(arr, xp.asarray(j), axis=axis)
+            quantile = xp.take(arr, xp.asarray(j, device=device), axis=axis)
             quantile *= 1 - x
-            tmp = xp.take(arr, xp.asarray(min(j + 1, m - 1)), axis=axis)
+            tmp = xp.take(arr, xp.asarray(min(j + 1, m - 1), device=device), axis=axis)
             tmp *= x
             quantile += tmp
             quantile[xp.reshape(missing, quantile.shape)] = xp.nan
