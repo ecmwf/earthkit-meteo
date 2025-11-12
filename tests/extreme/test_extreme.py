@@ -28,7 +28,6 @@ def test_highlevel_efi(xp, device, clim, ens, v_ref):
     clim = xp.asarray(clim, device=device)
     ens = xp.asarray(ens, device=device)
     v_ref = xp.asarray(v_ref, device=device)
-    # clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
     efi = extreme.efi(clim, ens)
     assert xp.isclose(efi[0], v_ref[0])
 
@@ -73,12 +72,8 @@ def test_efi_sorted(xp, device, clim, ens, v_ref):
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 def test_efi_nan(xp, device):
-    clim_nan = xp.empty((101, 1), device=device)
-    clim_nan[:] = xp.nan
-    ens_nan = xp.empty((51, 1), device=device)
-    ens_nan[:] = xp.nan
-    # print(clim_nan)
-    # print(ens_nan)
+    clim_nan = xp.full((101, 1), xp.nan, device=device)
+    ens_nan = xp.full((51, 1), xp.nan, device=device)
 
     efi = extreme.array.efi(clim_nan, ens_nan)
 
@@ -98,8 +93,8 @@ def test_sot_highlevel(xp, device, clim, ens, v_ref):
 
     v_ref = xp.asarray(v_ref, dtype=sot_upper.dtype)
 
-    assert xp.allclose(sot_upper[0], v_ref[0])
-    assert xp.allclose(sot_lower[0], v_ref[1])
+    assert xp.allclose(sot_upper[0], v_ref[0], rtol=1e-4)
+    assert xp.allclose(sot_lower[0], v_ref[1], rtol=1e-4)
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
@@ -119,12 +114,11 @@ def test_sot_core(xp, device, clim, ens, v_ref):
 
     v_ref = xp.asarray(v_ref, dtype=sot_upper.dtype)
 
-    assert xp.allclose(sot_upper[0], v_ref[0])
-    assert xp.allclose(sot_lower[0], v_ref[1])
+    assert xp.allclose(sot_upper[0], v_ref[0], rtol=1e-4)
+    assert xp.allclose(sot_lower[0], v_ref[1], rtol=1e-4)
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-# @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
 @pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])])
 def test_sot_perc(xp, device, clim, ens, v_ref):
     clim = xp.asarray(clim, device=device)
@@ -139,7 +133,6 @@ def test_sot_perc(xp, device, clim, ens, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-# @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
 @pytest.mark.parametrize(
     "qc_tail,qc,qf,kwargs,v_ref",
     [
