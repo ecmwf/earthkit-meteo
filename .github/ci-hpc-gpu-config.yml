@@ -1,0 +1,6 @@
+build:
+  python: 3.10
+  parallel: 1
+  queue: ng
+  gpus: 1
+  requirements: tests/downstream-ci-requirements.txt
