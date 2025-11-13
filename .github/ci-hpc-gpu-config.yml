@@ -1,7 +1,6 @@
 build:
-  modules:
-  - python3
-  python_dependencies:
-  - ecmwf/earthkit-utils@refactor/backend_for_testing_only
+  python: 3.10
+  parallel: 1
   queue: ng
   gpus: 1
+  requirements: tests/downstream-ci-requirements.txt
