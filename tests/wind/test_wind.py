@@ -208,7 +208,7 @@ def test_coriolis(lat, v_ref, xp, device):
     "xp, device",
     list(
         filter(
-            lambda x: not (x[0]._earthkit_array_namespace_name == "torch" and "cuda" in x[1]),
+            lambda x: not (x[0]._earthkit_array_namespace_name == "torch" and "cuda" in x[1].type),
             NAMESPACE_DEVICES,
         )
     ),
