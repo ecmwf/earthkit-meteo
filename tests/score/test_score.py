@@ -12,10 +12,10 @@ import sys
 
 import numpy as np
 import pytest
+from earthkit.utils.array.namespace import _NUMPY_NAMESPACE
+from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import score
-from earthkit.meteo.utils.testing import ARRAY_BACKENDS
-from earthkit.meteo.utils.testing import get_array_backend
 
 
 def crps_quaver2(x, y):
@@ -81,27 +81,29 @@ def _get_crps_data():
     return obs, ens, v_ref
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("nan_policy", ["raise", "propagate", "omit"])
 @pytest.mark.parametrize("obs,ens,v_ref", [_get_crps_data()])
-def test_crps_meteo(obs, ens, v_ref, array_backend, nan_policy):
-    obs, ens, v_ref = array_backend.asarray(obs, ens, v_ref)
-    xp = array_backend.namespace
+def test_crps_meteo(xp, device, obs, ens, v_ref, nan_policy):
+    obs = xp.asarray(obs, device=device)
+    ens = xp.asarray(ens, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
 
     c = score.crps(ens.T, obs[0], nan_policy)
 
     for i in range(ens.shape[0]):
-        assert array_backend.isclose(c[i], v_ref[i]), f"i={i}"
+        assert xp.isclose(c[i], v_ref[i]), f"i={i}"
 
-    assert array_backend.isclose(xp.mean(c), xp.mean(v_ref))
+    assert xp.isclose(xp.mean(c), xp.mean(v_ref))
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("nan_policy", ["raise", "propagate", "omit"])
 @pytest.mark.parametrize("obs,ens,v_ref", [_get_crps_data()])
-def test_crps_meteo_missing(obs, ens, v_ref, array_backend, nan_policy):
-    obs, ens, v_ref = array_backend.asarray(obs, ens, v_ref)
-    xp = array_backend.namespace
+def test_crps_meteo_missing(xp, device, obs, ens, v_ref, nan_policy):
+    obs = xp.asarray(obs, device=device)
+    ens = xp.asarray(ens, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
 
     ens = ens.T
     obs = obs[0]
@@ -119,32 +121,33 @@ def test_crps_meteo_missing(obs, ens, v_ref, array_backend, nan_policy):
 
         if nan_policy == "omit":
             for i in range(c_all.shape[0]):
-                assert array_backend.isclose(c_all[i], c_non_missing[i])
+                assert xp.isclose(c_all[i], c_non_missing[i])
         elif nan_policy == "propagate":
             j = 0
             for i in range(c_all.shape[0]):
                 if nan_mask[i]:
                     assert xp.isnan(c_all[i])
                 else:
-                    assert array_backend.isclose(c_all[i], c_non_missing[j])
+                    assert xp.isclose(c_all[i], c_non_missing[j])
                     j += 1
 
         non_missing_crps = c_all[~xp.isnan(c_all)]
-        assert array_backend.isclose(xp.mean(non_missing_crps), xp.mean(c_non_missing))
+        assert xp.isclose(xp.mean(non_missing_crps), xp.mean(c_non_missing))
 
 
-@pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
+@pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
 @pytest.mark.parametrize("obs,ens,v_ref", [_get_crps_data()])
-def test_crps_quaver2(obs, ens, v_ref, array_backend):
-    obs, ens, v_ref = array_backend.asarray(obs, ens, v_ref)
-    xp = array_backend.namespace
+def test_crps_quaver2(xp, obs, ens, v_ref):
+    obs = xp.asarray(obs)
+    ens = xp.asarray(ens)
+    v_ref = xp.asarray(v_ref)
 
     c = crps_quaver2(ens.T, obs[0])
 
     for i in range(ens.shape[0]):
-        assert array_backend.isclose(c[i], v_ref[i]), f"i={i}"
+        assert xp.isclose(c[i], v_ref[i]), f"i={i}"
 
-    assert array_backend.isclose(xp.mean(c), xp.mean(v_ref))
+    assert xp.isclose(xp.mean(c), xp.mean(v_ref))
 
 
 def _get_pearson_data():
@@ -175,10 +178,12 @@ def _get_pearson_data():
     return x.tolist(), y.tolist(), rs.tolist()
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("x, y, v_ref", [_get_pearson_data()])
-def test_pearson(x, y, v_ref, array_backend):
-    x, y, v_ref = array_backend.asarray(x, y, v_ref)
+def test_pearson(xp, device, x, y, v_ref):
+    x = xp.asarray(x, device=device)
+    y = xp.asarray(y, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
 
     r = score.pearson(x, y, axis=1)
-    np.testing.assert_allclose(r, v_ref, atol=1e-7)
+    assert xp.allclose(r, v_ref, atol=1e-7, equal_nan=True)

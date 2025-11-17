@@ -31,6 +31,10 @@ dependencies = [
   "earthkit-utils>=0.0.1",
   "numpy",
 ]
+optional-dependencies.gpu = [
+  "cupy",
+  "torch",
+]
 optional-dependencies.test = [
   "pytest",
   "pytest-cov",

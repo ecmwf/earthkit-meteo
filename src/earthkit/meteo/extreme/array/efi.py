@@ -34,6 +34,7 @@ def efi(clim, ens, eps=-0.1):
     xp = array_namespace(clim, ens)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
+    device = xp.device(clim)
 
     # locate missing values
     missing_mask = xp.logical_or(xp.sum(xp.isnan(clim), axis=0), xp.sum(xp.isnan(ens), axis=0))
@@ -60,10 +61,10 @@ def efi(clim, ens, eps=-0.1):
     acoef = (1.0 - 2.0 * p[:-1]) * acosdiff + proddiff
 
     # compute EFI from coefficients
-    efi = xp.zeros(npoints)
+    efi = xp.zeros(npoints, device=device)
     ##################################
     if eps > 0:
-        efimax = xp.zeros(npoints)
+        efimax = xp.zeros(npoints, device=device)
         for icl in range(nclim - 1):
             mask = clim[icl + 1, :] > eps
             dEFI = xp.where(

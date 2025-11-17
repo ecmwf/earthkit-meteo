@@ -49,12 +49,13 @@ def iter_quantiles(
 
     xp = array_namespace(arr)
     arr = xp.asarray(arr)
+    device = xp.device(arr)
 
     if isinstance(which, int):
         n = which
-        qs = xp.linspace(0.0, 1.0, n + 1)
+        qs = xp.linspace(0.0, 1.0, n + 1, device=device)
     else:
-        qs = xp.asarray(which)
+        qs = xp.asarray(which, device=device)
 
     if method == "numpy_bulk":
         quantiles = xp.quantile(arr, qs, axis=axis)
@@ -64,7 +65,7 @@ def iter_quantiles(
     if method == "sort":
         arr = xp.asarray(arr)
         arr = xp.sort(arr, axis=axis)
-        missing = xp.any(xp.isnan(arr), axis=axis)
+        missing = xp.any(xp.isnan(arr), axis=axis, keepdims=True)
 
     for q in qs:
         if method == "numpy":
@@ -76,10 +77,8 @@ def iter_quantiles(
             f = (m - 1) * q
             j = int(f)
             x = f - j
-            quantile = xp.take(arr, xp.asarray(j), axis=axis)
-            quantile *= 1 - x
-            tmp = xp.take(arr, xp.asarray(min(j + 1, m - 1)), axis=axis)
-            tmp *= x
+            quantile = xp.take(arr, xp.asarray(j, device=device), axis=axis) * (1 - x)
+            tmp = xp.take(arr, xp.asarray(min(j + 1, m - 1), device=device), axis=axis) * x
             quantile += tmp
-            quantile[xp.reshape(missing, quantile.shape)] = xp.nan
+            quantile = xp.where(missing, xp.nan, quantile)
             yield quantile

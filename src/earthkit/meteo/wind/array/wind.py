@@ -303,12 +303,13 @@ def windrose(speed, direction, sectors=16, speed_bins=None, percent=True):
     # TODO: atleast_1d is not part of the array API standard
     speed = xp.atleast_1d(speed)
     direction = xp.atleast_1d(direction)
+    device = xp.device(speed)
 
     dir_step = 360.0 / sectors
-    dir_bins = xp.asarray(
-        xp.linspace(int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2), dtype=speed.dtype
+    dir_bins = xp.linspace(
+        int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2, dtype=speed.dtype, device=device
     )
-    speed_bins = xp.asarray(speed_bins, dtype=speed.dtype)
+    speed_bins = xp.asarray(speed_bins, dtype=speed.dtype, device=device)
 
     # NOTE: np.histogram2d is only available in numpy. For other namespaces we use a fallback implementation
     # based on histogramdd. (See utils.compute.histogram2d). However, neither histogram2d nor
@@ -317,7 +318,6 @@ def windrose(speed, direction, sectors=16, speed_bins=None, percent=True):
         speed,
         direction,
         bins=[speed_bins, dir_bins],
-        density=False,
     )[0]
 
     # unify the north bins
