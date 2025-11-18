@@ -3,4 +3,6 @@ build:
   parallel: 1
   queue: ng
   gpus: 1
+  python_dependencies:
+  - ecmwf/earthkit-utils@develop
   requirements: tests/downstream-ci-requirements.txt
