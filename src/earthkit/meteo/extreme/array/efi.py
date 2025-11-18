@@ -10,6 +10,7 @@
 # import numba
 # from numba import float64, float32
 
+import array_api_extra as xpx
 from earthkit.utils.array import array_namespace
 
 
@@ -46,7 +47,8 @@ def efi(clim, ens, eps=-0.1):
     frac = xp.zeros_like(clim)
     ##################################
     for icl in range(nclim):
-        frac[icl, :] = xp.sum(ens[:, :] <= clim[icl, xp.newaxis, :], axis=0)
+        frac = xpx.at(frac, (icl, None)).set(xp.sum(ens[:, :] <= clim[icl, xp.newaxis, :], axis=0), xp=xp)
+        # frac[icl, :] = xp.sum(ens[:, :] <= clim[icl, xp.newaxis, :], axis=0)
     ##################################
     frac /= nens
 
@@ -85,7 +87,8 @@ def efi(clim, ens, eps=-0.1):
     ##################################
 
     # apply missing values
-    efi[missing_mask] = xp.nan
+    # efi[missing_mask] = xp.nan
+    efi = xpx.at(efi, missing_mask).set(xp.nan, xp=xp)
 
     return efi
 

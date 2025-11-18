@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import array_api_extra as xpx
 from earthkit.utils.array import array_namespace
 
 
@@ -40,7 +41,8 @@ def _cpf(clim, ens, epsilon=None, from_zero=False):
             # primary condition (to ensure crossing and not reverse-crossing)
             if tau_f < tau_c:
                 idx = (qv_f >= qv_c) & (~mask)
-                prim[idx] = True
+                # prim[idx] = True
+                prim = xpx.at(prim, idx).set(True, xp=xp)
 
             if tau_f >= tau_c:
                 # lowest climate quantile: interpolate between 2 consecutive quantiles
@@ -58,13 +60,17 @@ def _cpf(clim, ens, epsilon=None, from_zero=False):
                     )
 
                     # populate matrix, no values below 0
-                    cpf[idx] = xp.maximum(tau_i, xp.asarray(0))
-                    mask[idx] = True
+                    # cpf[idx] = xp.maximum(tau_i, xp.asarray(0))
+                    cpf = xpx.at(cpf, idx).set(xp.maximum(tau_i, xp.asarray(0)), xp=xp)
+                    # mask[idx] = True
+                    mask = xpx.at(mask, idx).set(True, xp=xp)
 
                 # check crossing cases
                 idx = (qv_f < qv_c) & (~mask) & prim
-                cpf[idx] = tau_f
-                mask[idx] = True
+                # cpf[idx] = tau_f
+                cpf = xpx.at(cpf, idx).set(tau_f, xp=xp)
+                # mask[idx] = True
+                mask = xpx.at(mask, idx).set(True, xp=xp)
 
                 # largest climate quantile: interpolate
                 if iq == nens - 1:
@@ -78,7 +84,8 @@ def _cpf(clim, ens, epsilon=None, from_zero=False):
                     )
 
                     # populate matrix, no values above 1
-                    cpf[idx] = xp.minimum(tau_i, xp.asarray(1))
+                    # cpf[idx] = xp.minimum(tau_i, xp.asarray(1))
+                    cpf = xpx.at(cpf, idx).set(xp.minimum(tau_i, xp.asarray(1)), xp=xp)
 
                 # speed up process
                 break
@@ -86,7 +93,8 @@ def _cpf(clim, ens, epsilon=None, from_zero=False):
     if epsilon is not None:
         # ens is assumed to be sorted at this point
         mask = ens[-1, :] < epsilon
-        cpf[mask] = 0.0
+        # cpf[mask] = 0.0
+        cpf = xpx.at(cpf, mask).set(0.0, xp=xp)
 
     return cpf
 
@@ -150,6 +158,7 @@ def cpf(
     if symmetric:
         cpf_reverse = _cpf(-xp.flip(clim, axis=0), -xp.flip(ens, axis=0), from_zero=from_zero)
         mask = cpf_direct < 0.5
-        cpf_direct[mask] = 1 - cpf_reverse[mask]
+        cpf_direct = xpx.at(cpf_direct, mask).set(1 - cpf_reverse[mask], xp=xp)
+        # cpf_direct[mask] = 1 - cpf_reverse[mask]
 
     return cpf_direct
