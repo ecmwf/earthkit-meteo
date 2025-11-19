@@ -40,7 +40,7 @@ def _direction_meteo(u, v):
     v = xp.asarray(v)
 
     minus_pi2 = -xp.pi / 2.0
-    d = xp.arctan2(v, u)
+    d = xp.atan2(v, u)
     d = xp.asarray(d)
     m = d <= minus_pi2
     d[m] = (minus_pi2 - d[m]) * constants.degree
@@ -53,7 +53,7 @@ def _direction_polar(u, v, to_positive):
     xp = array_namespace(u, v)
     u = xp.asarray(u)
     v = xp.asarray(v)
-    d = xp.arctan2(v, u) * constants.degree
+    d = xp.atan2(v, u) * constants.degree
     if to_positive:
         d = xp.asarray(d)
         m = d < 0
