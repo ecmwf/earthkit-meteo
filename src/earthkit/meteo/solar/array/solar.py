@@ -28,7 +28,7 @@ def solar_declination_angle(date):
     angle = julian_day(date) / DAYS_PER_YEAR * np.pi * 2
 
     # declination in [degrees]
-    declination = (
+    declination = float(
         0.396372
         - 22.91327 * np.cos(angle)
         + 4.025430 * np.sin(angle)
@@ -38,7 +38,7 @@ def solar_declination_angle(date):
         + 0.084798 * np.sin(3 * angle)
     )
     # time correction in [ h.degrees ]
-    time_correction = (
+    time_correction = float(
         0.004297
         + 0.107029 * np.cos(angle)
         - 1.837877 * np.sin(angle)
@@ -68,13 +68,16 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
         http://answers.google.com/answers/threadview/id/782886.html
 
     """
+    xp = array_namespace(latitudes, longitudes)
+    latitudes = xp.asarray(latitudes)
+    longitudes = xp.asarray(longitudes)
+    device = xp.device(latitudes)
+
     # declination angle + time correction for solar angle
     declination, time_correction = solar_declination_angle(date)
 
-    xp = array_namespace(latitudes, longitudes)
-    declination = xp.asarray(declination)
-    latitudes = xp.asarray(latitudes)
-    longitudes = xp.asarray(longitudes)
+    declination = xp.asarray(declination, device=device)
+    time_correction = xp.asarray(time_correction, device=device)
 
     # solar_declination_angle returns degrees
     # TODO: deg2rad() is not part of the array API standard

@@ -37,7 +37,7 @@ def nanaverage(data, weights=None, **kwargs):
     if weights is not None:
         weights = xp.asarray(weights)
         # set weights to nan where data is nan:
-        this_weights = xp.ones(data.shape) * weights
+        this_weights = xp.ones_like(data) * weights
         this_weights[xp.isnan(data)] = xp.nan
         # Weights must be scaled to the sum of valid
         #  weights for each relevant axis:

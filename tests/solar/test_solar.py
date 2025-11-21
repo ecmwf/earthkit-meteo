@@ -12,9 +12,9 @@ import datetime
 
 import numpy as np
 import pytest
+from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import solar
-from earthkit.meteo.utils.testing import ARRAY_BACKENDS
 
 
 @pytest.mark.parametrize(
@@ -47,19 +47,21 @@ def test_solar_declination_angle(date, v_ref):
     assert np.isclose(time_correction, v_ref[1])
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "date,lat,lon,v_ref",
     [(datetime.datetime(2024, 4, 22, 12, 0, 0), 40.0, 18.0, 0.8478445449796352)],
 )
-def test_cos_solar_zenith_angle_1(date, lat, lon, v_ref, array_backend):
-    lat, lon, v_ref = array_backend.asarray(lat, lon, v_ref)
+def test_cos_solar_zenith_angle_1(xp, device, date, lat, lon, v_ref):
+    lat = xp.asarray(lat, device=device)
+    lon = xp.asarray(lon, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
     v = solar.cos_solar_zenith_angle(date, lat, lon)
-    v_ref = array_backend.asarray(v_ref, dtype=v.dtype)
-    assert array_backend.allclose(v, v_ref)
+    v_ref = xp.asarray(v_ref, dtype=v.dtype)
+    assert xp.allclose(v, v_ref)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "begin_date,end_date,lat,lon,integration_order,v_ref",
     [
@@ -70,14 +72,16 @@ def test_cos_solar_zenith_angle_1(date, lat, lon, v_ref, array_backend):
     ],
 )
 def test_cos_solar_zenith_angle_integrated(
-    begin_date, end_date, lat, lon, integration_order, v_ref, array_backend
+    xp, device, begin_date, end_date, lat, lon, integration_order, v_ref
 ):
-    lat, lon, v_ref = array_backend.asarray(lat, lon, v_ref)
+    lat = xp.asarray(lat, device=device)
+    lon = xp.asarray(lon, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
     v = solar.cos_solar_zenith_angle_integrated(
         begin_date, end_date, lat, lon, integration_order=integration_order
     )
-    v_ref = array_backend.asarray(v_ref, dtype=v.dtype)
-    assert array_backend.allclose(v, v_ref)
+    v_ref = xp.asarray(v_ref, dtype=v.dtype)
+    assert xp.allclose(v, v_ref)
 
 
 def test_incoming_solar_radiation():
@@ -86,12 +90,14 @@ def test_incoming_solar_radiation():
     assert np.isclose(v, 4833557.3088814365)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "begin_date,end_date,lat,lon,v_ref",
     [(datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 1503617.8237746414)],
 )
-def test_toa_incident_solar_radiation(begin_date, end_date, lat, lon, v_ref, array_backend):
-    lat, lon, v_ref = array_backend.asarray(lat, lon, v_ref)
+def test_toa_incident_solar_radiation(xp, device, begin_date, end_date, lat, lon, v_ref):
+    lat = xp.asarray(lat, device=device)
+    lon = xp.asarray(lon, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
     v = solar.toa_incident_solar_radiation(begin_date, end_date, lat, lon)
-    assert array_backend.allclose(v, v_ref)
+    assert xp.allclose(v, v_ref)

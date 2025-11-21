@@ -1,8 +1,7 @@
 Welcome to earthkit-meteo's documentation
 ======================================================
 
-|Static Badge| |image1| |License: Apache 2.0| |Latest
-Release|
+|Static Badge| |image1| |License: Apache 2.0| |Latest Release|
 
 .. |Static Badge| image:: https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE/foundation_badge.svg
    :target: https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE
@@ -42,7 +41,6 @@ Quick start
     t = torch.tensor([264.12, 261.45])  # Kelvins
     p = torch.tensor([850.0, 850.0]) * 100.0  # Pascals
     theta = thermo.potential_temperature(t, p)
-
 
 
 .. toctree::

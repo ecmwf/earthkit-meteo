@@ -1,5 +1,8 @@
 build:
   python: 3.10
   parallel: 1
+  queue: ng
+  gpus: 1
   python_dependencies:
   - ecmwf/earthkit-utils@develop
+  requirements: tests/downstream-ci-requirements.txt
