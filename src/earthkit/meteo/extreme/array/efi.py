@@ -74,7 +74,7 @@ def efi(clim, ens, eps=-0.1):
             defimax = xp.where(mask, -acosdiff[icl] - proddiff[icl], 0.0)
             efi += dEFI
             efimax += defimax
-        efimax = xp.where(efimax > eps, efimax, eps)
+        efimax = xp.maximum(efimax, eps)
         efi /= efimax
     else:
         for icl in range(nclim - 1):
