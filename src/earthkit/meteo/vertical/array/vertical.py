@@ -12,6 +12,7 @@ from typing import Union
 
 import numpy as np
 from earthkit.utils.array import array_namespace
+from numpy.typing import ArrayLike
 from numpy.typing import NDArray
 
 from earthkit.meteo import constants
@@ -478,3 +479,87 @@ def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
     z = z / constants.g
     h = R_earth * z / (R_earth - z)
     return h
+
+
+def to_pressure(
+    values: ArrayLike,
+    p: Union[ArrayLike, list, tuple, float, int],
+    target_p: Union[ArrayLike, list, tuple, float, int],
+    mode: str = "linear",
+) -> ArrayLike:
+    xp = array_namespace(values, p)
+
+    target_p = xp.asarray(target_p)
+    p = xp.asarray(p)
+
+    nlev = values.shape[0]
+
+    if nlev < 2:
+        raise ValueError("At least two levels are required for interpolation.")
+
+    if values.shape[0] != p.shape[0]:
+        raise ValueError("The first dimension of values must match the size of p")
+
+    # initialize the output array
+    res = xp.empty((len(target_p),) + values.shape[1:], dtype=values.dtype)
+
+    scalar = xp.ndim(values[0]) == 0
+
+    for target_idx, pc in enumerate(target_p):
+        # find the level above the target pressure
+        i_top = (p > pc).sum(0)
+        i_top = xp.atleast_1d(i_top)
+
+        print("i_top", i_top)
+
+        # initialise the output array
+        r = np.empty(i_top.shape)
+
+        # mask when the target pressure is below the lowest level
+        mask_bottom = i_top == 0
+        # mask when the target pressure is above the highest level
+        mask_top = i_top == nlev
+        # mask when the target pressure is between the lowest and highest levels
+        mask_mid = ~(mask_bottom | mask_top)
+
+        # below bottom level
+        r[mask_bottom] = np.nan
+
+        # above top level
+        r[mask_top] = np.nan
+
+        print("mask_mid", mask_mid)
+        print("mask_top", mask_top)
+        print("mask_bottom", mask_bottom)
+
+        if any(mask_mid):
+            i_lev = i_top
+            print("i_lev", i_lev.shape)
+            if not scalar:
+                indices = np.indices(i_lev.shape)
+                masked_indices = tuple(dim[mask_mid] for dim in indices)
+                top = (i_top[mask_mid],) + masked_indices
+                bottom = (i_top[mask_mid] - 1,) + masked_indices
+            else:
+                top = i_top[mask_mid]
+                bottom = i_top[mask_mid] - 1
+
+            print("top", top)
+            print("bottom", bottom)
+            p_top = p[top]
+            p_bottom = p[bottom]
+
+            f_top = values[top]
+            f_bottom = values[bottom]
+
+            # calculate the interpolation factor
+            if mode == "linear":
+                factor = (pc - p_bottom) / (p_top - p_bottom)
+            elif mode == "log":
+                factor = (xp.log(pc) - xp.log(p_bottom)) / (xp.log(p_top) - xp.log(p_bottom))
+
+            r[mask_mid] = (1.0 - factor) * f_bottom + factor * f_top
+
+        res[target_idx] = r
+
+    return res

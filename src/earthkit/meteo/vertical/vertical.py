@@ -44,3 +44,7 @@ def geometric_height_from_geopotential_height(*args, **kwargs):
 
 def geometric_height_from_geopotential(*args, **kwargs):
     return array.geometric_height_from_geopotential(*args, **kwargs)
+
+
+def to_pressure(*args, **kwargs):
+    return array.to_pressure(*args, **kwargs)
