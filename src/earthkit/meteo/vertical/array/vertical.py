@@ -6,6 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
+from collections import namedtuple
 from typing import Any
 from typing import Tuple
 from typing import Union
@@ -16,6 +17,8 @@ from numpy.typing import ArrayLike
 from numpy.typing import NDArray
 
 from earthkit.meteo import constants
+
+ScalarInfo = namedtuple("ScalarInfo", ["values", "source", "target"])
 
 
 def pressure_at_model_levels(
@@ -481,84 +484,296 @@ def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
     return h
 
 
-def to_pressure(
-    values: ArrayLike,
-    p: Union[ArrayLike, list, tuple, float, int],
-    target_p: Union[ArrayLike, list, tuple, float, int],
-    mode: str = "linear",
+def interpolate_to_pressure_levels(
+    data: ArrayLike,
+    data_pressure: Union[ArrayLike, list, tuple, float, int],
+    target_pressure: Union[ArrayLike, list, tuple, float, int],
+    interpolation: str = "linear",
 ) -> ArrayLike:
-    xp = array_namespace(values, p)
+    """Interpolate data from source to target pressure levels.
 
-    target_p = xp.asarray(target_p)
-    p = xp.asarray(p)
+    Parameters
+    ----------
+    data : array-like
+        Data to be interpolated. First dimension must correspond to the pressure levels. Must have at
+        least two levels. Levels must be ordered in ascending or descending order.
+    data_pressure : array-like
+        Pressure levels corresponding to the first dimension of ``data``. Either must have
+        the same shape as ``data`` or be a 1D array with length equal to the size of the first
+        dimension of ``data``. The units are in Pa.
+    target_pressure : array-like
+        Target pressure levels to which ``data`` will be interpolated (Pa). It can be either a scalar
+        or a 1D array of pressure levels. Alternatively, it can be an array of arrays where each sub-array
+        contains the target pressure levels for the corresponding horizontal location in ``data``. The
+        units are in Pa.
+    interpolation  : str, optional
+        Interpolation mode. Default is "linear". Possible values are:
+        - "linear": linear interpolation in pressure
+        - "log": linear interpolation in logarithm of pressure
+        - "nearest": nearest neighbour interpolation
 
-    nlev = values.shape[0]
+    Returns
+    -------
+    array-like
+        Data interpolated to the target pressure levels. The shape depends on the shape of ``target_pressure``:
+        - If ``target_pressure`` is a scalar, the output shape is equal to ``data.shape[1:]``.
+        - If ``target_pressure`` is a 1D array of length N, the output shape is (N, ) + ``data.shape[1:]``.
+        - If ``target_pressure`` is an array of arrays, the output shape is (M, ) + ``data.shape[1:]``,
+          where M is the number of horizontal locations in ``data``.
+        When interpolation is not possible for a given target pressure level (e.g., when the target pressure
+        is outside the range of ``data_pressure``), the corresponding output values are set to NaN.
 
+    Raises
+    ------
+    ValueError
+        If ``data`` has less than two levels.
+    ValueError
+        If the first dimension of ``data`` and that of ``data_pressure`` do not match.
+
+
+    Notes
+    -----
+
+    - The ordering of the input pressure levels is not checked.
+    - The units of ``data_pressure`` and ``target_pressure`` are assumed to be the Pa; no checks
+      or conversions are performed.
+
+    """
+
+    return interpolate_to_coord_levels(
+        data, data_pressure, target_pressure, positive="down", interpolation=interpolation
+    )
+
+
+def interpolate_to_height_levels(
+    data: ArrayLike,
+    data_height: Union[ArrayLike, list, tuple, float, int],
+    target_height: Union[ArrayLike, list, tuple, float, int],
+    interpolation: str = "linear",
+) -> ArrayLike:
+    """Interpolate data from source to target height levels.
+
+    Parameters
+    ----------
+    data : array-like
+        Data to be interpolated. First dimension must correspond to the pressure levels. Must have at
+        least two levels. Levels must be ordered in ascending or descending order.
+    data_height : array-like
+        Height levels corresponding to the first dimension of ``data``. Either must have
+        the same shape as ``data`` or be a 1D array with length equal to the size of the first
+        dimension of ``data``. The units are in meters.
+    target_height : array-like
+        Target height levels to which ``data`` will be interpolated (m). It can be either a scalar
+        or a 1D array of height levels. Alternatively, it can be an array of arrays where each sub-array
+        contains the target height levels for the corresponding horizontal location in ``data``. The
+        units are in meters.
+    interpolation : str, optional
+        Interpolation mode. Default is "linear". Possible values are:
+        - "linear": linear interpolation in height
+        - "log": linear interpolation in logarithm of height
+        - "nearest": nearest neighbour interpolation
+
+    Returns
+    -------
+    array-like
+        Data interpolated to the target height levels. The shape depends on the shape of ``target_height``:
+        - If ``target_height`` is a scalar, the output shape is equal to ``data.shape[1:]``.
+        - If ``target_height`` is a 1D array of length N, the output shape is (N, ) + ``data.shape[1:]``.
+        - If ``target_height`` is an array of arrays, the output shape is (M, ) + ``data.shape[1:]``,
+          where M is the number of horizontal locations in ``data``.
+        When interpolation is not possible for a given target height level (e.g., when the target height
+        is outside the range of ``data_height``), the corresponding output values are set to NaN.
+
+    Raises
+    ------
+    ValueError
+        If ``data`` has less than two levels.
+    ValueError
+        If the first dimension of ``data`` and that of ``data_height`` do not match.
+
+
+    Notes
+    -----
+
+    - The ordering of the input height levels is not checked.
+    - The units of ``data_height`` and ``target_height`` are assumed to be meters; no checks
+      or conversions are performed.
+
+    """
+
+    return interpolate_to_coord_levels(data, data_height, target_height, "up", interpolation=interpolation)
+
+
+def interpolate_to_coord_levels(
+    data: ArrayLike,
+    data_coord: Union[ArrayLike, list, tuple, float, int],
+    target_coord: Union[ArrayLike, list, tuple, float, int],
+    positive: str = "down",
+    interpolation: str = "linear",
+) -> ArrayLike:
+    xp = array_namespace(data, data_coord)
+    target_coord = xp.atleast_1d(target_coord)
+    data_coord = xp.atleast_1d(data_coord)
+
+    if positive not in ["down", "up"]:
+        raise ValueError(f"Unknown value for 'positive': {positive}. Allowed values are 'down' and 'up'.")
+
+    if positive == "up":
+        compare = xp.less
+    else:
+        compare = xp.greater
+
+    nlev = data.shape[0]
     if nlev < 2:
         raise ValueError("At least two levels are required for interpolation.")
 
-    if values.shape[0] != p.shape[0]:
-        raise ValueError("The first dimension of values must match the size of p")
+    if data.shape[0] != data_coord.shape[0]:
+        raise ValueError(
+            f"The first dimension of data and that of data_coord must match! {data.shape=} {data_coord.shape=} {data.shape[0]} != {data_coord.shape[0]}"
+        )
+
+    scalar_info = ScalarInfo(
+        xp.ndim(data[0]) == 0, xp.ndim(data_coord[0]) == 0, xp.ndim(target_coord[0]) == 0
+    )
+
+    data_same_shape = data.shape == data_coord.shape
+    if data_same_shape:
+        if scalar_info.values and not scalar_info.target:
+            raise ValueError("If values and p have the same shape, they cannot both be scalars.")
+        if not scalar_info.values and not scalar_info.target and data.shape[1:] != target_coord.shape[1:]:
+            raise ValueError(
+                "When values and target_p have different shapes, target_p must be a scalar or a 1D array."
+            )
+
+    if not data_same_shape and xp.ndim(data_coord) != 1:
+        raise ValueError(
+            f"When values and p have different shapes, p must be a scalar or a 1D array. {data.shape=} {data_coord.shape=} {xp.ndim(data_coord)}"
+        )
 
     # initialize the output array
-    res = xp.empty((len(target_p),) + values.shape[1:], dtype=values.dtype)
+    res = xp.empty((len(target_coord),) + data.shape[1:], dtype=data.dtype)
 
-    scalar = xp.ndim(values[0]) == 0
+    if data_same_shape:
+        if scalar_info.values:
+            data = xp.broadcast_to(data, (1, nlev)).T
+            data_coord = xp.broadcast_to(data_coord, (1, nlev)).T
+        else:
+            assert not scalar_info.values
+            assert not scalar_info.source
+    else:
+        assert scalar_info.source
+        if scalar_info.target:
+            return _to_level_1(
+                data, data_coord, nlev, target_coord, interpolation, scalar_info, xp, res, compare
+            )
+        else:
+            data_coord = xp.broadcast_to(data_coord, (nlev,) + data.shape[1:]).T
 
-    for target_idx, pc in enumerate(target_p):
+    return _to_level(data, data_coord, nlev, target_coord, interpolation, scalar_info, xp, res, compare)
+
+
+# values and p have the same shape
+def _to_level(data, src_coord, nlev, target_coord, interpolation, scalar_info, xp, res, compare):
+    for target_idx, tc in enumerate(target_coord):
         # find the level above the target pressure
-        i_top = (p > pc).sum(0)
+        # i_top = (src_coord > tc).sum(0)
+        i_top = (compare(src_coord, tc)).sum(0)
         i_top = xp.atleast_1d(i_top)
 
-        print("i_top", i_top)
-
         # initialise the output array
-        r = np.empty(i_top.shape)
+        r = xp.empty(i_top.shape)
 
         # mask when the target pressure is below the lowest level
         mask_bottom = i_top == 0
+        if xp.any(mask_bottom):
+            if interpolation != "nearest":
+                r[mask_bottom] = np.nan
+                m = mask_bottom & (src_coord[0] == tc)
+                r[m] = data[0][m]
+
         # mask when the target pressure is above the highest level
         mask_top = i_top == nlev
+        if xp.any(mask_top):
+            if interpolation != "nearest":
+                r[mask_top] = np.nan
+                m = mask_top & (src_coord[-1] == tc)
+                r[m] = data[-1][m]
+
         # mask when the target pressure is between the lowest and highest levels
         mask_mid = ~(mask_bottom | mask_top)
 
-        # below bottom level
-        r[mask_bottom] = np.nan
-
-        # above top level
-        r[mask_top] = np.nan
-
-        print("mask_mid", mask_mid)
-        print("mask_top", mask_top)
-        print("mask_bottom", mask_bottom)
-
         if any(mask_mid):
             i_lev = i_top
-            print("i_lev", i_lev.shape)
-            if not scalar:
-                indices = np.indices(i_lev.shape)
-                masked_indices = tuple(dim[mask_mid] for dim in indices)
-                top = (i_top[mask_mid],) + masked_indices
-                bottom = (i_top[mask_mid] - 1,) + masked_indices
-            else:
-                top = i_top[mask_mid]
-                bottom = i_top[mask_mid] - 1
+            indices = np.indices(i_lev.shape)
+            masked_indices = tuple(dim[mask_mid] for dim in indices)
+            top = (i_top[mask_mid],) + masked_indices
+            bottom = (i_top[mask_mid] - 1,) + masked_indices
 
-            print("top", top)
-            print("bottom", bottom)
-            p_top = p[top]
-            p_bottom = p[bottom]
+            c_top = src_coord[top]
+            c_bottom = src_coord[bottom]
 
-            f_top = values[top]
-            f_bottom = values[bottom]
+            f_top = data[top]
+            f_bottom = data[bottom]
+
+            if not scalar_info.target:
+                tc = tc[mask_mid]
 
             # calculate the interpolation factor
-            if mode == "linear":
-                factor = (pc - p_bottom) / (p_top - p_bottom)
-            elif mode == "log":
-                factor = (xp.log(pc) - xp.log(p_bottom)) / (xp.log(p_top) - xp.log(p_bottom))
+            if interpolation == "linear":
+                factor = (tc - c_bottom) / (c_top - c_bottom)
+            elif interpolation == "log":
+                factor = (xp.log(tc) - xp.log(c_bottom)) / (xp.log(c_top) - xp.log(c_bottom))
 
             r[mask_mid] = (1.0 - factor) * f_bottom + factor * f_top
+
+        if scalar_info.values:
+            r = r[0]
+
+        res[target_idx] = r
+
+    return res
+
+
+# values and p have a different shape, p is 1D and target is 1D
+def _to_level_1(data, src_coord, nlev, target_coord, interpolation, scalar_info, xp, res, compare):
+
+    # initialize the output array
+    res = xp.empty((len(target_coord),) + data.shape[1:], dtype=data.dtype)
+
+    # p on a level is a number
+    for target_idx, tc in enumerate(target_coord):
+        # initialise the output array
+        r = xp.empty(data.shape[1:])
+        r = xp.atleast_1d(r)
+
+        # find the level above the target pressure
+        i_top = (compare(src_coord, tc)).sum(0)
+        if i_top == 0:
+            if xp.isclose(src_coord[0], tc):
+                r = data[0]
+            else:
+                r.fill(xp.nan)
+        elif i_top == nlev:
+            if xp.isclose(src_coord[-1], tc):
+                r = data[-1]
+            else:
+                r.fill(xp.nan)
+        else:
+            top = i_top
+            bottom = i_top - 1
+
+            c_top = src_coord[top]
+            c_bottom = src_coord[bottom]
+
+            d_top = data[top]
+            d_bottom = data[bottom]
+            # calculate the interpolation factor
+            if interpolation == "linear":
+                factor = (tc - c_bottom) / (c_top - c_bottom)
+            elif interpolation == "log":
+                factor = (xp.log(tc) - xp.log(c_bottom)) / (xp.log(c_top) - xp.log(c_bottom))
+
+            r = (1.0 - factor) * d_bottom + factor * d_top
 
         res[target_idx] = r
 
