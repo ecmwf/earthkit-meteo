@@ -486,8 +486,8 @@ def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
 
 def interpolate_to_pressure_levels(
     data: ArrayLike,
-    data_pressure: Union[ArrayLike, list, tuple, float, int],
-    target_pressure: Union[ArrayLike, list, tuple, float, int],
+    p_data: Union[ArrayLike, list, tuple, float, int],
+    p_target: Union[ArrayLike, list, tuple, float, int],
     interpolation: str = "linear",
 ) -> ArrayLike:
     """Interpolate data from source to target pressure levels.
@@ -497,11 +497,11 @@ def interpolate_to_pressure_levels(
     data : array-like
         Data to be interpolated. First dimension must correspond to the pressure levels. Must have at
         least two levels. Levels must be ordered in ascending or descending order.
-    data_pressure : array-like
+    p_data : array-like
         Pressure levels corresponding to the first dimension of ``data``. Either must have
         the same shape as ``data`` or be a 1D array with length equal to the size of the first
         dimension of ``data``. The units are in Pa.
-    target_pressure : array-like
+    p_target : array-like
         Target pressure levels to which ``data`` will be interpolated (Pa). It can be either a scalar
         or a 1D array of pressure levels. Alternatively, it can be an array of arrays where each sub-array
         contains the target pressure levels for the corresponding horizontal location in ``data``. The
@@ -518,37 +518,35 @@ def interpolate_to_pressure_levels(
         Data interpolated to the target pressure levels. The shape depends on the shape of ``target_pressure``:
         - If ``target_pressure`` is a scalar, the output shape is equal to ``data.shape[1:]``.
         - If ``target_pressure`` is a 1D array of length N, the output shape is (N, ) + ``data.shape[1:]``.
-        - If ``target_pressure`` is an array of arrays, the output shape is (M, ) + ``data.shape[1:]``,
+        - If ``p_target`` is an array of arrays, the output shape is (M, ) + ``data.shape[1:]``,
           where M is the number of horizontal locations in ``data``.
         When interpolation is not possible for a given target pressure level (e.g., when the target pressure
-        is outside the range of ``data_pressure``), the corresponding output values are set to NaN.
+        is outside the range of ``p_data``), the corresponding output values are set to NaN.
 
     Raises
     ------
     ValueError
         If ``data`` has less than two levels.
     ValueError
-        If the first dimension of ``data`` and that of ``data_pressure`` do not match.
+        If the first dimension of ``data`` and that of ``p_data`` do not match.
 
 
     Notes
     -----
 
     - The ordering of the input pressure levels is not checked.
-    - The units of ``data_pressure`` and ``target_pressure`` are assumed to be the Pa; no checks
+    - The units of ``p_data`` and ``p_target`` are assumed to be the Pa; no checks
       or conversions are performed.
 
     """
 
-    return interpolate_to_coord_levels(
-        data, data_pressure, target_pressure, positive="down", interpolation=interpolation
-    )
+    return interpolate_to_coord_levels(data, p_data, p_target, positive="down", interpolation=interpolation)
 
 
 def interpolate_to_height_levels(
     data: ArrayLike,
-    data_height: Union[ArrayLike, list, tuple, float, int],
-    target_height: Union[ArrayLike, list, tuple, float, int],
+    h_data: Union[ArrayLike, list, tuple, float, int],
+    h_target: Union[ArrayLike, list, tuple, float, int],
     interpolation: str = "linear",
 ) -> ArrayLike:
     """Interpolate data from source to target height levels.
@@ -558,11 +556,11 @@ def interpolate_to_height_levels(
     data : array-like
         Data to be interpolated. First dimension must correspond to the pressure levels. Must have at
         least two levels. Levels must be ordered in ascending or descending order.
-    data_height : array-like
+    h_data : array-like
         Height levels corresponding to the first dimension of ``data``. Either must have
         the same shape as ``data`` or be a 1D array with length equal to the size of the first
         dimension of ``data``. The units are in meters.
-    target_height : array-like
+    h_target : array-like
         Target height levels to which ``data`` will be interpolated (m). It can be either a scalar
         or a 1D array of height levels. Alternatively, it can be an array of arrays where each sub-array
         contains the target height levels for the corresponding horizontal location in ``data``. The
@@ -576,44 +574,44 @@ def interpolate_to_height_levels(
     Returns
     -------
     array-like
-        Data interpolated to the target height levels. The shape depends on the shape of ``target_height``:
-        - If ``target_height`` is a scalar, the output shape is equal to ``data.shape[1:]``.
-        - If ``target_height`` is a 1D array of length N, the output shape is (N, ) + ``data.shape[1:]``.
-        - If ``target_height`` is an array of arrays, the output shape is (M, ) + ``data.shape[1:]``,
+        Data interpolated to the target height levels. The shape depends on the shape of ``h_target``:
+        - If ``h_target`` is a scalar, the output shape is equal to ``data.shape[1:]``.
+        - If ``h_target`` is a 1D array of length N, the output shape is (N, ) + ``data.shape[1:]``.
+        - If ``h_target`` is an array of arrays, the output shape is (M, ) + ``data.shape[1:]``,
           where M is the number of horizontal locations in ``data``.
         When interpolation is not possible for a given target height level (e.g., when the target height
-        is outside the range of ``data_height``), the corresponding output values are set to NaN.
+        is outside the range of ``h_data``), the corresponding output values are set to NaN.
 
     Raises
     ------
     ValueError
         If ``data`` has less than two levels.
     ValueError
-        If the first dimension of ``data`` and that of ``data_height`` do not match.
+        If the first dimension of ``data`` and that of ``h_data`` do not match.
 
 
     Notes
     -----
 
     - The ordering of the input height levels is not checked.
-    - The units of ``data_height`` and ``target_height`` are assumed to be meters; no checks
+    - The units of ``h_data`` and ``h_target`` are assumed to be meters; no checks
       or conversions are performed.
 
     """
 
-    return interpolate_to_coord_levels(data, data_height, target_height, "up", interpolation=interpolation)
+    return interpolate_to_coord_levels(data, h_data, h_target, "up", interpolation=interpolation)
 
 
 def interpolate_to_coord_levels(
     data: ArrayLike,
-    data_coord: Union[ArrayLike, list, tuple, float, int],
-    target_coord: Union[ArrayLike, list, tuple, float, int],
+    coord_data: Union[ArrayLike, list, tuple, float, int],
+    coord_target: Union[ArrayLike, list, tuple, float, int],
     positive: str = "down",
     interpolation: str = "linear",
 ) -> ArrayLike:
-    xp = array_namespace(data, data_coord)
-    target_coord = xp.atleast_1d(target_coord)
-    data_coord = xp.atleast_1d(data_coord)
+    xp = array_namespace(data, coord_data)
+    coord_target = xp.atleast_1d(coord_target)
+    coord_data = xp.atleast_1d(coord_data)
 
     if positive not in ["down", "up"]:
         raise ValueError(f"Unknown value for 'positive': {positive}. Allowed values are 'down' and 'up'.")
@@ -627,36 +625,35 @@ def interpolate_to_coord_levels(
     if nlev < 2:
         raise ValueError("At least two levels are required for interpolation.")
 
-    if data.shape[0] != data_coord.shape[0]:
+    if data.shape[0] != coord_data.shape[0]:
         raise ValueError(
-            f"The first dimension of data and that of data_coord must match! {data.shape=} {data_coord.shape=} {data.shape[0]} != {data_coord.shape[0]}"
+            f"The first dimension of data and that of coord_data must match! {data.shape=} {coord_data.shape=} {data.shape[0]} != {coord_data.shape[0]}"
         )
 
     scalar_info = ScalarInfo(
-        xp.ndim(data[0]) == 0, xp.ndim(data_coord[0]) == 0, xp.ndim(target_coord[0]) == 0
+        xp.ndim(data[0]) == 0, xp.ndim(coord_data[0]) == 0, xp.ndim(coord_target[0]) == 0
     )
 
-    data_same_shape = data.shape == data_coord.shape
+    data_same_shape = data.shape == coord_data.shape
     if data_same_shape:
         if scalar_info.values and not scalar_info.target:
             raise ValueError("If values and p have the same shape, they cannot both be scalars.")
-        if not scalar_info.values and not scalar_info.target and data.shape[1:] != target_coord.shape[1:]:
+        if not scalar_info.values and not scalar_info.target and data.shape[1:] != coord_target.shape[1:]:
             raise ValueError(
                 "When values and target_p have different shapes, target_p must be a scalar or a 1D array."
             )
 
-    if not data_same_shape and xp.ndim(data_coord) != 1:
+    if not data_same_shape and xp.ndim(coord_data) != 1:
         raise ValueError(
-            f"When values and p have different shapes, p must be a scalar or a 1D array. {data.shape=} {data_coord.shape=} {xp.ndim(data_coord)}"
+            f"When values and p have different shapes, p must be a scalar or a 1D array. {data.shape=} {coord_data.shape=} {xp.ndim(coord_data)}"
         )
 
     # initialize the output array
-    res = xp.empty((len(target_coord),) + data.shape[1:], dtype=data.dtype)
-
+    res = xp.empty((len(coord_target),) + data.shape[1:], dtype=data.dtype)
     if data_same_shape:
         if scalar_info.values:
             data = xp.broadcast_to(data, (1, nlev)).T
-            data_coord = xp.broadcast_to(data_coord, (1, nlev)).T
+            coord_data = xp.broadcast_to(coord_data, (1, nlev)).T
         else:
             assert not scalar_info.values
             assert not scalar_info.source
@@ -664,17 +661,17 @@ def interpolate_to_coord_levels(
         assert scalar_info.source
         if scalar_info.target:
             return _to_level_1(
-                data, data_coord, nlev, target_coord, interpolation, scalar_info, xp, res, compare
+                data, coord_data, nlev, coord_target, interpolation, scalar_info, xp, res, compare
             )
         else:
-            data_coord = xp.broadcast_to(data_coord, (nlev,) + data.shape[1:]).T
+            coord_data = xp.broadcast_to(coord_data, (nlev,) + data.shape[1:]).T
 
-    return _to_level(data, data_coord, nlev, target_coord, interpolation, scalar_info, xp, res, compare)
+    return _to_level(data, coord_data, nlev, coord_target, interpolation, scalar_info, xp, res, compare)
 
 
 # values and p have the same shape
-def _to_level(data, src_coord, nlev, target_coord, interpolation, scalar_info, xp, res, compare):
-    for target_idx, tc in enumerate(target_coord):
+def _to_level(data, src_coord, nlev, coord_target, interpolation, scalar_info, xp, res, compare):
+    for target_idx, tc in enumerate(coord_target):
         # find the level above the target pressure
         # i_top = (src_coord > tc).sum(0)
         i_top = (compare(src_coord, tc)).sum(0)
@@ -735,13 +732,12 @@ def _to_level(data, src_coord, nlev, target_coord, interpolation, scalar_info, x
 
 
 # values and p have a different shape, p is 1D and target is 1D
-def _to_level_1(data, src_coord, nlev, target_coord, interpolation, scalar_info, xp, res, compare):
-
+def _to_level_1(data, src_coord, nlev, coord_target, interpolation, scalar_info, xp, res, compare):
     # initialize the output array
-    res = xp.empty((len(target_coord),) + data.shape[1:], dtype=data.dtype)
+    res = xp.empty((len(coord_target),) + data.shape[1:], dtype=data.dtype)
 
     # p on a level is a number
-    for target_idx, tc in enumerate(target_coord):
+    for target_idx, tc in enumerate(coord_target):
         # initialise the output array
         r = xp.empty(data.shape[1:])
         r = xp.atleast_1d(r)
