@@ -24,6 +24,8 @@ def _skip_api_items(app, what, name, obj, skip, options):
         skip = True
     elif what == "module" and len(name.split(".")) > 3:
         skip = True
+    elif "add_doc_from" in name:
+        skip = True
 
     # if not skip:
     #     print(f"{what} {name}")

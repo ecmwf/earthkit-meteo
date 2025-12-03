@@ -7,11 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.meteo.utils.docs import add_doc_from
+
 from . import array
 
 
-def celsius_to_kelvin(*args, **kwargs):
-    return array.celsius_to_kelvin(*args, **kwargs)
+@add_doc_from(array.celsius_to_kelvin)
+def celsius_to_kelvin(t):
+    return array.celsius_to_kelvin(t)
 
 
 def kelvin_to_celsius(*args, **kwargs):
