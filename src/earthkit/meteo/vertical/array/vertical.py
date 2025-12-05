@@ -484,6 +484,110 @@ def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
     return h
 
 
+def pressure_on_hybrid_levels(
+    A: ArrayLike, B: ArrayLike, sp: ArrayLike, levels=None, alpha=False, delta=False
+) -> ArrayLike:
+    r"""Compute pressure at full hybrid (IFS model) levels.
+
+    Parameters
+    ----------
+    A : array-like
+        A-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number.
+        See [IFS-CY47R3-Dynamics]_ (page 6) for details.
+    B : array-like
+        B-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number.
+        See [IFS-CY47R3-Dynamics]_ (page 6) for details.
+    sp : array-like
+        Surface pressure (Pa)
+    levels : None, array-like, list, tuple, optional
+        Specify the full eta levels to return in an arbitrary order. Please note level
+        numbering starts at 1. If None (default), all the levels are returned in the
+        order defined by the A and B coefficients (i.e. ascending order with respect to
+        the model level number).
+
+    Returns
+    -------
+    array-like
+        Pressure at full hybrid (IFS model) levels.
+
+    Notes
+    -----
+    For details on the returned parameters see [IFS-CY47R3-Dynamics]_ (page 7-8).
+
+    The pressure on the model-levels is calculated as:
+
+    .. math::
+
+        p_{k+1/2} = A_{k+1/2} + p_{s}\; B_{k+1/2}
+
+        p_{k} = \frac{1}{2}\; (p_{k-1/2} + p_{k+1/2})
+
+    where
+
+        - :math:`p_{s}` is the surface pressure
+        - :math:`p_{k+1/2}` is the pressure at the half-levels
+        - :math:`p_{k}` is the pressure at the full-levels
+        - :math:`A_{k+1/2}` and :math:`B_{k+1/2}` are the A- and B-coefficients defining
+          the model levels.
+
+    See also
+    --------
+    pressure_at_height_levels
+    relative_geopotential_thickness
+
+    """
+    if levels is not None:
+        # select a contiguous subset of levels
+        levels = np.asarray(levels)
+        levels_max = int(levels.max())
+        levels_min = max(int(levels.min()) - 1, 0)
+        lev_half_idx = np.array(list(range(levels_min, levels_max + 1)))
+        A = A[lev_half_idx]
+        B = B[lev_half_idx]
+
+        # compute indices to select the requested full levels later
+        lev_full_idx = np.where(levels[:, None] == lev_half_idx[None, :])[1] - 1
+
+    # make the calculation agnostic to the number of dimensions
+    ndim = sp.ndim
+    new_shape_half = (A.shape[0],) + (1,) * ndim
+    A_reshaped = A.reshape(new_shape_half)
+    B_reshaped = B.reshape(new_shape_half)
+
+    # calculate pressure on model half-levels
+    p_half_level = A_reshaped + B_reshaped * sp[np.newaxis, ...]
+
+    # calculate pressure on model full levels
+    # TODO: is there a faster way to calculate the averages?
+    # TODO: introduce option to calculate full levels in more complicated way
+    p_full_level = np.apply_along_axis(
+        lambda m: np.convolve(m, np.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level
+    )
+
+    # generate output for the requested levels only
+    if levels is not None:
+        p_full_level = p_full_level[lev_full_idx, ...]
+
+    return p_full_level
+
+
+def geopotential_on_hybrid_levels(
+    t: ArrayLike,
+    q: ArrayLike,
+    sp: ArrayLike,
+    A: ArrayLike,
+    B: ArrayLike,
+    alpha_top: str = "ifs",
+):
+    # pressure(-related) variables
+    _, _, delta, alpha = pressure_at_model_levels(A, B, sp, alpha_top=alpha_top)
+
+    # relative geopotential thickness of full levels
+    return relative_geopotential_thickness(alpha, delta, t, q)
+
+
 def interpolate_to_pressure_levels(
     data: ArrayLike,
     p_data: Union[ArrayLike, list, tuple, float, int],
@@ -540,7 +644,7 @@ def interpolate_to_pressure_levels(
 
     """
 
-    return interpolate_to_coord_levels(data, p_data, p_target, positive="down", interpolation=interpolation)
+    return interpolate_monotonic(data, p_data, p_target, positive="down", interpolation=interpolation)
 
 
 def interpolate_to_height_levels(
@@ -599,10 +703,10 @@ def interpolate_to_height_levels(
 
     """
 
-    return interpolate_to_coord_levels(data, h_data, h_target, "up", interpolation=interpolation)
+    return interpolate_monotonic(data, h_data, h_target, "up", interpolation=interpolation)
 
 
-def interpolate_to_coord_levels(
+def interpolate_monotonic(
     data: ArrayLike,
     coord_data: Union[ArrayLike, list, tuple, float, int],
     coord_target: Union[ArrayLike, list, tuple, float, int],
