@@ -11,6 +11,7 @@ from typing import Any
 from typing import Tuple
 from typing import Union
 
+import deprecation
 import numpy as np
 from earthkit.utils.array import array_namespace
 from numpy.typing import ArrayLike
@@ -21,6 +22,7 @@ from earthkit.meteo import constants
 ScalarInfo = namedtuple("ScalarInfo", ["values", "source", "target"])
 
 
+@deprecation.deprecated(deprecated_in="0.7", details="Use pressure_on_hybrid_levels instead.")
 def pressure_at_model_levels(
     A: NDArray[Any], B: NDArray[Any], sp: Union[float, NDArray[Any]], alpha_top: str = "ifs"
 ) -> Tuple[NDArray[Any], NDArray[Any], NDArray[Any], NDArray[Any]]:
@@ -489,20 +491,20 @@ def pressure_on_hybrid_levels(
 ) -> ArrayLike:
     r"""Compute pressure and related parameters at hybrid (IFS model) levels.
 
+    *New in version 0.7.0*: This function replaces the deprecated :func:`pressure_at_model_levels`.
+
     Parameters
     ----------
     A : array-like
         A-coefficients defining the hybrid levels. Must contain all the half-levels
         in ascending order with respect to the model level number. If the total number
-        of (full) model levels is NLEV, ``A`` must contain NLEV+1 values, one for each
-        half-level with ascending level order.
-        See [IFS-CY47R3-Dynamics]_ (page 6) for details.
+        of (full) model levels is :math:`NLEV`, ``A`` must contain :math:`NLEV+1` values, one for each
+        half-level. See [IFS-CY47R3-Dynamics]_ (page 6) for details.
     B : array-like
         B-coefficients defining the hybrid levels. Must contain all the half-levels
         in ascending order with respect to the model level number. Must have the same
-        size as ``A``.  So f the total number
-        of (full) model levels is NLEV, ``B`` must contain NLEV+1 values.
-        See [IFS-CY47R3-Dynamics]_ (page 6) for details.
+        size as ``A``.  If the total number of (full) model levels is :math:`NLEV`, ``B`` must
+        contain :math:`NLEV+1` values. See [IFS-CY47R3-Dynamics]_ (page 6) for details.
     sp : array-like
         Surface pressure (Pa)
     levels : None, array-like, list, tuple, optional
@@ -511,30 +513,47 @@ def pressure_on_hybrid_levels(
         order defined by the A and B coefficients (i.e. ascending order with respect to
         the model level number).
     alpha_top : str, optional
-        Option to initialise alpha on the top of the model atmosphere (first half-level in
-        the vertical coordinate system). The possible values are:
+        Option to initialise the alpha parameters (for details see below) on the top of the
+        model atmosphere (first half-level in the vertical coordinate system). The possible
+        values are:
 
         - "ifs": alpha is set to log(2). See [IFS-CY47R3-Dynamics]_ (page 7) for details.
         - "arpege": alpha is set to 1.0
 
     output : str or list/tuple of str, optional
-        Specify which outputs to return. Possible values are "full", "half", "alpha", and "delta".
+        Specify which outputs to return. Possible values are "full", "half", "delta" and "alpha".
         Can be a single string or a list/tuple of strings. Default is "full". The outputs are:
+
         - "full": pressure (Pa) on full levels
-        - "half": pressure (Pa) on half levels. When ``levels`` is
-        - "alpha": alpha parameter at half hybrid (IFS model) levels
-        - "delta": delta parameter at full hybrid (IFS model) levels
+        - "half": pressure (Pa) on half levels. When ``levels`` is None, returns all the
+          half-levels. When ``levels`` is not None, only returns the half-levels below
+          the requested full levels.
+        - "delta": logarithm of pressure difference between two adjacent half-levels. Uses
+          the same indexing as
+          the full levels.
+        - "alpha": alpha parameter defined for layers (i.e. for full levels). Uses the same
+          indexing as the full levels. Used for the calculation of the relative geopotential
+          thickness on full levels. See :func:`relative_geopotential_thickness` for details.
+
 
     Returns
     -------
-    array-like
-        Pressure at full hybrid (IFS model) levels.
+    array-like or tuple of array-like
+        See the ``output`` parameter for details.
 
     Notes
     -----
-    For details on the returned parameters see [IFS-CY47R3-Dynamics]_ (page 7-8).
+    The hybrid model levels divide the atmosphere into :math:`NLEV` layers. These layers are defined
+    by the pressures at the interfaces between them for :math:`0 \leq k \leq NLEV`, which are
+    the half-levels :math:`p_{k+1/2}` (indices increase from the top of the atmosphere towards
+    the surface). The half levels are defined by the ``A`` and ``B`` coefficients in such a way that at
+    the top of the atmosphere the first half level pressure :math:`p_{+1/2}` is a constant, while
+    at the surface :math:`p_{NLEV+1/2}` is the surface pressure.
 
-    The pressure on the model-levels is calculated as:
+    The full-level pressure :math:`p_{k}` associated with each model
+    level is defined as the middle of the layer for :math:`1 \leq k \leq NLEV`.
+
+    The level definitions can be written as:
 
     .. math::
 
@@ -549,6 +568,8 @@ def pressure_on_hybrid_levels(
         - :math:`p_{k}` is the pressure at the full-levels
         - :math:`A_{k+1/2}` and :math:`B_{k+1/2}` are the A- and B-coefficients defining
           the model levels.
+
+    For more details see [IFS-CY47R3-Dynamics]_ (page 6-8).
 
     See also
     --------
