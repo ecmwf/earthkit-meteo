@@ -50,9 +50,5 @@ def pressure_on_hybrid_levels(*args, **kwargs):
     return array.pressure_on_hybrid_levels(*args, **kwargs)
 
 
-def interpolate_to_pressure_levels(*args, **kwargs):
-    return array.interpolate_to_pressure_levels(*args, **kwargs)
-
-
-def interpolate_to_height_levels(*args, **kwargs):
-    return array.interpolate_to_height_levels(*args, **kwargs)
+def interpolate_monotonic(*args, **kwargs):
+    return array.interpolate_monotonic(*args, **kwargs)

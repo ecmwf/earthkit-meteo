@@ -39,6 +39,21 @@ NUMPY = [x for x in NAMESPACE_DEVICES if x[0]._earthkit_array_namespace_name == 
             "linear",
             [np.nan, 1009, 995, np.nan],
         ),
+        (
+            [
+                990.0,
+                1000.0,
+                1012.0,
+            ],
+            [
+                990.0,
+                1000.0,
+                1012.0,
+            ],
+            [1022.0, 1009.0, 995.0, 987.0],
+            "linear",
+            [np.nan, 1009, 995, np.nan],
+        ),
     ],
 )
 def test_to_pressure_s_s_s(value, pres, target, mode, expected_value, xp, device):
@@ -48,7 +63,7 @@ def test_to_pressure_s_s_s(value, pres, target, mode, expected_value, xp, device
     target = xp.asarray(target, device=device)
     expected_value = xp.asarray(expected_value, device=device)
 
-    r = vertical.interpolate_to_pressure_levels(value, pres, target, mode)
+    r = vertical.interpolate_monotonic(value, pres, target, mode)
     assert xp.allclose(r, expected_value, equal_nan=True)
 
 
@@ -62,6 +77,12 @@ def test_to_pressure_s_s_s(value, pres, target, mode, expected_value, xp, device
             [[1000.0, 900.0, 1000.0], [800.0, 700.0, 600.0]],
             "linear",
         ),
+        (
+            [200.0, 100.0],
+            [900.0, 1000.0],
+            [[1000.0, 900.0, 1000.0], [800.0, 700.0, 600.0]],
+            "linear",
+        ),
     ],
 )
 def test_to_pressure_s_s_a(value, pres, target, mode, xp, device):
@@ -71,7 +92,7 @@ def test_to_pressure_s_s_a(value, pres, target, mode, xp, device):
     target = xp.asarray(target, device=device)
 
     with pytest.raises(ValueError):
-        vertical.interpolate_to_pressure_levels(value, pres, target, mode)
+        vertical.interpolate_monotonic(value, pres, target, mode)
 
 
 @pytest.mark.parametrize("xp, device", NUMPY)
@@ -93,7 +114,7 @@ def test_to_pressure_s_a_s(value, pres, target, mode, xp, device):
     target = xp.asarray(target, device=device)
 
     with pytest.raises(ValueError):
-        vertical.interpolate_to_pressure_levels(value, pres, target, mode)
+        vertical.interpolate_monotonic(value, pres, target, mode)
 
 
 @pytest.mark.parametrize("xp, device", NUMPY)
@@ -115,7 +136,7 @@ def test_to_pressure_s_a_a(value, pres, target, mode, xp, device):
     target = xp.asarray(target, device=device)
 
     with pytest.raises(ValueError):
-        vertical.interpolate_to_pressure_levels(value, pres, target, mode)
+        vertical.interpolate_monotonic(value, pres, target, mode)
 
 
 @pytest.mark.parametrize("xp, device", NUMPY)
@@ -140,6 +161,24 @@ def test_to_pressure_s_a_a(value, pres, target, mode, xp, device):
                 [np.nan, np.nan, np.nan],
             ],
         ),
+        (
+            [[820, 810.0, 800.0], [920.0, 910.0, 900.0], [1020.0, 1010.0, 1000.0]],
+            [[820, 810.0, 800.0], [920.0, 910.0, 900.0], [1020.0, 1010.0, 1000.0]],
+            [1030.0, 1018.0, 1005.0, 950.0, 914.0, 905.0, 850.0, 814.0, 805.0, 790.0],
+            "linear",
+            [
+                [np.nan, np.nan, np.nan],
+                [1018.0, np.nan, np.nan],
+                [1005.0, 1005.0, np.nan],
+                [950.0, 950.0, 950.0],
+                [914.0, 914.0, 914.0],
+                [905.0, 905.0, 905.0],
+                [850.0, 850.0, 850.0],
+                [np.nan, 814.0, 814.0],
+                [np.nan, np.nan, 805.0],
+                [np.nan, np.nan, np.nan],
+            ],
+        ),
     ],
 )
 def test_to_pressure_a_a_s(value, pres, target, mode, expected_value, xp, device):
@@ -149,7 +188,7 @@ def test_to_pressure_a_a_s(value, pres, target, mode, expected_value, xp, device
     target = xp.asarray(target, device=device)
     expected_value = xp.asarray(expected_value, device=device)
 
-    r = vertical.interpolate_to_pressure_levels(value, pres, target, mode)
+    r = vertical.interpolate_monotonic(value, pres, target, mode)
     assert xp.allclose(r, expected_value, equal_nan=True)
 
 
@@ -172,6 +211,26 @@ def test_to_pressure_a_a_s(value, pres, target, mode, expected_value, xp, device
                 [np.nan, np.nan, np.nan],
             ],
         ),
+        (
+            [[0, 10.0, 20.0], [100, 110, 120], [200.0, 210.0, 220.0]],
+            [
+                800.0,
+                900.0,
+                1000.0,
+            ],
+            [1020.0, 1000.0, 960.0, 900.0, 860.0, 800.0, 750.0],
+            # [1000.0],
+            "linear",
+            [
+                [np.nan, np.nan, np.nan],
+                [200.0, 210.0, 220.0],
+                [160.0, 170.0, 180.0],
+                [100.0, 110.0, 120.0],
+                [60.0, 70.0, 80.0],
+                [0.0, 10.0, 20.0],
+                [np.nan, np.nan, np.nan],
+            ],
+        ),
     ],
 )
 def test_to_pressure_a_s_s(value, pres, target, mode, expected_value, xp, device):
@@ -181,7 +240,7 @@ def test_to_pressure_a_s_s(value, pres, target, mode, expected_value, xp, device
     target = xp.asarray(target, device=device)
     expected_value = xp.asarray(expected_value, device=device)
 
-    r = vertical.interpolate_to_pressure_levels(value, pres, target, mode)
+    r = vertical.interpolate_monotonic(value, pres, target, mode)
     assert xp.allclose(r, expected_value, equal_nan=True)
 
 
@@ -210,6 +269,27 @@ def test_to_pressure_a_s_s(value, pres, target, mode, expected_value, xp, device
                 [np.nan, np.nan, np.nan],
             ],
         ),
+        (
+            [[0, 10.0, 20.0], [100, 110, 120], [200.0, 210.0, 220.0]],
+            [800.0, 900.0, 1000.0],
+            [
+                [1030.0, 1020.0, 1010.0],
+                [1020.0, 1000.0, 1000.0],
+                [960.0, 900.0, 900.0],
+                [860.0, 800.0, 800.0],
+                [750.0, 800.0, 800.0],
+                [749.0, 750.0, 700],
+            ],
+            "linear",
+            [
+                [np.nan, np.nan, np.nan],
+                [np.nan, 210.0, 220.0],
+                [160.0, 110.0, 120.0],
+                [60.0, 10.0, 20.0],
+                [np.nan, 10.0, 20.0],
+                [np.nan, np.nan, np.nan],
+            ],
+        ),
     ],
 )
 def test_to_pressure_a_s_a(value, pres, target, mode, expected_value, xp, device):
@@ -219,7 +299,7 @@ def test_to_pressure_a_s_a(value, pres, target, mode, expected_value, xp, device
     target = xp.asarray(target, device=device)
     expected_value = xp.asarray(expected_value, device=device)
 
-    r = vertical.interpolate_to_pressure_levels(value, pres, target, mode)
+    r = vertical.interpolate_monotonic(value, pres, target, mode)
     assert xp.allclose(r, expected_value, equal_nan=True)
 
 
@@ -248,6 +328,27 @@ def test_to_pressure_a_s_a(value, pres, target, mode, expected_value, xp, device
                 [np.nan, np.nan, np.nan],
             ],
         ),
+        (
+            [[0, 10.0, 20.0], [100, 110, 120], [200.0, 210.0, 220.0]],
+            [[820, 810.0, 800.0], [920.0, 910.0, 900.0], [1020.0, 1010.0, 1000.0]],
+            [
+                [1030.0, 1020.0, 1010.0],
+                [1020.0, 1000.0, 1000.0],
+                [960.0, 900.0, 900.0],
+                [860.0, 800.0, 800.0],
+                [750.0, 810.0, 800.0],
+                [749.0, 750.0, 700],
+            ],
+            "linear",
+            [
+                [np.nan, np.nan, np.nan],
+                [200.0, 200.0, 220.0],
+                [140.0, 100.0, 120.0],
+                [40.0, np.nan, 20.0],
+                [np.nan, 10.0, 20.0],
+                [np.nan, np.nan, np.nan],
+            ],
+        ),
     ],
 )
 def test_to_pressure_a_a_a(value, pres, target, mode, expected_value, xp, device):
@@ -257,7 +358,7 @@ def test_to_pressure_a_a_a(value, pres, target, mode, expected_value, xp, device
     target = xp.asarray(target, device=device)
     expected_value = xp.asarray(expected_value, device=device)
 
-    r = vertical.interpolate_to_pressure_levels(value, pres, target, mode)
+    r = vertical.interpolate_monotonic(value, pres, target, mode)
     assert xp.allclose(r, expected_value, equal_nan=True)
 
 
@@ -281,5 +382,5 @@ def test_to_height_s_s_s(value, pres, target, mode, expected_value, xp, device):
     target = xp.asarray(target, device=device)
     expected_value = xp.asarray(expected_value, device=device)
 
-    r = vertical.interpolate_to_height_levels(value, pres, target, mode)
+    r = vertical.interpolate_monotonic(value, pres, target, mode)
     assert xp.allclose(r, expected_value, equal_nan=True)
