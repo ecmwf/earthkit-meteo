@@ -268,3 +268,139 @@ def test_pressure_at_height_levels_multi_point(xp):
 
     p = vertical.pressure_at_height_levels(h, t, q, sp, A, B, alpha_top="ifs")
     assert xp.allclose(p, p_ref)
+
+
+@pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
+@pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+def test_pressure_on_hybrid_levels_1(index, xp):
+
+    sp = DATA.p_surf
+    A = DATA.A
+    B = DATA.B
+    ref_p_full = DATA.p_full
+    ref_p_half = DATA.p_half
+    ref_delta = DATA.delta
+    ref_alpha = DATA.alpha
+
+    sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B = (
+        xp.asarray(x) for x in [sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B]
+    )
+
+    sp = sp[index[1]]
+    ref_p_full = ref_p_full[index]
+    ref_p_half = ref_p_half[index]
+    ref_delta = ref_delta[index]
+    ref_alpha = ref_alpha[index]
+
+    p_full, p_half, delta, alpha = vertical.pressure_on_hybrid_levels(
+        A, B, sp, alpha_top="ifs", output=["full", "half", "delta", "alpha"]
+    )
+
+    # print("p_full", repr(p_full))
+    # print("p_half", repr(p_half))
+    # print("delta", repr(delta))
+    # print("alpha", repr(alpha))
+
+    assert xp.allclose(p_full, ref_p_full)
+    assert xp.allclose(p_half, ref_p_half)
+    assert xp.allclose(delta, ref_delta)
+    assert xp.allclose(alpha, ref_alpha)
+
+
+@pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
+@pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+@pytest.mark.parametrize(
+    "levels", [None, list(range(90, 138)), list(range(137, 90, -1)), [1, 2], [2, 1], [1]]
+)
+@pytest.mark.parametrize(
+    "output",
+    [
+        "full",
+        "half",
+        "delta",
+        "alpha",
+        ["full", "half", "delta", "alpha"],
+        ["full", "half"],
+        ["half", "full"],
+        ["delta", "alpha"],
+    ],
+)
+def test_pressure_on_hybrid_levels_2(index, levels, output, xp):
+
+    sp = DATA.p_surf
+    A = DATA.A
+    B = DATA.B
+    ref_p_full = DATA.p_full
+    ref_p_half = DATA.p_half
+    ref_delta = DATA.delta
+    ref_alpha = DATA.alpha
+
+    # ref_def = {"full": DATA.p_full, "half": DATA.p_half, "delta": DATA.delta, "alpha": DATA.alpha}
+    # ref = {
+    #     key: val
+    #     for key, val in ref_def.items()
+    #     if (output == key or (isinstance(output, (list, tuple)) and key in output))
+    # }
+
+    # ref_p_full = DATA.p_full
+    # ref_p_half = DATA.p_half
+    # ref_delta = DATA.delta
+    # ref_alpha = DATA.alpha
+
+    sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B = (
+        xp.asarray(x) for x in [sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B]
+    )
+
+    # sp tests data is 1D
+    sp = sp[index[1]]
+
+    ref_def = {
+        "full": ref_p_full[index],
+        "half": ref_p_half[index],
+        "delta": ref_delta[index],
+        "alpha": ref_alpha[index],
+    }
+    ref = {
+        key: val
+        for key, val in ref_def.items()
+        if (output == key or (isinstance(output, (list, tuple)) and key in output))
+    }
+
+    levels = np.asarray(levels) if levels is not None else None
+
+    if levels is not None:
+        levels_half_idx = levels
+        levels_idx = levels - 1
+        for key in ref:
+            if key == "half":
+                ref[key] = ref[key][levels_half_idx]
+            else:
+                ref[key] = ref[key][levels_idx]
+
+        # ref_p_full = ref_p_full[levels_idx, :]
+        # ref_p_half = ref_p_half[levels_idx + 1, :]
+        # ref_delta = ref_delta[levels_idx, :]
+        # ref_alpha = ref_alpha[levels_idx, :]
+
+    print("levels=", levels)
+
+    res = vertical.pressure_on_hybrid_levels(A, B, sp, levels=levels, alpha_top="ifs", output=output)
+
+    if isinstance(output, str) or len(output) == 1:
+        key = output if isinstance(output, str) else output[0]
+        assert xp.allclose(res, ref[key])
+    else:
+        assert isinstance(res, tuple)
+        assert len(res) == len(output)
+        for key, rd in zip(output, res):
+            assert xp.allclose(rd, ref[key])
+
+    # # print("p_full", repr(p_full))
+    # # print("p_half", repr(p_half))
+    # # print("delta", repr(delta))
+    # # print("alpha", repr(alpha))
+
+    # assert xp.allclose(p_full, ref_p_full)
+    # assert xp.allclose(p_half, ref_p_half)
+    # assert xp.allclose(delta, ref_delta)
+    # assert xp.allclose(alpha, ref_alpha)

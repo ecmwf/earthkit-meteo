@@ -46,6 +46,10 @@ def geometric_height_from_geopotential(*args, **kwargs):
     return array.geometric_height_from_geopotential(*args, **kwargs)
 
 
+def pressure_on_hybrid_levels(*args, **kwargs):
+    return array.pressure_on_hybrid_levels(*args, **kwargs)
+
+
 def interpolate_to_pressure_levels(*args, **kwargs):
     return array.interpolate_to_pressure_levels(*args, **kwargs)
 

@@ -485,27 +485,45 @@ def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
 
 
 def pressure_on_hybrid_levels(
-    A: ArrayLike, B: ArrayLike, sp: ArrayLike, levels=None, alpha=False, delta=False
+    A: ArrayLike, B: ArrayLike, sp: ArrayLike, levels=None, alpha_top="ifs", output="full"
 ) -> ArrayLike:
-    r"""Compute pressure at full hybrid (IFS model) levels.
+    r"""Compute pressure and related parameters at hybrid (IFS model) levels.
 
     Parameters
     ----------
     A : array-like
         A-coefficients defining the hybrid levels. Must contain all the half-levels
-        in ascending order with respect to the model level number.
+        in ascending order with respect to the model level number. If the total number
+        of (full) model levels is NLEV, ``A`` must contain NLEV+1 values, one for each
+        half-level with ascending level order.
         See [IFS-CY47R3-Dynamics]_ (page 6) for details.
     B : array-like
         B-coefficients defining the hybrid levels. Must contain all the half-levels
-        in ascending order with respect to the model level number.
+        in ascending order with respect to the model level number. Must have the same
+        size as ``A``.  So f the total number
+        of (full) model levels is NLEV, ``B`` must contain NLEV+1 values.
         See [IFS-CY47R3-Dynamics]_ (page 6) for details.
     sp : array-like
         Surface pressure (Pa)
     levels : None, array-like, list, tuple, optional
-        Specify the full eta levels to return in an arbitrary order. Please note level
+        Specify the full hybrid levels to return in the given order. Please note level
         numbering starts at 1. If None (default), all the levels are returned in the
         order defined by the A and B coefficients (i.e. ascending order with respect to
         the model level number).
+    alpha_top : str, optional
+        Option to initialise alpha on the top of the model atmosphere (first half-level in
+        the vertical coordinate system). The possible values are:
+
+        - "ifs": alpha is set to log(2). See [IFS-CY47R3-Dynamics]_ (page 7) for details.
+        - "arpege": alpha is set to 1.0
+
+    output : str or list/tuple of str, optional
+        Specify which outputs to return. Possible values are "full", "half", "alpha", and "delta".
+        Can be a single string or a list/tuple of strings. Default is "full". The outputs are:
+        - "full": pressure (Pa) on full levels
+        - "half": pressure (Pa) on half levels. When ``levels`` is
+        - "alpha": alpha parameter at half hybrid (IFS model) levels
+        - "delta": delta parameter at full hybrid (IFS model) levels
 
     Returns
     -------
@@ -538,17 +556,41 @@ def pressure_on_hybrid_levels(
     relative_geopotential_thickness
 
     """
+    if isinstance(output, str):
+        output = (output,)
+
+    if not output:
+        raise ValueError("At least one output type must be specified.")
+
+    for out in output:
+        if out not in ["full", "half", "alpha", "delta"]:
+            raise ValueError(
+                f"Unknown output type '{out}'. Allowed values are 'full', 'half', 'alpha' or 'delta'."
+            )
+
+    if alpha_top not in ["ifs", "arpege"]:
+        raise ValueError(f"Unknown method '{alpha_top}' for pressure calculation. Use 'ifs' or 'arpege'.")
+
     if levels is not None:
         # select a contiguous subset of levels
+        nlev = A.shape[0] - 1  # number of model full-levels
         levels = np.asarray(levels)
         levels_max = int(levels.max())
-        levels_min = max(int(levels.min()) - 1, 0)
-        lev_half_idx = np.array(list(range(levels_min, levels_max + 1)))
-        A = A[lev_half_idx]
-        B = B[lev_half_idx]
+        levels_min = int(levels.min())
+        if levels_max > nlev:
+            raise ValueError(f"Requested level {levels_max} exceeds the maximum number of levels {nlev}.")
+        if levels_min < 1:
+            raise ValueError(f"Level numbering starts at 1. Found level={levels_min} < 1.")
+
+        half_idx = np.array(list(range(levels_min - 1, levels_max + 1)))
+        A = A[half_idx]
+        B = B[half_idx]
 
         # compute indices to select the requested full levels later
-        lev_full_idx = np.where(levels[:, None] == lev_half_idx[None, :])[1] - 1
+        out_half_idx = np.where(levels[:, None] == half_idx[None, :])[1]
+        out_full_idx = out_half_idx - 1
+
+        print(f"Selected levels: {levels} half_idx: {half_idx} out_full_idx: {out_full_idx}")
 
     # make the calculation agnostic to the number of dimensions
     ndim = sp.ndim
@@ -559,18 +601,74 @@ def pressure_on_hybrid_levels(
     # calculate pressure on model half-levels
     p_half_level = A_reshaped + B_reshaped * sp[np.newaxis, ...]
 
-    # calculate pressure on model full levels
-    # TODO: is there a faster way to calculate the averages?
-    # TODO: introduce option to calculate full levels in more complicated way
-    p_full_level = np.apply_along_axis(
-        lambda m: np.convolve(m, np.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level
-    )
+    if "delta" in output or "alpha" in output:
+        # constants
+        PRESSURE_TOA = 0.1  # safety when highest pressure level = 0.0
 
-    # generate output for the requested levels only
-    if levels is not None:
-        p_full_level = p_full_level[lev_full_idx, ...]
+        alpha_top = np.log(2) if alpha_top == "ifs" else 1.0
 
-    return p_full_level
+        new_shape_full = (A.shape[0] - 1,) + sp.shape
+
+        # calculate delta
+        delta = np.zeros(new_shape_full)
+        delta[1:, ...] = np.log(p_half_level[2:, ...] / p_half_level[1:-1, ...])
+
+        # pressure at highest half level<= 0.1
+        if np.any(p_half_level[0, ...] <= PRESSURE_TOA):
+            delta[0, ...] = np.log(p_half_level[1, ...] / PRESSURE_TOA)
+        # pressure at highest half level > 0.1
+        else:
+            delta[0, ...] = np.log(p_half_level[1, ...] / p_half_level[0, ...])
+
+        # calculate alpha
+        alpha = np.zeros(new_shape_full)
+
+        alpha[1:, ...] = (
+            1.0 - p_half_level[1:-1, ...] / (p_half_level[2:, ...] - p_half_level[1:-1, ...]) * delta[1:, ...]
+        )
+
+        # pressure at highest half level <= 0.1
+        if np.any(p_half_level[0, ...] <= PRESSURE_TOA):
+            alpha[0, ...] = alpha_top
+        # pressure at highest half level > 0.1
+        else:
+            alpha[0, ...] = (
+                1.0 - p_half_level[0, ...] / (p_half_level[1, ...] - p_half_level[0, ...]) * delta[0, ...]
+            )
+
+    if "full" in output:
+        # calculate pressure on model full levels
+        # TODO: is there a faster way to calculate the averages?
+        # TODO: introduce option to calculate full levels in more complicated way
+        p_full_level = np.apply_along_axis(
+            lambda m: np.convolve(m, np.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level
+        )
+
+    # generate output
+    res = []
+
+    for out in output:
+        if out == "full":
+            if levels is not None:
+                p_full_level = p_full_level[out_full_idx, ...]
+            res.append(p_full_level)
+        elif out == "half":
+            if levels is not None:
+                p_half_level = p_half_level[out_half_idx, ...]
+            res.append(p_half_level)
+        elif out == "alpha":
+            if levels is not None:
+                alpha = alpha[out_full_idx, ...]
+            res.append(alpha)
+        elif out == "delta":
+            if levels is not None:
+                delta = delta[out_full_idx, ...]
+            res.append(delta)
+
+    if len(res) == 1:
+        return res[0]
+
+    return tuple(res)
 
 
 def geopotential_on_hybrid_levels(
