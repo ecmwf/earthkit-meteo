@@ -62,15 +62,15 @@ def crps(x, y, nan_policy="propagate"):
     # if i == 0
 
     alpha[0] = 0
-    beta[0] = xp.where(diffxy[0] > 0, diffxy[0], 0)  # x(0)-y
+    beta[0] = xp.maximum(diffxy[0], 0)  # x(0)-y
     # if i == n_ens
-    alpha[-1] = xp.where(-diffxy[-1] > 0, -diffxy[-1], 0)  # y-x(n)
+    alpha[-1] = xp.maximum(-diffxy[-1], 0)  # y-x(n)
     beta[-1] = 0
     # else
-    temp = xp.where(-diffxy[:-1] > 0, -diffxy[:-1], 0)
-    alpha[1:-1] = xp.where(diffxx < temp, diffxx, temp)  # x(i+1)-x(i) or y-x(i) or 0
-    temp = xp.where(diffxy[1:] > 0, diffxy[1:], 0)
-    beta[1:-1] = xp.where(diffxx < temp, diffxx, temp)  # 0 or x(i+1)-y or x(i+1)-x(i)
+    temp = xp.maximum(-diffxy[:-1], 0)
+    alpha[1:-1] = xp.minimum(diffxx, temp)  # x(i+1)-x(i) or y-x(i) or 0
+    temp = xp.maximum(diffxy[1:], 0)
+    beta[1:-1] = xp.minimum(diffxx, temp)  # 0 or x(i+1)-y or x(i+1)-x(i)
 
     # compute crps
     p_exp = xp.reshape(xp.arange(n_ens + 1) / float(n_ens), (n_ens + 1, *([1] * y.ndim)))
