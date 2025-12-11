@@ -143,33 +143,35 @@ def pressure_at_model_levels(
     return p_full_level, p_half_level, delta, alpha
 
 
+@deprecation.deprecated(
+    deprecated_in="0.7", details="Use relative_geopotential_thickness_on_hybrid_levels instead."
+)
 def relative_geopotential_thickness(
-    alpha: NDArray[Any], delta: NDArray[Any], t: NDArray[Any], q: NDArray[Any]
-) -> NDArray[Any]:
-    """Calculate the geopotential thickness with respect to the surface on model full-levels.
+    alpha: ArrayLike, delta: ArrayLike, t: ArrayLike, q: ArrayLike
+) -> ArrayLike:
+    """Calculate the geopotential thickness with respect to the surface on hybrid (IFS model) full-levels.
 
     Parameters
     ----------
     alpha : array-like
-        alpha term of pressure calculations
+        Alpha term of pressure calculations
     delta : array-like
-        delta term of pressure calculations
+        Delta term of pressure calculations
     t : array-like
-        specific humidity on model full-levels (kg/kg).  First dimension must
-        correspond to the model full-levels.
-    q : array-like
-        temperature on model full-levels (K).  First dimension must
-        correspond to the model full-levels.
+        Temperature on hybrid (IFS model) full-levels (K). First dimension must
+        correspond to the full-levels.
+    q : Specific humidity on hybrid (IFS model) full-levels (kg/kg). First dimension must
+        correspond to the full-levels.
 
     Returns
     -------
     array-like
-        geopotential thickness of model full-levels with respect to the surface
+        Geopotential thickness (m2/s2) of hybrid (IFS model) full-levels with respect to the surface
 
     Notes
     -----
-    ``t`` and ``q`` must contain the same model levels in ascending order with respect to
-    the model level number. The model level range must be contiguous and must include the
+    ``t`` and ``q`` must contain the same levels in ascending order with respect to
+    the level number. The model level range must be contiguous and must include the
     bottom-most level, but not all the levels must be present. E.g. if the vertical coordinate
     system has 137 model levels using only a subset of levels between e.g. 137-96 is allowed.
 
@@ -489,7 +491,7 @@ def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
 def pressure_on_hybrid_levels(
     A: ArrayLike, B: ArrayLike, sp: ArrayLike, levels=None, alpha_top="ifs", output="full"
 ) -> ArrayLike:
-    r"""Compute pressure and related parameters at hybrid (IFS model) levels.
+    r"""Compute pressure and related parameters on hybrid (IFS model) levels.
 
     *New in version 0.7.0*: This function replaces the deprecated :func:`pressure_at_model_levels`.
 
@@ -692,19 +694,84 @@ def pressure_on_hybrid_levels(
     return tuple(res)
 
 
+def relative_geopotential_thickness_on_hybrid_levels(
+    t: ArrayLike,
+    q: ArrayLike,
+    alpha: ArrayLike,
+    delta: ArrayLike,
+) -> ArrayLike:
+    """Calculate the geopotential thickness with respect to the surface on hybrid (IFS model) full-levels.
+
+    Parameters
+    ----------
+    t : array-like
+        Temperature on hybrid (IFS model) full-levels (K). First dimension must
+        correspond to the full-levels.
+    q : Specific humidity on hybrid (IFS model) full-levels (kg/kg). First dimension must
+        correspond to the full-levels.
+    alpha : array-like
+        Alpha term of pressure calculations computed using :func:`pressure_on_hybrid_levels`
+    delta : array-like
+        Delta term of pressure calculations computed using :func:`pressure_on_hybrid_levels`
+
+    Returns
+    -------
+    array-like
+        Geopotential thickness (m2/s2) of hybrid (IFS model) full-levels with respect to the surface
+
+    Notes
+    -----
+    ``t`` and ``q`` must contain the same model levels in ascending order with respect to
+    the model level number. The model level range must be contiguous and must include the
+    bottom-most level, but not all the levels must be present. E.g. if the vertical coordinate
+    system has 137 model levels using only a subset of levels between e.g. 137-96 is allowed.
+
+    ``alpha`` and ``delta`` must be defined on the same levels as ``t`` and ``q``. These
+    values can be calculated using :func:`pressure_on_hybrid_levels`.
+
+    The computations are described in [IFS-CY47R3-Dynamics]_ (page 7-8).
+
+    See also
+    --------
+    pressure_on_hybrid_levels
+
+    """
+    from earthkit.meteo.thermo import specific_gas_constant
+
+    xp = array_namespace(alpha, delta, q, t)
+
+    R = specific_gas_constant(q)
+    d = R * t
+
+    # compute geopotential thickness on half levels from 1 to NLEV-1
+    dphi_half = xp.cumulative_sum(xp.flip(d[1:, ...] * delta[1:, ...], axis=0), axis=0)
+    dphi_half = xp.flip(dphi_half, axis=0)
+
+    # compute geopotential thickness on full levels
+    dphi = xp.zeros_like(d)
+    dphi[:-1, ...] = dphi_half + d[:-1, ...] * alpha[:-1, ...]
+    dphi[-1, ...] = d[-1, ...] * alpha[-1, ...]
+
+    return dphi
+
+
 def geopotential_on_hybrid_levels(
     t: ArrayLike,
     q: ArrayLike,
-    sp: ArrayLike,
-    A: ArrayLike,
-    B: ArrayLike,
-    alpha_top: str = "ifs",
+    zs: ArrayLike,
+    alpha: ArrayLike,
+    delta: ArrayLike,
 ):
-    # pressure(-related) variables
-    _, _, delta, alpha = pressure_at_model_levels(A, B, sp, alpha_top=alpha_top)
 
-    # relative geopotential thickness of full levels
-    return relative_geopotential_thickness(alpha, delta, t, q)
+    xp = array_namespace(t, q, zs, alpha, delta)
+    t = xp.asarray(t)
+    q = xp.asarray(q)
+    zs = xp.asarray(zs)
+    alpha = xp.asarray(alpha)
+    delta = xp.asarray(delta)
+
+    phi = relative_geopotential_thickness_on_hybrid_levels(t, q, alpha, delta)
+    return phi + zs
 
 
 def interpolate_monotonic(

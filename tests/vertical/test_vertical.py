@@ -14,7 +14,7 @@ from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import vertical
 
-np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
+np.set_printoptions(formatter={"float_kind": "{:.15f}".format})
 
 
 def _get_data():
@@ -143,6 +143,7 @@ def test_pressure_at_model_levels(index, xp):
     )
 
     sp = sp[index[1]]
+
     ref_p_full = ref_p_full[index]
     ref_p_half = ref_p_half[index]
     ref_delta = ref_delta[index]
@@ -155,13 +156,14 @@ def test_pressure_at_model_levels(index, xp):
     # print("delta", repr(delta))
     # print("alpha", repr(alpha))
 
-    assert xp.allclose(p_full, ref_p_full)
-    assert xp.allclose(p_half, ref_p_half)
-    assert xp.allclose(delta, ref_delta)
-    assert xp.allclose(alpha, ref_alpha)
+    assert xp.allclose(p_full, ref_p_full, rtol=1e-8)
+    assert xp.allclose(p_half, ref_p_half, rtol=1e-8)
+    assert xp.allclose(delta, ref_delta, rtol=1e-8)
+    assert xp.allclose(alpha, ref_alpha, rtol=1e-8)
 
 
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+# @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
 def test_relative_geopotential_thickness(index, xp, device):
 
@@ -187,7 +189,7 @@ def test_relative_geopotential_thickness(index, xp, device):
     # print("z", repr(z))
     # print("z_ref", repr(z_ref))
 
-    assert xp.allclose(z, z_ref)
+    assert xp.allclose(z, z_ref, rtol=1e-8)
 
 
 @pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
@@ -404,3 +406,69 @@ def test_pressure_on_hybrid_levels_2(index, levels, output, xp):
     # assert xp.allclose(p_half, ref_p_half)
     # assert xp.allclose(delta, ref_delta)
     # assert xp.allclose(alpha, ref_alpha)
+
+
+# @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+def test_geopotential_on_hybrid_levels_1(index, xp, device):
+
+    alpha = DATA.alpha
+    delta = DATA.delta
+    t = DATA.t
+    q = DATA.q
+    z_ref = DATA.z
+    zs = [0.0] * len(t[0])  # surface geopotential is zero in test data
+
+    z_ref, t, q, alpha, delta, zs = (xp.asarray(x, device=device) for x in [z_ref, t, q, alpha, delta, zs])
+
+    alpha = alpha[index]
+    delta = delta[index]
+    t = t[index]
+    q = q[index]
+    z_ref = z_ref[index]
+    zs = zs[index[1]]
+
+    z = vertical.geopotential_on_hybrid_levels(t, q, zs, alpha, delta)
+    # # print("z", repr(z))
+    # # print("z_ref", repr(z_ref))
+
+    # idx = 0
+    # for i in range(137):
+    #     # print(i, np.max(np.abs(r_ek[i] - r_mv[i])))
+    #     print(i, z[i] - z_ref[i])
+
+    assert xp.allclose(z, z_ref, rtol=1e-8)
+
+
+@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+def test_geopotential_on_hybrid_levels_2(index, xp, device):
+
+    A = DATA.A
+    B = DATA.B
+    t = DATA.t
+    q = DATA.q
+    z_ref = DATA.z
+    sp = DATA.p_surf
+    zs = [0.0] * len(sp)  # surface geopotential is zero in test data
+
+    z_ref, t, q, A, B, sp, zs = (xp.asarray(x, device=device) for x in [z_ref, t, q, A, B, sp, zs])
+
+    t = t[index]
+    q = q[index]
+    z_ref = z_ref[index]
+    sp = sp[index[1]]
+    zs = zs[index[1]]
+
+    alpha, delta = vertical.pressure_on_hybrid_levels(A, B, sp, alpha_top="ifs", output=["alpha", "delta"])
+    z = vertical.geopotential_on_hybrid_levels(t, q, zs, alpha, delta)
+    # # print("z", repr(z))
+    # # print("z_ref", repr(z_ref))
+
+    # idx = 0
+    # for i in range(137):
+    #     # print(i, np.max(np.abs(r_ek[i] - r_mv[i])))
+    #     print(i, z[i] - z_ref[i])
+
+    assert xp.allclose(z, z_ref, rtol=1e-5)

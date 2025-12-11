@@ -50,5 +50,9 @@ def pressure_on_hybrid_levels(*args, **kwargs):
     return array.pressure_on_hybrid_levels(*args, **kwargs)
 
 
+def geopotential_on_hybrid_levels(*args, **kwargs):
+    return array.geopotential_on_hybrid_levels(*args, **kwargs)
+
+
 def interpolate_monotonic(*args, **kwargs):
     return array.interpolate_monotonic(*args, **kwargs)
