@@ -13,5 +13,5 @@ def project(*args, **kwargs):
     return array.project(*args, **kwargs)
 
 
-def normalise(*args, **kwargs):
-    return array.normalise(*args, **kwargs)
+def standardise(*args, **kwargs):
+    return array.standardise(*args, **kwargs)

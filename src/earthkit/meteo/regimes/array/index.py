@@ -45,8 +45,8 @@ def project(field, patterns, weights=None, **patterns_kwargs):
     return {regime: np.sum(field * pattern * weights, axis=sum_axes) for regime, pattern in ps.items()}
 
 
-def normalise(projections, mean, std):
-    """Regime index by normalising regime projections.
+def standardise(projections, mean, std):
+    """Regime index by standardisation of regime projections.
 
     Convenience function to work with dictionaries.
 

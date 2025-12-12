@@ -102,7 +102,7 @@ def test_project_with_multiple_pattern_return(patterns):
     assert np.isclose(proj["dipole"][0], 0.5 * proj["dipole"][1])
 
 
-def test_normalise_index_with_dict():
+def test_standardise_with_dict():
     proj = {
         "foo": np.asarray([0.0, 1.0, 2.0, 3.0, 4.0, 5.0]),
         "bar": np.asarray([0.0, 1.0, 2.0, 3.0, 4.0, 5.0]),
@@ -110,7 +110,7 @@ def test_normalise_index_with_dict():
     mean = {"foo": 2.0, "bar": -4.0}
     std = {"foo": 10.0, "bar": 2.0}
 
-    index = regimes.normalise(proj, mean, std)
+    index = regimes.standardise(proj, mean, std)
 
     assert len(index) == 2
     assert "foo" in index
