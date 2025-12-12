@@ -126,5 +126,5 @@ class ModulatedRegimePatterns(RegimePatterns):
         """
         modulator = np.asarray(self.modulator(**kwargs))
         # Adapt to shape of regime patterns
-        modulator = modulator[..., *((np.newaxis,) * len(self.shape))]
+        modulator = modulator[(..., *((np.newaxis,) * len(self.shape)))]
         return {regime: modulator * base_pattern for regime, base_pattern in self._base_patterns_dict.items()}
