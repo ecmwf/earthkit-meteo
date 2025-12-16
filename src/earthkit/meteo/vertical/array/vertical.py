@@ -702,6 +702,8 @@ def relative_geopotential_thickness_on_hybrid_levels(
 ) -> ArrayLike:
     """Calculate the geopotential thickness with respect to the surface on hybrid (IFS model) full-levels.
 
+    *New in version 0.7.0*: This function replaces the deprecated :func:`relative_geopotential_thickness`.
+
     Parameters
     ----------
     t : array-like
@@ -772,6 +774,43 @@ def geopotential_on_hybrid_levels(
 
     phi = relative_geopotential_thickness_on_hybrid_levels(t, q, alpha, delta)
     return phi + zs
+
+
+def interpolate_hybrid_to_pressure_levels(
+    data: ArrayLike,
+    p_target: ArrayLike,
+    A: ArrayLike,
+    B: ArrayLike,
+    sp: ArrayLike,
+    interpolation: str = "linear",
+):
+    p = pressure_on_hybrid_levels(A, B, sp, output="full")
+    return interpolate_monotonic(data, p, p_target, interpolation=interpolation)
+
+
+def interpolate_hybrid_to_height_levels(
+    data: ArrayLike,
+    t: ArrayLike,
+    q: ArrayLike,
+    zs: ArrayLike,
+    h_target: ArrayLike,
+    agl: bool,
+    geometric_height: bool,
+    A: ArrayLike,
+    B: ArrayLike,
+    sp: ArrayLike,
+    interpolation: str = "linear",
+):
+    alpha, delta = pressure_on_hybrid_levels(A, B, sp, output=("alpha", "delta"))
+    z = geopotential_on_hybrid_levels(t, q, zs, alpha, delta)
+    if not agl:
+        z = z + zs
+    if geometric_height:
+        h = geometric_height_from_geopotential(z)
+    else:
+        h = geopotential_height_from_geopotential(z)
+
+    return interpolate_monotonic(data, h, h_target, interpolation=interpolation)
 
 
 def interpolate_monotonic(
