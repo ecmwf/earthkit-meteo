@@ -55,7 +55,7 @@ def interpolate_monotonic(
     fkm1 = data.shift(z=1)
 
     # ... loop through target values
-    for target_idx, t0 in enumerate(target_coord):
+    for target_idx, t0 in enumerate(target_coord.values):
         # ... find the 3d field where pressure is > p0 on level k
         #     and was <= p0 on level k-1
         # ... extract the index k of the vertical layer at which p2 adopts its minimum
@@ -376,7 +376,7 @@ def _init_field_with_vcoord(
     # ... inherit all except for the vertical coordinates
     coords = {c: v for c, v in parent.coords.items() if c != "z"}
     # ... initialize the vertical target coordinates
-    coords["z"] = xr.IndexVariable("z", vcoord.values, attrs=dc.asdict(vcoord.attrs))
+    coords["z"] = xr.IndexVariable("z", vcoord.values)
     # dtype
     if dtype is None:
         dtype = parent.data.dtype
