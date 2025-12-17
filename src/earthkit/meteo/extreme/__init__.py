@@ -15,6 +15,7 @@ can be used to operate on numpy arrays. The high level functions are still to be
 planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets*.
 """
 
+from . import excess_heat  # noqa
 from .cpf import *  # noqa
 from .efi import *  # noqa
 from .sot import *  # noqa
