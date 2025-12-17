@@ -7,6 +7,7 @@ dependencies:
 - numpy
 - pandas
 - earthkit-utils>=0.0.1
+- earthkit-transforms>=0.5.0
 - make
 - mypy
 - myst-parser
@@ -24,3 +25,4 @@ dependencies:
 - nbconvert
 - nbsphinx
 - ipykernel
+- xarray
