@@ -764,7 +764,6 @@ def geopotential_on_hybrid_levels(
     alpha: ArrayLike,
     delta: ArrayLike,
 ):
-
     xp = array_namespace(t, q, zs, alpha, delta)
     t = xp.asarray(t)
     q = xp.asarray(q)
@@ -776,16 +775,59 @@ def geopotential_on_hybrid_levels(
     return phi + zs
 
 
+def geopotential_on_hybrid_levels_1(
+    t: ArrayLike,
+    q: ArrayLike,
+    zs: ArrayLike,
+    A: ArrayLike,
+    B: ArrayLike,
+    sp: ArrayLike,
+):
+    xp = array_namespace(t, q, zs, sp)
+    t = xp.asarray(t)
+    q = xp.asarray(q)
+    zs = xp.asarray(zs)
+    A = xp.asarray(A)
+    B = xp.asarray(B)
+    sp = xp.asarray(sp)
+
+    alpha, delta = pressure_on_hybrid_levels(A, B, sp, output=("alpha", "delta"))
+    phi = relative_geopotential_thickness_on_hybrid_levels(t, q, alpha, delta)
+    return phi + zs
+
+
+def height_on_hybrid_levels(
+    t: ArrayLike,
+    q: ArrayLike,
+    zs: ArrayLike,
+    A: ArrayLike,
+    B: ArrayLike,
+    sp: ArrayLike,
+    h_type: str = "geometric",
+    h_reference: str = "surface",
+):
+    alpha, delta = pressure_on_hybrid_levels(A, B, sp, output=("alpha", "delta"))
+    z = geopotential_on_hybrid_levels(t, q, zs, alpha, delta)
+    if h_reference == "sea":
+        z = z + zs
+    if h_type == "geometric":
+        h = geometric_height_from_geopotential(z)
+    else:
+        h = geopotential_height_from_geopotential(z)
+
+    return h
+
+
 def interpolate_hybrid_to_pressure_levels(
     data: ArrayLike,
-    p_target: ArrayLike,
+    target_p: ArrayLike,
     A: ArrayLike,
     B: ArrayLike,
     sp: ArrayLike,
     interpolation: str = "linear",
 ):
     p = pressure_on_hybrid_levels(A, B, sp, output="full")
-    return interpolate_monotonic(data, p, p_target, interpolation=interpolation)
+    return interpolate_monotonic(data=data, coord=p, target_coord=target_p, interpolation=interpolation)
 
 
 def interpolate_hybrid_to_height_levels(
@@ -793,31 +835,37 @@ def interpolate_hybrid_to_height_levels(
     t: ArrayLike,
     q: ArrayLike,
     zs: ArrayLike,
-    h_target: ArrayLike,
-    agl: bool,
-    geometric_height: bool,
     A: ArrayLike,
     B: ArrayLike,
     sp: ArrayLike,
+    target_h: ArrayLike,
+    h_type: str = "geometric",
+    h_reference: str = "surface",
     interpolation: str = "linear",
+    aux_bottom_data=None,
+    aux_bottom_h=None,
 ):
     alpha, delta = pressure_on_hybrid_levels(A, B, sp, output=("alpha", "delta"))
     z = geopotential_on_hybrid_levels(t, q, zs, alpha, delta)
-    if not agl:
+
+    if h_reference == "sea":
         z = z + zs
-    if geometric_height:
+    if h_type == "geometric":
         h = geometric_height_from_geopotential(z)
     else:
         h = geopotential_height_from_geopotential(z)
-
-    return interpolate_monotonic(data, h, h_target, interpolation=interpolation)
+    return interpolate_monotonic(data=data, coord=h, target_coord=target_h, interpolation=interpolation)
 
 
 def interpolate_monotonic(
     data: ArrayLike,
-    coord_data: Union[ArrayLike, list, tuple, float, int],
-    coord_target: Union[ArrayLike, list, tuple, float, int],
+    coord: Union[ArrayLike, list, tuple, float, int],
+    target_coord: Union[ArrayLike, list, tuple, float, int],
     interpolation: str = "linear",
+    aux_min_level_data=None,
+    aux_min_level_coord=None,
+    aux_max_level_data=None,
+    aux_max_level_coord=None,
 ) -> ArrayLike:
     """Interpolate data onto monotonic coordinate levels.
 
@@ -826,15 +874,15 @@ def interpolate_monotonic(
     data : array-like
         Data to be interpolated. First dimension must correspond to the vertical. Must have at
         least two levels. Levels must be ordered in ascending or descending order.
-    coord_data : array-like
+    coord : array-like
         Monotonic coordinate levels corresponding to the first dimension of ``data``. Either must
         have the same shape as ``data`` or be a 1D array with length equal to the size of the first
         dimension of ``data``.
-    coord_target : array-like
+    target_coord : array-like
         Target coordinate levels to which ``data`` will be interpolated. It can be either a scalar
         or a 1D array of coordinate levels. Alternatively, it can be an array of arrays where each sub-array
         contains the target coordinate levels for the corresponding horizontal location in ``data``. The
-        units are in the same units as ``coord_data``.
+        units are in the same units as ``coord``.
     interpolation  : str, optional
         Interpolation mode. Default is "linear". Possible values are:
         - "linear": linear interpolation in coordinate
@@ -844,215 +892,38 @@ def interpolate_monotonic(
     Returns
     -------
     array-like
-        Data interpolated to the target levels. The shape depends on the shape of ``coord_target``:
-        - If ``coord_target`` is a scalar, the output shape is equal to ``data.shape[1:]``.
-        - If ``coord_target`` is a 1D array of length N, the output shape is (N, ) + ``data.shape[1:]``.
-        - If ``coord_target`` is an array of arrays, the output shape is (M, ) + ``data.shape[1:]``,
+        Data interpolated to the target levels. The shape depends on the shape of ``target_coord``:
+        - If ``target_coord`` is a scalar, the output shape is equal to ``data.shape[1:]``.
+        - If ``target_coord`` is a 1D array of length N, the output shape is (N, ) + ``data.shape[1:]``.
+        - If ``target_coord`` is an array of arrays, the output shape is (M, ) + ``data.shape[1:]``,
           where M is the number of horizontal locations in ``data``.
         When interpolation is not possible for a given target coordinate level (e.g., when the target coordinate
-        is outside the range of ``coord_data``), the corresponding output values are set to NaN.
+        is outside the range of ``coord``), the corresponding output values are set to NaN.
 
     Raises
     ------
     ValueError
         If ``data`` has less than two levels.
     ValueError
-        If the first dimension of ``data`` and that of ``coord_data`` do not match.
-
+        If the first dimension of ``data`` and that of ``coord`` do not match.
 
     Notes
     -----
     - The ordering of the input coordinate levels is not checked.
-    - The units of ``coord_data`` and ``coord_target`` are assumed to be the same; no checks
+    - The units of ``coord`` and ``target_coord`` are assumed to be the same; no checks
       or conversions are performed.
 
     """
+    from .monotonic import MonotonicInterpolator
 
-    xp = array_namespace(data, coord_data)
-    coord_target = xp.atleast_1d(coord_target)
-    coord_data = xp.atleast_1d(coord_data)
-
-    # Ensure levels are in descending order with respect to the first dimension
-    first = [0] * xp.ndim(coord_data)
-    last = [0] * xp.ndim(coord_data)
-    first = tuple([0] + first[1:])
-    last = tuple([-1] + last[1:])
-
-    if coord_data[first] < coord_data[last]:
-        coord_data = xp.flip(coord_data, axis=0)
-        data = xp.flip(data, axis=0)
-
-    nlev = data.shape[0]
-    if nlev < 2:
-        raise ValueError("At least two levels are required for interpolation.")
-
-    if data.shape[0] != coord_data.shape[0]:
-        raise ValueError(
-            f"The first dimension of data and that of coord_data must match! {data.shape=} {coord_data.shape=} {data.shape[0]} != {coord_data.shape[0]}"
-        )
-
-    scalar_info = ScalarInfo(
-        xp.ndim(data[0]) == 0, xp.ndim(coord_data[0]) == 0, xp.ndim(coord_target[0]) == 0
+    comp = MonotonicInterpolator()
+    return comp(
+        data,
+        coord,
+        target_coord,
+        interpolation,
+        aux_min_level_data,
+        aux_min_level_coord,
+        aux_max_level_data,
+        aux_max_level_coord,
     )
-
-    data_same_shape = data.shape == coord_data.shape
-    if data_same_shape:
-        if scalar_info.values and not scalar_info.target:
-            raise ValueError("If values and p have the same shape, they cannot both be scalars.")
-        if not scalar_info.values and not scalar_info.target and data.shape[1:] != coord_target.shape[1:]:
-            raise ValueError(
-                "When values and target_p have different shapes, target_p must be a scalar or a 1D array."
-            )
-
-    if not data_same_shape and xp.ndim(coord_data) != 1:
-        raise ValueError(
-            f"When values and p have different shapes, p must be a scalar or a 1D array. {data.shape=} {coord_data.shape=} {xp.ndim(coord_data)}"
-        )
-
-    # initialize the output array
-    res = xp.empty((len(coord_target),) + data.shape[1:], dtype=data.dtype)
-    if data_same_shape:
-        if scalar_info.values:
-            data = xp.broadcast_to(data, (1, nlev)).T
-            coord_data = xp.broadcast_to(coord_data, (1, nlev)).T
-        else:
-            assert not scalar_info.values
-            assert not scalar_info.source
-    else:
-        assert scalar_info.source
-        # print(f"scalar_info.target: {scalar_info.target}")
-        if scalar_info.target:
-            return _to_level_1(data, coord_data, nlev, coord_target, interpolation, scalar_info, xp, res)
-        else:
-            coord_data = xp.broadcast_to(coord_data, (nlev,) + data.shape[1:]).T
-
-    return _to_level(data, coord_data, nlev, coord_target, interpolation, scalar_info, xp, res)
-
-
-# values and p have the same shape
-def _to_level(data, src_coord, nlev, coord_target, interpolation, scalar_info, xp, res):
-    # The coordinate levels must be ordered in descending order with respect to the
-    # first dimension. So index 0 has the highest coordinate values, index -1 the lowest,
-    # as if it were pressure levels in the atmosphere. The algorithm below agnostic to the
-    # actual meaning of the coordinate in the real atmosphere. The terms "top" and "bottom"
-    # are used with respect to this coordinate ordering in mind and not related to actual
-    # vertical position in the atmosphere. Of course, if the  coordinate is pressure these
-    # two definitions coincide.
-    for target_idx, tc in enumerate(coord_target):
-
-        # find the level below the target
-        idx_bottom = (src_coord > tc).sum(0)
-        idx_bottom = xp.atleast_1d(idx_bottom)
-
-        # print(f"tc: {tc} i_top: {i_top}")
-        # initialise the output array
-        r = xp.empty(idx_bottom.shape)
-
-        # mask when the target is below the lowest level
-        mask_bottom = idx_bottom == 0
-        if xp.any(mask_bottom):
-            if interpolation != "nearest":
-                r[mask_bottom] = np.nan
-                m = mask_bottom & (src_coord[0] == tc)
-                r[m] = data[0][m]
-
-        # mask when the target is above the highest level
-        mask_top = idx_bottom == nlev
-        if xp.any(mask_top):
-            if interpolation != "nearest":
-                r[mask_top] = np.nan
-                m = mask_top & (src_coord[-1] == tc)
-                r[m] = data[-1][m]
-
-        # mask when the target is in the coordinate range
-        mask_mid = ~(mask_bottom | mask_top)
-
-        if xp.any(mask_mid):
-            i_lev = idx_bottom
-            indices = np.indices(i_lev.shape)
-            masked_indices = tuple(dim[mask_mid] for dim in indices)
-            top = (idx_bottom[mask_mid],) + masked_indices
-            bottom = (idx_bottom[mask_mid] - 1,) + masked_indices
-            c_top = src_coord[top]
-            c_bottom = src_coord[bottom]
-
-            f_top = data[top]
-            f_bottom = data[bottom]
-
-            # print(f"tc: {tc} c_top: {c_top} c_bottom: {c_bottom} f_top: {f_top} f_bottom: {f_bottom}")
-
-            if not scalar_info.target:
-                tc = tc[mask_mid]
-
-            # calculate the interpolation factor
-            if interpolation == "linear":
-                factor = (tc - c_bottom) / (c_top - c_bottom)
-            elif interpolation == "log":
-                factor = (xp.log(tc) - xp.log(c_bottom)) / (xp.log(c_top) - xp.log(c_bottom))
-
-            r[mask_mid] = (1.0 - factor) * f_bottom + factor * f_top
-
-        if scalar_info.values:
-            r = r[0]
-
-        res[target_idx] = r
-
-    return res
-
-
-# values and p have a different shape, p is 1D and target is 1D
-def _to_level_1(data, src_coord, nlev, coord_target, interpolation, scalar_info, xp, res):
-    # The coordinate levels must be ordered in descending order with respect to the
-    # first dimension. So index 0 has the highest coordinate values, index -1 the lowest,
-    # as if it were pressure levels in the atmosphere. The algorithm below agnostic to the
-    # actual meaning of the coordinate in the real atmosphere. The terms "top" and "bottom"
-    # are used with respect to this coordinate ordering in mind and not related to actual
-    # vertical position in the atmosphere. Of course, if the  coordinate is pressure these
-    # two definitions coincide.
-
-    # initialize the output array
-    res = xp.empty((len(coord_target),) + data.shape[1:], dtype=data.dtype)
-
-    # print("src_coord", src_coord, compare)
-
-    # p on a level is a number
-    for target_idx, tc in enumerate(coord_target):
-        # initialise the output array
-        r = xp.empty(data.shape[1:])
-        r = xp.atleast_1d(r)
-
-        # find the level below the target
-        idx_bottom = (src_coord > tc).sum(0)
-
-        # print(f"tc: {tc} i_top: {i_top}", src_coord[0])
-        if idx_bottom == 0:
-            if xp.isclose(src_coord[0], tc):
-                r = data[0]
-                # print(f"tc: {tc} r: {r}")
-            else:
-                r.fill(xp.nan)
-        elif idx_bottom == nlev:
-            if xp.isclose(src_coord[-1], tc):
-                r = data[-1]
-            else:
-                r.fill(xp.nan)
-        else:
-            top = idx_bottom
-            bottom = idx_bottom - 1
-
-            c_top = src_coord[top]
-            c_bottom = src_coord[bottom]
-
-            d_top = data[top]
-            d_bottom = data[bottom]
-            # calculate the interpolation factor
-            if interpolation == "linear":
-                factor = (tc - c_bottom) / (c_top - c_bottom)
-            elif interpolation == "log":
-                factor = (xp.log(tc) - xp.log(c_bottom)) / (xp.log(c_top) - xp.log(c_bottom))
-
-            r = (1.0 - factor) * d_bottom + factor * d_top
-
-        res[target_idx] = r
-
-    return res

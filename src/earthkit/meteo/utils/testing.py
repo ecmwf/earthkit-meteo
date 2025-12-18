@@ -10,6 +10,7 @@
 # A collection of functions to support pytest testing
 
 import os
+from importlib import import_module
 
 from earthkit.utils.testing import get_array_backend
 
@@ -23,3 +24,15 @@ if not os.path.exists(os.path.join(ROOT_DIR, "tests")):
 
 def test_data_path(filename: str) -> str:
     return os.path.join(ROOT_DIR, filename)
+
+
+def modules_installed(*modules):
+    for module in modules:
+        try:
+            import_module(module)
+        except (ImportError, RuntimeError, SyntaxError):
+            return False
+    return True
+
+
+NO_XARRAY = not modules_installed("xarray")
