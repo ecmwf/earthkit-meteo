@@ -9,8 +9,8 @@ __all__ = [
     "TargetCoordinates",
     "interpolate_monotonic",
     "interpolate_to_pressure_levels",
-    "interpolate_to_theta_levels",
-    "interpolate_to_any",
+    "interpolate_sleve_to_coord_levels",
+    "interpolate_sleve_to_theta_levels",
 ]
 
 
@@ -28,17 +28,38 @@ class TargetCoordinates:
 
 def interpolate_monotonic(
     data: xr.DataArray,
-    target_data: xr.DataArray,
+    coord: xr.DataArray,
     target_coord: TargetCoordinates,
     interpolation: Literal["linear", "log", "nearest"] = "linear",
 ) -> xr.DataArray:
+    """Interpolate a field to isolevels of a monotonic target field.
 
+    Example for vertical interpolation to isosurfaces of a target field,
+    which is strictly monotonically decreasing with height.
+
+    Parameters
+    ----------
+    data : xarray.DataArray
+        field to interpolate
+    coord : xarray.DataArray
+        target coordinate field data on the same levels as data
+    target_coord : TargetCoordinates
+        target coordinate definition
+    interpolation : str
+        interpolation algorithm, one of {"linear", "log", "nearest"}
+
+    Returns
+    -------
+    field_on_target : xarray.DataArray
+        field on target (i.e., pressure) coordinates
+
+    """
     # Initializations
     if interpolation not in {"linear", "log", "nearest"}:
         raise ValueError(f"Unknown interpolation: {interpolation}")
 
     # ... determine direction of target field
-    dtdz = target_data.diff("z")
+    dtdz = coord.diff("z")
     positive = np.all(dtdz > 0)
 
     if not positive and not np.all(dtdz < 0):
@@ -46,12 +67,12 @@ def interpolate_monotonic(
 
     # Prepare output field field_on_target on target coordinates
     field_on_target = _init_field_with_vcoord(
-        data.broadcast_like(target_data), target_coord, np.nan,
+        data.broadcast_like(coord), target_coord, np.nan,
     )
 
     # Interpolate
     # ... prepare interpolation
-    tkm1 = target_data.shift(z=1)
+    tkm1 = coord.shift(z=1)
     fkm1 = data.shift(z=1)
 
     # ... loop through target values
@@ -63,9 +84,9 @@ def interpolate_monotonic(
         # ... note that if the condition above is not fulfilled, minind will
         #     be set to k_top
         if positive:
-            t2 = target_data.where((target_data < t0) & (tkm1 >= t0))
+            t2 = coord.where((coord < t0) & (tkm1 >= t0))
         else:
-            t2 = target_data.where((target_data > t0) & (tkm1 <= t0))
+            t2 = coord.where((coord > t0) & (tkm1 <= t0))
 
         minind = t2.fillna(np.inf).argmin(dim="z")
 
@@ -103,9 +124,9 @@ def interpolate_monotonic(
 
 def interpolate_to_pressure_levels(
     data: xr.DataArray,
-    p_data: xr.DataArray,
-    p_target: Sequence[float],
-    p_target_units: Literal["Pa", "hPa"] = "Pa",
+    p: xr.DataArray,
+    target_p: Sequence[float],
+    target_p_units: Literal["Pa", "hPa"] = "Pa",
     interpolation: Literal["linear", "log", "nearest"] = "linear",
 ) -> xr.DataArray:
     """Interpolate a field from model (k) levels to pressure coordinates.
@@ -117,11 +138,11 @@ def interpolate_to_pressure_levels(
     ----------
     data : xarray.DataArray
         field to interpolate
-    p_data : xarray.DataArray
+    p : xarray.DataArray
         pressure field in Pa
-    p_target : list of float
+    target_p : list of float
         pressure target coordinate values
-    p_target_units : str
+    target_p_units : str
         pressure target coordinate units
     interpolation : str
         interpolation algorithm, one of {"linear", "log", "nearest"}
@@ -132,45 +153,45 @@ def interpolate_to_pressure_levels(
         field on target (i.e., pressure) coordinates
 
     """
-    # TODO: check that p_data is the pressure field, given in Pa (can only be done
+    # TODO: check that p is the pressure field, given in Pa (can only be done
     #       if attributes are consequently set)
     #       print warn message if result contains missing values
 
     # Initializations
     # ... supported target units and corresponding conversion factors to Pa
-    p_target_unit_conversions = dict(Pa=1.0, hPa=100.0)
-    if p_target_units not in p_target_unit_conversions.keys():
+    target_p_unit_conversions = dict(Pa=1.0, hPa=100.0)
+    if target_p_units not in target_p_unit_conversions.keys():
         raise ValueError(
-            f"unsupported value of p_target_units: {p_target_units}"
+            f"unsupported value of target_p_units: {target_p_units}"
         )
     # ... supported range of pressure target values (in Pa)
-    p_target_min = 1.0
-    p_target_max = 120000.0
+    target_p_min = 1.0
+    target_p_max = 120000.0
 
     # Define vertical target coordinates (target)
-    target_factor = p_target_unit_conversions[p_target_units]
-    target_values = np.array(sorted(p_target)) * target_factor
-    if np.any((target_values < p_target_min) | (target_values > p_target_max)):
+    target_factor = target_p_unit_conversions[target_p_units]
+    target_values = np.array(sorted(target_p)) * target_factor
+    if np.any((target_values < target_p_min) | (target_values > target_p_max)):
         raise ValueError(
             "target coordinate value out of range "
-            f"(must be in interval [{p_target_min}, {p_target_max}]Pa)"
+            f"(must be in interval [{target_p_min}, {target_p_max}]Pa)"
         )
     target = TargetCoordinates(
         type_of_level="isobaricInPa",
         values=target_values.tolist(),
     )
 
-    return interpolate_monotonic(data, p_data, target, interpolation)
+    return interpolate_monotonic(data, p, target, interpolation)
 
 
-def interpolate_to_any(
+def interpolate_sleve_to_coord_levels(
     data: xr.DataArray,
-    target_data: xr.DataArray,
-    target: TargetCoordinates,
-    h_data: xr.DataArray,
+    h: xr.DataArray,
+    coord: xr.DataArray,
+    target_coord: TargetCoordinates,
     folding_mode: Literal["low_fold", "high_fold", "undef_fold"] = "undef_fold",
 ) -> xr.DataArray:
-    """Interpolate a field from model levels to coordinates w.r.t. an arbitrary field.
+    """Interpolate a field from sleve levels to coordinates w.r.t. an arbitrary field.
 
     Example for vertical interpolation to isosurfaces of a target field
     that is no monotonic function of height.
@@ -179,12 +200,12 @@ def interpolate_to_any(
     ----------
     data : xarray.DataArray
         field to interpolate (e.g. on model levels)
-    target_data : xarray.DataArray
+    h : xarray.DataArray
+        height on same levels as data field
+    coord : xarray.DataArray
         target field on same levels as data field
     target : TargetCoordinates
         target coordinate definition
-    h_data : xarray.DataArray
-        height on same levels as data field
     folding_mode : str
         handle when the target is observed multiple times in a column,
         one of {"low_fold", "high_fold", "undef_fold"}
@@ -205,38 +226,38 @@ def interpolate_to_any(
     h_max = 100000.0
 
     # Prepare output field on target coordinates
-    field_on_target = _init_field_with_vcoord(data.broadcast_like(target_data), target, np.nan)
+    field_on_target = _init_field_with_vcoord(data.broadcast_like(coord), target_coord, np.nan)
 
     # Interpolate
     # ... prepare interpolation
-    tkm1 = target_data.shift(z=1)
+    tkm1 = coord.shift(z=1)
     fkm1 = data.shift(z=1)
 
     # ... loop through tc values
-    for t_idx, t0 in enumerate(target.values):
-        folding_coord_exception = xr.full_like(h_data[{"z": 0}], False)
+    for t_idx, t0 in enumerate(target_coord.values):
+        folding_coord_exception = xr.full_like(h[{"z": 0}], False)
         # ... find the height field where target is >= t0 on level k and was <= t0
         #     on level k-1 or where theta is <= th0 on level k
         #     and was >= th0 on level k-1
-        h = h_data.where(
-            ((target_data >= t0) & (tkm1 <= t0)) | ((target_data <= t0) & (tkm1 >= t0))
+        ht = h.where(
+            ((coord >= t0) & (tkm1 <= t0)) | ((coord <= t0) & (tkm1 >= t0))
         )
         if folding_mode == "undef_fold":
             # ... find condition where more than one interval is found, which
             # contains the target coordinate value
-            tmp = xr.where(h.notnull(), 1, 0).sum(dim=["z"])
+            tmp = xr.where(ht.notnull(), 1, 0).sum(dim=["z"])
             folding_coord_exception = tmp.where(tmp > 1).notnull()
         if folding_mode in ("low_fold", "undef_fold"):
             # ... extract the index k of the smallest height at which
             # the condition is fulfilled
-            tcind = h.fillna(h_max).argmin(dim="z")
+            tcind = ht.fillna(h_max).argmin(dim="z")
         if folding_mode == "high_fold":
             # ... extract the index k of the largest height at which the condition
             # is fulfilled
-            tcind = h.fillna(h_min).argmax(dim="z")
+            tcind = ht.fillna(h_min).argmax(dim="z")
 
         # ... extract theta and field at level k
-        t2 = target_data[{"z": tcind}]
+        t2 = coord[{"z": tcind}]
         f2 = data[{"z": tcind}]
         # ... extract theta and field at level k-1
         f1 = fkm1[{"z": tcind}]
@@ -253,30 +274,30 @@ def interpolate_to_any(
     return field_on_target
 
 
-def interpolate_to_theta_levels(
+def interpolate_sleve_to_theta_levels(
     data: xr.DataArray,
-    t_data: xr.DataArray,
-    t_target: Sequence[float],
-    h_data: xr.DataArray,
-    t_target_units: Literal["K", "cK"] = "K",
+    h: xr.DataArray,
+    theta: xr.DataArray,
+    target_theta: Sequence[float],
+    target_t_units: Literal["K", "cK"] = "K",
     folding_mode: Literal["low_fold", "high_fold", "undef_fold"] = "undef_fold",
 ) -> xr.DataArray:
-    """Interpolate a field from model levels to potential temperature coordinates.
+    """Interpolate a field from sleve levels to potential temperature coordinates.
 
-       Example for vertical interpolation to isosurfaces of a target field
-       that is no monotonic function of height.
+    Example for vertical interpolation to isosurfaces of a target field
+    that is no monotonic function of height.
 
     Parameters
     ----------
     data : xarray.DataArray
         field to interpolate
-    t_data : xarray.DataArray
-        potential temperature theta in K
-    t_target : list of float
-        target coordinate values
-    h_data : xarray.DataArray
+    h : xarray.DataArray
         height
-    t_target_units : str
+    theta : xarray.DataArray
+        potential temperature theta in K
+    target_theta : list of float
+        target coordinate values
+    target_t_units : str
         target coordinate units, one of {"K", "cK"}
     folding_mode : str
         handle when the target is observed multiple times in a column,
@@ -303,9 +324,9 @@ def interpolate_to_theta_levels(
     #     isentropic surfaces are coded in K; fieldextra codes
     #     them in cK for NetCDF (to be checked)
     th_tc_unit_conversions = dict(K=1.0, cK=0.01)
-    if t_target_units not in th_tc_unit_conversions.keys():
+    if target_t_units not in th_tc_unit_conversions.keys():
         raise ValueError(
-            f"unsupported value of th_tc_units: {t_target_units}"
+            f"unsupported value of th_tc_units: {target_t_units}"
         )
     # ... supported range of tc values (in K)
     th_tc_min = 1.0
@@ -314,7 +335,7 @@ def interpolate_to_theta_levels(
     # Define vertical target coordinates
     # Sorting cannot be exploited for optimizations, since theta is
     # not monotonous wrt to height tc values are stored in K
-    tc_values = np.array(t_target) * th_tc_unit_conversions[t_target_units]
+    tc_values = np.array(target_theta) * th_tc_unit_conversions[target_t_units]
     if np.any((tc_values < th_tc_min) | (tc_values > th_tc_max)):
         raise ValueError(
             "target coordinate value "
@@ -325,7 +346,7 @@ def interpolate_to_theta_levels(
         values=tc_values.tolist(),
     )
 
-    return interpolate_to_any(data, t_data, tc, h_data, folding_mode)
+    return interpolate_sleve_to_coord_levels(data, theta, tc, h, folding_mode)
 
 
 def _init_field_with_vcoord(
