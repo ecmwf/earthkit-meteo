@@ -6,8 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-import numpy as np
-
 
 def project(field, patterns, weights, **patterns_kwargs):
     """Project onto the given regime patterns.
@@ -43,11 +41,11 @@ def project(field, patterns, weights, **patterns_kwargs):
         raise NotImplementedError("automatic generation of weights")
     if weights.shape != patterns.shape:
         raise ValueError(f"shape of weights {weights.shape} must match shape of patterns {patterns.shape}")
-    weights = weights / np.sum(weights)
+    weights = weights / weights.sum()
 
     # Project onto each regime pattern
     sum_axes = tuple(range(-ndim_field, 0, 1))
-    return {regime: np.sum(field * pattern * weights, axis=sum_axes) for regime, pattern in ps.items()}
+    return {regime: (field * pattern * weights).sum(axis=sum_axes) for regime, pattern in ps.items()}
 
 
 def standardise(projections, mean, std):

@@ -8,7 +8,7 @@
 
 import abc
 
-import numpy as np
+from earthkit.utils.array import array_namespace
 
 
 class RegimePatterns(abc.ABC):
@@ -68,7 +68,8 @@ class ConstantRegimePatterns(RegimePatterns):
 
     def __init__(self, regimes, grid, patterns):
         super().__init__(regimes, grid)
-        self._patterns = np.asarray(patterns)
+        self._xp = array_namespace(patterns)
+        self._patterns = self._xp.asarray(patterns)
         if self._patterns.ndim != 1 + len(self.shape):
             raise ValueError("must have exactly one regime dimension in the patterns")
         if len(self.regimes) != self._patterns.shape[0]:
@@ -102,7 +103,8 @@ class ModulatedRegimePatterns(RegimePatterns):
 
     def __init__(self, regimes, grid, patterns, modulator):
         super().__init__(regimes, grid)
-        self._base_patterns = np.asarray(patterns)
+        self._xp = array_namespace(patterns)
+        self._base_patterns = self._xp.asarray(patterns)
         # Pattern verification
         if self._base_patterns.ndim != 1 + len(self.shape):
             raise ValueError("must have exactly one regime dimension in the patterns")
@@ -129,7 +131,8 @@ class ModulatedRegimePatterns(RegimePatterns):
         dict[str, array_like]
             Modulated regime patterns.
         """
-        modulator = np.asarray(self.modulator(**kwargs))
+        xp = self._xp
+        modulator = xp.asarray(self.modulator(**kwargs))
         # Adapt to shape of regime patterns
-        modulator = modulator[(..., *((np.newaxis,) * len(self.shape)))]
+        modulator = modulator[(..., *((xp.newaxis,) * len(self.shape)))]
         return {regime: modulator * base_pattern for regime, base_pattern in self._base_patterns_dict.items()}
