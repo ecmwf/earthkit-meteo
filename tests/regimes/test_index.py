@@ -34,12 +34,17 @@ def patterns():
 
 
 def test_project_matches_field_and_pattern_shapes(patterns):
-    with pytest.raises(AssertionError):
-        regimes.project(np.zeros((91 * 121,)), patterns)
-    with pytest.raises(AssertionError):
-        regimes.project(np.zeros((20, 30)), patterns)
-    with pytest.raises(AssertionError):
-        regimes.project(np.zeros((91, 2, 3)), patterns)
+    with pytest.raises(ValueError):
+        regimes.project(np.zeros((91 * 121,)), patterns, weights=None)
+    with pytest.raises(ValueError):
+        regimes.project(np.zeros((20, 30)), patterns, weights=None)
+    with pytest.raises(ValueError):
+        regimes.project(np.zeros((91, 2, 3)), patterns, weights=None)
+
+
+def test_project_matches_weights_and_pattern_shapes(patterns):
+    with pytest.raises(ValueError):
+        regimes.project(np.ones(patterns.shape), patterns, weights=np.ones((20, 30)))
 
 
 def test_project_ones_with_uniform_weights(patterns):

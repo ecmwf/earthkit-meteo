@@ -69,8 +69,10 @@ class ConstantRegimePatterns(RegimePatterns):
     def __init__(self, regimes, grid, patterns):
         super().__init__(regimes, grid)
         self._patterns = np.asarray(patterns)
-        assert self._patterns.ndim == 1 + len(self.shape)
-        assert len(self.regimes) == self._patterns.shape[0]
+        if self._patterns.ndim != 1 + len(self.shape):
+            raise ValueError("must have exactly one regime dimension in the patterns")
+        if len(self.regimes) != self._patterns.shape[0]:
+            raise ValueError("number of regimes does not match number of patterns")
 
     def patterns(self):
         """Regime patterns.
@@ -102,10 +104,13 @@ class ModulatedRegimePatterns(RegimePatterns):
         super().__init__(regimes, grid)
         self._base_patterns = np.asarray(patterns)
         # Pattern verification
-        assert self._base_patterns.ndim == 1 + len(self.shape)
-        assert len(self.regimes) == self._base_patterns.shape[0]
+        if self._base_patterns.ndim != 1 + len(self.shape):
+            raise ValueError("must have exactly one regime dimension in the patterns")
+        if len(self.regimes) != self._base_patterns.shape[0]:
+            raise ValueError("number of regimes does not match number of patterns")
         self.modulator = modulator
-        assert callable(self.modulator)
+        if not callable(self.modulator):
+            raise ValueError("modulator must be callable")
 
     @property
     def _base_patterns_dict(self):

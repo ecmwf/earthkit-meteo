@@ -9,7 +9,7 @@
 import numpy as np
 
 
-def project(field, patterns, weights=None, **patterns_kwargs):
+def project(field, patterns, weights, **patterns_kwargs):
     """Project onto the given regime patterns.
 
     Parameters
@@ -18,10 +18,10 @@ def project(field, patterns, weights=None, **patterns_kwargs):
         Input field(s) to project.
     patterns : earthkit.meteo.regimes.RegimePatterns
         Regime patterns.
-    weights : None, array_like, "uniform", optional
+    weights : array_like
         Weights for the summation over the spatial dimensions.
     **patterns_kwargs : dict[str, Any], optional
-        Keyword argumenents for the pattern generation. E.g., a sequence of
+        Keyword arguments for the pattern generation. E.g., a sequence of
         dates for date-modulated regime patterns.
 
     Returns
@@ -30,14 +30,19 @@ def project(field, patterns, weights=None, **patterns_kwargs):
         Results of the projection for each regime.
     """
     ndim_field = len(patterns.shape)
-    assert field.shape[-ndim_field:] == patterns.shape
+    if field.shape[-ndim_field:] != patterns.shape:
+        raise ValueError(
+            f"shape of input fields {field.shape} incompatible with shape of regime patterns {patterns.shape}"
+        )
 
     ps = patterns.patterns(**patterns_kwargs)
 
     if weights is None:
         # TODO generate area-based weights from grid of patterns with earthkit-geo
-        raise NotImplementedError
-    assert weights.shape == patterns.shape
+        # TODO make weights an optional argument with None default and document
+        raise NotImplementedError("automatic generation of weights")
+    if weights.shape != patterns.shape:
+        raise ValueError(f"shape of weights {weights.shape} must match shape of patterns {patterns.shape}")
     weights = weights / np.sum(weights)
 
     # Project onto each regime pattern
