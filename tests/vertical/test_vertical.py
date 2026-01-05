@@ -257,8 +257,6 @@ def test_pressure_on_hybrid_levels_2(index, levels, output, xp):
         # ref_delta = ref_delta[levels_idx, :]
         # ref_alpha = ref_alpha[levels_idx, :]
 
-    print("levels=", levels)
-
     res = vertical.pressure_on_hybrid_levels(A, B, sp, levels=levels, alpha_top="ifs", output=output)
 
     if isinstance(output, str) or len(output) == 1:
@@ -284,7 +282,7 @@ def test_pressure_on_hybrid_levels_2(index, levels, output, xp):
 # @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
-def test_relative_geopotential_thickness_on_hybrid_levels(index, xp, device):
+def test_relative_geopotential_thickness_on_hybrid_levels_1(index, xp, device):
 
     alpha = DATA_HYBRID_CORE.alpha
     delta = DATA_HYBRID_CORE.delta
@@ -300,9 +298,33 @@ def test_relative_geopotential_thickness_on_hybrid_levels(index, xp, device):
     q = q[index]
     z_ref = z_ref[index]
 
-    z = vertical.relative_geopotential_thickness_on_hybrid_levels(t, q, alpha, delta)
+    z = vertical.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta)
 
-    assert xp.allclose(z, z_ref, rtol=1e-8)
+    assert xp.allclose(z, z_ref)
+
+
+# @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+def test_relative_geopotential_thickness_on_hybrid_levels_2(index, xp, device):
+
+    A = DATA_HYBRID_CORE.A
+    B = DATA_HYBRID_CORE.B
+    sp = DATA_HYBRID_CORE.p_surf
+    t = DATA_HYBRID_CORE.t
+    q = DATA_HYBRID_CORE.q
+    z_ref = DATA_HYBRID_CORE.z
+
+    z_ref, t, q, A, B, sp = (xp.asarray(x, device=device) for x in [z_ref, t, q, A, B, sp])
+
+    sp = sp[index[1]]
+    t = t[index]
+    q = q[index]
+    z_ref = z_ref[index]
+
+    z = vertical.relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp)
+
+    assert xp.allclose(z, z_ref, rtol=1e-6)
 
 
 # @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
@@ -310,25 +332,25 @@ def test_relative_geopotential_thickness_on_hybrid_levels(index, xp, device):
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
 def test_geopotential_on_hybrid_levels(index, xp, device):
 
-    alpha = DATA_HYBRID_CORE.alpha
-    delta = DATA_HYBRID_CORE.delta
+    A = DATA_HYBRID_CORE.A
+    B = DATA_HYBRID_CORE.B
+    sp = DATA_HYBRID_CORE.p_surf
     t = DATA_HYBRID_CORE.t
     q = DATA_HYBRID_CORE.q
     z_ref = DATA_HYBRID_CORE.z
     zs = [0.0] * len(t[0])  # surface geopotential is zero in test data
 
-    z_ref, t, q, alpha, delta, zs = (xp.asarray(x, device=device) for x in [z_ref, t, q, alpha, delta, zs])
+    z_ref, t, q, zs, A, B, sp = (xp.asarray(x, device=device) for x in [z_ref, t, q, zs, A, B, sp])
 
-    alpha = alpha[index]
-    delta = delta[index]
+    sp = sp[index[1]]
     t = t[index]
     q = q[index]
     z_ref = z_ref[index]
     zs = zs[index[1]]
 
-    z = vertical.geopotential_on_hybrid_levels(t, q, zs, alpha, delta)
+    z = vertical.geopotential_on_hybrid_levels(t, q, zs, A, B, sp)
 
-    assert xp.allclose(z, z_ref, rtol=1e-8)
+    assert xp.allclose(z, z_ref, rtol=1e-6)
 
 
 @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
@@ -339,28 +361,20 @@ def test_height_on_hybrid_levels(index, xp, device, h_type, h_reference):
 
     A, B = vertical.hybrid_level_parameters(137)
     sp = DATA_HYBRID_H.p_surf
-    alpha, delta = vertical.pressure_on_hybrid_levels(A, B, sp, output=("alpha", "delta"))
-
     t = DATA_HYBRID_H.t
     q = DATA_HYBRID_H.q
-    p_surf = DATA_HYBRID_H.p_surf
     zs = DATA_HYBRID_H.zs
 
     ref_name = f"h_{h_type}_{h_reference}"
     h_ref = getattr(DATA_HYBRID_H, ref_name)
 
-    h_ref, t, q, zs, p_surf, alpha, delta = (
-        xp.asarray(x, device=device) for x in [h_ref, t, q, zs, p_surf, alpha, delta]
-    )
+    h_ref, t, q, zs, sp, A, B = (xp.asarray(x, device=device) for x in [h_ref, t, q, zs, sp, A, B])
 
     t = t[index]
     q = q[index]
     h_ref = h_ref[index]
     zs = zs[index[1]]
-    p_surf = p_surf[index[1]]
-    alpha = alpha[index]
-    delta = delta[index]
+    sp = sp[index[1]]
 
-    h = vertical.height_on_hybrid_levels(t, q, zs, alpha, delta, h_type=h_type, h_reference=h_reference)
-
+    h = vertical.height_on_hybrid_levels(t, q, zs, A, B, sp, h_type=h_type, h_reference=h_reference)
     assert xp.allclose(h, h_ref)

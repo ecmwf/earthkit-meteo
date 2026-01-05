@@ -615,8 +615,6 @@ def pressure_on_hybrid_levels(
         out_half_idx = np.where(levels[:, None] == half_idx[None, :])[1]
         out_full_idx = out_half_idx - 1
 
-        print(f"Selected levels: {levels} half_idx: {half_idx} out_full_idx: {out_full_idx}")
-
     # make the calculation agnostic to the number of dimensions
     ndim = sp.ndim
     new_shape_half = (A.shape[0],) + (1,) * ndim
@@ -696,7 +694,7 @@ def pressure_on_hybrid_levels(
     return tuple(res)
 
 
-def relative_geopotential_thickness_on_hybrid_levels(
+def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     t: ArrayLike,
     q: ArrayLike,
     alpha: ArrayLike,
@@ -767,12 +765,89 @@ def relative_geopotential_thickness_on_hybrid_levels(
     return dphi
 
 
+def relative_geopotential_thickness_on_hybrid_levels(
+    t: ArrayLike,
+    q: ArrayLike,
+    A: ArrayLike,
+    B: ArrayLike,
+    sp: ArrayLike,
+) -> ArrayLike:
+    """Compute the geopotential thickness between the surface and hybrid (IFS model) full-levels.
+
+    *New in version 0.7.0*
+
+    Parameters
+    ----------
+    t : array-like
+        Temperature on hybrid full-levels (K). First dimension must
+        correspond to the full-levels. The levels must be in ascending order with
+        respect the model level number. Not all the levels must be present, but a
+        contiguous level range including the bottom-most level must be used. E.g. if
+        the vertical coordinate system has 137 model levels using only a subset of
+        levels between e.g. 137-96 is allowed.
+    q : array-like
+        Specific humidity on hybrid full-levels (kg/kg). Must have the
+        same shape, level range and order as ``t``.
+    A : array-like
+        A-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number. Must be defined
+        on the hybrid half-levels corresponding to the hybrid full-levels in ``t`` and
+        ``q``. So the number of levels in ``A`` must be one more than the number of
+        levels in ``t`` and ``q``.
+    B : array-like
+        B-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number.  Must have the same
+        size as ``A``. Must be defined on the hybrid half-levels corresponding to the
+        hybrid full-levels in ``t`` and ``q``. So the number of levels in ``A`` must be
+        one more than the number of levels in ``t`` and ``q``.
+    sp : array-like
+        Surface pressure (Pa)
+
+    Returns
+    -------
+    array-like
+        Geopotential thickness (m2/s2) between the surface and hybrid full-levels.
+
+    Notes
+    -----
+    ``t`` and ``q`` must contain the same model levels in ascending order with respect to
+    the model level number. The model level range must be contiguous and must include the
+    bottom-most level, but not all the levels must be present. E.g. if the vertical coordinate
+    system has 137 model levels using only a subset of levels between e.g. 137-96 is allowed.
+
+    ``A`` and ``B`` must be defined on the model half-levels corresponding to the model
+    full-levels in ``t`` and ``q``. So the number of levels in ``A`` and ``B`` must be one
+    more than the number of levels in ``t`` and ``q``.
+
+    The computations are done in two steps:
+
+    - first the ``alpha`` and ``delta`` parameters are calculated using
+      :func:`pressure_on_hybrid_levels`
+    - then the geopotential thickness is calculated using
+      :func:`relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta` See
+      [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1. for details.
+
+    See also
+    --------
+    pressure_on_hybrid_levels
+    relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta
+
+    """
+    xp = array_namespace(t, q, A, B, sp)
+    A = xp.asarray(A)
+    B = xp.asarray(B)
+    sp = xp.asarray(sp)
+    alpha, delta = pressure_on_hybrid_levels(A, B, sp, output=("alpha", "delta"))
+    return relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta)
+
+
 def geopotential_on_hybrid_levels(
     t: ArrayLike,
     q: ArrayLike,
     zs: ArrayLike,
-    alpha: ArrayLike,
-    delta: ArrayLike,
+    A: ArrayLike,
+    B: ArrayLike,
+    sp: ArrayLike,
 ):
     """Compute the geopotential on hybrid (IFS model) full-levels.
 
@@ -791,13 +866,21 @@ def geopotential_on_hybrid_levels(
         same shape, level range and order as ``t``.
     zs : array-like
         Surface geopotential (m2/s2). Only used when ``reference_level`` is "sea".
-    alpha : array-like
-        Alpha term of pressure calculations computed using
-        :func:`pressure_on_hybrid_levels`. Must have the same shape, level range
-        and order as ``t``.
-    delta : array-like
-        Delta term of pressure calculations computed using :func:`pressure_on_hybrid_levels`.
-        Must have the same shape, level range and order as ``t``.
+    A : array-like
+        A-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number. Must be defined
+        on the hybrid half-levels corresponding to the hybrid full-levels in ``t`` and
+        ``q``. So the number of levels in ``A`` must be one more than the number of
+        levels in ``t`` and ``q``.
+    B : array-like
+        B-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number.  Must have the same
+        size as ``A``. Must be defined on the hybrid half-levels corresponding to the
+        hybrid full-levels in ``t`` and ``q``. So the number of levels in ``A`` must be
+        one more than the number of levels in ``t`` and ``q``.
+    sp : array-like
+        Surface pressure (Pa)
+
 
     Returns
     -------
@@ -811,8 +894,9 @@ def geopotential_on_hybrid_levels(
     bottom-most level, but not all the levels must be present. E.g. if the vertical coordinate
     system has 137 model levels using only a subset of levels between e.g. 137-96 is allowed.
 
-    ``alpha`` and ``delta`` must be defined on the same levels as ``t`` and ``q``. These
-    values can be calculated using :func:`pressure_on_hybrid_levels`.
+    ``A`` and ``B`` must be defined on the model half-levels corresponding to the model
+    full-levels in ``t`` and ``q``. So the number of levels in ``A`` and ``B`` must be one
+    more than the number of levels in ``t`` and ``q``.
 
     The computations are described in [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1.
 
@@ -822,14 +906,9 @@ def geopotential_on_hybrid_levels(
     relative_geopotential_thickness_on_hybrid_levels
 
     """
-    xp = array_namespace(t, q, zs, alpha, delta)
-    t = xp.asarray(t)
-    q = xp.asarray(q)
+    z = relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp)
+    xp = array_namespace(z, zs)
     zs = xp.asarray(zs)
-    alpha = xp.asarray(alpha)
-    delta = xp.asarray(delta)
-
-    z = relative_geopotential_thickness_on_hybrid_levels(t, q, alpha, delta)
     return z + zs
 
 
@@ -837,12 +916,13 @@ def height_on_hybrid_levels(
     t: ArrayLike,
     q: ArrayLike,
     zs: ArrayLike,
-    alpha: ArrayLike,
-    delta: ArrayLike,
+    A: ArrayLike,
+    B: ArrayLike,
+    sp: ArrayLike,
     h_type: str = "geometric",
     h_reference: str = "ground",
 ):
-    """Calculate the height on hybrid (IFS model) full-levels.
+    """Compute the height on hybrid (IFS model) full-levels.
 
     *New in version 0.7.0*
 
@@ -860,13 +940,20 @@ def height_on_hybrid_levels(
         same shape, level range and order as ``t``.
     zs : array-like
         Surface geopotential (m2/s2). Only used when ``h_reference`` is "ground".
-    alpha : array-like
-        Alpha term of pressure calculations computed using
-        :func:`pressure_on_hybrid_levels`. Must have the same shape, level range
-        and order as ``t``.
-    delta : array-like
-        Delta term of pressure calculations computed using :func:`pressure_on_hybrid_levels`.
-        Must have the same shape, level range and order as ``t``.
+    A : array-like
+        A-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number. Must be defined
+        on the hybrid half-levels corresponding to the hybrid full-levels in ``t`` and
+        ``q``. So the number of levels in ``A`` must be one more than the number of
+        levels in ``t`` and ``q``.
+    B : array-like
+        B-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number.  Must have the same
+        size as ``A``. Must be defined on the hybrid half-levels corresponding to the
+        hybrid full-levels in ``t`` and ``q``. So the number of levels in ``A`` must be
+        one more than the number of levels in ``t`` and ``q``.
+    sp : array-like
+        Surface pressure (Pa)
     h_type : str, optional
         Type of height to compute. Possible values are:
 
@@ -890,9 +977,18 @@ def height_on_hybrid_levels(
 
     Notes
     -----
+    ``t`` and ``q`` must contain the same model levels in ascending order with respect to
+    the model level number. The model level range must be contiguous and must include the
+    bottom-most level, but not all the levels must be present. E.g. if the vertical coordinate
+    system has 137 model levels using only a subset of levels between e.g. 137-96 is allowed.
+
+    ``A`` and ``B`` must be defined on the model half-levels corresponding to the model
+    full-levels in ``t`` and ``q``. So the number of levels in ``A`` and ``B`` must be one
+    more than the number of levels in ``t`` and ``q``.
+
     The height is calculated from the geopotential on hybrid levels, which is computed
-    from the temperature, specific humidity, surface geopotential and the hybrid
-    level definition (A and B coefficients together with the surface pressure). The
+    from the ``t``, ``q``, ``zs`` and the hybrid
+    level definition (``A``, ``B``  and ``sp``). The
     computations are described in [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1.
 
     See also
@@ -907,17 +1003,17 @@ def height_on_hybrid_levels(
         raise ValueError(f"Unknown '{h_reference=}'. Use 'sea' or 'ground'.")
 
     nlev_t = t.shape[0]
-    nlev = alpha.shape[0] - 1  # number of model full-levels
+    nlev = A.shape[0] - 1  # number of model full-levels
     levels = None
     if nlev_t != nlev:
         # select a contiguous subset of levels
         levels = list(range(nlev - nlev_t + 1, nlev + 1))
         assert nlev_t == len(levels), (
-            "Inconsistent number of levels between t/q and alpha/delta coefficients."
-            f" t/q have {nlev_t} levels, alpha/delta have {nlev} levels."
+            "Inconsistent number of levels between t/q and A/B coefficients."
+            f" t/q have {nlev_t} levels, A/B have {nlev} levels."
         )
 
-    z_thickness = relative_geopotential_thickness_on_hybrid_levels(t, q, alpha, delta)
+    z_thickness = relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp)
 
     if h_reference == "sea":
         z = z_thickness + zs

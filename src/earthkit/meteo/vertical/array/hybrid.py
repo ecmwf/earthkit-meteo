@@ -304,7 +304,7 @@ _IFS = {
 
 
 def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> Tuple[NDArray[Any], NDArray[Any]]:
-    r"""Get the A and B parameters of hybrid levels for a number of levels and model.
+    r"""Get the A and B parameters of hybrid levels for a given configuration.
 
     Parameters
     -----------

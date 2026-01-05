@@ -58,6 +58,10 @@ def relative_geopotential_thickness_on_hybrid_levels(*args, **kwargs):
     return array.relative_geopotential_thickness_on_hybrid_levels(*args, **kwargs)
 
 
+def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(*args, **kwargs):
+    return array.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(*args, **kwargs)
+
+
 def geopotential_on_hybrid_levels(*args, **kwargs):
     return array.geopotential_on_hybrid_levels(*args, **kwargs)
 
