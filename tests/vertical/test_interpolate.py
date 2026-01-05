@@ -18,11 +18,11 @@ np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 NUMPY = [x for x in NAMESPACE_DEVICES if x[0]._earthkit_array_namespace_name == "numpy"]
 
 
-# The type of the input per level is encoded in the test name as three letters with:
+# The type of the input data per level is encoded in the test name as three letters with:
 #   s: scalar
 #   a: array
 #
-# So, e.g. "s_a_s" means the following on a level:
+# So, e.g. "s_a_s" means the following input data on a level:
 #  - value is scalar
 #  - pres is array
 #  - target is scalar
@@ -97,7 +97,7 @@ def make_xr(xp, data, coord):
         ),
     ],
 )
-def test_to_pressure_s_s_s(value, pres, target, mode, expected_value, xp, device):
+def test_interpolate_monotonic_to_pressure_s_s_s(value, pres, target, mode, expected_value, xp, device):
     """Test to_pressure with scalar value, scalar pres, scalar target"""
     value = xp.asarray(value, device=device)
     pres = xp.asarray(pres, device=device)
@@ -126,7 +126,7 @@ def test_to_pressure_s_s_s(value, pres, target, mode, expected_value, xp, device
         ),
     ],
 )
-def test_to_pressure_s_s_a(value, pres, target, mode, xp, device):
+def test_interpolate_monotonic_to_pressure_s_s_a(value, pres, target, mode, xp, device):
     """Test to_pressure with scalar value, scalar pres, scalar target"""
     value = xp.asarray(value, device=device)
     pres = xp.asarray(pres, device=device)
@@ -148,7 +148,7 @@ def test_to_pressure_s_s_a(value, pres, target, mode, xp, device):
         ),
     ],
 )
-def test_to_pressure_s_a_s(value, pres, target, mode, xp, device):
+def test_interpolate_monotonic_to_pressure_s_a_s(value, pres, target, mode, xp, device):
     """Test to_pressure with scalar value, scalar pres, scalar target"""
     value = xp.asarray(value, device=device)
     pres = xp.asarray(pres, device=device)
@@ -170,7 +170,7 @@ def test_to_pressure_s_a_s(value, pres, target, mode, xp, device):
         ),
     ],
 )
-def test_to_pressure_s_a_a(value, pres, target, mode, xp, device):
+def test_interpolate_monotonic_to_pressure_s_a_a(value, pres, target, mode, xp, device):
     """Test to_pressure with scalar value, scalar pres, scalar target"""
     value = xp.asarray(value, device=device)
     pres = xp.asarray(pres, device=device)
@@ -222,7 +222,7 @@ def test_to_pressure_s_a_a(value, pres, target, mode, xp, device):
         # ),
     ],
 )
-def test_to_pressure_a_a_s(value, pres, target, mode, expected_value, xp, device):
+def test_interpolate_monotonic_to_pressure_a_a_s(value, pres, target, mode, expected_value, xp, device):
     """Test to_pressure with array value, array pres, scalar target"""
     value = xp.asarray(value, device=device)
     pres = xp.asarray(pres, device=device)
@@ -277,7 +277,7 @@ def test_to_pressure_a_a_s(value, pres, target, mode, expected_value, xp, device
         ),
     ],
 )
-def test_to_pressure_a_s_s(value, pres, target, mode, expected_value, xp, device):
+def test_interpolate_monotonic_to_pressure_a_s_s(value, pres, target, mode, expected_value, xp, device):
     """Test to_pressure with array value, array pres, scalar target"""
     value = xp.asarray(value, device=device)
     pres = xp.asarray(pres, device=device)
@@ -336,7 +336,7 @@ def test_to_pressure_a_s_s(value, pres, target, mode, expected_value, xp, device
         ),
     ],
 )
-def test_to_pressure_a_s_a(value, pres, target, mode, expected_value, xp, device):
+def test_interpolate_monotonic_to_pressure_a_s_a(value, pres, target, mode, expected_value, xp, device):
     """Test to_pressure with array value, array pres, array target"""
     value = xp.asarray(value, device=device)
     pres = xp.asarray(pres, device=device)
@@ -395,7 +395,7 @@ def test_to_pressure_a_s_a(value, pres, target, mode, expected_value, xp, device
         ),
     ],
 )
-def test_to_pressure_a_a_a(value, pres, target, mode, expected_value, xp, device):
+def test_interpolate_monotonic_to_pressure_a_a_a(value, pres, target, mode, expected_value, xp, device):
     """Test to_pressure with array value, array pres, array target"""
     value = xp.asarray(value, device=device)
     pres = xp.asarray(pres, device=device)
@@ -419,7 +419,7 @@ def test_to_pressure_a_a_a(value, pres, target, mode, expected_value, xp, device
         ),
     ],
 )
-def test_to_pressure_s_s_s_aux(value, pres, target, mode, expected_value, xp, device):
+def test_interpolate_monotonic_to_pressure_s_s_s_aux(value, pres, target, mode, expected_value, xp, device):
     """Test to_pressure with scalar value, scalar pres, scalar target"""
     value = xp.asarray(value, device=device)
     pres = xp.asarray(pres, device=device)
@@ -450,7 +450,7 @@ def test_to_pressure_s_s_s_aux(value, pres, target, mode, expected_value, xp, de
         ),
     ],
 )
-def test_to_height_s_s_s(value, h, target, mode, expected_value, xp, device):
+def test_interpolate_monotonic_to_height_s_s_s(value, h, target, mode, expected_value, xp, device):
     """Test to_pressure with scalar value, scalar pres, scalar target"""
     value = xp.asarray(value, device=device)
     h = xp.asarray(h, device=device)
@@ -492,7 +492,7 @@ def test_to_height_s_s_s(value, h, target, mode, expected_value, xp, device):
         ),
     ],
 )
-def test_to_height_a_a_a(value, h, target, mode, expected_value, xp, device):
+def test_interpolate_monotonic_to_height_a_a_a(value, h, target, mode, expected_value, xp, device):
     """Test to_pressure with array value, array pres, array target"""
     value = xp.asarray(value, device=device)
     h = xp.asarray(h, device=device)
@@ -521,7 +521,7 @@ def test_to_height_a_a_a(value, h, target, mode, expected_value, xp, device):
         ),
     ],
 )
-def test_to_height_s_s_s_aux(value, h, target, mode, expected_value, xp, device):
+def test_interpolate_monotonic_to_height_s_s_s_aux(value, h, target, mode, expected_value, xp, device):
     """Test to_pressure with scalar value, scalar pres, scalar target"""
     value = xp.asarray(value, device=device)
     h = xp.asarray(h, device=device)
@@ -572,7 +572,9 @@ def test_to_height_s_s_s_aux(value, h, target, mode, expected_value, xp, device)
         ),
     ],
 )
-def test_to_height_a_a_a_aux(value, h, target, aux_value, aux_coord, mode, expected_value, xp, device):
+def test_interpolate_monotonic_to_height_a_a_a_aux(
+    value, h, target, aux_value, aux_coord, mode, expected_value, xp, device
+):
     """Test to_pressure with array value, array pres, array target"""
     value = xp.asarray(value, device=device)
     h = xp.asarray(h, device=device)

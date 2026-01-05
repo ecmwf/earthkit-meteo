@@ -283,7 +283,7 @@ class MonotonicInterpolator:
         factor = self._factor(c_top, c_bottom, tc, self.interpolation, xp)
         r[mask] = (1.0 - factor) * d_bottom + factor * d_top
 
-    # values and p have a different shape, p is 1D and target is 1D
+    # data and coord have a different shape, data is 1D and target is 1D
     def simple_compute(self, res):
         xp = self.xp
 

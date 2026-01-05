@@ -46,12 +46,24 @@ def geometric_height_from_geopotential(*args, **kwargs):
     return array.geometric_height_from_geopotential(*args, **kwargs)
 
 
+def hybrid_level_parameters(*args, **kwargs):
+    return array.hybrid_level_parameters(*args, **kwargs)
+
+
 def pressure_on_hybrid_levels(*args, **kwargs):
     return array.pressure_on_hybrid_levels(*args, **kwargs)
 
 
+def relative_geopotential_thickness_on_hybrid_levels(*args, **kwargs):
+    return array.relative_geopotential_thickness_on_hybrid_levels(*args, **kwargs)
+
+
 def geopotential_on_hybrid_levels(*args, **kwargs):
     return array.geopotential_on_hybrid_levels(*args, **kwargs)
+
+
+def height_on_hybrid_levels(*args, **kwargs):
+    return array.height_on_hybrid_levels(*args, **kwargs)
 
 
 def interpolate_monotonic(*args, **kwargs):
