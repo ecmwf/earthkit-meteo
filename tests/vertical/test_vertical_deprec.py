@@ -36,7 +36,7 @@ DATA = _get_data("_hybrid_core_data")
 
 @pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
-def test_pressure_at_model_levels(index, xp):
+def test_pressure_at_model_levels_ori(index, xp):
 
     sp = DATA.p_surf
     A = DATA.A
@@ -70,22 +70,56 @@ def test_pressure_at_model_levels(index, xp):
     assert xp.allclose(alpha, ref_alpha, rtol=1e-8)
 
 
+@pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
+@pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+def test_pressure_at_model_levels_migrated(index, xp):
+
+    sp = DATA.p_surf
+    A = DATA.A
+    B = DATA.B
+    ref_p_full = DATA.p_full
+    ref_p_half = DATA.p_half
+    ref_delta = DATA.delta
+    ref_alpha = DATA.alpha
+
+    sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B = (
+        xp.asarray(x) for x in [sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B]
+    )
+
+    sp = sp[index[1]]
+
+    ref_p_full = ref_p_full[index]
+    ref_p_half = ref_p_half[index]
+    ref_delta = ref_delta[index]
+    ref_alpha = ref_alpha[index]
+
+    p_full, p_half, delta, alpha = vertical.pressure_on_hybrid_levels(
+        A, B, sp, alpha_top="ifs", output=("full", "half", "delta", "alpha")
+    )
+
+    # print("p_full", repr(p_full))
+    # print("p_half", repr(p_half))
+    # print("delta", repr(delta))
+    # print("alpha", repr(alpha))
+
+    assert xp.allclose(p_full, ref_p_full, rtol=1e-8)
+    assert xp.allclose(p_half, ref_p_half, rtol=1e-8)
+    assert xp.allclose(delta, ref_delta, rtol=1e-8)
+    assert xp.allclose(alpha, ref_alpha, rtol=1e-8)
+
+
 # @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
-def test_relative_geopotential_thickness(index, xp, device):
+def test_relative_geopotential_thickness_ori(index, xp, device):
 
-    A = DATA.A
-    B = DATA.B
     alpha = DATA.alpha
     delta = DATA.delta
     t = DATA.t
     q = DATA.q
     z_ref = DATA.z
 
-    z_ref, t, q, alpha, delta, A, B = (
-        xp.asarray(x, device=device) for x in [z_ref, t, q, alpha, delta, A, B]
-    )
+    z_ref, t, q, alpha, delta = (xp.asarray(x, device=device) for x in [z_ref, t, q, alpha, delta])
 
     alpha = alpha[index]
     delta = delta[index]
@@ -94,6 +128,32 @@ def test_relative_geopotential_thickness(index, xp, device):
     z_ref = z_ref[index]
 
     z = vertical.relative_geopotential_thickness(alpha, delta, t, q)
+    # print("z", repr(z))
+    # print("z_ref", repr(z_ref))
+
+    assert xp.allclose(z, z_ref, rtol=1e-8)
+
+
+# @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+def test_relative_geopotential_thickness_migrated(index, xp, device):
+
+    alpha = DATA.alpha
+    delta = DATA.delta
+    t = DATA.t
+    q = DATA.q
+    z_ref = DATA.z
+
+    z_ref, t, q, alpha, delta = (xp.asarray(x, device=device) for x in [z_ref, t, q, alpha, delta])
+
+    alpha = alpha[index]
+    delta = delta[index]
+    t = t[index]
+    q = q[index]
+    z_ref = z_ref[index]
+
+    z = vertical.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta)
     # print("z", repr(z))
     # print("z_ref", repr(z_ref))
 
@@ -111,7 +171,7 @@ def test_relative_geopotential_thickness(index, xp, device):
         (50000.0, 84.2265165561),
     ],
 )
-def test_pressure_at_height_levels_all(h, p_ref, xp):
+def test_pressure_at_height_levels_all_ori(h, p_ref, xp):
     sp = DATA.p_surf
     A = DATA.A
     B = DATA.B
@@ -178,3 +238,91 @@ def test_pressure_at_height_levels_multi_point(xp):
 
     p = vertical.pressure_at_height_levels(h, t, q, sp, A, B, alpha_top="ifs")
     assert xp.allclose(p, p_ref)
+
+
+@pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
+@pytest.mark.parametrize(
+    "h_target,p_ref",
+    [
+        (0, 101183.94696484),
+        (1, 101171.8606369517),
+        (100.0, 99979.6875841272),
+        (5000.0, 53738.035306025726),
+        (50000.0, 84.2265165561),
+    ],
+)
+def test_pressure_at_height_levels_all_migrated_1(h_target, p_ref, xp):
+    sp = DATA.p_surf
+    A = DATA.A
+    B = DATA.B
+    t = DATA.t
+    q = DATA.q
+
+    # p_ref = [p_ref]
+
+    sp, h_target, p_ref, t, q, A, B = (xp.asarray(x) for x in [sp, h_target, p_ref, t, q, A, B])
+
+    sp = sp[0]  # use only the first surface pressure value
+    t = t[:, 0]
+    q = q[:, 0]
+
+    p_ml = vertical.pressure_on_hybrid_levels(A, B, sp, alpha_top="ifs", output="full")
+    h_ml = vertical.height_on_hybrid_levels(
+        t, q, 0, A, B, sp, alpha_top="ifs", h_type="geopotential", h_reference="ground"
+    )
+
+    p = vertical.interpolate_monotonic(
+        p_ml, h_ml, h_target, aux_min_level_data=sp, aux_min_level_coord=0.0, interpolation="linear"
+    )
+
+    # print("p:", repr(p), "p_ref:", repr(p_ref), p - p_ref)
+    # print("diff:", np.allclose(p, p_ref), np.abs(p - p_ref) < 1e-3 + 1e-8 * np.abs(p_ref))
+    # print("isclose:", np.isclose(p, p_ref, rtol=1e-8, atol=1e-5))
+    assert np.allclose(p, p_ref, atol=1e-3, rtol=1e-8)
+
+
+@pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
+@pytest.mark.parametrize(
+    "h_target,p_ref",
+    [
+        (0, 101183.94696484),
+        (1, 101171.8606369517),
+        (100.0, 99979.6875841272),
+        (5000.0, 53738.035306025726),
+        (50000.0, 84.2265165561),
+    ],
+)
+def test_pressure_at_height_levels_all_migrated_2(h_target, p_ref, xp):
+    sp = DATA.p_surf
+    A = DATA.A
+    B = DATA.B
+    t = DATA.t
+    q = DATA.q
+
+    p_ref = [p_ref]
+
+    sp, h_target, p_ref, t, q, A, B = (xp.asarray(x) for x in [sp, h_target, p_ref, t, q, A, B])
+
+    sp = sp[0]  # use only the first surface pressure value
+    t = t[:, 0]
+    q = q[:, 0]
+
+    p_ml = vertical.pressure_on_hybrid_levels(A, B, sp, output="full")
+    p = vertical.interpolate_hybrid_to_height_levels(
+        p_ml,
+        t,
+        q,
+        0,
+        A,
+        B,
+        sp,
+        h_target,
+        alpha_top="ifs",
+        aux_bottom_data=sp,
+        aux_bottom_h=0.0,
+        h_type="geopotential",
+        h_reference="ground",
+        interpolation="linear",
+    )
+
+    assert np.allclose(p, p_ref, atol=1e-3, rtol=1e-8)

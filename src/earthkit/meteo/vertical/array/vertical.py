@@ -766,11 +766,7 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
 
 
 def relative_geopotential_thickness_on_hybrid_levels(
-    t: ArrayLike,
-    q: ArrayLike,
-    A: ArrayLike,
-    B: ArrayLike,
-    sp: ArrayLike,
+    t: ArrayLike, q: ArrayLike, A: ArrayLike, B: ArrayLike, sp: ArrayLike, alpha_top="ifs"
 ) -> ArrayLike:
     """Compute the geopotential thickness between the surface and hybrid (IFS model) full-levels.
 
@@ -802,6 +798,10 @@ def relative_geopotential_thickness_on_hybrid_levels(
         one more than the number of levels in ``t`` and ``q``.
     sp : array-like
         Surface pressure (Pa)
+    alpha_top : str, optional
+        Option to initialise the alpha parameters (for details see below) on the top of the
+        model atmosphere (first half-level in the vertical coordinate system). See
+        :func:`pressure_on_hybrid_levels` for details.
 
     Returns
     -------
@@ -837,7 +837,7 @@ def relative_geopotential_thickness_on_hybrid_levels(
     A = xp.asarray(A)
     B = xp.asarray(B)
     sp = xp.asarray(sp)
-    alpha, delta = pressure_on_hybrid_levels(A, B, sp, output=("alpha", "delta"))
+    alpha, delta = pressure_on_hybrid_levels(A, B, sp, alpha_top=alpha_top, output=("alpha", "delta"))
     return relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta)
 
 
@@ -848,6 +848,7 @@ def geopotential_on_hybrid_levels(
     A: ArrayLike,
     B: ArrayLike,
     sp: ArrayLike,
+    alpha_top="ifs",
 ):
     """Compute the geopotential on hybrid (IFS model) full-levels.
 
@@ -880,6 +881,10 @@ def geopotential_on_hybrid_levels(
         one more than the number of levels in ``t`` and ``q``.
     sp : array-like
         Surface pressure (Pa)
+    alpha_top : str, optional
+        Option to initialise the alpha parameters (for details see below) on the top of the
+        model atmosphere (first half-level in the vertical coordinate system). See
+        :func:`pressure_on_hybrid_levels` for details.
 
 
     Returns
@@ -906,7 +911,7 @@ def geopotential_on_hybrid_levels(
     relative_geopotential_thickness_on_hybrid_levels
 
     """
-    z = relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp)
+    z = relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp, alpha_top=alpha_top)
     xp = array_namespace(z, zs)
     zs = xp.asarray(zs)
     return z + zs
@@ -919,6 +924,7 @@ def height_on_hybrid_levels(
     A: ArrayLike,
     B: ArrayLike,
     sp: ArrayLike,
+    alpha_top="ifs",
     h_type: str = "geometric",
     h_reference: str = "ground",
 ):
@@ -954,6 +960,10 @@ def height_on_hybrid_levels(
         one more than the number of levels in ``t`` and ``q``.
     sp : array-like
         Surface pressure (Pa)
+    alpha_top : str, optional
+        Option to initialise the alpha parameters (for details see below) on the top of the
+        model atmosphere (first half-level in the vertical coordinate system). See
+        :func:`pressure_on_hybrid_levels` for details.
     h_type : str, optional
         Type of height to compute. Possible values are:
 
@@ -1013,7 +1023,7 @@ def height_on_hybrid_levels(
             f" t/q have {nlev_t} levels, A/B have {nlev} levels."
         )
 
-    z_thickness = relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp)
+    z_thickness = relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp, alpha_top=alpha_top)
 
     if h_reference == "sea":
         z = z_thickness + zs
@@ -1038,9 +1048,10 @@ def interpolate_hybrid_to_pressure_levels(
     A: ArrayLike,
     B: ArrayLike,
     sp: ArrayLike,
+    alpha_top="ifs",
     interpolation: str = "linear",
 ):
-    p = pressure_on_hybrid_levels(A, B, sp, output="full")
+    p = pressure_on_hybrid_levels(A, B, sp, alpha_top=alpha_top, output="full")
     return interpolate_monotonic(data=data, coord=p, target_coord=target_p, interpolation=interpolation)
 
 
@@ -1053,21 +1064,36 @@ def interpolate_hybrid_to_height_levels(
     B: ArrayLike,
     sp: ArrayLike,
     target_h: ArrayLike,
+    alpha_top="ifs",
     h_type: str = "geometric",
-    h_reference: str = "surface",
+    h_reference: str = "ground",
     interpolation: str = "linear",
     aux_bottom_data=None,
     aux_bottom_h=None,
 ):
-    alpha, delta = pressure_on_hybrid_levels(A, B, sp, output=("alpha", "delta"))
-    z = geopotential_on_hybrid_levels(t, q, zs, alpha, delta)
 
-    if h_reference == "sea":
-        z = z + zs
-    if h_type == "geometric":
-        h = geometric_height_from_geopotential(z)
-    else:
-        h = geopotential_height_from_geopotential(z)
+    h = height_on_hybrid_levels(
+        t=t,
+        q=q,
+        zs=zs,
+        A=A,
+        B=B,
+        sp=sp,
+        alpha_top=alpha_top,
+        h_type=h_type,
+        h_reference=h_reference,
+    )
+
+    # alpha, delta = pressure_on_hybrid_levels(A, B, sp, output=("alpha", "delta"))
+    # z = geopotential_on_hybrid_levels(t, q, zs, alpha, delta)
+
+    # if h_reference == "sea":
+    #     z = z + zs
+    # if h_type == "geometric":
+    #     h = geometric_height_from_geopotential(z)
+    # else:
+    #     h = geopotential_height_from_geopotential(z)
+
     return interpolate_monotonic(
         data=data,
         coord=h,
