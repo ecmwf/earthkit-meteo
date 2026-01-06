@@ -78,5 +78,9 @@ def interpolate_hybrid_to_height_levels(*args, **kwargs):
     return array.interpolate_hybrid_to_height_levels(*args, **kwargs)
 
 
+def interpolate_pressure_to_height_levels(*args, **kwargs):
+    return array.interpolate_pressure_to_height_levels(*args, **kwargs)
+
+
 def interpolate_monotonic(*args, **kwargs):
     return array.interpolate_monotonic(*args, **kwargs)

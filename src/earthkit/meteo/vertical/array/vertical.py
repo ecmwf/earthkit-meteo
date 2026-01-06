@@ -1104,6 +1104,37 @@ def interpolate_hybrid_to_height_levels(
     )
 
 
+def interpolate_pressure_to_height_levels(
+    data: ArrayLike,
+    z: ArrayLike,
+    zs: ArrayLike,
+    target_h: ArrayLike,
+    h_type: str = "geometric",
+    h_reference: str = "ground",
+    interpolation: str = "linear",
+    aux_bottom_data=None,
+    aux_bottom_h=None,
+):
+    if h_type == "geometric":
+        h = geometric_height_from_geopotential_height(z)
+        if h_reference == "ground":
+            zs_h = geometric_height_from_geopotential_height(zs)
+            h = h - zs_h
+    else:
+        if h_reference == "ground":
+            z = z - zs
+        h = geopotential_height_from_geopotential(z)
+
+    return interpolate_monotonic(
+        data=data,
+        coord=h,
+        target_coord=target_h,
+        interpolation=interpolation,
+        aux_min_level_data=aux_bottom_data,
+        aux_min_level_coord=aux_bottom_h,
+    )
+
+
 def interpolate_monotonic(
     data: ArrayLike,
     coord: Union[ArrayLike, list, tuple, float, int],
