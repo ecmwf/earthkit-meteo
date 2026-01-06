@@ -19,6 +19,7 @@ np.set_printoptions(formatter={"float_kind": "{:.15f}".format})
 
 
 # These are tests for deprecated functions in vertical
+# TODO: remove when deprecation period is over
 
 
 def _get_data(name):
