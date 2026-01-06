@@ -36,3 +36,4 @@ def modules_installed(*modules):
 
 
 NO_XARRAY = not modules_installed("xarray")
+NO_XARRAY = True

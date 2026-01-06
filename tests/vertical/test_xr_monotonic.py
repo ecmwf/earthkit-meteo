@@ -95,6 +95,9 @@ DATA = _get_data()
 
 
 def make_input(conf_id):
+    if NO_XARRAY:
+        return None
+
     for d in DATA[conf_id]:
         data, coord, target_coord, mode, expected_data = d
 
