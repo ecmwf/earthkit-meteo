@@ -9,7 +9,7 @@ A, B = vertical.hybrid_level_parameters(137, model="ifs")
 # define surface pressures
 sp = np.array([100000.0, 90000.0])
 
-# get temperature and specific humidity profiles (example data)
+# get temperature and specific humidity profiles on hybrid levels (example data)
 DATA = hybrid_level_test_data()
 t = DATA.t
 q = DATA.q

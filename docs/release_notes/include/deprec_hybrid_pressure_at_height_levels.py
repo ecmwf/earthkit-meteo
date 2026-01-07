@@ -9,13 +9,12 @@ A, B = vertical.hybrid_level_parameters(137, model="ifs")
 # define surface pressures
 sp = np.array([100000.0, 90000.0])
 
-# compute alpha and delta
-_, _, delta, alpha = vertical.pressure_at_model_levels(A, B, sp, alpha_top="ifs")
-
 # get temperature and specific humidity profiles on hybrid levels (example data)
 DATA = hybrid_level_test_data()
 t = np.array(DATA.t)
 q = np.array(DATA.q)
 
-# compute the relative geopotential thickness
-z_thickness = vertical.relative_geopotential_thickness(alpha, delta, t, q)
+# compute the pressure on geopotential height levels above the
+# ground using linear interpolation
+h_target = 10.0
+p = vertical.pressure_at_height_levels(h_target, t, q, sp, A, B, alpha_top="ifs")
