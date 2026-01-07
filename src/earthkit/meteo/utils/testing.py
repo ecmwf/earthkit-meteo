@@ -10,6 +10,7 @@
 # A collection of functions to support pytest testing
 
 import os
+import sys
 from importlib import import_module
 
 # from earthkit.utils.testing import get_array_backend
@@ -17,16 +18,16 @@ from importlib import import_module
 # ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy"], raise_on_missing=False)
 # NUMPY_BACKEND = get_array_backend("numpy")
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-if not os.path.exists(os.path.join(ROOT_DIR, "tests")):
-    ROOT_DIR = "./"
+_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
+if not os.path.exists(os.path.join(_ROOT_DIR, "tests")):
+    _ROOT_DIR = "./"
 
 
-def test_data_path(filename: str) -> str:
-    return os.path.join(ROOT_DIR, filename)
+def earthkit_file(*args) -> str:
+    return os.path.join(_ROOT_DIR, *args)
 
 
-def modules_installed(*modules):
+def modules_installed(*modules) -> bool:
     for module in modules:
         try:
             import_module(module)
@@ -35,5 +36,14 @@ def modules_installed(*modules):
     return True
 
 
+def hybrid_level_test_data():
+    """Import hybrid level test data from tests/vertical/_hybrid_core_data.py"""
+    name = "_hybrid_core_data"
+    path = earthkit_file("tests/vertical")
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
+    return import_module(name)
+
+
 NO_XARRAY = not modules_installed("xarray")
-NO_XARRAY = True

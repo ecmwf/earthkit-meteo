@@ -749,6 +749,10 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     from earthkit.meteo.thermo import specific_gas_constant
 
     xp = array_namespace(alpha, delta, q, t)
+    alpha = xp.asarray(alpha)
+    delta = xp.asarray(delta)
+    t = xp.asarray(t)
+    q = xp.asarray(q)
 
     R = specific_gas_constant(q)
     d = R * t
