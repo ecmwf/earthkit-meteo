@@ -204,7 +204,7 @@ def interpolate_sleve_to_coord_levels(
         height on same levels as data field
     coord : xarray.DataArray
         target field on same levels as data field
-    target : TargetCoordinates
+    target_coord : TargetCoordinates
         target coordinate definition
     folding_mode : str
         handle when the target is observed multiple times in a column,
@@ -346,7 +346,7 @@ def interpolate_sleve_to_theta_levels(
         values=tc_values.tolist(),
     )
 
-    return interpolate_sleve_to_coord_levels(data, theta, tc, h, folding_mode)
+    return interpolate_sleve_to_coord_levels(data, h, theta, tc, folding_mode)
 
 
 def _init_field_with_vcoord(
