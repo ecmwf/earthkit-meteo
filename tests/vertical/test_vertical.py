@@ -329,6 +329,40 @@ def test_relative_geopotential_thickness_on_hybrid_levels_2(index, xp, device):
 
 # @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize(
+    "index",
+    [
+        (slice(None), slice(None)),
+    ],
+)
+# @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+def test_relative_geopotential_thickness_on_hybrid_levels_part(index, xp, device):
+    # get only levels from 90 to 136/137
+    part = slice(90, None)
+
+    A = DATA_HYBRID_CORE.A
+    B = DATA_HYBRID_CORE.B
+    sp = DATA_HYBRID_CORE.p_surf
+    t = DATA_HYBRID_CORE.t
+    q = DATA_HYBRID_CORE.q
+    z_ref = DATA_HYBRID_CORE.z
+
+    z_ref, t, q, A, B, sp = (xp.asarray(x, device=device) for x in [z_ref, t, q, A, B, sp])
+
+    part_index = (part, index[1])
+
+    sp = sp[index[1]]
+    t = t[part_index]
+    q = q[part_index]
+    z_ref = z_ref[part_index]
+
+    z = vertical.relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp)
+
+    assert xp.allclose(z, z_ref, rtol=1e-6)
+
+
+# @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
 def test_geopotential_on_hybrid_levels(index, xp, device):
 
@@ -363,7 +397,7 @@ def test_height_on_hybrid_levels(index, xp, device, h_type, h_reference):
     sp = DATA_HYBRID_H.p_surf
     t = DATA_HYBRID_H.t
     q = DATA_HYBRID_H.q
-    zs = DATA_HYBRID_H.zs
+    zs = DATA_HYBRID_H.z_surf
 
     ref_name = f"h_{h_type}_{h_reference}"
     h_ref = getattr(DATA_HYBRID_H, ref_name)

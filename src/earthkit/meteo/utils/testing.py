@@ -10,21 +10,83 @@
 # A collection of functions to support pytest testing
 
 import os
-import sys
 from importlib import import_module
 
-# from earthkit.utils.testing import get_array_backend
+from earthkit.meteo.utils.download import simple_download
 
-# ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy"], raise_on_missing=False)
-# NUMPY_BACKEND = get_array_backend("numpy")
+_REMOTE_ROOT_URL = "https://sites.ecmwf.int/repository/earthkit-meteo/"
+_REMOTE_TEST_DATA_URL = "https://sites.ecmwf.int/repository/earthkit-meteo/test-data/"
+_REMOTE_EXAMPLES_URL = "https://sites.ecmwf.int/repository/earthkit-meteo/examples/"
 
 _ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 if not os.path.exists(os.path.join(_ROOT_DIR, "tests")):
     _ROOT_DIR = "./"
 
 
-def earthkit_file(*args) -> str:
+def earthkit_path(*args) -> str:
     return os.path.join(_ROOT_DIR, *args)
+
+
+def earthkit_test_data_path(name):
+    return earthkit_path("tests", "data", name)
+
+
+def earthkit_remote_path(*args):
+    return os.path.join(_REMOTE_ROOT_URL, *args)
+
+
+def earthkit_remote_test_data_path(*args):
+    return os.path.join(_REMOTE_TEST_DATA_URL, *args)
+
+
+def earthkit_remote_examples_path(*args):
+    return os.path.join(_REMOTE_EXAMPLES_URL, *args)
+
+
+def get_test_data(filename, subfolder):
+    if not isinstance(filename, list):
+        filename = [filename]
+
+    res = []
+    for fn in filename:
+        d_path = earthkit_test_data_path(subfolder)
+        os.makedirs(d_path, exist_ok=True)
+        f_path = os.path.join(d_path, fn)
+        if not os.path.exists(f_path):
+            simple_download(url=f"{_REMOTE_ROOT_URL}/{subfolder}/{fn}", target=f_path)
+        res.append(f_path)
+
+    if len(res) == 1:
+        return res[0]
+    else:
+        return res
+
+
+def read_data_file(path):
+    import numpy as np
+
+    d = np.genfromtxt(
+        path,
+        delimiter=",",
+        names=True,
+    )
+    return d
+
+
+def read_test_data_file(path):
+    return read_data_file(earthkit_test_data_path(path))
+
+
+def save_test_data_reference(file_name, data):
+    """Helper function to save test reference data into csv"""
+    import numpy as np
+
+    np.savetxt(
+        earthkit_test_data_path(file_name),
+        np.column_stack(tuple(data.values())),
+        delimiter=",",
+        header=",".join(list(data.keys())),
+    )
 
 
 def modules_installed(*modules) -> bool:
@@ -34,16 +96,6 @@ def modules_installed(*modules) -> bool:
         except (ImportError, RuntimeError, SyntaxError):
             return False
     return True
-
-
-def hybrid_level_test_data():
-    """Import hybrid level test data from tests/vertical/_hybrid_core_data.py"""
-    name = "_hybrid_core_data"
-    path = earthkit_file("tests/vertical")
-    if path not in sys.path:
-        sys.path.insert(0, path)
-
-    return import_module(name)
 
 
 NO_XARRAY = not modules_installed("xarray")

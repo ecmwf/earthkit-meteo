@@ -841,7 +841,22 @@ def relative_geopotential_thickness_on_hybrid_levels(
     A = xp.asarray(A)
     B = xp.asarray(B)
     sp = xp.asarray(sp)
-    alpha, delta = pressure_on_hybrid_levels(A, B, sp, alpha_top=alpha_top, output=("alpha", "delta"))
+    t = xp.asarray(t)
+
+    nlev_t = t.shape[0]
+    nlev = A.shape[0] - 1  # number of model full-levels
+    levels = None
+    if nlev_t != nlev:
+        # select a contiguous subset of levels
+        levels = list(range(nlev - nlev_t + 1, nlev + 1))
+        assert nlev_t == len(levels), (
+            "Inconsistent number of levels between t/q and A/B coefficients."
+            f" t/q have {nlev_t} levels, A/B have {nlev} levels."
+        )
+
+    alpha, delta = pressure_on_hybrid_levels(
+        A, B, sp, alpha_top=alpha_top, levels=levels, output=("alpha", "delta")
+    )
     return relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta)
 
 

@@ -13,7 +13,7 @@ import os
 
 import pytest
 
-from earthkit.meteo.utils.testing import earthkit_file
+from earthkit.meteo.utils.testing import earthkit_path
 
 SKIP = [
     "conf.py",
@@ -22,7 +22,7 @@ SKIP = [
     "skip_api_rules.py",
 ]
 
-EXAMPLES = earthkit_file("docs")
+EXAMPLES = earthkit_path("docs")
 
 
 def example_list():

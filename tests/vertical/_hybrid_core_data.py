@@ -289,6 +289,8 @@ B = [
 # Metview computations with mlv_geopotential_on_ml() using 0 surface
 # geopotential height.
 
+z_surf = [44.1252, 52257.1252]
+
 p_surf = [101183.94696484, 53169.889084751754]
 
 p_full = [
