@@ -1061,6 +1061,20 @@ def height_on_hybrid_levels(
     return h
 
 
+def _hybrid_subset(data, A, B):
+    nlev_t = data.shape[0]
+    nlev = A.shape[0] - 1  # number of model full-levels
+    levels = None
+    if nlev_t != nlev:
+        # select a contiguous subset of levels
+        levels = list(range(nlev - nlev_t + 1, nlev + 1))
+        assert nlev_t == len(levels), (
+            "Inconsistent number of levels between data and A/B coefficients."
+            f" data have {nlev_t} levels, A/B have {nlev} levels."
+        )
+    return levels
+
+
 def interpolate_hybrid_to_pressure_levels(
     data: ArrayLike,
     target_p: ArrayLike,
@@ -1070,7 +1084,15 @@ def interpolate_hybrid_to_pressure_levels(
     alpha_top="ifs",
     interpolation: str = "linear",
 ):
-    p = pressure_on_hybrid_levels(A, B, sp, alpha_top=alpha_top, output="full")
+    xp = array_namespace(data, A, B, sp)
+    data = xp.asarray(data)
+    A = xp.asarray(A)
+    B = xp.asarray(B)
+    sp = xp.asarray(sp)
+
+    levels = _hybrid_subset(data, A, B)
+
+    p = pressure_on_hybrid_levels(A, B, sp, alpha_top=alpha_top, levels=levels, output="full")
     return interpolate_monotonic(data=data, coord=p, target_coord=target_p, interpolation=interpolation)
 
 

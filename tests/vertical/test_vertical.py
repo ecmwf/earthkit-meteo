@@ -136,13 +136,19 @@ def test_hybrid_level_parameters_1(xp):
 
     A, B = vertical.hybrid_level_parameters(137)
 
-    assert np.allclose(A, ref_A, rtol=1e-8)
-    assert np.allclose(B, ref_B, rtol=1e-8)
+    # Note: A in test data has been stored with higher precision than in the conf
+    assert np.allclose(A, ref_A, rtol=1e-5)
+    assert np.allclose(B, ref_B, rtol=1e-5)
 
 
 def test_hybrid_level_parameters_2():
     with pytest.raises(ValueError):
         vertical.hybrid_level_parameters(-100)
+
+
+def test_hybrid_level_parameters_3():
+    with pytest.raises(ValueError):
+        vertical.hybrid_level_parameters(137, model="unknown_model")
 
 
 @pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])

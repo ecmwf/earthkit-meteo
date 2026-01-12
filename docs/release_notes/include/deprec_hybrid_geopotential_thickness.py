@@ -1,7 +1,7 @@
 import numpy as np
 
 import earthkit.meteo.vertical as vertical
-from earthkit.meteo.utils.testing import hybrid_level_test_data
+from earthkit.meteo.utils.sample import get_sample
 
 # get hybrid (IFS model) level definition
 A, B = vertical.hybrid_level_parameters(137, model="ifs")
@@ -13,9 +13,9 @@ sp = np.array([100000.0, 90000.0])
 _, _, delta, alpha = vertical.pressure_at_model_levels(A, B, sp, alpha_top="ifs")
 
 # get temperature and specific humidity profiles on hybrid levels (example data)
-DATA = hybrid_level_test_data()
-t = np.array(DATA.t)
-q = np.array(DATA.q)
+DATA = get_sample("vertical_hybrid_data")
+t = DATA.t
+q = DATA.q
 
 # compute the relative geopotential thickness
 z_thickness = vertical.relative_geopotential_thickness(alpha, delta, t, q)
