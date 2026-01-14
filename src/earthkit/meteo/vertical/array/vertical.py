@@ -1042,7 +1042,8 @@ def height_on_hybrid_levels(
     array-like
         Height (m) of hybrid full-levels with
         respect to ``h_reference``. The type of height is defined by ``h_type``
-        ("geometric" or "geopotential").
+        ("geometric" or "geopotential"). The axis corresponding to the vertical
+        coordinate (hybrid levels) is defined by the ``vertical_axis`` parameter.
 
     Notes
     -----
@@ -1113,6 +1114,76 @@ def interpolate_hybrid_to_pressure_levels(
     interpolation: str = "linear",
     vertical_axis=0,
 ):
+    """Interpolate data from hybrid (IFS model) full-levels to pressure levels.
+
+    Parameters
+    ----------
+    data : array-like
+        Data to be interpolated. The axis corresponding to the vertical
+        coordinate (hybrid levels) is defined by the ``vertical_axis`` parameter.
+        Must have at least two levels. Levels must be ordered in ascending order
+        with respect to the model level number (model level number goes from top to bottom).
+    target_p : array-like
+        Target pressure levels (Pa) to which ``data`` will be interpolated. It can be
+        either a scalar or a 1D array of pressure levels. Alternatively, it can be a
+        multidimensional array with a vertical axis defined by `vertical_axis`. In this case
+        the other axes/dimensions must match those of ``data``.
+    A : array-like
+        A-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number.
+    B : array-like
+        B-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number. Must have the same
+        size as ``A``.
+    sp : array-like
+        Surface pressure (Pa). The shape must be compatible with the non-vertical
+        dimensions of ``data``.
+    alpha_top : str, optional
+        Option to initialise the alpha parameters (for details see below) on the top of the
+        model atmosphere (first half-level in the vertical coordinate system). See
+        :func:`pressure_on_hybrid_levels` for details.
+    interpolation  : str, optional
+        Interpolation mode. Default is "linear". Possible values are:
+
+        - "linear": linear interpolation in coordinate
+        - "log": linear interpolation in logarithm of coordinate
+        - "nearest": nearest neighbour interpolation
+    vertical_axis : int, optional
+        Axis corresponding to the vertical coordinate (hybrid full-levels) in the input
+        arrays and also in the output array. Default is 0 (first axis).
+
+
+    Returns
+    -------
+    array-like
+        Data interpolated to the target levels. The shape depends on the shape of ``target_p``.
+        The axis corresponding to the vertical coordinate (hybrid levels) is defined by
+        the ``vertical_axis`` parameter. When interpolation is not possible for a given target
+        pressure level (e.g., when the target pressure is outside the available pressure range),
+        the corresponding output values are set to nan.
+
+    Raises
+    ------
+    ValueError
+        If ``data`` has less than two levels.
+    ValueError
+        If the first dimension of ``data`` and that of ``target_p`` do not match.
+
+    Notes
+    -----
+    - The ordering of the input coordinate levels is not checked.
+    - The units of ``coord`` and ``target_coord`` are assumed to be the same; no checks
+      or conversions are performed.
+
+    Examples
+    --------
+    - :ref:`/examples/interpolate_hybrid_to_pl.ipynb`
+
+    See also
+    --------
+    interpolate_monotonic
+
+    """
     xp = array_namespace(data, A, B, sp)
     data = xp.asarray(data)
     A = xp.asarray(A)
@@ -1127,13 +1198,13 @@ def interpolate_hybrid_to_pressure_levels(
 
 def interpolate_hybrid_to_height_levels(
     data: ArrayLike,
+    target_h: ArrayLike,
     t: ArrayLike,
     q: ArrayLike,
     zs: ArrayLike,
     A: ArrayLike,
     B: ArrayLike,
     sp: ArrayLike,
-    target_h: ArrayLike,
     alpha_top="ifs",
     h_type: str = "geometric",
     h_reference: str = "ground",
@@ -1142,7 +1213,98 @@ def interpolate_hybrid_to_height_levels(
     aux_bottom_h=None,
     vertical_axis=0,
 ):
+    """Interpolate data from hybrid (IFS model) full-levels to height levels.
 
+    Parameters
+    ----------
+    data : array-like
+        Data to be interpolated. The axis corresponding to the vertical
+        coordinate (hybrid levels) is defined by the ``vertical_axis`` parameter.
+        Must have at least two levels. Levels must be ordered in ascending order
+        with respect to the model level number (model level number goes from top
+        to bottom). Not all the levels must be present, but a contiguous level range
+        including the bottom-most level must be used. E.g. if the vertical coordinate
+        system has 137 model levels using only a subset of levels between
+        e.g. 137-96 is allowed.
+    target_h : array-like
+        Target height levels (m) to which ``data`` will be interpolated. It can be
+        either a scalar or a 1D array of height levels. Alternatively, it can be a
+        multidimensional array with a vertical axis defined by `vertical_axis`. In this case
+        the other axes/dimensions must match those of ``data``. The type of the height and
+        the reference level are defined by ``h_type`` and ``h_reference``.
+    t : array-like
+        Temperature on hybrid full-levels (K). Must have the
+        same shape, level range and order as ``data``.
+    q : array-like
+        Specific humidity on hybrid full-levels (kg/kg). Must have the
+        same shape, level range and order as ``t``.
+    zs : array-like
+        Surface geopotential (m2/s2). Only used when ``h_reference`` is "ground". The shape
+        must be compatible with the non-vertical dimensions of ``t`` and ``q``.
+    A : array-like
+        A-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number.
+    B : array-like
+        B-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number. Must have the same
+        size as ``A``.
+    sp : array-like
+        Surface pressure (Pa). The shape must be compatible with the non-vertical
+        dimensions of ``data``.
+    alpha_top : str, optional
+        Option to initialise the alpha parameters (for details see below) on the top of the
+        model atmosphere (first half-level in the vertical coordinate system). See
+        :func:`pressure_on_hybrid_levels` for details.
+    h_type : str, optional
+        Type of height to compute. Possible values are:
+
+        - "geometric": geometric height (m) with respect to ``h_reference``
+        - "geopotential": geopotential height (m) with respect to ``h_reference``
+        Default is "geometric". See :func:`geometric_height_from_geopotential` and
+        :func:`geopotential_height_from_geopotential` for details.
+    h_reference : str, optional
+        Reference level for the height calculation. Possible values are:
+
+        - "ground": height with respect to the ground/surface level
+        - "sea": height with respect to the sea level
+        Default is "ground".
+    interpolation  : str, optional
+        Interpolation mode. Default is "linear". Possible values are:
+
+        - "linear": linear interpolation in coordinate
+        - "log": linear interpolation in logarithm of coordinate
+        - "nearest": nearest neighbour interpolation
+    vertical_axis : int, optional
+        Axis corresponding to the vertical coordinate (hybrid full-levels) in the input
+        arrays and also in the output array. Default is 0 (first axis).
+
+
+    Returns
+    -------
+    array-like
+        Data interpolated to the target height levels. The shape depends on the shape
+        of ``target_h``. The axis corresponding to the vertical coordinate (hybrid levels)
+        is defined by the ``vertical_axis`` parameter. When interpolation is not possible
+        for a given target height level (e.g., when the target height is outside the
+        available height range), the corresponding output values are set to nan.
+
+    Raises
+    ------
+    ValueError
+        If ``data`` has less than two levels.
+    ValueError
+        If the first dimension of ``data`` and that of ``target_p`` do not match.
+
+    Examples
+    --------
+    - :ref:`/examples/interpolate_hybrid_to_hl.ipynb`
+
+
+    See also
+    --------
+    interpolate_monotonic
+
+    """
     h = height_on_hybrid_levels(
         t=t,
         q=q,

@@ -10,6 +10,7 @@
 from typing import Any
 from typing import Tuple
 
+import numpy as np
 from numpy.typing import NDArray
 
 
@@ -28,8 +29,7 @@ def read_conf():
         data = json.load(f)
         d["ifs"] = dict()
         for n_levels, coeffs in data.items():
-            # d["ifs"][n_levels] = {"A": np.array(coeffs["A"]), "B": np.array(coeffs["B"])}
-            d["ifs"][n_levels] = {"A": tuple(coeffs["A"]), "B": tuple(coeffs["B"])}
+            d["ifs"][n_levels] = {"A": np.array(coeffs["A"]), "B": np.array(coeffs["B"])}
 
     return d
 

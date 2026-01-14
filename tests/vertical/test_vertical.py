@@ -497,6 +497,9 @@ def test_geopotential_on_hybrid_levels(index, xp, device):
 def test_height_on_hybrid_levels(index, xp, device, h_type, h_reference):
 
     A, B = vertical.hybrid_level_parameters(137)
+    A = A.tolist()
+    B = B.tolist()
+
     sp = DATA_HYBRID_H.p_surf
     t = DATA_HYBRID_H.t
     q = DATA_HYBRID_H.q

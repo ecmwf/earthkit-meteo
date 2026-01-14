@@ -311,13 +311,13 @@ def test_pressure_at_height_levels_all_migrated_2(h_target, p_ref, xp):
     p_ml = vertical.pressure_on_hybrid_levels(A, B, sp, output="full")
     p = vertical.interpolate_hybrid_to_height_levels(
         p_ml,
+        h_target,
         t,
         q,
         0,
         A,
         B,
         sp,
-        h_target,
         alpha_top="ifs",
         aux_bottom_data=sp,
         aux_bottom_h=0.0,

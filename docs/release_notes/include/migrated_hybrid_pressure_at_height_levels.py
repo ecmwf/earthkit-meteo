@@ -22,13 +22,13 @@ q = DATA.q
 target_h = [10.0]
 p_h = vertical.interpolate_hybrid_to_height_levels(
     p_full,
+    target_h,
     t,
     q,
     0,
     A,
     B,
     sp,
-    target_h,
     h_type="geopotential",
     h_reference="ground",
     interpolation="linear",
