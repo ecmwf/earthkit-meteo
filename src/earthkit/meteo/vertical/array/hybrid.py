@@ -10,7 +10,6 @@
 from typing import Any
 from typing import Tuple
 
-import numpy as np
 from numpy.typing import NDArray
 
 
@@ -29,7 +28,8 @@ def read_conf():
         data = json.load(f)
         d["ifs"] = dict()
         for n_levels, coeffs in data.items():
-            d["ifs"][n_levels] = {"A": np.array(coeffs["A"]), "B": np.array(coeffs["B"])}
+            # d["ifs"][n_levels] = {"A": np.array(coeffs["A"]), "B": np.array(coeffs["B"])}
+            d["ifs"][n_levels] = {"A": tuple(coeffs["A"]), "B": tuple(coeffs["B"])}
 
     return d
 
@@ -93,9 +93,7 @@ def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> Tuple[NDArray[
     if model in _CONF:
         if n_levels in _CONF[model]:
             c = _CONF[model][n_levels]
-            a_coeffs = c["A"]
-            b_coeffs = c["B"]
-            return a_coeffs, b_coeffs
+            return c["A"], c["B"]
         else:
             raise ValueError(
                 f"Hybrid level parameters not available for {n_levels} levels in model '{model}'."

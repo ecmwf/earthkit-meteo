@@ -15,6 +15,7 @@ from earthkit.utils.array.namespace import _NUMPY_NAMESPACE
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import vertical
+from earthkit.meteo.utils.testing import Tolerance
 
 np.set_printoptions(formatter={"float_kind": "{:.15f}".format})
 
@@ -128,6 +129,7 @@ def test_geometric_height_from_geopotential_height(zh, expected_value, xp, devic
     assert xp.allclose(r, expected_value)
 
 
+# NOTE: this method returns numpy arrays only
 @pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
 def test_hybrid_level_parameters_1(xp):
     ref_A = DATA_HYBRID_CORE.A
@@ -151,10 +153,10 @@ def test_hybrid_level_parameters_3():
         vertical.hybrid_level_parameters(137, model="unknown_model")
 
 
-@pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+# @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
-def test_pressure_on_hybrid_levels_1(index, xp):
-
+def test_pressure_on_hybrid_levels_core(index, xp, device):
     sp = DATA_HYBRID_CORE.p_surf
     A = DATA_HYBRID_CORE.A
     B = DATA_HYBRID_CORE.B
@@ -164,7 +166,7 @@ def test_pressure_on_hybrid_levels_1(index, xp):
     ref_alpha = DATA_HYBRID_CORE.alpha
 
     sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B = (
-        xp.asarray(x) for x in [sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B]
+        xp.asarray(x, device=device) for x in [sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B]
     )
 
     sp = sp[index[1]]
@@ -182,13 +184,102 @@ def test_pressure_on_hybrid_levels_1(index, xp):
     # print("delta", repr(delta))
     # print("alpha", repr(alpha))
 
-    assert xp.allclose(p_full, ref_p_full)
-    assert xp.allclose(p_half, ref_p_half)
-    assert xp.allclose(delta, ref_delta)
-    assert xp.allclose(alpha, ref_alpha)
+    # print("p_full diff", repr(xp.max(xp.abs(p_full - ref_p_full))))
+    # print("p_half diff", repr(xp.max(xp.abs(p_half - ref_p_half))))
+    # print("delta diff", repr(xp.max(xp.abs(delta - ref_delta))))
+    # print("alpha diff", repr(xp.max(xp.abs(alpha - ref_alpha))))
+
+    tolerance = Tolerance(
+        {
+            "p_full": {64: (1e-8, 1e-6)},
+            "p_half": {64: (1e-8, 1e-6)},
+            "delta": {64: (1e-8, 1e-6), 32: (1e-6, 1e-5)},
+            "alpha": {64: (1e-8, 1e-6), 32: (1e-4, 1e-5)},
+        }
+    )
+    atol, rtol = tolerance.get(key="p_full", dtype=sp.dtype)
+    assert xp.allclose(p_full, ref_p_full, atol=atol, rtol=rtol)
+
+    atol, rtol = tolerance.get(key="p_half", dtype=sp.dtype)
+    assert xp.allclose(p_half, ref_p_half, atol=atol, rtol=rtol)
+
+    # for i in range(delta.shape[0]):
+    #     print(f"delta level {i}: computed={delta[i]}, reference={ref_delta[i]} diff={delta[i]-ref_delta[i]}")
+
+    atol, rtol = tolerance.get(key="delta", dtype=sp.dtype)
+    assert xp.allclose(delta, ref_delta, atol=atol, rtol=rtol)
+
+    atol, rtol = tolerance.get(key="alpha", dtype=sp.dtype)
+    assert xp.allclose(alpha, ref_alpha, atol=atol, rtol=rtol)
 
 
-@pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+# @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+def test_pressure_on_hybrid_levels_axis(index, xp, device):
+    # nondefault vertical axis for output
+    vertical_axis = 1
+
+    sp = DATA_HYBRID_CORE.p_surf
+    A = DATA_HYBRID_CORE.A
+    B = DATA_HYBRID_CORE.B
+    ref_p_full = DATA_HYBRID_CORE.p_full
+    ref_p_half = DATA_HYBRID_CORE.p_half
+    ref_delta = DATA_HYBRID_CORE.delta
+    ref_alpha = DATA_HYBRID_CORE.alpha
+
+    nlev = len(A) - 1
+
+    sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B = (
+        xp.asarray(x, device=device) for x in [sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B]
+    )
+
+    sp = sp[index[1]]
+    ref_p_full = ref_p_full[index]
+    ref_p_half = ref_p_half[index]
+    ref_delta = ref_delta[index]
+    ref_alpha = ref_alpha[index]
+
+    p_full, p_half, delta, alpha = vertical.pressure_on_hybrid_levels(
+        A, B, sp, alpha_top="ifs", output=["full", "half", "delta", "alpha"], vertical_axis=vertical_axis
+    )
+
+    input_shape = sp.shape
+
+    assert p_full.shape == input_shape + (nlev,)
+    assert p_half.shape == input_shape + (nlev + 1,)
+    assert delta.shape == input_shape + (nlev,)
+    assert alpha.shape == input_shape + (nlev,)
+
+    if p_full.ndim > 1:
+        p_full = xp.moveaxis(p_full, vertical_axis, 0)
+        p_half = xp.moveaxis(p_half, vertical_axis, 0)
+        delta = xp.moveaxis(delta, vertical_axis, 0)
+        alpha = xp.moveaxis(alpha, vertical_axis, 0)
+
+    tolerance = Tolerance(
+        {
+            "p_full": {64: (1e-8, 1e-6)},
+            "p_half": {64: (1e-8, 1e-6)},
+            "delta": {64: (1e-8, 1e-6), 32: (1e-6, 1e-5)},
+            "alpha": {64: (1e-8, 1e-6), 32: (1e-4, 1e-5)},
+        }
+    )
+    atol, rtol = tolerance.get(key="p_full", dtype=sp.dtype)
+    assert xp.allclose(p_full, ref_p_full, atol=atol, rtol=rtol)
+
+    atol, rtol = tolerance.get(key="p_half", dtype=sp.dtype)
+    assert xp.allclose(p_half, ref_p_half, atol=atol, rtol=rtol)
+
+    atol, rtol = tolerance.get(key="delta", dtype=sp.dtype)
+    assert xp.allclose(delta, ref_delta, atol=atol, rtol=rtol)
+
+    atol, rtol = tolerance.get(key="alpha", dtype=sp.dtype)
+    assert xp.allclose(alpha, ref_alpha, atol=atol, rtol=rtol)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+# @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
 @pytest.mark.parametrize(
     "levels", [None, list(range(90, 138)), list(range(137, 90, -1)), [1, 2], [2, 1], [1]]
@@ -206,7 +297,7 @@ def test_pressure_on_hybrid_levels_1(index, xp):
         ["delta", "alpha"],
     ],
 )
-def test_pressure_on_hybrid_levels_2(index, levels, output, xp):
+def test_pressure_on_hybrid_levels_output(index, levels, output, xp, device):
 
     sp = DATA_HYBRID_CORE.p_surf
     A = DATA_HYBRID_CORE.A
@@ -229,10 +320,10 @@ def test_pressure_on_hybrid_levels_2(index, levels, output, xp):
     # ref_alpha = DATA_HYBRID_CORE.alpha
 
     sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B = (
-        xp.asarray(x) for x in [sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B]
+        xp.asarray(x, device=device) for x in [sp, ref_p_full, ref_p_half, ref_delta, ref_alpha, A, B]
     )
 
-    # sp tests data is 1D
+    # sp test data is 1D
     sp = sp[index[1]]
 
     ref_def = {
@@ -258,37 +349,40 @@ def test_pressure_on_hybrid_levels_2(index, levels, output, xp):
             else:
                 ref[key] = ref[key][levels_idx]
 
-        # ref_p_full = ref_p_full[levels_idx, :]
-        # ref_p_half = ref_p_half[levels_idx + 1, :]
-        # ref_delta = ref_delta[levels_idx, :]
-        # ref_alpha = ref_alpha[levels_idx, :]
-
     res = vertical.pressure_on_hybrid_levels(A, B, sp, levels=levels, alpha_top="ifs", output=output)
+
+    # atol and rtol for different outputs, due to different precisions in backends
+    tolerance = Tolerance(
+        {
+            "full": {64: (1e-8, 1e-6)},
+            "half": {64: (1e-8, 1e-6)},
+            "delta": {64: (1e-8, 1e-6), 32: (1e-6, 1e-5)},
+            "alpha": {64: (1e-8, 1e-6), 32: (1e-4, 1e-5)},
+        }
+    )
 
     if isinstance(output, str) or len(output) == 1:
         key = output if isinstance(output, str) else output[0]
-        assert xp.allclose(res, ref[key])
+        # print(f"{key=}, max abs diff={xp.max(xp.abs(res - ref[key]))}")
+
+        atol, rtol = tolerance.get(key=key, dtype=sp.dtype)
+        assert xp.allclose(
+            res, ref[key], atol=atol, rtol=rtol
+        ), f"{key=}, max abs diff={xp.max(xp.abs(res - ref[key]))}"
     else:
         assert isinstance(res, tuple)
         assert len(res) == len(output)
         for key, rd in zip(output, res):
-            assert xp.allclose(rd, ref[key])
-
-    # # print("p_full", repr(p_full))
-    # # print("p_half", repr(p_half))
-    # # print("delta", repr(delta))
-    # # print("alpha", repr(alpha))
-
-    # assert xp.allclose(p_full, ref_p_full)
-    # assert xp.allclose(p_half, ref_p_half)
-    # assert xp.allclose(delta, ref_delta)
-    # assert xp.allclose(alpha, ref_alpha)
+            atol, rtol = tolerance.get(key=key, dtype=sp.dtype)
+            assert xp.allclose(
+                rd, ref[key], atol=atol, rtol=rtol
+            ), f"{key=}, max abs diff={xp.max(xp.abs(rd - ref[key]))}"
 
 
-# @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+# @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
-def test_relative_geopotential_thickness_on_hybrid_levels_1(index, xp, device):
+def test_relative_geopotential_thickness_on_hybrid_levels_alpha_delta(index, xp, device):
 
     alpha = DATA_HYBRID_CORE.alpha
     delta = DATA_HYBRID_CORE.delta
@@ -306,13 +400,15 @@ def test_relative_geopotential_thickness_on_hybrid_levels_1(index, xp, device):
 
     z = vertical.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta)
 
-    assert xp.allclose(z, z_ref)
+    tolerance = Tolerance({64: (1e-8, 1e-6), 32: (1e-8, 1e-6)})
+    atol, rtol = tolerance.get(dtype=t.dtype)
+    assert xp.allclose(z, z_ref, atol=atol, rtol=rtol), f"max abs diff={xp.max(xp.abs(z - z_ref))}"
 
 
-# @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+# @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
-def test_relative_geopotential_thickness_on_hybrid_levels_2(index, xp, device):
+def test_relative_geopotential_thickness_on_hybrid_levels_ab(index, xp, device):
 
     A = DATA_HYBRID_CORE.A
     B = DATA_HYBRID_CORE.B
@@ -330,18 +426,14 @@ def test_relative_geopotential_thickness_on_hybrid_levels_2(index, xp, device):
 
     z = vertical.relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp)
 
-    assert xp.allclose(z, z_ref, rtol=1e-6)
+    tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
+    atol, rtol = tolerance.get(dtype=t.dtype)
+    assert xp.allclose(z, z_ref, atol=atol, rtol=rtol), f"max abs diff={xp.max(xp.abs(z - z_ref))}"
 
 
-# @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
-@pytest.mark.parametrize(
-    "index",
-    [
-        (slice(None), slice(None)),
-    ],
-)
-# @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+# @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
 def test_relative_geopotential_thickness_on_hybrid_levels_part(index, xp, device):
     # get only levels from 90 to 136/137
     part = slice(90, None)
@@ -364,11 +456,13 @@ def test_relative_geopotential_thickness_on_hybrid_levels_part(index, xp, device
 
     z = vertical.relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp)
 
-    assert xp.allclose(z, z_ref, rtol=1e-6)
+    tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
+    atol, rtol = tolerance.get(dtype=t.dtype)
+    assert xp.allclose(z, z_ref, atol=atol, rtol=rtol), f"max abs diff={xp.max(xp.abs(z - z_ref))}"
 
 
-# @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+# @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
 def test_geopotential_on_hybrid_levels(index, xp, device):
 
@@ -390,10 +484,13 @@ def test_geopotential_on_hybrid_levels(index, xp, device):
 
     z = vertical.geopotential_on_hybrid_levels(t, q, zs, A, B, sp)
 
-    assert xp.allclose(z, z_ref, rtol=1e-6)
+    tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
+    atol, rtol = tolerance.get(dtype=t.dtype)
+    assert xp.allclose(z, z_ref, atol=atol, rtol=rtol), f"max abs diff={xp.max(xp.abs(z - z_ref))}"
 
 
-@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+# @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
 @pytest.mark.parametrize("h_type", ["geometric", "geopotential"])
 @pytest.mark.parametrize("h_reference", ["sea", "ground"])
@@ -417,4 +514,7 @@ def test_height_on_hybrid_levels(index, xp, device, h_type, h_reference):
     sp = sp[index[1]]
 
     h = vertical.height_on_hybrid_levels(t, q, zs, A, B, sp, h_type=h_type, h_reference=h_reference)
-    assert xp.allclose(h, h_ref)
+
+    tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
+    atol, rtol = tolerance.get(dtype=t.dtype)
+    assert xp.allclose(h, h_ref, atol=atol, rtol=rtol), f"max abs diff={xp.max(xp.abs(h - h_ref))}"

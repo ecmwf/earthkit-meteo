@@ -98,4 +98,41 @@ def modules_installed(*modules) -> bool:
     return True
 
 
+class Tolerance:
+    def __init__(self, conf):
+        """Helper class to manage tolerances for different data bit depths."""
+        self.conf = conf
+
+    def bits(self, dtype=None):
+        bits = (64, 32, 16)
+        if dtype is not None:
+            import numpy as np
+            from earthkit.utils.array.convert import convert_dtype
+            from earthkit.utils.array.namespace import _NUMPY_NAMESPACE
+
+            dtype = convert_dtype(dtype, _NUMPY_NAMESPACE)
+            if dtype in [np.float64]:
+                bits = (64,)
+            elif dtype in [np.float32]:
+                bits = (32, 64)
+            elif dtype in [np.float16]:
+                bits = (16, 32, 64)
+        return bits
+
+    def get(self, key=None, dtype=None):
+        bits = self.bits(dtype)
+        if key is not None:
+            conf = self.conf[key]
+        else:
+            conf = self.conf
+
+        for b in bits:
+            if b in conf:
+                atol = conf[b][0]
+                rtol = conf[b][1]
+                return atol, rtol
+
+        raise ValueError(f"No tolerances found for dtype={dtype}")
+
+
 NO_XARRAY = not modules_installed("xarray")

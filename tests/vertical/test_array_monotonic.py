@@ -54,6 +54,7 @@ def _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected
     assert xp.allclose(r, expected_data, equal_nan=True)
 
 
+# @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("xp, device", NUMPY)
 @pytest.mark.parametrize(
     "data,coord,target_coord,mode,expected_data",

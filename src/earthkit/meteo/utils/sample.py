@@ -14,7 +14,6 @@ class SampleInputData:
     """Helper class to load sample input data."""
 
     def __init__(self, d, xp=None, device=None):
-
         self._d = d
         if xp is None:
             from earthkit.utils.array import array_namespace

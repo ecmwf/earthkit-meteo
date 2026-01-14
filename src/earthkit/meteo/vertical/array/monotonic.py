@@ -8,7 +8,6 @@
 
 from typing import Union
 
-import numpy as np
 from earthkit.utils.array import array_namespace
 from numpy.typing import ArrayLike
 
@@ -60,6 +59,7 @@ class MonotonicInterpolator:
         aux_min_level_coord=None,
         aux_max_level_data=None,
         aux_max_level_coord=None,
+        vertical_axis=0,
     ):
 
         if interpolation not in ["linear", "log", "nearest"]:
@@ -72,10 +72,18 @@ class MonotonicInterpolator:
         coord = xp.atleast_1d(coord)
         data = xp.asarray(data)
 
+        if vertical_axis != 0:
+            # move the vertical axis to the required position
+            data = xp.moveaxis(data, vertical_axis, 0)
+            if coord.ndim > 1:
+                coord = xp.moveaxis(coord, vertical_axis, 0)
+            if target_coord.ndim > 1:
+                target_coord = xp.moveaxis(target_coord, vertical_axis, 0)
+
         # Ensure levels are in descending order with respect to the values in the first
         # dimension of coord
-        first = [0] * xp.ndim(coord)
-        last = [0] * xp.ndim(coord)
+        first = [0] * coord.ndim
+        last = [0] * coord.ndim
         first = tuple([0] + first[1:])
         last = tuple([-1] + last[1:])
 
@@ -92,9 +100,9 @@ class MonotonicInterpolator:
                 f"The first dimension of data and that of coord must match! {data.shape=} {coord.shape=} {data.shape[0]} != {coord.shape[0]}"
             )
 
-        self.data_is_scalar = xp.ndim(data[0]) == 0
-        self.coord_is_scalar = xp.ndim(coord[0]) == 0
-        self.target_is_scalar = xp.ndim(target_coord[0]) == 0
+        self.data_is_scalar = data[0].ndim == 0
+        self.coord_is_scalar = coord[0].ndim == 0
+        self.target_is_scalar = target_coord[0].ndim == 0
 
         same_shape = data.shape == coord.shape
         if same_shape:
@@ -109,9 +117,9 @@ class MonotonicInterpolator:
                     "When values and target_p have different shapes, target_p must be a scalar or a 1D array."
                 )
 
-        if not same_shape and xp.ndim(coord) != 1:
+        if not same_shape and coord.ndim != 1:
             raise ValueError(
-                f"When values and p have different shapes, p must be a scalar or a 1D array. {data.shape=} {coord.shape=} {xp.ndim(coord)}"
+                f"When values and p have different shapes, p must be a scalar or a 1D array. {data.shape=} {coord.shape=} {coord.ndim}"
             )
 
         # initialize the output array
@@ -161,6 +169,10 @@ class MonotonicInterpolator:
             self.compute(res)
         else:
             return self.simple_compute(res)
+
+        if vertical_axis != 0:
+            # move back the vertical axis to the original position
+            res = xp.moveaxis(res, 0, vertical_axis)
 
         return res
 
@@ -217,11 +229,11 @@ class MonotonicInterpolator:
                 if self.interpolation == "nearest":
                     r[mask] = self.data[0][mask]
                 else:
-                    r[mask] = np.nan
+                    r[mask] = xp.nan
                     m = mask & (xp.isclose(self.coord[0], tc))
                     r[m] = self.data[0][m]
             else:
-                r[mask] = np.nan
+                r[mask] = xp.nan
                 aux_mask = mask & (self.aux_bottom.coord > self.coord[0]) & (self.aux_bottom.coord >= tc)
                 if xp.any(aux_mask):
                     d_top = self.data[0][aux_mask]
@@ -242,12 +254,12 @@ class MonotonicInterpolator:
                 if self.interpolation == "nearest":
                     r[mask] = self.data[-1][mask]
                 else:
-                    r[mask] = np.nan
+                    r[mask] = xp.nan
                     m = mask & (xp.isclose(self.coord[-1], tc))
                     r[m] = self.data[-1][m]
             else:
                 # print("Using aux top layer")
-                r[mask] = np.nan
+                r[mask] = xp.nan
                 # print("aux top coord:", self.aux_top.coord, "self.coord[-1]:", self.coord[-1])
                 aux_mask = mask & (self.aux_top.coord < self.coord[-1]) & (self.aux_top.coord <= tc)
                 if xp.any(aux_mask):
@@ -266,7 +278,7 @@ class MonotonicInterpolator:
     def _compute_mid(self, idx_bottom, mask, r, tc):
         xp = self.xp
         i_lev = idx_bottom
-        indices = np.indices(i_lev.shape)
+        indices = xp.indices(i_lev.shape)
         masked_indices = tuple(dim[mask] for dim in indices)
         top = (idx_bottom[mask],) + masked_indices
         bottom = (idx_bottom[mask] - 1,) + masked_indices

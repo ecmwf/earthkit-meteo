@@ -94,6 +94,9 @@ def pressure_at_model_levels(
 
     alpha_top = np.log(2) if alpha_top == "ifs" else 1.0
 
+    A = np.asarray(A)
+    B = np.asarray(B)
+
     # make the calculation agnostic to the number of dimensions
     ndim = sp.ndim
     new_shape_half = (A.shape[0],) + (1,) * ndim
@@ -259,6 +262,9 @@ def pressure_at_height_levels(
 
 
     """
+    A = np.asarray(A)
+    B = np.asarray(B)
+
     # geopotential thickness of the height level
     tdphi = height * constants.g
 
@@ -487,7 +493,13 @@ def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
 
 
 def pressure_on_hybrid_levels(
-    A: ArrayLike, B: ArrayLike, sp: ArrayLike, levels=None, alpha_top="ifs", output="full"
+    A: ArrayLike,
+    B: ArrayLike,
+    sp: ArrayLike,
+    levels=None,
+    alpha_top="ifs",
+    output="full",
+    vertical_axis=0,
 ) -> ArrayLike:
     r"""Compute pressure and related parameters on hybrid (IFS model) levels.
 
@@ -507,6 +519,8 @@ def pressure_on_hybrid_levels(
         contain :math:`NLEV+1` values. See [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1. for details.
     sp : array-like
         Surface pressure (Pa)
+    vertical_axis : int, optional
+        Axis corresponding to the vertical coordinate (hybrid levels) in the output arrays.
     levels : None, array-like, list, tuple, optional
         Specify the full hybrid levels to return in the given order. Please note level
         numbering starts at 1. If None (default), all the levels are returned in the
@@ -539,7 +553,9 @@ def pressure_on_hybrid_levels(
     Returns
     -------
     array-like or tuple of array-like
-        See the ``output`` parameter for details.
+        See the ``output`` parameter for details. The axis corresponding to the vertical
+        coordinate (hybrid levels) in the output arrays is defined by the ``vertical_axis``
+        parameter.
 
     Notes
     -----
@@ -591,15 +607,15 @@ def pressure_on_hybrid_levels(
     if alpha_top not in ["ifs", "arpege"]:
         raise ValueError(f"Unknown method '{alpha_top}' for pressure calculation. Use 'ifs' or 'arpege'.")
 
-    xp = array_namespace(A, B, sp)
+    xp = array_namespace(sp, A, B)
     A = xp.asarray(A)
     B = xp.asarray(B)
-    sp = xp.asarray(sp)
+    device = xp.device(sp)
 
     if levels is not None:
         # select a contiguous subset of levels
         nlev = A.shape[0] - 1  # number of model full-levels
-        levels = np.asarray(levels)
+        levels = xp.asarray(levels)
         levels_max = int(levels.max())
         levels_min = int(levels.min())
         if levels_max > nlev:
@@ -607,22 +623,25 @@ def pressure_on_hybrid_levels(
         if levels_min < 1:
             raise ValueError(f"Level numbering starts at 1. Found level={levels_min} < 1.")
 
-        half_idx = np.array(list(range(levels_min - 1, levels_max + 1)))
+        half_idx = xp.asarray(list(range(levels_min - 1, levels_max + 1)))
         A = A[half_idx]
         B = B[half_idx]
 
         # compute indices to select the requested full levels later
-        out_half_idx = np.where(levels[:, None] == half_idx[None, :])[1]
+        # out_half_idx = xp.where(levels[:, None] == half_idx[None, :])[1]
+
+        out_half_idx = xp.nonzero(xp.asarray(levels[:, None] == half_idx[None, :]))[1]
+
         out_full_idx = out_half_idx - 1
 
     # make the calculation agnostic to the number of dimensions
     ndim = sp.ndim
     new_shape_half = (A.shape[0],) + (1,) * ndim
-    A_reshaped = A.reshape(new_shape_half)
-    B_reshaped = B.reshape(new_shape_half)
+    A_reshaped = xp.reshape(A, new_shape_half)
+    B_reshaped = xp.reshape(B, new_shape_half)
 
     # calculate pressure on model half-levels
-    p_half_level = A_reshaped + B_reshaped * sp[np.newaxis, ...]
+    p_half_level = A_reshaped + B_reshaped * sp[xp.newaxis, ...]
 
     if "delta" in output or "alpha" in output:
         # constants
@@ -633,25 +652,25 @@ def pressure_on_hybrid_levels(
         new_shape_full = (A.shape[0] - 1,) + sp.shape
 
         # calculate delta
-        delta = np.zeros(new_shape_full)
-        delta[1:, ...] = np.log(p_half_level[2:, ...] / p_half_level[1:-1, ...])
+        delta = xp.zeros(new_shape_full, device=device)
+        delta[1:, ...] = xp.log(p_half_level[2:, ...] / p_half_level[1:-1, ...])
 
         # pressure at highest half level<= 0.1
-        if np.any(p_half_level[0, ...] <= PRESSURE_TOA):
-            delta[0, ...] = np.log(p_half_level[1, ...] / PRESSURE_TOA)
+        if xp.any(p_half_level[0, ...] <= PRESSURE_TOA):
+            delta[0, ...] = xp.log(p_half_level[1, ...] / PRESSURE_TOA)
         # pressure at highest half level > 0.1
         else:
-            delta[0, ...] = np.log(p_half_level[1, ...] / p_half_level[0, ...])
+            delta[0, ...] = xp.log(p_half_level[1, ...] / p_half_level[0, ...])
 
         # calculate alpha
-        alpha = np.zeros(new_shape_full)
+        alpha = xp.zeros(new_shape_full, device=device)
 
         alpha[1:, ...] = (
             1.0 - p_half_level[1:-1, ...] / (p_half_level[2:, ...] - p_half_level[1:-1, ...]) * delta[1:, ...]
         )
 
         # pressure at highest half level <= 0.1
-        if np.any(p_half_level[0, ...] <= PRESSURE_TOA):
+        if xp.any(p_half_level[0, ...] <= PRESSURE_TOA):
             alpha[0, ...] = alpha_top
         # pressure at highest half level > 0.1
         else:
@@ -663,9 +682,11 @@ def pressure_on_hybrid_levels(
         # calculate pressure on model full levels
         # TODO: is there a faster way to calculate the averages?
         # TODO: introduce option to calculate full levels in more complicated way
-        p_full_level = np.apply_along_axis(
-            lambda m: np.convolve(m, np.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level
-        )
+        # p_full_level = xp.apply_along_axis(
+        #     lambda m: xp.convolve(m, xp.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level
+        # )
+
+        p_full_level = p_half_level[:-1, ...] + 0.5 * xp.diff(p_half_level, axis=0)
 
     # generate output
     res = []
@@ -688,6 +709,10 @@ def pressure_on_hybrid_levels(
                 delta = delta[out_full_idx, ...]
             res.append(delta)
 
+    if vertical_axis != 0 and res[0].ndim > 1:
+        # move the vertical axis to the required position
+        res = [xp.moveaxis(r, 0, vertical_axis) for r in res]
+
     if len(res) == 1:
         return res[0]
 
@@ -699,6 +724,7 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     q: ArrayLike,
     alpha: ArrayLike,
     delta: ArrayLike,
+    vertical_axis=0,
 ) -> ArrayLike:
     """Compute the geopotential thickness between the surface and hybrid (IFS model) full-levels.
 
@@ -723,6 +749,9 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     delta : array-like
         Delta term of pressure calculations computed using :func:`pressure_on_hybrid_levels`.
         Must have the same shape, level range and order as ``t``.
+    vertical_axis : int, optional
+        Axis corresponding to the vertical coordinate (model levels) in the input arrays and also in
+        the output array. Default is 0 (first axis).
 
     Returns
     -------
@@ -754,6 +783,13 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     t = xp.asarray(t)
     q = xp.asarray(q)
 
+    if vertical_axis != 0:
+        # move the vertical axis to the first position
+        alpha = xp.moveaxis(alpha, vertical_axis, 0)
+        delta = xp.moveaxis(delta, vertical_axis, 0)
+        t = xp.moveaxis(t, vertical_axis, 0)
+        q = xp.moveaxis(q, vertical_axis, 0)
+
     R = specific_gas_constant(q)
     d = R * t
 
@@ -766,11 +802,21 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     dphi[:-1, ...] = dphi_half + d[:-1, ...] * alpha[:-1, ...]
     dphi[-1, ...] = d[-1, ...] * alpha[-1, ...]
 
+    if vertical_axis != 0:
+        # move the vertical axis back to its original position
+        dphi = xp.moveaxis(dphi, 0, vertical_axis)
+
     return dphi
 
 
 def relative_geopotential_thickness_on_hybrid_levels(
-    t: ArrayLike, q: ArrayLike, A: ArrayLike, B: ArrayLike, sp: ArrayLike, alpha_top="ifs"
+    t: ArrayLike,
+    q: ArrayLike,
+    A: ArrayLike,
+    B: ArrayLike,
+    sp: ArrayLike,
+    alpha_top="ifs",
+    vertical_axis=0,
 ) -> ArrayLike:
     """Compute the geopotential thickness between the surface and hybrid (IFS model) full-levels.
 
@@ -779,8 +825,7 @@ def relative_geopotential_thickness_on_hybrid_levels(
     Parameters
     ----------
     t : array-like
-        Temperature on hybrid full-levels (K). First dimension must
-        correspond to the full-levels. The levels must be in ascending order with
+        Temperature on hybrid full-levels (K). The ``vertical_axis`` must correspond to the full-levels. The levels must be in ascending order with
         respect the model level number. Not all the levels must be present, but a
         contiguous level range including the bottom-most level must be used. E.g. if
         the vertical coordinate system has 137 model levels using only a subset of
@@ -806,6 +851,9 @@ def relative_geopotential_thickness_on_hybrid_levels(
         Option to initialise the alpha parameters (for details see below) on the top of the
         model atmosphere (first half-level in the vertical coordinate system). See
         :func:`pressure_on_hybrid_levels` for details.
+    vertical_axis : int, optional
+        Axis corresponding to the vertical coordinate (model levels) in the input ``t``
+        and ``q`` arrays and also in the output array. Default is 0 (first axis).
 
     Returns
     -------
@@ -843,21 +891,25 @@ def relative_geopotential_thickness_on_hybrid_levels(
     sp = xp.asarray(sp)
     t = xp.asarray(t)
 
-    nlev_t = t.shape[0]
-    nlev = A.shape[0] - 1  # number of model full-levels
-    levels = None
-    if nlev_t != nlev:
-        # select a contiguous subset of levels
-        levels = list(range(nlev - nlev_t + 1, nlev + 1))
-        assert nlev_t == len(levels), (
-            "Inconsistent number of levels between t/q and A/B coefficients."
-            f" t/q have {nlev_t} levels, A/B have {nlev} levels."
-        )
+    levels = _hybrid_subset(t, A, B, vertical_axis)
+    # nlev_t = t.shape[vertical_axis]
+    # nlev = A.shape[0] - 1  # number of model full-levels
+    # levels = None
+    # if nlev_t != nlev:
+    #     # select a contiguous subset of levels
+    #     levels = list(range(nlev - nlev_t + 1, nlev + 1))
+    #     assert nlev_t == len(levels), (
+    #         "Inconsistent number of levels between t/q and A/B coefficients."
+    #         f" t/q have {nlev_t} levels, A/B have {nlev} levels."
+    #     )
 
     alpha, delta = pressure_on_hybrid_levels(
-        A, B, sp, alpha_top=alpha_top, levels=levels, output=("alpha", "delta")
+        A, B, sp, vertical_axis=vertical_axis, alpha_top=alpha_top, levels=levels, output=("alpha", "delta")
     )
-    return relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta)
+
+    return relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
+        t, q, alpha, delta, vertical_axis=vertical_axis
+    )
 
 
 def geopotential_on_hybrid_levels(
@@ -868,6 +920,7 @@ def geopotential_on_hybrid_levels(
     B: ArrayLike,
     sp: ArrayLike,
     alpha_top="ifs",
+    vertical_axis=0,
 ):
     """Compute the geopotential on hybrid (IFS model) full-levels.
 
@@ -930,7 +983,9 @@ def geopotential_on_hybrid_levels(
     relative_geopotential_thickness_on_hybrid_levels
 
     """
-    z = relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp, alpha_top=alpha_top)
+    z = relative_geopotential_thickness_on_hybrid_levels(
+        t, q, A, B, sp, vertical_axis=vertical_axis, alpha_top=alpha_top
+    )
     xp = array_namespace(z, zs)
     zs = xp.asarray(zs)
     return z + zs
@@ -946,6 +1001,7 @@ def height_on_hybrid_levels(
     alpha_top="ifs",
     h_type: str = "geometric",
     h_reference: str = "ground",
+    vertical_axis=0,
 ):
     """Compute the height on hybrid (IFS model) full-levels.
 
@@ -996,6 +1052,9 @@ def height_on_hybrid_levels(
         - "ground": height with respect to the ground/surface level
         - "sea": height with respect to the sea level
         Default is "ground".
+    vertical_axis : int, optional
+        Axis corresponding to the vertical coordinate (hybrid full-levels) in the input
+        arrays. Default is 0.
 
     Returns
     -------
@@ -1031,18 +1090,27 @@ def height_on_hybrid_levels(
     if h_reference not in ["sea", "ground"]:
         raise ValueError(f"Unknown '{h_reference=}'. Use 'sea' or 'ground'.")
 
-    nlev_t = t.shape[0]
-    nlev = A.shape[0] - 1  # number of model full-levels
-    levels = None
-    if nlev_t != nlev:
-        # select a contiguous subset of levels
-        levels = list(range(nlev - nlev_t + 1, nlev + 1))
-        assert nlev_t == len(levels), (
-            "Inconsistent number of levels between t/q and A/B coefficients."
-            f" t/q have {nlev_t} levels, A/B have {nlev} levels."
-        )
+    xp = array_namespace(t, q, A, B)
+    t = xp.asarray(t)
+    A = xp.asarray(A)
+    B = xp.asarray(B)
 
-    z_thickness = relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp, alpha_top=alpha_top)
+    _hybrid_subset(t, A, B, vertical_axis)
+
+    # nlev_t = t.shape[vertical_axis]
+    # nlev = A.shape[0] - 1  # number of model full-levels
+    # levels = None
+    # if nlev_t != nlev:
+    #     # select a contiguous subset of levels
+    #     levels = list(range(nlev - nlev_t + 1, nlev + 1))
+    #     assert nlev_t == len(levels), (
+    #         "Inconsistent number of levels between t/q and A/B coefficients."
+    #         f" t/q have {nlev_t} levels, A/B have {nlev} levels."
+    #     )
+
+    z_thickness = relative_geopotential_thickness_on_hybrid_levels(
+        t, q, A, B, sp, alpha_top=alpha_top, vertical_axis=vertical_axis
+    )
 
     if h_reference == "sea":
         z = z_thickness + zs
@@ -1061,8 +1129,9 @@ def height_on_hybrid_levels(
     return h
 
 
-def _hybrid_subset(data, A, B):
-    nlev_t = data.shape[0]
+def _hybrid_subset(data, A, B, vertical_axis=0):
+    """Helper function to determine the subset of hybrid levels corresponding to the data levels."""
+    nlev_t = data.shape[vertical_axis]
     nlev = A.shape[0] - 1  # number of model full-levels
     levels = None
     if nlev_t != nlev:
@@ -1083,6 +1152,7 @@ def interpolate_hybrid_to_pressure_levels(
     sp: ArrayLike,
     alpha_top="ifs",
     interpolation: str = "linear",
+    vertical_axis=0,
 ):
     xp = array_namespace(data, A, B, sp)
     data = xp.asarray(data)
@@ -1090,7 +1160,7 @@ def interpolate_hybrid_to_pressure_levels(
     B = xp.asarray(B)
     sp = xp.asarray(sp)
 
-    levels = _hybrid_subset(data, A, B)
+    levels = _hybrid_subset(data, A, B, vertical_axis)
 
     p = pressure_on_hybrid_levels(A, B, sp, alpha_top=alpha_top, levels=levels, output="full")
     return interpolate_monotonic(data=data, coord=p, target_coord=target_p, interpolation=interpolation)
@@ -1111,6 +1181,7 @@ def interpolate_hybrid_to_height_levels(
     interpolation: str = "linear",
     aux_bottom_data=None,
     aux_bottom_h=None,
+    vertical_axis=0,
 ):
 
     h = height_on_hybrid_levels(
@@ -1123,6 +1194,7 @@ def interpolate_hybrid_to_height_levels(
         alpha_top=alpha_top,
         h_type=h_type,
         h_reference=h_reference,
+        vertical_axis=vertical_axis,
     )
 
     # alpha, delta = pressure_on_hybrid_levels(A, B, sp, output=("alpha", "delta"))
@@ -1142,6 +1214,7 @@ def interpolate_hybrid_to_height_levels(
         interpolation=interpolation,
         aux_min_level_data=aux_bottom_data,
         aux_min_level_coord=aux_bottom_h,
+        vertical_axis=vertical_axis,
     )
 
 
@@ -1155,6 +1228,7 @@ def interpolate_pressure_to_height_levels(
     interpolation: str = "linear",
     aux_bottom_data=None,
     aux_bottom_h=None,
+    vertical_axis: int = 0,
 ):
     if h_type == "geometric":
         h = geometric_height_from_geopotential_height(z)
@@ -1173,6 +1247,7 @@ def interpolate_pressure_to_height_levels(
         interpolation=interpolation,
         aux_min_level_data=aux_bottom_data,
         aux_min_level_coord=aux_bottom_h,
+        vertical_axis=vertical_axis,
     )
 
 
@@ -1185,6 +1260,7 @@ def interpolate_monotonic(
     aux_min_level_coord=None,
     aux_max_level_data=None,
     aux_max_level_coord=None,
+    vertical_axis: int = 0,
 ) -> ArrayLike:
     """Interpolate data with the same type of source and target monotonic coordinate levels.
 
@@ -1247,4 +1323,5 @@ def interpolate_monotonic(
         aux_min_level_coord,
         aux_max_level_data,
         aux_max_level_coord,
+        vertical_axis=vertical_axis,
     )
