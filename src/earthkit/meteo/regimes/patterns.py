@@ -19,7 +19,7 @@ class RegimePatterns(abc.ABC):
     regimes : Iterable[str]
         Names of the regimes. The ordering here determines the ordering of
         regimes in all outputs.
-    grid : GridSpec
+    grid : dict
         The grid on which the regime patterns live.
     """
 
@@ -60,7 +60,7 @@ class ConstantRegimePatterns(RegimePatterns):
     ----------
     regimes : Iterable[str]
         Regime labels.
-    grid : GridSpec
+    grid : dict
         Grid specification of the patterns.
     patterns : array_like
         Regime patterns.
@@ -93,7 +93,7 @@ class ModulatedRegimePatterns(RegimePatterns):
     ----------
     regimes : Iterable[str]
         Regime labels.
-    grid : GridSpec
+    grid : dict
         Grid specification of the patterns.
     patterns : array_like
         Base regime patterns.
