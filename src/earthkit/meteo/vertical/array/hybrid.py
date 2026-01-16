@@ -14,7 +14,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def read_conf():
+def _read_conf():
     d = dict()
 
     from earthkit.meteo.utils.paths import earthkit_conf_file
@@ -34,7 +34,7 @@ def read_conf():
     return d
 
 
-_CONF = read_conf()
+_CONF = _read_conf()
 
 
 def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> Tuple[NDArray[Any], NDArray[Any]]:
