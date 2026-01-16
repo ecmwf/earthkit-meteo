@@ -7,11 +7,15 @@
 # nor does it submit to any jurisdiction.
 #
 
+from importlib import import_module
+
 import numpy as np
 import pytest
+from earthkit.utils.array.namespace import _NUMPY_NAMESPACE
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import vertical
+from earthkit.meteo.utils.testing import Tolerance
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
@@ -41,6 +45,21 @@ def _get_data():
 
 
 DATA = _get_data()
+
+
+def _get_data_1(name):
+    import os
+    import sys
+
+    here = os.path.dirname(__file__)
+    sys.path.insert(0, here)
+
+    return import_module(name)
+
+
+DATA_HYBRID_CORE = _get_data_1("_hybrid_core_data")
+DATA_HYBRID_H = _get_data_1("_hybrid_height_data")
+DATA_PL = _get_data_1("_pl_data")
 
 
 def _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected_data, xp, device):
@@ -311,3 +330,332 @@ def test_array_interpolate_monotonic_to_height_a_a_a_aux(
         aux_min_level_coord=aux_coord,
     )
     assert xp.allclose(r, expected_data, equal_nan=True)
+
+
+@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize(
+    "_kwargs,expected_values",
+    [
+        (
+            {"target_p": [85000.0, 50000.0], "interpolation": "linear"},
+            [[263.50982741, 287.70299692], [238.00383748, 259.50822691]],
+        ),
+        (
+            {"target_p": [85000.0, 50000.0, 95100.0], "interpolation": "linear"},
+            [[263.50982741, 287.70299692], [238.00383748, 259.50822691], [np.nan, 292.08454145]],
+        ),
+        (
+            {
+                "target_p": [85000.0, 50000.0, 95100.0],
+                "aux_bottom_p": [95178.337944, 102659.81019512],
+                "aux_bottom_data": [270.0, 293.0],
+                "interpolation": "linear",
+            },
+            [[263.50982741, 287.70299692], [238.00383748, 259.50822691], [269.21926951, 292.08454145]],
+        ),
+        (
+            {
+                "target_p": [95100.0],
+                "interpolation": "linear",
+            },
+            [np.nan, 292.08454145],
+        ),
+        (
+            {
+                "target_p": [95100.0],
+                "aux_bottom_p": [95178.337944, 102659.81019512],
+                "aux_bottom_data": [270.0, 293.0],
+                "interpolation": "linear",
+            },
+            [269.21926951, 292.08454145],
+        ),
+    ],
+)
+@pytest.mark.parametrize("part", [None, slice(-50, None)])
+def test_array_interpolate_hybrid_to_pressure_levels(_kwargs, expected_values, part, xp, device):
+    r_ref = expected_values
+
+    A, B = vertical.hybrid_level_parameters(137, model="ifs")
+    A = A.tolist()
+    B = B.tolist()
+
+    sp = DATA_HYBRID_H.p_surf
+    t = DATA_HYBRID_H.t
+
+    t, r_ref, sp, A, B = (xp.asarray(x, device=device) for x in [t, r_ref, sp, A, B])
+
+    if part:
+        t = t[part]
+
+    _kwargs = dict(_kwargs)
+    target_p = _kwargs.pop("target_p")
+
+    r = vertical.interpolate_hybrid_to_pressure_levels(
+        t,  # data to interpolate
+        target_p,
+        A,
+        B,
+        sp,
+        **_kwargs,
+    )
+
+    # print(repr(r))
+
+    tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
+    atol, rtol = tolerance.get(dtype=t.dtype)
+    assert xp.allclose(
+        r, r_ref, atol=atol, rtol=rtol, equal_nan=True
+    ), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
+
+
+@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize(
+    "_kwargs,expected_values",
+    [
+        (
+            {
+                "target_h": [1000.0, 5000.0],
+                "h_type": "geometric",
+                "h_reference": "ground",
+                "interpolation": "linear",
+            },
+            [[262.3693894784, 291.4452034379], [236.7746100208, 265.4952859218]],
+        ),
+        (
+            {
+                "target_h": [1000.0, 5000.0],
+                "h_type": "geometric",
+                "h_reference": "sea",
+                "interpolation": "linear",
+            },
+            [[265.8344752939, 291.0419484632], [239.8099274052, 264.9629089069]],
+        ),
+        (
+            {
+                "target_h": [1000.0, 5000.0],
+                "h_type": "geopotential",
+                "h_reference": "ground",
+                "interpolation": "linear",
+            },
+            [[262.3657943604, 291.4447171210], [236.7517288039, 265.4713984425]],
+        ),
+        (
+            {
+                "target_h": [1000.0, 5000.0],
+                "h_type": "geopotential",
+                "h_reference": "sea",
+                "interpolation": "linear",
+            },
+            [[265.8333668681, 291.0411459042], [239.7860545644, 264.9382000331]],
+        ),
+        (
+            {
+                "target_h": [1000.0, 5000.0, 5.0],
+                "h_type": "geometric",
+                "h_reference": "ground",
+                "interpolation": "linear",
+            },
+            [[262.3693894784, 291.4452034379], [236.7746100208, 265.4952859218], [np.nan, np.nan]],
+        ),
+        (
+            {
+                "target_h": [1000.0, 5000.0, 5.0],
+                "h_type": "geometric",
+                "h_reference": "ground",
+                "aux_bottom_h": 0.0,
+                "aux_bottom_data": [280.0, 300.0],
+                "interpolation": "linear",
+            },
+            [
+                [262.3693894784, 291.4452034379],
+                [236.7746100208, 265.4952859218],
+                [274.0481585682, 296.5000734836],
+            ],
+        ),
+        (
+            {
+                "target_h": [5.0],
+                "h_type": "geometric",
+                "h_reference": "ground",
+                "interpolation": "linear",
+            },
+            [np.nan, np.nan],
+        ),
+        (
+            {
+                "target_h": [5.0],
+                "h_type": "geometric",
+                "h_reference": "ground",
+                "aux_bottom_h": 0.0,
+                "aux_bottom_data": [280.0, 300.0],
+                "interpolation": "linear",
+            },
+            [274.0481585682, 296.5000734836],
+        ),
+    ],
+)
+@pytest.mark.parametrize("part", [None, slice(-50, None)])
+def test_array_interpolate_hybrid_to_height_levels(_kwargs, expected_values, part, xp, device):
+    r_ref = expected_values
+
+    A, B = vertical.hybrid_level_parameters(137, model="ifs")
+    A = A.tolist()
+    B = B.tolist()
+
+    sp = DATA_HYBRID_H.p_surf
+    t = DATA_HYBRID_H.t
+    q = DATA_HYBRID_H.q
+    zs = DATA_HYBRID_H.z_surf
+
+    r_ref, t, q, zs, sp, A, B = (xp.asarray(x, device=device) for x in [r_ref, t, q, zs, sp, A, B])
+
+    if part:
+        t = t[part]
+        q = q[part]
+
+    _kwargs = dict(_kwargs)
+    target_h = _kwargs.pop("target_h")
+
+    r = vertical.interpolate_hybrid_to_height_levels(
+        t,  # data to interpolate
+        target_h,
+        t,
+        q,
+        zs,
+        A,
+        B,
+        sp,
+        **_kwargs,
+    )
+
+    # print(repr(r))
+
+    tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
+    atol, rtol = tolerance.get(dtype=t.dtype)
+    assert xp.allclose(
+        r, r_ref, atol=atol, rtol=rtol, equal_nan=True
+    ), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
+
+
+@pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
+@pytest.mark.parametrize(
+    "_kwargs,expected_values",
+    [
+        (
+            {
+                "target_h": [1000.0, 5000.0],
+                "h_type": "geometric",
+                "h_reference": "ground",
+                "interpolation": "linear",
+            },
+            [[294.20429573, 299.22387254], [271.02124509, 272.90306903]],
+        ),
+        (
+            {
+                "target_h": [1000.0, 5000.0],
+                "h_type": "geometric",
+                "h_reference": "sea",
+                "interpolation": "linear",
+            },
+            [[298.4516800756, 298.9948524649], [274.0326115423, 272.7133842002]],
+        ),
+        (
+            {
+                "target_h": [1000.0, 5000.0],
+                "h_type": "geopotential",
+                "h_reference": "ground",
+                "interpolation": "linear",
+            },
+            [[294.2022875759, 299.2221015691], [270.9937963229, 272.8758976631]],
+        ),
+        (
+            {
+                "target_h": [1000.0, 5000.0],
+                "h_type": "geopotential",
+                "h_reference": "sea",
+                "interpolation": "linear",
+            },
+            [[298.4498485083, 298.9930209085], [274.0092073632, 272.6859411558]],
+        ),
+        (
+            {
+                "target_h": [1000.0, 5000.0, 2.0],
+                "h_type": "geometric",
+                "h_reference": "ground",
+                "interpolation": "linear",
+            },
+            [
+                [
+                    294.20429573,
+                    299.22387254,
+                ],
+                [271.02124509, 272.90306903],
+                [302.0918370407, np.nan],
+            ],
+        ),
+        (
+            {
+                "target_h": [1000.0, 5000.0, 2.0],
+                "h_type": "geometric",
+                "h_reference": "ground",
+                "interpolation": "linear",
+                "aux_bottom_h": 0.0,
+                "aux_bottom_data": [304.0, 306.0],
+            },
+            [
+                [
+                    294.20429573,
+                    299.22387254,
+                ],
+                [271.02124509, 272.90306903],
+                [302.0918370407, 305.9996224989],
+            ],
+        ),
+        (
+            {
+                "target_h": [2.0],
+                "h_type": "geometric",
+                "h_reference": "ground",
+                "interpolation": "linear",
+            },
+            [302.0918370407, np.nan],
+        ),
+        (
+            {
+                "target_h": [2.0],
+                "h_type": "geometric",
+                "h_reference": "ground",
+                "interpolation": "linear",
+                "aux_bottom_h": 0.0,
+                "aux_bottom_data": [304.0, 306.0],
+            },
+            [302.0918370407, 305.9996224989],
+        ),
+    ],
+)
+def test_array_interpolate_pressure_to_height_levels(_kwargs, expected_values, xp, device):
+    r_ref = expected_values
+
+    t = DATA_PL.t  # temperature [K]
+    z = DATA_PL.z  # geopotential [m2/s2]
+    sp = DATA_PL.p_surf  # surface pressure [Pa]
+    zs = DATA_PL.z_surf  # surface geopotential [m2/s2]
+
+    t, z, r_ref, sp, zs = (xp.asarray(x, device=device) for x in [t, z, r_ref, sp, zs])
+
+    _kwargs = dict(_kwargs)
+    target_h = _kwargs.pop("target_h")
+
+    r = vertical.interpolate_pressure_to_height_levels(
+        t,  # data to interpolate
+        target_h,
+        z,
+        zs,
+        **_kwargs,
+    )
+
+    tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
+    atol, rtol = tolerance.get(dtype=t.dtype)
+    assert xp.allclose(
+        r, r_ref, atol=atol, rtol=rtol, equal_nan=True
+    ), f"max abs diff={xp.max(xp.abs(r - r_ref))}"

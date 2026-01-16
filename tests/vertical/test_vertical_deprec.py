@@ -300,6 +300,49 @@ def test_pressure_at_height_levels_all_migrated_2(h_target, p_ref, xp):
     t = DATA.t
     q = DATA.q
 
+    # p_ref = [p_ref]
+
+    sp, h_target, p_ref, t, q, A, B = (xp.asarray(x) for x in [sp, h_target, p_ref, t, q, A, B])
+
+    sp = sp[0]  # use only the first surface pressure value
+    t = t[:, 0]
+    q = q[:, 0]
+
+    p_full, alpha, delta = vertical.pressure_on_hybrid_levels(
+        A, B, sp, alpha_top="ifs", output=("full", "alpha", "delta")
+    )
+
+    z = vertical.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta)
+    h = vertical.geopotential_height_from_geopotential(z)
+
+    p = vertical.interpolate_monotonic(
+        p_full, h, h_target, aux_min_level_data=sp, aux_min_level_coord=0.0, interpolation="linear"
+    )
+
+    # print("p:", repr(p), "p_ref:", repr(p_ref), p - p_ref)
+    # print("diff:", np.allclose(p, p_ref), np.abs(p - p_ref) < 1e-3 + 1e-8 * np.abs(p_ref))
+    # print("isclose:", np.isclose(p, p_ref, rtol=1e-8, atol=1e-5))
+    assert np.allclose(p, p_ref, atol=1e-3, rtol=1e-8)
+
+
+@pytest.mark.parametrize("xp", [_NUMPY_NAMESPACE])
+@pytest.mark.parametrize(
+    "h_target,p_ref",
+    [
+        (0, 101183.94696484),
+        (1, 101171.8606369517),
+        (100.0, 99979.6875841272),
+        (5000.0, 53738.035306025726),
+        (50000.0, 84.2265165561),
+    ],
+)
+def test_pressure_at_height_levels_all_migrated_3(h_target, p_ref, xp):
+    sp = DATA.p_surf
+    A = DATA.A
+    B = DATA.B
+    t = DATA.t
+    q = DATA.q
+
     p_ref = [p_ref]
 
     sp, h_target, p_ref, t, q, A, B = (xp.asarray(x) for x in [sp, h_target, p_ref, t, q, A, B])

@@ -26,6 +26,9 @@ def pressure_at_model_levels(
 ) -> Tuple[NDArray[Any], NDArray[Any], NDArray[Any], NDArray[Any]]:
     r"""Compute pressure at model full- and half-levels.
 
+    *Deprecated in version 0.7.0*
+    See :ref:`deprecated-hybrid-pressure-at-model-levels` for details.
+
     Parameters
     ----------
     A : ndarray
@@ -51,7 +54,7 @@ def pressure_at_model_levels(
     ndarray
         Delta at full-levels
     ndarray
-        Alpha at full levels
+        Alpha at full-levels
 
 
     Notes
@@ -111,10 +114,10 @@ def pressure_at_model_levels(
     delta = np.zeros(new_shape_full)
     delta[1:, ...] = np.log(p_half_level[2:, ...] / p_half_level[1:-1, ...])
 
-    # pressure at highest half level<= 0.1
+    # pressure at highest half-level <= 0.1
     if np.any(p_half_level[0, ...] <= PRESSURE_TOA):
         delta[0, ...] = np.log(p_half_level[1, ...] / PRESSURE_TOA)
-    # pressure at highest half level > 0.1
+    # pressure at highest half-level > 0.1
     else:
         delta[0, ...] = np.log(p_half_level[1, ...] / p_half_level[0, ...])
 
@@ -125,18 +128,18 @@ def pressure_at_model_levels(
         1.0 - p_half_level[1:-1, ...] / (p_half_level[2:, ...] - p_half_level[1:-1, ...]) * delta[1:, ...]
     )
 
-    # pressure at highest half level <= 0.1
+    # pressure at highest half-level <= 0.1
     if np.any(p_half_level[0, ...] <= PRESSURE_TOA):
         alpha[0, ...] = alpha_top
-    # pressure at highest half level > 0.1
+    # pressure at highest half-level > 0.1
     else:
         alpha[0, ...] = (
             1.0 - p_half_level[0, ...] / (p_half_level[1, ...] - p_half_level[0, ...]) * delta[0, ...]
         )
 
-    # calculate pressure on model full levels
+    # calculate pressure on model full-levels
     # TODO: is there a faster way to calculate the averages?
-    # TODO: introduce option to calculate full levels in more complicated way
+    # TODO: introduce option to calculate full-levels in more complicated way
     p_full_level = np.apply_along_axis(
         lambda m: np.convolve(m, np.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level
     )
@@ -151,6 +154,9 @@ def relative_geopotential_thickness(
     alpha: ArrayLike, delta: ArrayLike, t: ArrayLike, q: ArrayLike
 ) -> ArrayLike:
     """Calculate the geopotential thickness with respect to the surface on hybrid (IFS model) full-levels.
+
+    *Deprecated in version 0.7.0*
+    See :ref:`deprecated-hybrid-relative-geopotential-thickness` for details.
 
     Parameters
     ----------
@@ -193,11 +199,11 @@ def relative_geopotential_thickness(
     R = specific_gas_constant(q)
     d = R * t
 
-    # compute geopotential thickness on half levels from 1 to NLEV-1
+    # compute geopotential thickness on half-levels from 1 to NLEV-1
     dphi_half = xp.cumulative_sum(xp.flip(d[1:, ...] * delta[1:, ...], axis=0), axis=0)
     dphi_half = xp.flip(dphi_half, axis=0)
 
-    # compute geopotential thickness on full levels
+    # compute geopotential thickness on full-levels
     dphi = xp.zeros_like(d)
     dphi[:-1, ...] = dphi_half + d[:-1, ...] * alpha[:-1, ...]
     dphi[-1, ...] = d[-1, ...] * alpha[-1, ...]
@@ -205,6 +211,7 @@ def relative_geopotential_thickness(
     return dphi
 
 
+@deprecation.deprecated(deprecated_in="0.7", details="Use interpolate_hybrid_to_height_levels instead.")
 def pressure_at_height_levels(
     height: float,
     t: NDArray[Any],
@@ -215,6 +222,9 @@ def pressure_at_height_levels(
     alpha_top: str = "ifs",
 ) -> Union[float, NDArray[Any]]:
     """Calculate the pressure at a height above the surface from model full-levels.
+
+    *Deprecated in version 0.7.0*
+    See :ref:`deprecated-hybrid-pressure-at-height-levels` for details.
 
     Parameters
     ----------
@@ -273,10 +283,10 @@ def pressure_at_height_levels(
     # pressure(-related) variables
     p_full, p_half, delta, alpha = pressure_at_model_levels(A, B, sp, alpha_top=alpha_top)
 
-    # relative geopotential thickness of full levels
+    # relative geopotential thickness of full-levels
     dphi = relative_geopotential_thickness(alpha, delta, t, q)
 
-    # find the model full level right above the height level
+    # find the model full-level right above the height level
     i_phi = (tdphi < dphi).sum(0)
     i_phi = i_phi - 1
 
@@ -509,24 +519,24 @@ def pressure_on_hybrid_levels(
     ----------
     A : array-like
         A-coefficients defining the hybrid levels. Must contain all the half-levels
-        in ascending order with respect to the model level number. If the total number
-        of (full) model levels is :math:`NLEV`, ``A`` must contain :math:`NLEV+1` values, one for each
-        half-level. See [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1. for details.
+        in ascending order with respect to the model level number (from the top of the
+        atmosphere toward the surface). If the total number of (full) model levels
+        is :math:`NLEV`, ``A`` must contain :math:`NLEV+1` values, one for each
+        half-level. See [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1. for
+        details.
     B : array-like
         B-coefficients defining the hybrid levels. Must contain all the half-levels
         in ascending order with respect to the model level number. Must have the same
-        size as ``A``.  If the total number of (full) model levels is :math:`NLEV`, ``B`` must
-        contain :math:`NLEV+1` values. See [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1. for details.
+        size and ordering as ``A``.
+        See [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1. for details.
     sp : array-like
         Surface pressure (Pa)
-    vertical_axis : int, optional
-        Axis corresponding to the vertical coordinate (hybrid levels) in the output arrays.
-        Default is 0 (first axis).
     levels : None, array-like, list, tuple, optional
-        Specify the full hybrid levels to return in the given order. Please note level
-        numbering starts at 1. If None (default), all the levels are returned in the
-        order defined by the A and B coefficients (i.e. ascending order with respect to
-        the model level number).
+        Specify the hybrid full-levels to return in the given order. Following the
+        IFS convention model level numbering starts at 1 at the top of the atmosphere
+        and increasing toward the surface.  If None (default), all the levels are
+        returned in the order defined by the A and B coefficients (i.e. ascending order
+        with respect to the model level number).
     alpha_top : str, optional
         Option to initialise the alpha parameters (for details see below) on the top of the
         model atmosphere (first half-level in the vertical coordinate system). The possible
@@ -539,17 +549,20 @@ def pressure_on_hybrid_levels(
         Specify which outputs to return. Possible values are "full", "half", "delta" and "alpha".
         Can be a single string or a list/tuple of strings. Default is "full". The outputs are:
 
-        - "full": pressure (Pa) on full levels
-        - "half": pressure (Pa) on half levels. When ``levels`` is None, returns all the
+        - "full": pressure (Pa) on full-levels
+        - "half": pressure (Pa) on half-levels. When ``levels`` is None, returns all the
           half-levels. When ``levels`` is not None, only returns the half-levels below
-          the requested full levels.
+          the requested full-levels.
         - "delta": logarithm of pressure difference between two adjacent half-levels. Uses
-          the same indexing as the full levels.
-        - "alpha": alpha parameter defined for layers (i.e. for full levels). Uses the same
-          indexing as the full levels. Used for the calculation of the relative geopotential
-          thickness on full levels. See
+          the same indexing as the full-levels.
+        - "alpha": alpha parameter defined for layers (i.e. for full-levels). Uses the same
+          indexing as the full-levels. Used for the calculation of the relative geopotential
+          thickness on full-levels. See
           :func:`relative_geopotential_thickness_on_hybrid_levels` for details.
 
+    vertical_axis : int, optional
+        Axis corresponding to the vertical coordinate (hybrid levels) in the output arrays.
+        Default is 0 (first axis).
 
     Returns
     -------
@@ -563,9 +576,9 @@ def pressure_on_hybrid_levels(
     The hybrid model levels divide the atmosphere into :math:`NLEV` layers. These layers are defined
     by the pressures at the interfaces between them for :math:`0 \leq k \leq NLEV`, which are
     the half-levels :math:`p_{k+1/2}` (indices increase from the top of the atmosphere towards
-    the surface). The half levels are defined by the ``A`` and ``B`` coefficients in such a way that at
-    the top of the atmosphere the first half level pressure :math:`p_{+1/2}` is a constant, while
-    at the surface :math:`p_{NLEV+1/2}` is the surface pressure.
+    the surface). The half-levels are defined by the ``A`` and ``B`` coefficients in such a way
+    that at the top of the atmosphere the first half-level pressure :math:`p_{+1/2}` is a constant,
+    while at the surface :math:`p_{NLEV+1/2}` is the surface pressure.
 
     The full-level pressure :math:`p_{k}` associated with each model
     level is defined as the middle of the layer for :math:`1 \leq k \leq NLEV`.
@@ -633,7 +646,7 @@ def pressure_on_hybrid_levels(
         A = A[half_idx]
         B = B[half_idx]
 
-        # compute indices to select the requested full levels later
+        # compute indices to select the requested full-levels later
         # out_half_idx = xp.where(levels[:, None] == half_idx[None, :])[1]
 
         out_half_idx = xp.nonzero(xp.asarray(levels[:, None] == half_idx[None, :]))[1]
@@ -661,10 +674,10 @@ def pressure_on_hybrid_levels(
         delta = xp.zeros(new_shape_full, device=device)
         delta[1:, ...] = xp.log(p_half_level[2:, ...] / p_half_level[1:-1, ...])
 
-        # pressure at highest half level<= 0.1
+        # pressure at highest half-level<= 0.1
         if xp.any(p_half_level[0, ...] <= PRESSURE_TOA):
             delta[0, ...] = xp.log(p_half_level[1, ...] / PRESSURE_TOA)
-        # pressure at highest half level > 0.1
+        # pressure at highest half-level > 0.1
         else:
             delta[0, ...] = xp.log(p_half_level[1, ...] / p_half_level[0, ...])
 
@@ -675,19 +688,19 @@ def pressure_on_hybrid_levels(
             1.0 - p_half_level[1:-1, ...] / (p_half_level[2:, ...] - p_half_level[1:-1, ...]) * delta[1:, ...]
         )
 
-        # pressure at highest half level <= 0.1
+        # pressure at highest half-level <= 0.1
         if xp.any(p_half_level[0, ...] <= PRESSURE_TOA):
             alpha[0, ...] = alpha_top
-        # pressure at highest half level > 0.1
+        # pressure at highest half-level > 0.1
         else:
             alpha[0, ...] = (
                 1.0 - p_half_level[0, ...] / (p_half_level[1, ...] - p_half_level[0, ...]) * delta[0, ...]
             )
 
     if "full" in output:
-        # calculate pressure on model full levels
+        # calculate pressure on model full-levels
         # TODO: is there a faster way to calculate the averages?
-        # TODO: introduce option to calculate full levels in more complicated way
+        # TODO: introduce option to calculate full-levels in more complicated way
         # p_full_level = xp.apply_along_axis(
         #     lambda m: xp.convolve(m, xp.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level
         # )
@@ -723,6 +736,80 @@ def pressure_on_hybrid_levels(
         return res[0]
 
     return tuple(res)
+
+
+def _compute_relative_geopotential_thickness_on_hybrid_levels(
+    t: ArrayLike,
+    q: ArrayLike,
+    alpha: ArrayLike,
+    delta: ArrayLike,
+    xp: Any,
+) -> ArrayLike:
+    """Compute the geopotential thickness between the surface and hybrid (IFS model) full-levels.
+
+    *New in version 0.7.0*: This function replaces the deprecated :func:`relative_geopotential_thickness`.
+
+    Parameters
+    ----------
+    t : array-like
+        Temperature on hybrid full-levels (K). The axis corresponding to the vertical
+        coordinate (hybrid levels) is defined by the ``vertical_axis`` parameter.
+        The levels must be in ascending order with respect the model level number. Not
+        all the levels must be present, but a contiguous level range including the bottom-most
+        level must be used. E.g. if the vertical coordinate system has 137 model levels using
+        only a subset of levels between e.g. 137-96 is allowed.
+    q : array-like
+        Specific humidity on hybrid full-levels (kg/kg). Must have the
+        same shape, level range and order as ``t``.
+    alpha : array-like
+        Alpha term of pressure calculations computed using
+        :func:`pressure_on_hybrid_levels`. Must have the same shape, level range
+        and order as ``t``.
+    delta : array-like
+        Delta term of pressure calculations computed using :func:`pressure_on_hybrid_levels`.
+        Must have the same shape, level range and order as ``t``.
+    vertical_axis : int, optional
+        Axis corresponding to the vertical coordinate (hybrid levels) in the input arrays
+        and also in the output array. Default is 0 (first axis).
+
+    Returns
+    -------
+    array-like
+        Geopotential thickness (m2/s2) between the surface and hybrid full-levels.
+        The axis corresponding to the vertical coordinate (hybrid levels) is defined
+        by the ``vertical_axis`` parameter.
+
+    Notes
+    -----
+    ``alpha`` and ``delta``can be calculated using :func:`pressure_on_hybrid_levels`.
+
+    The computations are described in [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1.
+
+    Examples
+    --------
+    - :ref:`/examples/hybrid_levels.ipynb`
+
+
+    See also
+    --------
+    pressure_on_hybrid_levels
+
+    """
+    from earthkit.meteo.thermo import specific_gas_constant
+
+    R = specific_gas_constant(q)
+    d = R * t
+
+    # compute geopotential thickness on half levels from 1 to NLEV-1
+    dphi_half = xp.cumulative_sum(xp.flip(d[1:, ...] * delta[1:, ...], axis=0), axis=0)
+    dphi_half = xp.flip(dphi_half, axis=0)
+
+    # compute geopotential thickness on full levels
+    dphi = xp.zeros_like(d)
+    dphi[:-1, ...] = dphi_half + d[:-1, ...] * alpha[:-1, ...]
+    dphi[-1, ...] = d[-1, ...] * alpha[-1, ...]
+
+    return dphi
 
 
 def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
@@ -782,7 +869,6 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     pressure_on_hybrid_levels
 
     """
-    from earthkit.meteo.thermo import specific_gas_constant
 
     xp = array_namespace(alpha, delta, q, t)
     alpha = xp.asarray(alpha)
@@ -797,17 +883,19 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
         t = xp.moveaxis(t, vertical_axis, 0)
         q = xp.moveaxis(q, vertical_axis, 0)
 
-    R = specific_gas_constant(q)
-    d = R * t
+    dphi = _compute_relative_geopotential_thickness_on_hybrid_levels(t, q, alpha, delta, xp)
 
-    # compute geopotential thickness on half levels from 1 to NLEV-1
-    dphi_half = xp.cumulative_sum(xp.flip(d[1:, ...] * delta[1:, ...], axis=0), axis=0)
-    dphi_half = xp.flip(dphi_half, axis=0)
+    # R = specific_gas_constant(q)
+    # d = R * t
 
-    # compute geopotential thickness on full levels
-    dphi = xp.zeros_like(d)
-    dphi[:-1, ...] = dphi_half + d[:-1, ...] * alpha[:-1, ...]
-    dphi[-1, ...] = d[-1, ...] * alpha[-1, ...]
+    # # compute geopotential thickness on half levels from 1 to NLEV-1
+    # dphi_half = xp.cumulative_sum(xp.flip(d[1:, ...] * delta[1:, ...], axis=0), axis=0)
+    # dphi_half = xp.flip(dphi_half, axis=0)
+
+    # # compute geopotential thickness on full levels
+    # dphi = xp.zeros_like(d)
+    # dphi[:-1, ...] = dphi_half + d[:-1, ...] * alpha[:-1, ...]
+    # dphi[-1, ...] = d[-1, ...] * alpha[-1, ...]
 
     if vertical_axis != 0:
         # move the vertical axis back to its original position
@@ -871,7 +959,7 @@ def relative_geopotential_thickness_on_hybrid_levels(
 
     - first the ``alpha`` and ``delta`` parameters are calculated using
       :func:`pressure_on_hybrid_levels`
-    - then the geopotential thickness is calculated using
+    - then the geopotential thickness is calculated with hydrostatic integration using
       :func:`relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta` See
       [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1. for details.
 
@@ -890,16 +978,45 @@ def relative_geopotential_thickness_on_hybrid_levels(
     B = xp.asarray(B)
     sp = xp.asarray(sp)
     t = xp.asarray(t)
+    q = xp.asarray(q)
 
     levels = _hybrid_subset(t, A, B, vertical_axis)
 
     alpha, delta = pressure_on_hybrid_levels(
-        A, B, sp, vertical_axis=vertical_axis, alpha_top=alpha_top, levels=levels, output=("alpha", "delta")
+        A, B, sp, alpha_top=alpha_top, levels=levels, output=("alpha", "delta")
     )
 
-    return relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
-        t, q, alpha, delta, vertical_axis=vertical_axis
-    )
+    # return relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
+    #     t, q, alpha, delta, vertical_axis=vertical_axis
+    # )
+
+    # move the vertical axis to the first position
+    if vertical_axis != 0:
+        # move the vertical axis to the first position
+        alpha = xp.moveaxis(alpha, vertical_axis, 0)
+        delta = xp.moveaxis(delta, vertical_axis, 0)
+        t = xp.moveaxis(t, vertical_axis, 0)
+        q = xp.moveaxis(q, vertical_axis, 0)
+
+    dphi = _compute_relative_geopotential_thickness_on_hybrid_levels(t, q, alpha, delta, xp)
+
+    # R = specific_gas_constant(q)
+    # d = R * t
+
+    # # compute geopotential thickness on half-levels from 1 to NLEV-1
+    # dphi_half = xp.cumulative_sum(xp.flip(d[1:, ...] * delta[1:, ...], axis=0), axis=0)
+    # dphi_half = xp.flip(dphi_half, axis=0)
+
+    # # compute geopotential thickness on full-levels
+    # dphi = xp.zeros_like(d)
+    # dphi[:-1, ...] = dphi_half + d[:-1, ...] * alpha[:-1, ...]
+    # dphi[-1, ...] = d[-1, ...] * alpha[-1, ...]
+
+    # move the vertical axis back to its original position
+    if vertical_axis != 0:
+        dphi = xp.moveaxis(dphi, 0, vertical_axis)
+
+    return dphi
 
 
 def geopotential_on_hybrid_levels(
@@ -1006,7 +1123,8 @@ def height_on_hybrid_levels(
         Specific humidity on hybrid full-levels (kg/kg). Must have the
         same shape, level range and order as ``t``.
     zs : array-like
-        Surface geopotential (m2/s2). Only used when ``h_reference`` is "ground".
+        Surface geopotential (m2/s2). Not used  when ``h_type`` is "geopotential" and
+        ``h_reference`` is "ground".
     A : array-like
         A-coefficients defining the hybrid levels. Must contain all the half-levels
         in ascending order with respect to the model level number.
@@ -1021,18 +1139,20 @@ def height_on_hybrid_levels(
         model atmosphere (first half-level in the vertical coordinate system). See
         :func:`pressure_on_hybrid_levels` for details.
     h_type : str, optional
-        Type of height to compute. Possible values are:
+        Type of height to compute. Default is "geometric". Possible values are:
 
         - "geometric": geometric height (m) with respect to ``h_reference``
         - "geopotential": geopotential height (m) with respect to ``h_reference``
-        Default is "geometric". See :func:`geometric_height_from_geopotential` and
+
+        See :func:`geometric_height_from_geopotential` and
         :func:`geopotential_height_from_geopotential` for details.
+
     h_reference : str, optional
-        Reference level for the height calculation. Possible values are:
+        Reference level for the height calculation. Default is "ground". Possible values are:
 
         - "ground": height with respect to the ground/surface level
         - "sea": height with respect to the sea level
-        Default is "ground".
+
     vertical_axis : int, optional
         Axis corresponding to the vertical coordinate (hybrid full-levels) in the input
         arrays and also in the output array. Default is 0 (first axis).
@@ -1072,7 +1192,10 @@ def height_on_hybrid_levels(
         t, q, A, B, sp, alpha_top=alpha_top, vertical_axis=vertical_axis
     )
 
+    xp = array_namespace(z_thickness)
+
     if h_reference == "sea":
+        zs = xp.asarray(zs)
         z = z_thickness + zs
         if h_type == "geometric":
             h = geometric_height_from_geopotential(z)
@@ -1080,6 +1203,7 @@ def height_on_hybrid_levels(
             h = geopotential_height_from_geopotential(z)
     else:
         if h_type == "geometric":
+            zs = xp.asarray(zs)
             h_surf = geometric_height_from_geopotential(zs)
             z = z_thickness + zs
             h = geometric_height_from_geopotential(z) - h_surf
@@ -1112,9 +1236,15 @@ def interpolate_hybrid_to_pressure_levels(
     sp: ArrayLike,
     alpha_top="ifs",
     interpolation: str = "linear",
+    aux_bottom_data=None,
+    aux_bottom_p=None,
+    aux_top_data=None,
+    aux_top_p=None,
     vertical_axis=0,
 ):
-    """Interpolate data from hybrid (IFS model) full-levels to pressure levels.
+    """Interpolate data from hybrid full-levels (IFS model levels) to pressure levels.
+
+    *New in version 0.7.0*
 
     Parameters
     ----------
@@ -1122,32 +1252,52 @@ def interpolate_hybrid_to_pressure_levels(
         Data to be interpolated. The axis corresponding to the vertical
         coordinate (hybrid levels) is defined by the ``vertical_axis`` parameter.
         Must have at least two levels. Levels must be ordered in ascending order
-        with respect to the model level number (model level number goes from top to bottom).
+        with respect to the model level number. By convention, model level numbering
+        starts at 1 at the top of the atmosphere and increases towards the surface.
+        Not all the levels must be present, but a contiguous level range including the
+        bottom-most level must be used. E.g. if the vertical coordinate system has 137 model
+        levels using only a subset of levels between e.g. 137-96 is allowed.
     target_p : array-like
         Target pressure levels (Pa) to which ``data`` will be interpolated. It can be
         either a scalar or a 1D array of pressure levels. Alternatively, it can be a
-        multidimensional array with a vertical axis defined by `vertical_axis`. In this case
-        the other axes/dimensions must match those of ``data``.
+        multidimensional array with a vertical axis defined by ``vertical_axis``. In this
+        case the other axes/dimensions must match those of ``data``.
     A : array-like
         A-coefficients defining the hybrid levels. Must contain all the half-levels
         in ascending order with respect to the model level number.
+        See :func:`hybrid_level_parameters` for details.
     B : array-like
         B-coefficients defining the hybrid levels. Must contain all the half-levels
         in ascending order with respect to the model level number. Must have the same
-        size as ``A``.
+        size as ``A``. See :func:`hybrid_level_parameters` for details.
     sp : array-like
         Surface pressure (Pa). The shape must be compatible with the non-vertical
         dimensions of ``data``.
     alpha_top : str, optional
-        Option to initialise the alpha parameters (for details see below) on the top of the
+        Option to initialise the alpha parameters on the top of the
         model atmosphere (first half-level in the vertical coordinate system). See
         :func:`pressure_on_hybrid_levels` for details.
     interpolation  : str, optional
         Interpolation mode. Default is "linear". Possible values are:
 
-        - "linear": linear interpolation in coordinate
-        - "log": linear interpolation in logarithm of coordinate
-        - "nearest": nearest neighbour interpolation
+        - "linear": linear interpolation in pressure between the two nearest levels
+        - "log": linear interpolation in logarithm of pressure between the two nearest levels
+        - "nearest": nearest level interpolation
+
+    aux_bottom_data : array-like, optional
+        Auxiliary data for interpolation to targets below the bottom hybrid full-level
+        and above the level specified by ``aux_bottom_p``. Can be a scalar or must have the
+        same shape as a single level of ``data``.
+    aux_bottom_p : array-like, optional
+        Pressures (Pa) of ``aux_bottom_data``. Can be a scalar or must have the same
+        shape as a single level of ``data``.
+    aux_top_data : array-like, optional
+        Auxiliary data for interpolation to targets above the top hybrid full-level
+        and below the level specified by ``aux_top_p``. Can be a scalar or must have
+        the same shape as a single level of ``data``.
+    aux_top_p : array-like, optional
+        Pressures (Pa) of ``aux_top_data``. Can be a scalar or must have the same
+        shape as a single level of ``data``.
     vertical_axis : int, optional
         Axis corresponding to the vertical coordinate (hybrid full-levels) in the input
         arrays and also in the output array. Default is 0 (first axis).
@@ -1169,11 +1319,6 @@ def interpolate_hybrid_to_pressure_levels(
     ValueError
         If the first dimension of ``data`` and that of ``target_p`` do not match.
 
-    Notes
-    -----
-    - The ordering of the input coordinate levels is not checked.
-    - The units of ``coord`` and ``target_coord`` are assumed to be the same; no checks
-      or conversions are performed.
 
     Examples
     --------
@@ -1193,7 +1338,17 @@ def interpolate_hybrid_to_pressure_levels(
     levels = _hybrid_subset(data, A, B, vertical_axis)
 
     p = pressure_on_hybrid_levels(A, B, sp, alpha_top=alpha_top, levels=levels, output="full")
-    return interpolate_monotonic(data=data, coord=p, target_coord=target_p, interpolation=interpolation)
+    return interpolate_monotonic(
+        data=data,
+        coord=p,
+        target_coord=target_p,
+        interpolation=interpolation,
+        aux_min_level_coord=aux_top_p,
+        aux_min_level_data=aux_top_data,
+        aux_max_level_coord=aux_bottom_p,
+        aux_max_level_data=aux_bottom_data,
+        vertical_axis=vertical_axis,
+    )
 
 
 def interpolate_hybrid_to_height_levels(
@@ -1211,9 +1366,13 @@ def interpolate_hybrid_to_height_levels(
     interpolation: str = "linear",
     aux_bottom_data=None,
     aux_bottom_h=None,
+    aux_top_data=None,
+    aux_top_h=None,
     vertical_axis=0,
 ):
-    """Interpolate data from hybrid (IFS model) full-levels to height levels.
+    """Interpolate data from hybrid full-levels (IFS model levels) to height levels.
+
+    *New in version 0.7.0*
 
     Parameters
     ----------
@@ -1221,8 +1380,9 @@ def interpolate_hybrid_to_height_levels(
         Data to be interpolated. The axis corresponding to the vertical
         coordinate (hybrid levels) is defined by the ``vertical_axis`` parameter.
         Must have at least two levels. Levels must be ordered in ascending order
-        with respect to the model level number (model level number goes from top
-        to bottom). Not all the levels must be present, but a contiguous level range
+        with respect to the model level number.  By convention, model level numbering
+        starts at 1 at the top of the atmosphere and increases towards the surface.  Not
+        all the levels must be present, but a contiguous level range
         including the bottom-most level must be used. E.g. if the vertical coordinate
         system has 137 model levels using only a subset of levels between
         e.g. 137-96 is allowed.
@@ -1239,15 +1399,17 @@ def interpolate_hybrid_to_height_levels(
         Specific humidity on hybrid full-levels (kg/kg). Must have the
         same shape, level range and order as ``t``.
     zs : array-like
-        Surface geopotential (m2/s2). Only used when ``h_reference`` is "ground". The shape
+        Surface geopotential (m2/s2). The shape
         must be compatible with the non-vertical dimensions of ``t`` and ``q``.
+        Not used  when ``h_type`` is "geopotential" and ``h_reference`` is "ground".
     A : array-like
         A-coefficients defining the hybrid levels. Must contain all the half-levels
         in ascending order with respect to the model level number.
+        See :func:`hybrid_level_parameters` for details.
     B : array-like
         B-coefficients defining the hybrid levels. Must contain all the half-levels
         in ascending order with respect to the model level number. Must have the same
-        size as ``A``.
+        size as ``A``. See :func:`hybrid_level_parameters` for details.
     sp : array-like
         Surface pressure (Pa). The shape must be compatible with the non-vertical
         dimensions of ``data``.
@@ -1256,24 +1418,42 @@ def interpolate_hybrid_to_height_levels(
         model atmosphere (first half-level in the vertical coordinate system). See
         :func:`pressure_on_hybrid_levels` for details.
     h_type : str, optional
-        Type of height to compute. Possible values are:
+        Type of height to compute. Default is "geometric".  Possible values are:
 
         - "geometric": geometric height (m) with respect to ``h_reference``
         - "geopotential": geopotential height (m) with respect to ``h_reference``
-        Default is "geometric". See :func:`geometric_height_from_geopotential` and
+
+        See :func:`geometric_height_from_geopotential` and
         :func:`geopotential_height_from_geopotential` for details.
     h_reference : str, optional
-        Reference level for the height calculation. Possible values are:
+        Reference level for the height calculation. Default is "ground". Possible values are:
 
         - "ground": height with respect to the ground/surface level
         - "sea": height with respect to the sea level
-        Default is "ground".
+
     interpolation  : str, optional
         Interpolation mode. Default is "linear". Possible values are:
 
-        - "linear": linear interpolation in coordinate
-        - "log": linear interpolation in logarithm of coordinate
-        - "nearest": nearest neighbour interpolation
+        - "linear": linear interpolation in height between the two nearest levels
+        - "log": linear interpolation in logarithm of height between the two nearest levels
+        - "nearest": nearest level interpolation
+
+    aux_bottom_data : array-like, optional
+        Auxiliary data for interpolation to heights between the bottom hybrid full-level
+        and ``aux_bottom_h``. Can be a scalar or must have
+        the same shape as a single level of ``data``.
+    aux_bottom_h : array-like, optional
+        Heights (m) of ``aux_bottom_data``. Can be a scalar or must have the same
+        shape as a single level of ``data``.  The type of the height and
+        the reference level are defined by ``h_type`` and ``h_reference``.
+    aux_top_data : array-like, optional
+        Auxiliary data for interpolation to heights above the top hybrid full-level
+        and below ``aux_top_h``. Can be a scalar or must have
+        the same shape as a single level of ``data``.
+    aux_top_h : array-like, optional
+        Heights (m) of ``aux_top_data``. Can be a scalar or must have the same
+        shape as a single level of ``data``.  The type of the height and
+        the reference level are defined by ``h_type`` and ``h_reference``.
     vertical_axis : int, optional
         Axis corresponding to the vertical coordinate (hybrid full-levels) in the input
         arrays and also in the output array. Default is 0 (first axis).
@@ -1293,7 +1473,7 @@ def interpolate_hybrid_to_height_levels(
     ValueError
         If ``data`` has less than two levels.
     ValueError
-        If the first dimension of ``data`` and that of ``target_p`` do not match.
+        If the first dimension of ``data`` and that of ``target_h`` do not match.
 
     Examples
     --------
@@ -1306,27 +1486,17 @@ def interpolate_hybrid_to_height_levels(
 
     """
     h = height_on_hybrid_levels(
-        t=t,
-        q=q,
-        zs=zs,
-        A=A,
-        B=B,
-        sp=sp,
+        t,
+        q,
+        zs,
+        A,
+        B,
+        sp,
         alpha_top=alpha_top,
         h_type=h_type,
         h_reference=h_reference,
         vertical_axis=vertical_axis,
     )
-
-    # alpha, delta = pressure_on_hybrid_levels(A, B, sp, output=("alpha", "delta"))
-    # z = geopotential_on_hybrid_levels(t, q, zs, alpha, delta)
-
-    # if h_reference == "sea":
-    #     z = z + zs
-    # if h_type == "geometric":
-    #     h = geometric_height_from_geopotential(z)
-    # else:
-    #     h = geopotential_height_from_geopotential(z)
 
     return interpolate_monotonic(
         data=data,
@@ -1335,26 +1505,120 @@ def interpolate_hybrid_to_height_levels(
         interpolation=interpolation,
         aux_min_level_data=aux_bottom_data,
         aux_min_level_coord=aux_bottom_h,
+        aux_max_level_coord=aux_top_h,
+        aux_max_level_data=aux_top_data,
         vertical_axis=vertical_axis,
     )
 
 
 def interpolate_pressure_to_height_levels(
     data: ArrayLike,
+    target_h: ArrayLike,
     z: ArrayLike,
     zs: ArrayLike,
-    target_h: ArrayLike,
     h_type: str = "geometric",
     h_reference: str = "ground",
     interpolation: str = "linear",
     aux_bottom_data=None,
     aux_bottom_h=None,
+    aux_top_data=None,
+    aux_top_h=None,
     vertical_axis: int = 0,
 ):
+    """Interpolate data from pressure levels to height levels.
+
+    *New in version 0.7.0*
+
+    Parameters
+    ----------
+    data : array-like
+        Data to be interpolated. The axis corresponding to the vertical
+        coordinate (pressure levels) is defined by the ``vertical_axis`` parameter.
+        Must have at least two levels. Levels must be ordered in ascending or
+        descending order with respect to pressure (i.e. monotonic).
+    target_h : array-like
+        Target height levels (m) to which ``data`` will be interpolated. It can be
+        either a scalar or a 1D array of height levels. Alternatively, it can be a
+        multidimensional array with a vertical axis defined by `vertical_axis`. In this case
+        the other axes/dimensions must match those of ``data``. The type of the height and
+        the reference level are defined by ``h_type`` and ``h_reference``.
+    z : array-like
+        Geopotential (m2/s2) on the same pressure levels as ``data``.
+    zs : array-like
+        Surface geopotential (m2/s2). The shape must be compatible with the non-vertical
+        dimensions of ``data`` and ``z``. Only used when and ``h_reference`` is "ground".
+    h_type : str, optional
+        Type of height to compute. Possible values are:
+
+        - "geometric": geometric height (m) with respect to ``h_reference``
+        - "geopotential": geopotential height (m) with respect to ``h_reference``
+          Default is "geometric". See :func:`geometric_height_from_geopotential` and
+          :func:`geopotential_height_from_geopotential` for details.
+
+    h_reference : str, optional
+        Reference level for the height calculation. Default is "ground". Possible values are:
+
+        - "ground": height with respect to the ground/surface level
+        - "sea": height with respect to the sea level
+
+    interpolation  : str, optional
+        Interpolation mode. Default is "linear". Possible values are:
+
+        - "linear": linear interpolation in height between the two nearest levels
+        - "log": linear interpolation in logarithm of height between the two nearest levels
+        - "nearest": nearest level interpolation
+
+    aux_bottom_data : array-like, optional
+        Auxiliary data for interpolation to heights between the bottom pressure
+        level and ``aux_bottom_h``. Can be a scalar or must have
+        the same shape as a single level of ``data``.
+    aux_bottom_h : array-like, optional
+        Heights (m) of ``aux_bottom_data``. Can be a scalar or must have the same
+        shape as a single level of ``data``. The type of the height and
+        the reference level are defined by ``h_type`` and ``h_reference``.
+    aux_top_data : array-like, optional
+        Auxiliary data for interpolation to heights between the top pressure
+        level and ``aux_top_h``. Can be a scalar or must have
+        the same shape as a single level of ``data``.
+    aux_top_h : array-like, optional
+        Heights (m) of ``aux_top_data``. Can be a scalar or must have the same
+        shape as a single level of ``data``. The type of the height and
+        the reference level are defined by ``h_type`` and ``h_reference``.
+    vertical_axis : int, optional
+        Axis corresponding to the vertical coordinate (hybrid full-levels) in the input
+        arrays and also in the output array. Default is 0 (first axis).
+
+
+    Returns
+    -------
+    array-like
+        Data interpolated to the target height levels. The shape depends on the shape
+        of ``target_h``. The axis corresponding to the vertical coordinate (height levels)
+        is defined by the ``vertical_axis`` parameter. When interpolation is not possible
+        for a given target height level (e.g., when the target height is outside the
+        available height range), the corresponding output values are set to nan.
+
+    Raises
+    ------
+    ValueError
+        If ``data`` has less than two levels.
+    ValueError
+        If the first dimension of ``data`` and that of ``target_h`` do not match.
+
+    Examples
+    --------
+    - :ref:`/examples/interpolate_pl_to_hl.ipynb`
+
+
+    See also
+    --------
+    interpolate_monotonic
+
+    """
     if h_type == "geometric":
-        h = geometric_height_from_geopotential_height(z)
+        h = geometric_height_from_geopotential(z)
         if h_reference == "ground":
-            zs_h = geometric_height_from_geopotential_height(zs)
+            zs_h = geometric_height_from_geopotential(zs)
             h = h - zs_h
     else:
         if h_reference == "ground":
@@ -1368,6 +1632,8 @@ def interpolate_pressure_to_height_levels(
         interpolation=interpolation,
         aux_min_level_data=aux_bottom_data,
         aux_min_level_coord=aux_bottom_h,
+        aux_max_level_coord=aux_top_h,
+        aux_max_level_data=aux_top_data,
         vertical_axis=vertical_axis,
     )
 
@@ -1383,53 +1649,83 @@ def interpolate_monotonic(
     aux_max_level_coord=None,
     vertical_axis: int = 0,
 ) -> ArrayLike:
-    """Interpolate data with the same type of source and target monotonic coordinate levels.
+    """Interpolate data between the same type of monotonic coordinate levels.
+
+    *New in version 0.7.0*
 
     Parameters
     ----------
     data : array-like
-        Data to be interpolated. First dimension must correspond to the vertical. Must have at
-        least two levels. Levels must be ordered in ascending or descending order.
+        Data to be interpolated. The axis corresponding to the vertical
+        coordinate is defined by the ``vertical_axis`` parameter.
+        Must have at least two levels.
     coord : array-like
-        Monotonic coordinate levels corresponding to the first dimension of ``data``. Either must
-        have the same shape as ``data`` or be a 1D array with length equal to the size of the first
-        dimension of ``data``.
+        Vertical coordinates related to ``data``. Either must have the same
+        shape as ``data`` or be a 1D array with length equal to the size of
+        the number of levels in ``data``. Must be monotonic (either sorted
+        ascending or descending) along the vertical axis.
     target_coord : array-like
-        Target coordinate levels to which ``data`` will be interpolated. It can be either a scalar
-        or a 1D array of coordinate levels. Alternatively, it can be an array of arrays where each sub-array
-        contains the target coordinate levels for the corresponding horizontal location in ``data``. The
-        units are the same as for ``coord``.
+        Target coordinate levels to which ``data`` will be interpolated. It can be
+        either a scalar or a 1D array of coordinate levels. Alternatively, it can be a
+        multidimensional array with a vertical axis defined by `vertical_axis`. In this case
+        the other axes/dimensions must match those of ``data``. Must be the same type
+        of coordinate as ``coord``.
     interpolation  : str, optional
         Interpolation mode. Default is "linear". Possible values are:
 
-        - "linear": linear interpolation in coordinate
-        - "log": linear interpolation in logarithm of coordinate
-        - "nearest": nearest neighbour interpolation
+        - "linear": linear interpolation in coordinate between the two nearest levels
+        - "log": linear interpolation in logarithm of coordinate between the two nearest levels
+        - "nearest": nearest level interpolation
+
+    aux_min_level_data : array-like, optional
+        Auxiliary data for interpolation to target levels below the minimum level
+        of ``coord`` and above `aux_min_level_coord`. Can be a scalar or must have
+        the same shape as a single level of ``data``.
+    aux_min_level_coord : array-like, optional
+        Coordinates of ``aux_min_level_data``. Can be a scalar or must have the same
+        shape as a single level of ``data`` or ``coord``. Must be the same type
+        of coordinate as ``coord``.
+    aux_max_level_data : array-like, optional
+        Auxiliary data for interpolation to target levels above the maximum level
+        of ``coord`` and below `aux_max_level_coord`. Can be a scalar or must have
+        the same shape as a single level of ``data``.
+    aux_max_level_coord : array-like, optional
+        Coordinates of ``aux_max_level_data``. Can be a scalar or must have the
+        same shape as a single level of ``data`` or ``coord``. Must be the same type
+        of coordinate as ``coord``.
+    vertical_axis : int, optional
+        Axis corresponding to the vertical coordinate in the input arrays and also in the
+        output array. Default is 0 (first axis).
+
 
     Returns
     -------
     array-like
-        Data interpolated to the target levels. The shape depends on the shape of ``target_coord``:
-
-        - If ``target_coord`` is a scalar, the output shape is equal to ``data.shape[1:]``.
-        - If ``target_coord`` is a 1D array of length N, the output shape is (N, ) + ``data.shape[1:]``.
-        - If ``target_coord`` is an array of arrays, the output shape is (M, ) + ``data.shape[1:]``,
-          where M is the number of horizontal locations in ``data``.
-        When interpolation is not possible for a given target coordinate level (e.g., when the target coordinate
-        is outside the range of ``coord``), the corresponding output values are set to NaN.
+        Data interpolated to the target levels. The shape depends on the shape of ``target_coord``.
+        The axis corresponding to the vertical coordinate is defined by
+        the ``vertical_axis`` parameter. When interpolation is not possible for a given target
+        level (e.g., when the target level is outside the available level range),
+        the corresponding output values are set to nan.
 
     Raises
     ------
     ValueError
         If ``data`` has less than two levels.
     ValueError
-        If the first dimension of ``data`` and that of ``coord`` do not match.
+        If the shape of ``data`` and that of ``coord`` are not compatible.
 
     Notes
     -----
     - The ordering of the input coordinate levels is not checked.
     - The units of ``coord`` and ``target_coord`` are assumed to be the same; no checks
       or conversions are performed.
+
+    Examples
+    --------
+    - :ref:`/examples/interpolate_hybrid_to_pl.ipynb`
+    - :ref:`/examples/interpolate_hybrid_to_hl.ipynb`
+    - :ref:`/examples/interpolate_pl_to_hl.ipynb`
+    - :ref:`/examples/interpolate_pl_to_pl.ipynb`
 
     """
     from .monotonic import MonotonicInterpolator

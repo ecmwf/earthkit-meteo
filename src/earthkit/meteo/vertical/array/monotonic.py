@@ -45,8 +45,6 @@ class AuxTopLayer:
         self.coord = xp.where(mask, aux_coord, coord)
         self.data = xp.where(mask, aux_data, data)
 
-        # print("AuxTopLayer:", self.coord, self.data)
-
 
 class MonotonicInterpolator:
     def __call__(
@@ -72,9 +70,10 @@ class MonotonicInterpolator:
         coord = xp.atleast_1d(coord)
         data = xp.asarray(data)
 
+        # move the vertical axis to the first position for easier processing
         if vertical_axis != 0:
-            # move the vertical axis to the required position
-            data = xp.moveaxis(data, vertical_axis, 0)
+            if data.ndim > 1:
+                data = xp.moveaxis(data, vertical_axis, 0)
             if coord.ndim > 1:
                 coord = xp.moveaxis(coord, vertical_axis, 0)
             if target_coord.ndim > 1:
@@ -170,8 +169,8 @@ class MonotonicInterpolator:
         else:
             return self.simple_compute(res)
 
-        if vertical_axis != 0:
-            # move back the vertical axis to the original position
+        # move back the vertical axis to the original position
+        if vertical_axis != 0 and res.ndim > 1:
             res = xp.moveaxis(res, 0, vertical_axis)
 
         return res
@@ -296,6 +295,7 @@ class MonotonicInterpolator:
         r[mask] = (1.0 - factor) * d_bottom + factor * d_top
 
     # data and coord have a different shape, data is 1D and target is 1D
+    # TODO: review if it is needed or can be covered by compute
     def simple_compute(self, res):
         xp = self.xp
 
