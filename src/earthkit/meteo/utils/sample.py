@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
+
 _CONF = {"vertical_hybrid_data": "json"}
 
 
@@ -37,6 +39,54 @@ class SampleInputData:
         return self._d
 
 
+class TmpFile:
+    """The TmpFile objects are designed to be used for temporary files.
+    It ensures that the file is unlinked when the object is
+    out-of-scope (with __del__).
+
+    Parameters
+    ----------
+    path : str
+        Actual path of the file.
+    """
+
+    def __init__(self, path: str):
+        self.path = path
+
+    def __del__(self):
+        self.cleanup()
+
+    def __enter__(self):
+        return self.path
+
+    def __exit__(self, *args, **kwargs):
+        self.cleanup()
+
+    def cleanup(self):
+        if self.path is not None and os is not None:
+            os.unlink(self.path)
+        self.path = None
+
+
+def temp_file(extension=".tmp") -> TmpFile:
+    """Create a temporary file with the given extension .
+
+    Parameters
+    ----------
+    extension : str, optional
+        By default ".tmp"
+
+    Returns
+    -------
+    TmpFile
+    """
+    import tempfile
+
+    fd, path = tempfile.mkstemp(suffix=extension)
+    os.close(fd)
+    return TmpFile(path)
+
+
 # TODO: add thread safety if needed
 class Samples:
     _CACHE = {}
@@ -49,7 +99,6 @@ class Samples:
             return self._CACHE[name]
 
         import os
-        import tempfile
 
         from earthkit.meteo.utils.download import simple_download
         from earthkit.meteo.utils.testing import earthkit_remote_path
@@ -64,9 +113,7 @@ class Samples:
         url = earthkit_remote_path(os.path.join("samples", file_name))
 
         d = None
-        with tempfile.NamedTemporaryFile(delete_on_close=True) as fp:
-            fp.close()
-            target = fp.name
+        with temp_file() as target:
             simple_download(url=url, target=target)
 
             d = SampleInputData.from_json(target)
