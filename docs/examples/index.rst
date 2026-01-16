@@ -3,7 +3,7 @@
 Examples
 ============
 
-Here is a list of example notebooks to illustrate how to use earthkit-data.
+Here is a list of example notebooks to illustrate how to use earthkit-meteo.
 
 
 
