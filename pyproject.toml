@@ -31,6 +31,9 @@ dependencies = [
   "earthkit-utils>=0.0.1",
   "numpy",
 ]
+optional-dependencies.all = [
+  "earthkit-meteo[samples]",
+]
 optional-dependencies.dev = [
   "earthkit-meteo[all,docs,test]",
 ]
@@ -47,6 +50,9 @@ optional-dependencies.docs = [
 optional-dependencies.gpu = [
   "cupy",
   "torch",
+]
+optional-dependencies.samples = [
+  "requests",
 ]
 optional-dependencies.test = [
   "pytest",
