@@ -7,9 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Vertical computation functions operating on numpy arrays.
-"""
+import logging
+import os
 
-from .hybrid import *  # noqa
-from .vertical import *  # noqa
+LOG = logging.getLogger(__name__)
+
+
+_ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+
+
+def earthkit_conf_file(*args):
+    return os.path.join(_ROOT_DIR, "conf", *args)

@@ -27,16 +27,37 @@ classifiers = [
 ]
 dynamic = [ "version" ]
 dependencies = [
+  "deprecation",
   "earthkit-utils>=0.0.1",
   "numpy",
+]
+optional-dependencies.all = [
+  "earthkit-meteo[samples]",
+]
+optional-dependencies.dev = [
+  "earthkit-meteo[all,docs,test]",
+]
+optional-dependencies.docs = [
+  "nbsphinx",
+  "requests",
+  "sphinx>=7.3.7",
+  "sphinx-autoapi",
+  "sphinx-copybutton",
+  "sphinx-issues",
+  "sphinx-rtd-theme",
+  "sphinx-tabs",
 ]
 optional-dependencies.gpu = [
   "cupy",
   "torch",
 ]
+optional-dependencies.samples = [
+  "requests",
+]
 optional-dependencies.test = [
   "pytest",
   "pytest-cov",
+  "requests",
 ]
 urls.Documentation = "https://earthkit-meteo.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-meteo/"
