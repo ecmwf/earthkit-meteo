@@ -32,7 +32,7 @@ NUMPY = [x for x in NAMESPACE_DEVICES if x[0]._earthkit_array_namespace_name == 
 #  - target_coord is scalar
 
 
-def _get_data():
+def _get_data_1():
     import os
     import sys
 
@@ -44,10 +44,10 @@ def _get_data():
     return cases
 
 
-DATA = _get_data()
+DATA = _get_data_1()
 
 
-def _get_data_1(name):
+def _get_data_2(name):
     import os
     import sys
 
@@ -57,9 +57,9 @@ def _get_data_1(name):
     return import_module(name)
 
 
-DATA_HYBRID_CORE = _get_data_1("_hybrid_core_data")
-DATA_HYBRID_H = _get_data_1("_hybrid_height_data")
-DATA_PL = _get_data_1("_pl_data")
+DATA_HYBRID_CORE = _get_data_2("_hybrid_core_data")
+DATA_HYBRID_H = _get_data_2("_hybrid_height_data")
+DATA_PL = _get_data_2("_pl_data")
 
 
 def _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected_data, xp, device):

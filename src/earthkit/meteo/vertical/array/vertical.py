@@ -819,7 +819,7 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     delta: ArrayLike,
     vertical_axis=0,
 ) -> ArrayLike:
-    """Compute the geopotential thickness between the surface and hybrid (IFS model) full-levels.
+    """Compute the geopotential thickness between the surface and hybrid full-levels (IFS model levels).
 
     *New in version 0.7.0*: This function replaces the deprecated :func:`relative_geopotential_thickness`.
 
@@ -855,8 +855,7 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
 
     Notes
     -----
-    ``alpha`` and ``delta``can be calculated using :func:`pressure_on_hybrid_levels`.
-
+    ``alpha`` and ``delta`` can be calculated using :func:`pressure_on_hybrid_levels`.
     The computations are described in [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1.
 
     Examples
@@ -885,18 +884,6 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
 
     dphi = _compute_relative_geopotential_thickness_on_hybrid_levels(t, q, alpha, delta, xp)
 
-    # R = specific_gas_constant(q)
-    # d = R * t
-
-    # # compute geopotential thickness on half levels from 1 to NLEV-1
-    # dphi_half = xp.cumulative_sum(xp.flip(d[1:, ...] * delta[1:, ...], axis=0), axis=0)
-    # dphi_half = xp.flip(dphi_half, axis=0)
-
-    # # compute geopotential thickness on full levels
-    # dphi = xp.zeros_like(d)
-    # dphi[:-1, ...] = dphi_half + d[:-1, ...] * alpha[:-1, ...]
-    # dphi[-1, ...] = d[-1, ...] * alpha[-1, ...]
-
     if vertical_axis != 0:
         # move the vertical axis back to its original position
         dphi = xp.moveaxis(dphi, 0, vertical_axis)
@@ -913,7 +900,7 @@ def relative_geopotential_thickness_on_hybrid_levels(
     alpha_top="ifs",
     vertical_axis=0,
 ) -> ArrayLike:
-    """Compute the geopotential thickness between the surface and hybrid (IFS model) full-levels.
+    """Compute the geopotential thickness between the surface and hybrid full-levels (IFS model levels).
 
     *New in version 0.7.0*
 
@@ -999,18 +986,6 @@ def relative_geopotential_thickness_on_hybrid_levels(
         q = xp.moveaxis(q, vertical_axis, 0)
 
     dphi = _compute_relative_geopotential_thickness_on_hybrid_levels(t, q, alpha, delta, xp)
-
-    # R = specific_gas_constant(q)
-    # d = R * t
-
-    # # compute geopotential thickness on half-levels from 1 to NLEV-1
-    # dphi_half = xp.cumulative_sum(xp.flip(d[1:, ...] * delta[1:, ...], axis=0), axis=0)
-    # dphi_half = xp.flip(dphi_half, axis=0)
-
-    # # compute geopotential thickness on full-levels
-    # dphi = xp.zeros_like(d)
-    # dphi[:-1, ...] = dphi_half + d[:-1, ...] * alpha[:-1, ...]
-    # dphi[-1, ...] = d[-1, ...] * alpha[-1, ...]
 
     # move the vertical axis back to its original position
     if vertical_axis != 0:
