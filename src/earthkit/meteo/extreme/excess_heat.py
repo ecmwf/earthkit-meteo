@@ -1,3 +1,11 @@
+# (C) Copyright 2025 - ECMWF and individual contributors.
+
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
+
 import functools
 import numbers
 
@@ -45,8 +53,9 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
         2-metre temperature.
     day_start : number | np.timedelta64
         Constant offset for the start of the day in the aggregations. By
-        default, the day is defined from 09:00 to 09:00. Numeric values are
-        interpreted as hours.
+        default, the day is defined from 09:00 to 09:00. Positive offsets
+        indicate a late start of the day (see default), negative an early
+        start. Numeric values are interpreted as hours.
     time_shift : np.timedelta64 | number | str | xr.DataArray
         Numeric values are interpreted as hours. Provide a string value to
         take from DataArray coordinates.
@@ -87,10 +96,10 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
     assert time_shift.size == 1
     assert np.issubdtype(time_shift.dtype, np.timedelta64)
 
-    agg_kwargs = {"time_shift": time_shift + day_start, "remove_partial_periods": True, **kwargs}
+    agg_kwargs = {"time_shift": time_shift - day_start, "remove_partial_periods": True, **kwargs}
     tmin = earthkit.transforms.temporal.daily_min(t2m, **agg_kwargs)
     tmax = earthkit.transforms.temporal.daily_max(t2m, **agg_kwargs)
-    return (0.5 * (tmin + tmax)).rename("daily_mean_temperature")
+    return 0.5 * (tmin + tmax)
 
 
 @_with_metadata("ehi_sig", long_name="Significance index")
@@ -127,7 +136,7 @@ def significance_index(dmt, threshold=("quantile", 0.95), ndays=3, time_dim=None
             raise NotImplementedError
     # TODO: also support day-of-year climatology to detect warm spells
     current = _rolling_mean(dmt, ndays, shift_days=(1 - ndays))
-    return (current - threshold).rename("significance_index")
+    return current - threshold
 
 
 @_with_metadata("ehi_accl", long_name="acclimatisation_index")
@@ -143,7 +152,9 @@ def acclimatisation_index(dmt, ndays=3, ndays_ref=30):
     ndays_ref : number
         Length of reference time window (recent past).
     """
-    current = _rolling_mean(dmt, ndays, shift_days=(1 - ndays))
+    current = _rolling_mean(
+        dmt, ndays, shift_days=(1 - ndays)
+    )  # TODO: shared with significance index, would be nice to not compute it twice
     reference = _rolling_mean(dmt, ndays_ref, shift_days=1)
     return current - reference
 
