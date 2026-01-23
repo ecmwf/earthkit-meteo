@@ -46,7 +46,34 @@ __DMT_TIME_SHIFT_COORD = "__daily_mean_temperature_time_shift"
 def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
     """Daily mean temperature, computed from min and max.
 
-    Recommended to install flox for efficient aggregations.
+    It is recommended to install flox for efficient aggregations.
+
+    Supports custom definitions of "day". E.g., by defining a later start of
+    the day (positive `day_start`), the usual early morning temperature minimum
+    can be attributed to the previous day, so that the mean value is derived
+    from the daytime maximum and the minimum of the following night (rather
+    than the previous night). At the same time, local time zones can be
+    accounted with the `time_shift` parameter by specifying the time zone
+    offsets with respect to the time coordinate of the input data as a function
+    of the spatial coordinates.
+
+    Example
+    -------
+
+    Assume that the time coordinate of the data is given in UTC and we want to
+    define the day from 10:00 to 10:00 Atlantic Standard Time (UTC -4 hours),
+    then we need to call
+
+        daily_mean_temperature(..., day_start=10, time_shift=-4)
+
+    Note that while both offest parameters lead to a "later" start of the day
+    relative to the reference time coordinate of the data, the sign of their
+    value is different to match their use as outlined in the text above. Set
+    `day_start` to zero and integrate the start offset into `time_shift` if
+    you prefer to specify only a single offset for both settings. The above
+    call is equivalent to
+
+        daily_mean_temperature(..., day_start=0, time_shift=-14)
 
     Parameters
     ----------
@@ -56,10 +83,12 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
         Constant offset for the start of the day in the aggregations. By
         default, the day is defined from 09:00 to 09:00. Positive offsets
         indicate a late start of the day (see default), negative an early
-        start. Numeric values are interpreted as hours.
+        start. A numeric value is interpreted as hours.
     time_shift : np.timedelta64 | number | str | xr.DataArray
-        Numeric values are interpreted as hours. Provide a string value to
-        take from DataArray coordinates.
+        Offset relative to time coordinate of input. Can be a function of
+        space to specify timezones. A numeric value is interpreted as hours.
+        Provide a string value to take a correspondingly named coordinate
+        from the input DataArray.
     **kwargs
         Keyword arguments for the daily_min and daily_max functions of
         earthkit.transforms.temporal.
@@ -84,8 +113,8 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
             assert __DMT_TIME_SHIFT_COORD not in t2m.coords
             # Merging of groups where different partial days were removed
             # fails after map when the time coordinate is of pandas period
-            # dtype. The period dtype works if the same partial days are
-            # removed.
+            # dtype. The period dtype works as long as the same partial days
+            # are in all groups removed.
             return (
                 t2m
                 # Groups don't know their time shift unless we attach it here.
