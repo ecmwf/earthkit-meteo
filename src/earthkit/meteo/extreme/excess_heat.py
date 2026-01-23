@@ -9,6 +9,7 @@
 import functools
 import numbers
 
+import earthkit.transforms._tools as _ekt_tools
 import earthkit.transforms.temporal
 import numpy as np
 import xarray as xr
@@ -81,6 +82,10 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
             time_shift = unique_shifts[0]
         else:
             assert __DMT_TIME_SHIFT_COORD not in t2m.coords
+            # Merging of groups where different partial days were removed
+            # fails after map when the time coordinate is of pandas period
+            # dtype. The period dtype works if the same partial days are
+            # removed.
             return (
                 t2m
                 # Groups don't know their time shift unless we attach it here.
@@ -124,9 +129,7 @@ def significance_index(dmt, threshold=("quantile", 0.95), ndays=3, time_dim=None
     """
     # Time coordinate detection compatible with earthkit.transforms
     if time_dim is None:
-        from earthkit.transforms._tools import get_dim_key
-
-        time_dim = get_dim_key(dmt, "t", raise_error=True)
+        time_dim = _ekt_tools.get_dim_key(dmt, "t", raise_error=True)
     # Compute threshold as quantile
     if isinstance(threshold, tuple):
         assert len(threshold) == 2
