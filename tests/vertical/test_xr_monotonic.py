@@ -12,8 +12,6 @@ import pytest
 
 from earthkit.meteo.utils.testing import NO_XARRAY
 
-# TODO: implement tests once xarray interpolation is implemented
-
 # These tests reuse the same test cases as in test_array_monotonic.py
 
 # The type of the input data per level is encoded in the test name as three letters with:
@@ -36,8 +34,8 @@ def _make_xr(xp, data, coord):
     if data_is_scalar and coord_is_scalar:
         data_da = xr.DataArray(
             data,
-            dims=("level",),
-            coords={"level": coord},
+            dims=("z",),
+            coords={"z": coord},
         )
 
         ds = xr.Dataset({"data": data_da})
@@ -51,8 +49,8 @@ def _make_xr(xp, data, coord):
 
         data_da = xr.DataArray(
             data,
-            dims=("level", "x"),
-            coords={"level": level_dim, "x": x_dim},
+            dims=("z", "x"),
+            coords={"z": level_dim, "x": x_dim},
         )
 
         ds = xr.Dataset({"data": data_da})
@@ -68,11 +66,11 @@ def _make_xr(xp, data, coord):
 
         data_da = xr.DataArray(
             data,
-            dims=("level", "x"),
-            coords={"level": level_dim, "x": x_dim},
+            dims=("z", "x"),
+            coords={"z": level_dim, "x": x_dim},
         )
 
-        level_da = xr.DataArray(coord, dims=("level", "x"), coords={"level": level_dim, "x": x_dim})
+        level_da = xr.DataArray(coord, dims=("z", "x"), coords={"z": level_dim, "x": x_dim})
 
         ds = xr.Dataset({"data": data_da, "level_coord": level_da})
 
@@ -119,30 +117,38 @@ def _make_input_xr(data, coord, target_coord, expected_data, xp=np, device="cpu"
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
 @pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_s_s_s"))
 def test_xr_interpolate_monotonic_s_s_s(ds_input, ds_expected, mode):
-    # print(ds_input)
-    # print(ds_expected)
-    pass
+    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+    observed = interpolate_monotonic(ds_input.data, ds_input.z, ds_expected.z, mode)
+    assert observed == ds_expected
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
 @pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_a_s"))
 def test_xr_interpolate_monotonic_a_a_s(ds_input, ds_expected, mode):
-    pass
+    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+    observed = interpolate_monotonic(ds_input.data, ds_input.z, ds_expected.z, mode)
+    assert observed == ds_expected
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
 @pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_s_s"))
 def test_xr_interpolate_monotonic_a_s_s(ds_input, ds_expected, mode):
-    pass
+    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+    observed = interpolate_monotonic(ds_input.data, ds_input.z, ds_expected.z, mode)
+    assert observed == ds_expected
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
 @pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_s_a"))
 def test_xr_interpolate_monotonic_a_s_a(ds_input, ds_expected, mode):
-    pass
+    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+    observed = interpolate_monotonic(ds_input.data, ds_input.z, ds_expected.z, mode)
+    assert observed == ds_expected
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
 @pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_a_a"))
 def test_xr_interpolate_monotonic_a_a_a(ds_input, ds_expected, mode):
-    pass
+    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+    observed = interpolate_monotonic(ds_input.data, ds_input.z, ds_expected.z, mode)
+    assert observed == ds_expected
