@@ -127,8 +127,56 @@ def kelvin_to_celsius(t, **kwargs):
     
 
 
-def specific_humidity_from_mixing_ratio(*args, **kwargs):
-    return array.specific_humidity_from_mixing_ratio(*args, **kwargs)
+@overload
+def specific_humidity_from_mixing_ratio(
+    w: xr.DataArray,
+    *,
+    some_xarray_specific_option: Any = None,
+    **kwargs: Any,
+) -> xr.DataArray:
+    """Compute the specific humidity from mixing ratio for xarray.DataArray."""
+    ...
+
+
+@overload
+def specific_humidity_from_mixing_ratio(
+    w: FieldType,
+    *,
+    some_grib_specific_option: Any = None,
+    **kwargs: Any,
+) -> FieldType:
+    """Compute the specific humidity from mixing ratio for earthkit objects."""
+    ...
+
+def specific_humidity_from_mixing_ratio(w, **kwargs):
+    UNITS = ["1", "Kg/Kg"] 
+    if isinstance(w, xr.DataArray):
+        # check variable
+        if "standard_name" in w.attrs:
+            if w.attrs["standard_name"] != "humidity_mixing_ratio":
+                raise ValueError(
+                    f"Expected 'standard_name' attribute to be 'humidity_mixing_ratio', got '{w.attrs['standard_name']}'"
+                )
+        elif "long_name" in w.attrs:
+            if "temperature" not in w.attrs["long_name"].lower():
+                raise ValueError(
+                    f"Expected 'long_name' attribute to contain 'temperature', got '{w.attrs['long_name']}'"
+                )
+        else:
+            raise ValueError("DataArray must have either 'standard_name' or 'long_name' attribute to compute the specific humidity.")
+        
+        # check units 
+        if "units" not in w.attrs:
+            raise ValueError("DataArray must have 'units' attribute to compute the specific humidity.")
+        if w.attrs["units"].lower() not in UNITS:
+            msg = f"Expected 'units' attribute to be one of {UNITS}, got '{w.attrs['units']}'"
+            raise ValueError(msg)
+        
+        q = xr.apply_ufunc(array.specific_humidity_from_mixing_ratio, w)
+        q.attrs["standard_name"] = "specific_humidity"
+        return q
+
+    return array.specific_humidity_from_mixing_ratio(w, **kwargs)
 
 
 def mixing_ratio_from_specific_humidity(*args, **kwargs):
