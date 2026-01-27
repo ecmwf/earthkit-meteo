@@ -275,7 +275,8 @@ def _cigns(mean, stdev, observations, stdev_ref=None, nens=None, normalize=True)
 
 # TODO: add return_components option
 # TODO: double check naming - stdev reference (climatology)
-def continuous_ignorance(fcst, obs, over, stdev_reference=None, normalize=True):
+def continuous_ignorance(fcst, obs, over, stdev_reference=None, normalize=True, return_components=True):
+    assert return_components is True, "return_components=False not implemented yet"
     obs, _ = _stack_arr(obs, over)
     fcst, _ = _stack_arr(fcst, over)
     if stdev_reference is not None:

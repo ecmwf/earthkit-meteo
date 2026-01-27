@@ -1,9 +1,14 @@
 from typing import Literal
 
-from ..fieldset.dimensions import QUANTILE_DIM_NAME
-from . import QUANTILE_MAP
-from . import QUANTILE_NAMES
-
+QUANTILE_DIM_NAME = "quantile_"
+QUANTILE_MAP = {
+    100: "percentile",
+    3: "tercile",
+    4: "quartile",
+    5: "quintile",
+    10: "decile",
+}
+QUANTILE_NAMES = list(QUANTILE_MAP.values())
 QUANTILE_QS = {v: k for k, v in QUANTILE_MAP.items()}
 
 operators = {
