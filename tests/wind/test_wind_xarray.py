@@ -24,6 +24,7 @@ def _da(values):
     return xr.DataArray(np.asarray(values))
 
 
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize(
     "u,v,v_ref",
     [
@@ -52,6 +53,7 @@ def test_wind_speed(u, v, v_ref):
     assert np.allclose(sp.values, np.asarray(v_ref), equal_nan=True)
 
 
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize(
     "u,v,kwargs,v_ref",
     [
@@ -110,6 +112,7 @@ def test_wind_direction(u, v, v_ref, kwargs):
     assert np.allclose(d.values, np.asarray(v_ref), equal_nan=True)
 
 
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize(
     "u,v,sp_ref,d_ref",
     [
@@ -140,6 +143,7 @@ def test_wind_xy_to_polar(u, v, sp_ref, d_ref):
     assert np.allclose(d.values, np.asarray(d_ref), equal_nan=True)
 
 
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize(
     "sp,d,u_ref, v_ref",
     [
@@ -170,6 +174,7 @@ def test_wind_polar_to_xy(sp, d, u_ref, v_ref):
     assert np.allclose(v.values, np.asarray(v_ref), equal_nan=True, atol=1e-7)
 
 
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize(
     "omega,t,p,v_ref", [([1.2, 21.3], [285.6, 261.1], [1000, 850], [-0.1003208031, -1.9152219066])]
 )
@@ -181,12 +186,14 @@ def test_w_from_omega(omega, t, p, v_ref):
     assert np.allclose(w.values, np.asarray(v_ref))
 
 
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize("lat, v_ref", [([-20, 0, 50], [-0.0000498810, 0.0, 0.0001117217])])
 def test_coriolis(lat, v_ref):
     c = wind.coriolis(_da(lat))
     assert np.allclose(c.values, np.asarray(v_ref), rtol=1e-04)
 
 
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize(
     "sp,d,sectors,sp_bins,percent,v_ref,dir_bin_ref",
     [
@@ -278,6 +285,7 @@ def test_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref):
     assert np.allclose(r[1].values, np.asarray(dir_bin_ref), equal_nan=True, rtol=1e-04)
 
 
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize(
     "sp,d,sectors,sp_bins", [(3.4, 90.01, 0, [0, 1]), (3.4, 90.01, 6, [0]), (3.4, 90.01, 6, None)]
 )
