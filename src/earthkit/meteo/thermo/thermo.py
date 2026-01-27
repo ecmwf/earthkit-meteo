@@ -6,12 +6,72 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+from typing import overload, Any, TypeVar
+
+import xarray as xr
+import earthkit.data as ekd
 
 from . import array
 
 
-def celsius_to_kelvin(*args, **kwargs):
-    return array.celsius_to_kelvin(*args, **kwargs)
+FieldType = TypeVar("FieldType", ekd.Field, ekd.FieldList)
+
+@overload
+def celsius_to_kelvin(
+    t: xr.DataArray,
+    *,
+    some_xarray_specific_option: Any = None,
+    **kwargs: Any,
+) -> xr.DataArray:
+    """Convert temperature from Celsius to Kelvin for xarray.DataArray."""
+    ...
+
+
+@overload
+def celsius_to_kelvin(
+    t: FieldType,
+    *,
+    some_grib_specific_option: Any = None,
+    **kwargs: Any,
+) -> FieldType:
+    """Convert temperature from Celsius to Kelvin for earthkit objects."""
+    ...
+
+
+# TODO 1: CF conventions through Enums?
+def celsius_to_kelvin(t, **kwargs: Any) -> Any:
+    """Convert temperature from Celsius to Kelvin."""
+
+    UNITS = ["celsius", "degree_celsius", "degrees_celsius", "°c"]
+    if isinstance(t, xr.DataArray):
+
+        # check variable
+        if "standard_name" in t.attrs:
+            if t.attrs["standard_name"] != "air_temperature":
+                raise ValueError(
+                    f"Expected 'standard_name' attribute to be 'air_temperature', got '{t.attrs['standard_name']}'"
+                )
+        elif "long_name" in t.attrs:
+            if "temperature" not in t.attrs["long_name"].lower():
+                raise ValueError(
+                    f"Expected 'long_name' attribute to contain 'temperature', got '{t.attrs['long_name']}'"
+                )
+        else:
+            raise ValueError("DataArray must have either 'standard_name' or 'long_name' attribute to convert temperature.")
+
+        # check units 
+        if "units" not in t.attrs:
+            raise ValueError("DataArray must have 'units' attribute to convert temperature.")
+        if t.attrs["units"].lower() not in UNITS:
+            msg = f"Expected 'units' attribute to be one of {UNITS}, got '{t.attrs['units']}'"
+            raise ValueError(msg)
+
+        t = xr.apply_ufunc(array.celsius_to_kelvin, t)
+        t.attrs["units"] = "Kelvin"
+        return t
+    
+    return array.celsius_to_kelvin(t, **kwargs)
+
 
 
 def kelvin_to_celsius(*args, **kwargs):
@@ -164,3 +224,4 @@ def wet_bulb_potential_temperature_from_specific_humidity(*args, **kwargs):
 
 def specific_gas_constant(*args, **kwargs):
     return array.specific_gas_constant(*args, **kwargs)
+ 
