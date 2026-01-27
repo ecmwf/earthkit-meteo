@@ -9,15 +9,20 @@
 # ##
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
+from typing import Any  # noqa: F401
 from typing import Iterable
+from typing import overload
 
-from earthkit.meteo.utils import is_module_loaded
+if TYPE_CHECKING:
+    import xarray  # type: ignore[import]
+    from earthkit.data import FieldList  # type: ignore[import]
 
-from . import array
 
-
+# TODO: move these underscore functions to meteo.utils
 def _is_xarray(obj: Any) -> bool:
+    from earthkit.meteo.utils import is_module_loaded
+
     if not is_module_loaded("xarray"):
         return False
 
@@ -29,196 +34,170 @@ def _is_xarray(obj: Any) -> bool:
         return False
 
 
+def _is_fieldlist(obj: Any) -> bool:
+    from earthkit.meteo.utils import is_module_loaded
+
+    if not is_module_loaded("earthkit.data"):
+        return False
+
+    try:
+        from earthkit.data import FieldList
+
+        return isinstance(obj, FieldList)
+    except ImportError:
+        return False
+
+
+def _call(func: str, *args: Any, **kwargs: Any) -> Any:
+    if _is_xarray(args[0]):
+        from . import xarray as _module
+    elif _is_fieldlist(args[0]):
+        from . import fieldlist as _module
+
+    return getattr(_module, func)(*args, **kwargs)
+
+
+@overload
+def speed(u: "xarray.DataArray", v: "xarray.DataArray") -> "xarray.DataArray":
+    r"""Compute the wind speed/vector magnitude.
+
+    Parameters
+    ----------
+    u: xarray.DataArray
+        u wind/x vector component
+    v: xarray.DataArray
+        v wind/y vector component (same units as ``u``)
+
+    Returns
+    -------
+    xarray.DataArray
+        Wind speed/magnitude (same units as ``u`` and ``v``)
+
+    """
+    ...
+
+
+@overload
+def speed(u: "FieldList", v: "FieldList") -> "FieldList":
+    r"""Compute the wind speed/vector magnitude.
+
+    Parameters
+    ----------
+    u: "FieldList"
+        u wind/x vector component
+    v: "FieldList"
+        v wind/y vector component (same units as ``u``)
+
+    Returns
+    -------
+    "FieldList"
+        Wind speed/magnitude (same units as ``u`` and ``v``)
+
+    """
+    ...
+
+
 def speed(u: Any, v: Any) -> Any:
     r"""Compute the wind speed/vector magnitude.
 
     Parameters
     ----------
-    u: array-like or xarray.DataArray
+    u: Any
         u wind/x vector component
-    v: array-like or xarray.DataArray
+    v: Any
         v wind/y vector component (same units as ``u``)
 
     Returns
     -------
-    array-like or xarray.DataArray
+    Any
         Wind speed/magnitude (same units as ``u`` and ``v``)
-    """
-    if _is_xarray(u):
-        from . import xarray as xarray_module
 
-        return xarray_module.speed(u, v)
-    return array.speed(u, v)
+    """
+    return _call("speed", u, v)
+
+
+@overload
+def direction(
+    u: "xarray.DataArray", v: "xarray.DataArray", convention: str = "meteo", to_positive: bool = True
+) -> "xarray.DataArray":
+    r"""Compute the direction/angle of a vector quantity."""
+    ...
 
 
 def direction(u: Any, v: Any, convention: str = "meteo", to_positive: bool = True) -> Any:
-    r"""Compute the direction/angle of a vector quantity.
+    r"""Compute the direction/angle of a vector quantity."""
 
-    Parameters
-    ----------
-    u: array-like or xarray.DataArray
-        u wind/x vector component
-    v: array-like or xarray.DataArray
-        v wind/y vector component (same units as ``u``)
-    convention: str, optional
-        Specify how the direction/angle is interpreted. The possible values are as follows:
+    return _call("direction", u, v, convention=convention, to_positive=to_positive)
 
-        * "meteo": the direction is the meteorological wind direction
-        * "polar": the direction is measured anti-clockwise from the x axis (East/right) to the vector
 
-    to_positive: bool, optional
-        If it is True the resulting values are mapped into the [0, 360] range when
-        ``convention`` is "polar". Otherwise they lie in the [-180, 180] range.
-
-    Returns
-    -------
-    array-like or xarray.DataArray
-        Direction/angle (degrees)
-
-    The meteorological wind direction is the direction from which the wind is
-    blowing. Wind direction increases clockwise such that a northerly wind is 0°, an easterly
-    wind is 90°, a southerly wind is 180°, and a westerly wind is 270°.
-
-    In the "polar" convention the direction is measured anti-clockwise from the x axis
-    (East/right) to the vector. When ``to_positive`` is True, angles are mapped to [0, 360];
-    otherwise they lie in [-180, 180].
-
-    .. image:: /_static/wind_direction.png
-        :width: 400px
-    """
-    if _is_xarray(u):
-        from . import xarray as xarray_module
-
-        return xarray_module.direction(u, v, convention=convention, to_positive=to_positive)
-    return array.direction(u, v, convention=convention, to_positive=to_positive)
+@overload
+def xy_to_polar(
+    x: "xarray.DataArray",
+    y: "xarray.DataArray",
+    convention: str = "meteo",
+) -> tuple["xarray.DataArray", "xarray.DataArray"]:
+    r"""Convert wind/vector data from xy representation to polar representation."""
+    ...
 
 
 def xy_to_polar(x: Any, y: Any, convention: str = "meteo") -> tuple[Any, Any]:
-    r"""Convert wind/vector data from xy representation to polar representation.
+    r"""Convert wind/vector data from xy representation to polar representation."""
 
-    Parameters
-    ----------
-    x: array-like or xarray.DataArray
-        u wind/x vector component
-    y: array-like or xarray.DataArray
-        v wind/y vector component (same units as ``x``)
-    convention: str
-        Specify how the direction/angle component of the target polar coordinate
-        system is interpreted. The possible values are as follows:
+    return _call("xy_to_polar", x, y, convention=convention)
 
-        * "meteo": the direction is the meteorological wind direction
-        * "polar": the direction is measured anti-clockwise from the x axis (East/right) to the vector
 
-    Returns
-    -------
-    array-like or xarray.DataArray
-        Magnitude (same units as ``x``)
-    array-like or xarray.DataArray
-        Direction (degrees)
-
-    In the target xy representation the x axis points East while the y axis points North.
-    """
-    if _is_xarray(x):
-        from . import xarray as xarray_module
-
-        return xarray_module.xy_to_polar(x, y, convention=convention)
-    return array.xy_to_polar(x, y, convention=convention)
+@overload
+def polar_to_xy(
+    magnitude: "xarray.DataArray",
+    direction: "xarray.DataArray",
+    convention: str = "meteo",
+) -> tuple["xarray.DataArray", "xarray.DataArray"]:
+    r"""Convert wind/vector data from polar representation to xy representation."""
+    ...
 
 
 def polar_to_xy(magnitude: Any, direction: Any, convention: str = "meteo") -> tuple[Any, Any]:
-    r"""Convert wind/vector data from polar representation to xy representation.
+    r"""Convert wind/vector data from polar representation to xy representation."""
+    return _call("polar_to_xy", magnitude, direction, convention=convention)
 
-    Parameters
-    ----------
-    magnitude: array-like or xarray.DataArray
-        Speed/magnitude of the vector
-    direction: array-like or xarray.DataArray
-        Direction of the vector (degrees)
-    convention: str
-        Specify how ``direction`` is interpreted. The possible values are as follows:
 
-        * "meteo": ``direction`` is the meteorological wind direction
-        * "polar": ``direction`` is the angle measured anti-clockwise from the x axis
-          (East/right) to the vector
-
-    Returns
-    -------
-    array-like or xarray.DataArray
-        X vector component (same units as ``magnitude``)
-    array-like or xarray.DataArray
-        Y vector component (same units as ``magnitude``)
-
-    In the target xy representation the x axis points East while the y axis points North.
-    """
-    if _is_xarray(magnitude):
-        from . import xarray as xarray_module
-
-        return xarray_module.polar_to_xy(magnitude, direction, convention=convention)
-    return array.polar_to_xy(magnitude, direction, convention=convention)
+@overload
+def w_from_omega(
+    omega: "xarray.DataArray",
+    t: "xarray.DataArray",
+    p: "xarray.DataArray",
+) -> "xarray.DataArray":
+    r"""Compute the hydrostatic vertical velocity from pressure velocity"""
+    ...
 
 
 def w_from_omega(omega: Any, t: Any, p: Any) -> Any:
-    r"""Compute the hydrostatic vertical velocity from pressure velocity.
+    r"""Compute the hydrostatic vertical velocity from pressure velocity"""
+    return _call("w_from_omega", omega, t, p)
 
-    Parameters
-    ----------
-    omega : array-like or xarray.DataArray
-        Hydrostatic pressure velocity (Pa/s)
-    t : array-like or xarray.DataArray
-        Temperature (K)
-    p : array-like or xarray.DataArray
-        Pressure (Pa)
 
-    Returns
-    -------
-    array-like or xarray.DataArray
-        Hydrostatic vertical velocity (m/s)
-
-    The computation is based on the following hydrostatic formula:
-
-    .. math::
-
-        w = - \frac{\omega\; t R_{d}}{p g}
-
-    where
-
-        * :math:`R_{d}` is the specific gas constant for dry air (see :data:`earthkit.meteo.constants.Rd`).
-        * :math:`g` is the gravitational acceleration (see :data:`earthkit.meteo.constants.g`).
-    """
-    if _is_xarray(omega):
-        from . import xarray as xarray_module
-
-        return xarray_module.w_from_omega(omega, t, p)
-    return array.w_from_omega(omega, t, p)
+@overload
+def coriolis(lat: "xarray.DataArray") -> "xarray.DataArray":
+    r"""Compute the Coriolis parameter"""
+    ...
 
 
 def coriolis(lat: Any) -> Any:
-    r"""Compute the Coriolis parameter.
+    r"""Compute the Coriolis parameter"""
 
-    Parameters
-    ----------
-    lat : array-like or xarray.DataArray
-        Latitude (degrees)
+    return _call("coriolis", lat)
 
-    Returns
-    -------
-    array-like or xarray.DataArray
-        The Coriolis parameter (:math:`s^{-1}`)
 
-    The Coriolis parameter is defined by the following formula:
-
-    .. math::
-
-        f = 2 \Omega sin(\phi)
-
-    where :math:`\Omega` is the rotation rate of Earth
-    (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
-    """
-    if _is_xarray(lat):
-        from . import xarray as xarray_module
-
-        return xarray_module.coriolis(lat)
-    return array.coriolis(lat)
+@overload
+def windrose(
+    speed: "xarray.DataArray",
+    direction: "xarray.DataArray",
+    sectors: int = 16,
+    speed_bins: Iterable[float] | None = None,
+    percent: bool = True,
+) -> tuple["xarray.DataArray", "xarray.DataArray"]:
+    r"""Generate windrose data"""
+    ...
 
 
 def windrose(
@@ -228,50 +207,10 @@ def windrose(
     speed_bins: Iterable[float] | None = None,
     percent: bool = True,
 ) -> tuple[Any, Any]:
-    r"""Generate windrose data.
+    r"""Generate windrose data"""
 
-    Parameters
-    ----------
-    speed : array-like or xarray.DataArray
-        Speed
-    direction : array-like or xarray.DataArray
-        Meteorological wind direction (degrees). See :func:`direction` for details.
-        Values must be between 0 and 360.
-    sectors: number
-        Number of sectors the 360 degrees direction range is split into.
-    speed_bin: array-like
-        Speed bins
-    percent: bool
-        If False, returns the number of valid samples in each bin. If True, returns
-        the percentage of the number of samples in each bin with respect to the total
-        number of valid samples.
-
-    Returns
-    -------
-    array-like or xarray.DataArray
-        The bi-dimensional histogram of ``speed`` and ``direction``.  Values in
-        ``speed`` are histogrammed along the first dimension and values in ``direction``
-        are histogrammed along the second dimension.
-    array-like or xarray.DataArray
-        The direction bins (i.e. the sectors) (degrees)
-
-    The sectors do not start at 0 degrees (North) but are shifted by half a sector size.
-    E.g. if ``sectors`` is 4 the sectors are defined as:
-
-    .. image:: /_static/wind_sector.png
-        :width: 350px
-    """
-    if _is_xarray(speed):
-        from . import xarray as xarray_module
-
-        return xarray_module.windrose(
-            speed,
-            direction,
-            sectors=sectors,
-            speed_bins=speed_bins,
-            percent=percent,
-        )
-    return array.windrose(
+    return _call(
+        "windrose",
         speed,
         direction,
         sectors=sectors,
