@@ -9,17 +9,24 @@
 # ##
 from __future__ import annotations
 
-from typing import Any, Iterable
+from typing import Any
+from typing import Iterable
+
+from earthkit.meteo.utils import is_module_loaded
 
 from . import array
 
 
 def _is_xarray(obj: Any) -> bool:
+    if not is_module_loaded("xarray"):
+        return False
+
     try:
         import xarray as xr
+
+        return isinstance(obj, (xr.DataArray, xr.Dataset))
     except (ImportError, RuntimeError, SyntaxError):
         return False
-    return isinstance(obj, (xr.DataArray, xr.Dataset))
 
 
 def speed(u: Any, v: Any) -> Any:
