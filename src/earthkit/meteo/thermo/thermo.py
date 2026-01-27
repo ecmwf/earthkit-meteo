@@ -73,9 +73,58 @@ def celsius_to_kelvin(t, **kwargs: Any) -> Any:
     return array.celsius_to_kelvin(t, **kwargs)
 
 
+@overload
+def kelvin_to_celsius(
+    t: xr.DataArray,
+    *,
+    some_xarray_specific_option: Any = None,
+    **kwargs: Any,
+) -> xr.DataArray:
+    """Convert temperature from Kelvin to Celsius for xarray.DataArray."""
+    ...
 
-def kelvin_to_celsius(*args, **kwargs):
-    return array.kelvin_to_celsius(*args, **kwargs)
+@overload
+def kelvin_to_celsius(
+    t: FieldType,
+    *,
+    some_grib_specific_option: Any = None,
+    **kwargs: Any,
+) -> FieldType:
+    """Convert temperature from Kelvin to Celsius for earthkit objects."""
+    ...
+
+def kelvin_to_celsius(t, **kwargs):
+    """Convert temperature from Kelvin to Celsius."""
+
+    if isinstance(t, xr.DataArray):
+
+        # check variable
+        if "standard_name" in t.attrs:
+            if t.attrs["standard_name"] != "air_temperature":
+                raise ValueError(
+                    f"Expected 'standard_name' attribute to be 'air_temperature', got '{t.attrs['standard_name']}'"
+                )
+        elif "long_name" in t.attrs:
+            if "temperature" not in t.attrs["long_name"].lower():
+                raise ValueError(
+                    f"Expected 'long_name' attribute to contain 'temperature', got '{t.attrs['long_name']}'"
+                )
+        else:
+            raise ValueError("DataArray must have either 'standard_name' or 'long_name' attribute to convert temperature.")
+
+        # check units 
+        if "units" not in t.attrs:
+            raise ValueError("DataArray must have 'units' attribute to convert temperature.")
+        if t.attrs["units"].lower() != "kelvin":
+            msg = f"Expected 'units' attribute to be 'Kelvin', got '{t.attrs['units']}'"
+            raise ValueError(msg)
+
+        t = xr.apply_ufunc(array.kelvin_to_celsius, t)
+        t.attrs["units"] = "Celsius"
+        return t
+    
+    return array.kelvin_to_celsius(t, **kwargs)
+    
 
 
 def specific_humidity_from_mixing_ratio(*args, **kwargs):
