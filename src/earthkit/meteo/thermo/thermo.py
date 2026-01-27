@@ -6,35 +6,37 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-from typing import overload, Any, TypeVar
+from typing import overload, Any, TypeVar, TYPE_CHECKING
 
-import xarray as xr
-import earthkit.data as ekd
+if TYPE_CHECKING:
+    import xarray as xr
+    import earthkit.data as ekd
 
+from earthkit.meteo.utils import is_module_loaded
 from . import array
 
 
 FieldType = TypeVar("FieldType", ekd.Field, ekd.FieldList)
 
+def _is_xarray(obj: Any) -> bool:
+    if not is_module_loaded("xarray"):
+        return False
+    import xarray as xr
+    return isinstance(obj, (xr.DataArray, xr.Dataset))
+
 @overload
 def celsius_to_kelvin(
     t: xr.DataArray,
-    *,
-    some_xarray_specific_option: Any = None,
     **kwargs: Any,
 ) -> xr.DataArray:
-    """Convert temperature from Celsius to Kelvin for xarray.DataArray."""
     ...
 
 
 @overload
 def celsius_to_kelvin(
     t: FieldType,
-    *,
-    some_grib_specific_option: Any = None,
     **kwargs: Any,
 ) -> FieldType:
-    """Convert temperature from Celsius to Kelvin for earthkit objects."""
     ...
 
 
@@ -43,7 +45,7 @@ def celsius_to_kelvin(t, **kwargs: Any) -> Any:
     """Convert temperature from Celsius to Kelvin."""
 
     UNITS = ["celsius", "degree_celsius", "degrees_celsius", "°c"]
-    if isinstance(t, xr.DataArray):
+    if _is_xarray(t):
 
         # check variable
         if "standard_name" in t.attrs:
@@ -96,7 +98,7 @@ def kelvin_to_celsius(
 def kelvin_to_celsius(t, **kwargs):
     """Convert temperature from Kelvin to Celsius."""
 
-    if isinstance(t, xr.DataArray):
+    if _is_xarray(t):
 
         # check variable
         if "standard_name" in t.attrs:
@@ -126,6 +128,36 @@ def kelvin_to_celsius(t, **kwargs):
     return array.kelvin_to_celsius(t, **kwargs)
     
 
+@overload
+def specific_humidity_from_mixing_ratio(w: xr.DataArray, **kwargs) -> xr.DataArray:
+    r"""Compute the specific humidity from mixing ratio.
+
+    Parameters
+    ----------
+    w : number or array-like or xarray.DataArray
+        Mixing ratio (kg/kg)
+
+    Returns
+    -------
+    number or array-like or xarray.DataArray
+        Specific humidity (kg/kg)
+
+
+    The result is the specific humidity in kg/kg units. The computation is based on
+    the following definition [Wallace2006]_:
+
+    .. math::
+
+        q = \frac {w}{1+w}
+
+    """
+
+@overload
+def specific_humidity_from_mixing_ratio(w: FieldType, **kwargs) -> FieldType:
+    ...
+
+def specific_humidity_from_mixing_ratio(w, **kwargs):
+    ...
 
 @overload
 def specific_humidity_from_mixing_ratio(
@@ -150,7 +182,7 @@ def specific_humidity_from_mixing_ratio(
 
 def specific_humidity_from_mixing_ratio(w, **kwargs):
     UNITS = ["1", "Kg/Kg"] 
-    if isinstance(w, xr.DataArray):
+    if _is_xarray(w):
         # check variable
         if "standard_name" in w.attrs:
             if w.attrs["standard_name"] != "humidity_mixing_ratio":
