@@ -1,5 +1,7 @@
 from typing import Literal
 
+import xarray as xr
+
 QUANTILE_DIM_NAME = "quantile_"
 QUANTILE_MAP = {
     100: "percentile",
@@ -17,6 +19,43 @@ operators = {
     ">=": lambda x, y: x >= y,
     "<=": lambda x, y: x <= y,
 }
+
+
+def _common_valid_mask(*arrays, dim=None):
+    # return a np bool array of occurrences of all values valid across dim
+    # return xr.concat(arrays, dim=dim).notnull().all(dim=dim)
+    mask = None
+    for array in arrays:
+        if dim is not None and dim in array.dims:
+            nmask = array.notnull().all(dim=dim)
+        else:
+            nmask = array.notnull()
+        if mask is None:
+            mask = nmask
+        else:
+            mask = mask & nmask
+    return mask
+
+
+def event_field(event, field, statistics=None, dim=None):
+    # dim solely indicates which dimension is the ensemble when `field` is an ensemble
+    # TODO: check if this actually works for "abs" when field has coordinates along `dim` dimension?
+    bev = BinaryEvent(**event)
+    if bev.requires_climatology and statistics is None:
+        raise ValueError("Binary event %s requires statistics/climatology but none is present" % bev)
+    if bev["type"] == "abs":
+        if dim is not None and dim in field.dims:
+            threshold = xr.full_like(field[{dim: 0}], bev["value"])
+        else:
+            threshold = xr.full_like(field, bev["value"])
+    elif bev["type"] == "stdev":
+        threshold = bev["value"] * statistics["stdev"]
+    else:
+        threshold = bev.select_quantile_array(statistics["quantile"])
+    if bev["is_anomaly"]:
+        threshold = threshold + statistics["mean"]
+    valid_mask = _common_valid_mask(field, threshold, dim=dim)
+    return bev.operator()(field, threshold), valid_mask
 
 
 class BinaryEvent(dict):

@@ -273,8 +273,8 @@ def _cigns(mean, stdev, observations, stdev_ref=None, nens=None, normalize=True)
     return cigns, cigns_rel, fcigns
 
 
-# TODO: add return_components option
 # TODO: double check naming - stdev reference (climatology)
+# NB: this is not an event, just a baseline
 def continuous_ignorance(fcst, obs, over, stdev_reference=None, normalize=True, return_components=True):
     assert return_components is True, "return_components=False not implemented yet"
     obs, _ = _stack_arr(obs, over)
@@ -295,110 +295,92 @@ def continuous_ignorance(fcst, obs, over, stdev_reference=None, normalize=True, 
     )
 
 
-# TODO: fill
-def quantile_score(*args, **kwargs):
-    pass
+# TODO: check if we can use scores.continuous.quantile_score
+def quantile_score(fcst, obs, tau, over):
+    qf = fcst.quantile(tau, dim=over)
+    # qf = numpy.nanpercentile(e, tau * 100., axis=0)
+    qscore = abs(obs - qf) + (2.0 * tau - 1.0) * (obs - qf)
+    return qscore
 
 
-# TODO: fill
-def diagonal(*args, **kwargs):
-    pass
-
-
-def _event_field(event, field, statistics=None, dim=None):
-    # dim solely indicates which dimension is the ensemble when `field` is an ensemble
-    # TODO: check if this actually works for "abs" when field has coordinates along `dim` dimension?
-    from .event import BinaryEvent
-
-    bev = BinaryEvent(**event)
-    if bev.requires_climatology and statistics is None:
-        raise ValueError("Binary event %s requires statistics/climatology but none is present" % bev)
-    if bev["type"] == "abs":
-        if dim is not None and dim in field.dims:
-            threshold = xr.full_like(field[{dim: 0}], bev["value"])
-        else:
-            threshold = xr.full_like(field, bev["value"])
-    elif bev["type"] == "stdev":
-        threshold = bev["value"] * statistics["stdev"]
+def _stats_to_quantiles(statistics, include_min_max=False, quantile_dim="quantile_"):
+    # extract quantile array from the forecast statistics / climatology
+    # optionally includes array of min/max
+    # converts coordinates from "number:number_of_categories" to fraction (0.,1.)
+    quantile_labels = statistics["quantile"][quantile_dim].values
+    pvals_pc = [float(n) / float(nn) for n, nn in (p.split(":") for p in quantile_labels)]
+    if include_min_max:
+        assert (
+            0.0 in pvals_pc
+        ), "This computation requires the minimum values array to be included as a '0:nquant' quantile"
+        assert (
+            1.0 in pvals_pc
+        ), "This computation requires the maximum values array to be included as a 'nquant:nquant' quantile"
     else:
-        threshold = bev.select_quantile_array(statistics["quantile"])
-    if bev["is_anomaly"]:
-        threshold = threshold + statistics["mean"]
-    valid_mask = _common_valid_mask(field, threshold, dim=dim)
-    return bev.operator()(field, threshold), valid_mask
+        for x in (0.0, 1.0):
+            try:
+                ind = pvals_pc.index(x)
+                del pvals_pc[ind]
+                del quantile_labels[ind]
+            except ValueError:
+                pass
+    pvals = np.array(pvals_pc)
+    return statistics["quantile"].loc[{quantile_dim: quantile_labels}].assign_coords({quantile_dim: pvals})
 
 
-def _generate_rps_events(thr_type, ncat, thr_max=None):
-    from .event import BinaryEvent
-
-    if thr_type == "percentile":
-        for jcat in range(ncat - 1):
-            p_thr = float(jcat + 1) / float(ncat)  # 1/ncat ... (ncat-1)/ncat
-            yield BinaryEvent(
-                value=int(100.0 * p_thr + 0.5),
-                type="percentile",
-                operator=">",
-                is_anomaly=False,
-            )
-    elif thr_type == "tercile":
-        for jcat in (1, 2):
-            yield BinaryEvent(value=jcat, type="tercile", operator=">", is_anomaly=False)
-    elif thr_type == "stdev":
-        for jcat in range(ncat - 1):
-            if ncat == 20:
-                xthr = 1.64 * (2 * jcat - ncat + 2) / float(ncat - 2)
-            elif ncat == 10:
-                xthr = 1.28 * (2 * jcat - ncat + 2) / float(ncat - 2)
-            elif ncat == 5:
-                xthr = 0.84 * (2 * jcat - ncat + 2) / float(ncat - 2)
-            else:
-                xthr = 1.5 * (2 * jcat - ncat + 2) / float(ncat - 2)
-            yield BinaryEvent(value=xthr, type="stdev", operator=">", is_anomaly=False)
-    elif thr_type == "abs":
-        if thr_max is None:
-            raise ValueError("thr_max is required if type is abs")
-        for jcat in range(ncat - 1):
-            xthr = thr_max * (2 * jcat - ncat + 2) / float(ncat - 2)
-            yield BinaryEvent(value=xthr, type="abs", operator=">", is_anomaly=False)
-    else:
-        raise ValueError("threshold type " + thr_type + " not defined")
+def _nondistinct_mask(quantile, dim):
+    # build nondistinct_mask which will mark points where the current quantile field equals to previous
+    # or next quantiles (a provision for discrete variables like cloud cover)
+    inner_mask_l = quantile[{dim: slice(0, -1)}] < quantile.shift(**{dim: -1})[{dim: slice(0, -1)}]
+    inner_mask_u = quantile[{dim: slice(1, None)}] > quantile.shift(**{dim: 1})[{dim: slice(1, None)}]
+    infimum = -np.inf < quantile[{dim: [0]}]
+    supremum = quantile[{dim: [-1]}] < np.inf
+    return xr.concat((infimum, inner_mask_u), dim=dim) & xr.concat((inner_mask_l, supremum), dim=dim)
 
 
-# TODO: this was directly copy-pasted, decide on API
-def rps(
-    observations,
-    forecasts,
-    observation_climatology=None,
-    forecast_climatology=None,
-    thr_type="percentile",
-    ncat=10,
-    thr_max=None,
-    dim=None,
+# TODO: fill
+def diagonal(
+    fcst,
+    obs,
+    over,
+    obs_reference_distribution=None,  # ek.GaussianDistribution(ds, mean_dim, std_dim), ek.QuantileDistribution(ds, type, dim)
+    fcst_reference_distribution=None,
 ):
-    if observation_climatology is not None:
-        observation_climatology, _ = _stack_arr(observation_climatology, dim)
-    if forecast_climatology is not None:
-        forecast_climatology, _ = _stack_arr(forecast_climatology, dim)
-    if observation_climatology is None:
-        observation_climatology = forecast_climatology
-    if forecast_climatology is None:
-        forecast_climatology = observation_climatology
-    observations, _ = _stack_arr(observations, dim)
-    forecasts, _ = _stack_arr(forecasts, dim)
-    rps = xr.zeros_like(forecasts[{dim: 0}])
-    counter = 0
-    masks = True
-    for be in _generate_rps_events(thr_type, ncat, thr_max):
-        obs_events, mask_ob = _event_field(be, observations, observation_climatology, dim=dim)
-        ens_events, mask_fc = _event_field(be, forecasts, forecast_climatology, dim=dim)
-        masks &= mask_ob & mask_fc
-        # probability
-        p = ens_events.mean(dim)
-        bs = (p - obs_events) ** 2
-        rps += bs
-        counter += 1
-    rps /= float(counter + 1)
-    return _unstack_arr(rps.where(masks))
+    # get quantiles from distributions, then compute as beforehand
+    pass
+
+
+# TODO: confirm we don't want from ctg_table
+# TODO: check if want to be able to compute direct from probabilities
+# TODO: implement (requires event implementation + distribution implementation)
+# TODO: decide event API e.g.
+# x >= ek.Distribution().median # medianthresholdevent
+# x - ek.Distribution().mean >= threshold # equivalent to anomaly constantthresholdevent
+# PercentileThresholdEvent(baseline=ek.Distribution, condition=">=", p=0.9)
+# TercileThresholdEvent(baseline=ek.Distribution, condition=">=", tercile="upper")
+# MedianThresholdEvent(baseline=ek.Distribution, condition=">=")
+# MeanThresholdEvent(baseline=ek.Distribution, condition=">=")
+# ConstantThresholdEvent(condition=">=", threshold=value)
+# AnomalyConstantThresholdEvent(condition=">=", threshold=value)
+# TODO: decide if should be Anomaly(ConstantThresholdEvent) instead
+# StandardDeviationThresholdEvent(baseline=ek.Distribution, condition=">=", n_stdev=1.5)
+# AND NB: also anomaly versions, which means first subtract climatology/baseline mean from data
+# TODO: can we decide events?
+def rps(fcst, obs, over, events):
+    pass
+
+
+# def rps(
+#     observations,
+#     forecasts,
+#     observation_climatology=None,
+#     forecast_climatology=None,
+#     thr_type="percentile",
+#     ncat=10,
+#     thr_max=None,
+#     dim=None,
+# ):
+#     pass
 
 
 def rank_histogram(*args, **kwargs):
@@ -424,12 +406,12 @@ def diagonal_quadrature(*outargs, **kwargs):
     pass
 
 
-def brier_gaussian(*args, **kwargs):
-    pass
+# def brier_gaussian(*args, **kwargs):
+#     pass
 
 
-def brier_quadrature(*args, **kwargs):
-    pass
+# def brier_quadrature(*args, **kwargs):
+#     pass
 
 
 def ignorance_gaussian(*args, **kwargs):
@@ -455,14 +437,66 @@ def event_occurrences(*args, **kwargs):
     pass
 
 
-def contingency_table(*args, **kwargs):
-    pass
+def contingency_table(
+    event,
+    observations,
+    forecasts,
+    observation_climatology=None,
+    forecast_climatology=None,
+    dim=None,
+    ct_dim="ctable",
+):
+    from .event import event_field
+
+    if observation_climatology is not None:
+        observation_climatology, _ = _stack_arr(observation_climatology, dim, order=observations.dims)
+    if forecast_climatology is not None:
+        forecast_climatology, _ = _stack_arr(forecast_climatology, dim, order=forecasts.dims)
+    if observation_climatology is None:
+        observation_climatology = forecast_climatology
+    if forecast_climatology is None:
+        forecast_climatology = observation_climatology
+    observations, _ = _stack_arr(observations, dim)
+    forecasts, stacked_dim = _stack_arr(forecasts, dim)
+    ev_an, an_mask = event_field(event, observations, observation_climatology, dim=dim)
+    ev_fc, fc_mask = event_field(event, forecasts, forecast_climatology, dim=dim)
+    nens = ev_fc.sizes[dim]
+    rnk0 = ev_fc.sum(dim=dim)
+    # use rnk0 to decide which element of cnoc /cocc is updated
+    where_observed = ev_an.values
+    # cocc and cnoc could be just views to ct
+    # "Positional indexing with only integers and slices returns a view."
+    ct = xr.concat([xr.zeros_like(forecasts[{dim: 0}])] * 2 * (nens + 1), dim=ct_dim).assign_coords(
+        {ct_dim: range(1, 2 * (nens + 1) + 1)}
+    )
+    cocc = ct[{ct_dim: slice(0, nens + 1)}]
+    cnoc = ct[{ct_dim: slice(nens + 1, None)}]
+    # xarray indexing works slightly differently from numpy
+    # ind_rnk must be a DataArray with the dimension FIELD to make sure
+    # the following indexing is vectorized (returns ind_rnk where where_observed)
+    # and not orthogonal (which would return a region ind_rnk x where_observed)
+    cocc[{ct_dim: rnk0[where_observed], stacked_dim: where_observed}] = 1.0
+    cnoc[{ct_dim: rnk0[~where_observed], stacked_dim: ~where_observed}] = 1.0
+    valid_mask = an_mask & fc_mask  # it includes optionally the nan-mask of climatology as well
+    return _unstack_arr(ct.where(valid_mask))
 
 
 # from ctg tables
 
 
-def roc_curve(*outargs, **kwargs):
+def brier_from_ctg_table(contingency_table, over):
+    pass
+
+
+def brier_from_ensemble(fcst, obs, event_thresholds=0.5, ensemble_member_dim="ensemble"):
+    pass
+
+
+def brier_from_cdf(fcst_cdf, obs, event_thresholds=0.5, quantile_dim="quantile_"):  # quadrature
+    pass
+
+
+def brier_gaussian(event, observations, forecast_statistics):
     pass
 
 
