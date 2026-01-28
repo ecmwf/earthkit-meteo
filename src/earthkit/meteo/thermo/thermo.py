@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any  # noqa: F401
-from typing import Iterable
 from typing import overload
 
 if TYPE_CHECKING:
@@ -18,6 +17,7 @@ if TYPE_CHECKING:
     from earthkit.data import FieldList  # type: ignore[import]
 
 from . import array
+
 
 # TODO: move these underscore functions to meteo.utils
 def _is_xarray(obj: Any) -> bool:
@@ -166,6 +166,7 @@ def specific_humidity_from_mixing_ratio(w: "FieldList") -> "FieldList":
     """
     ...
 
+
 def specific_humidity_from_mixing_ratio(w: Any) -> Any:
     r"""Compute the specific humidity from mixing ratio.
 
@@ -238,6 +239,7 @@ def saturation_specific_humidity_slope(*args, **kwargs):
 def temperature_from_saturation_vapour_pressure(*args, **kwargs):
     return array.temperature_from_saturation_vapour_pressure(*args, **kwargs)
 
+
 @overload
 def relative_humidity_from_dewpoint(t: "xarray.DataArray", td: "xarray.DataArray") -> "xarray.DataArray":
     r"""Compute the relative humidity from dew point temperature
@@ -265,6 +267,7 @@ def relative_humidity_from_dewpoint(t: "xarray.DataArray", td: "xarray.DataArray
     where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
 
     """
+
 
 @overload
 def relative_humidity_from_dewpoint(t: "FieldList", td: "FieldList") -> "FieldList":
@@ -294,6 +297,7 @@ def relative_humidity_from_dewpoint(t: "FieldList", td: "FieldList") -> "FieldLi
 
     """
 
+
 def relative_humidity_from_dewpoint(t, td, **kwargs: Any) -> Any:
     r"""Compute the relative humidity from dew point temperature
 
@@ -322,8 +326,11 @@ def relative_humidity_from_dewpoint(t, td, **kwargs: Any) -> Any:
     """
     return _call("relative_humidity_from_dewpoint", t, td)
 
+
 @overload
-def relative_humidity_from_specific_humidity(t: "xarray.DataArray", q: "xarray.DataArray", p: "xarray.DataArray") -> "xarray.DataArray":
+def relative_humidity_from_specific_humidity(
+    t: "xarray.DataArray", q: "xarray.DataArray", p: "xarray.DataArray"
+) -> "xarray.DataArray":
     r"""Compute the relative humidity from specific humidity.
 
     Parameters
@@ -353,6 +360,7 @@ def relative_humidity_from_specific_humidity(t: "xarray.DataArray", q: "xarray.D
         * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
 
     """
+
 
 @overload
 def relative_humidity_from_specific_humidity(t: "FieldList", q: "FieldList", p: "FieldList") -> "FieldList":

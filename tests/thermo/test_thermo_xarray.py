@@ -10,14 +10,14 @@ pytestmark = pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 
 def _da(values):
     import xarray as xr
+
     return xr.DataArray(np.asarray(values))
 
 
 @pytest.mark.parametrize(
     "t_c,t_k_ref",
     [
-        ([-273.15, -40.0, 0.0, 20.0, 100.0, np.nan],
-         [0.0, 233.15, 273.15, 293.15, 373.15, np.nan]),
+        ([-273.15, -40.0, 0.0, 20.0, 100.0, np.nan], [0.0, 233.15, 273.15, 293.15, 373.15, np.nan]),
     ],
 )
 def test_celsius_to_kelvin(t_c, t_k_ref):
@@ -28,8 +28,7 @@ def test_celsius_to_kelvin(t_c, t_k_ref):
 @pytest.mark.parametrize(
     "t_k,t_c_ref",
     [
-        ([0.0, 233.15, 273.15, 293.15, 373.15, np.nan],
-         [-273.15, -40.0, 0.0, 20.0, 100.0, np.nan]),
+        ([0.0, 233.15, 273.15, 293.15, 373.15, np.nan], [-273.15, -40.0, 0.0, 20.0, 100.0, np.nan]),
     ],
 )
 def test_kelvin_to_celsius(t_k, t_c_ref):
@@ -42,7 +41,7 @@ def test_kelvin_to_celsius(t_k, t_c_ref):
     [
         (
             [0.0, 1.0, 0.5, 0.1, 1e-6, np.nan, -0.5],
-            [0.0, 0.5, 1/3, 1/11, 1e-6/(1+1e-6), np.nan, -1.0],
+            [0.0, 0.5, 1 / 3, 1 / 11, 1e-6 / (1 + 1e-6), np.nan, -1.0],
         )
     ],
 )

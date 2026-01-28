@@ -7,7 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .. import array
 
 def specific_humidity_from_mixing_ratio(w):
     r"""Compute the specific humidity from mixing ratio.
@@ -33,7 +32,7 @@ def specific_humidity_from_mixing_ratio(w):
     """
     # Map known "mixing ratio" parameter IDs to "specific humidity" parameter IDs
     param_ids = {
-        53: 133,      # humidity mixing ratio -> specific humidity
+        53: 133,  # humidity mixing ratio -> specific humidity
     }
 
     result = []
@@ -51,6 +50,7 @@ def specific_humidity_from_mixing_ratio(w):
         result.append(wi.clone(values=q, metadata=md))
 
     return w.from_fields(result)
+
 
 def relative_humidity_from_dewpoint(t, td):
     r"""Compute the relative humidity from dew point temperature
@@ -78,6 +78,7 @@ def relative_humidity_from_dewpoint(t, td):
     where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
 
     """
+
 
 def relative_humidity_from_specific_humidity(t, q, p):
     r"""Compute the relative humidity from specific humidity.

@@ -16,5 +16,5 @@ planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets
 """
 
 
-from .thermo import *  # noqa
 from . import array
+from .thermo import *  # noqa

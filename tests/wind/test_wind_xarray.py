@@ -48,7 +48,7 @@ def _da(values):
         )
     ],
 )
-def test_wind_speed(u, v, v_ref):
+def test_xr_wind_speed(u, v, v_ref):
     sp = wind.speed(_da(u), _da(v))
     assert np.allclose(sp.values, np.asarray(v_ref), equal_nan=True)
 
@@ -107,7 +107,7 @@ def test_wind_speed(u, v, v_ref):
         (1.0, np.nan, {"convention": "polar"}, np.nan),
     ],
 )
-def test_wind_direction(u, v, v_ref, kwargs):
+def test_xr_wind_direction(u, v, v_ref, kwargs):
     d = wind.direction(_da(u), _da(v), **kwargs)
     assert np.allclose(d.values, np.asarray(v_ref), equal_nan=True)
 
@@ -137,7 +137,7 @@ def test_wind_direction(u, v, v_ref, kwargs):
         )
     ],
 )
-def test_wind_xy_to_polar(u, v, sp_ref, d_ref):
+def test_xr_wind_xy_to_polar(u, v, sp_ref, d_ref):
     sp, d = wind.xy_to_polar(_da(u), _da(v))
     assert np.allclose(sp.values, np.asarray(sp_ref), equal_nan=True)
     assert np.allclose(d.values, np.asarray(d_ref), equal_nan=True)
@@ -168,7 +168,7 @@ def test_wind_xy_to_polar(u, v, sp_ref, d_ref):
         )
     ],
 )
-def test_wind_polar_to_xy(sp, d, u_ref, v_ref):
+def test_xr_wind_polar_to_xy(sp, d, u_ref, v_ref):
     u, v = wind.polar_to_xy(_da(sp), _da(d))
     assert np.allclose(u.values, np.asarray(u_ref), equal_nan=True, atol=1e-7)
     assert np.allclose(v.values, np.asarray(v_ref), equal_nan=True, atol=1e-7)
@@ -188,7 +188,7 @@ def test_w_from_omega(omega, t, p, v_ref):
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize("lat, v_ref", [([-20, 0, 50], [-0.0000498810, 0.0, 0.0001117217])])
-def test_coriolis(lat, v_ref):
+def test_xr_coriolis(lat, v_ref):
     c = wind.coriolis(_da(lat))
     assert np.allclose(c.values, np.asarray(v_ref), rtol=1e-04)
 
@@ -279,7 +279,7 @@ def test_coriolis(lat, v_ref):
         (3.4, 90.01, 1, [0, 5], False, [[1]], [-180.0000000000, 180.0000000000]),
     ],
 )
-def test_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref):
+def test_xr_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref):
     r = wind.windrose(_da(sp), _da(d), sectors=sectors, speed_bins=sp_bins, percent=percent)
     assert np.allclose(r[0].values, np.asarray(v_ref), equal_nan=True, rtol=1e-04)
     assert np.allclose(r[1].values, np.asarray(dir_bin_ref), equal_nan=True, rtol=1e-04)
@@ -289,6 +289,6 @@ def test_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref):
 @pytest.mark.parametrize(
     "sp,d,sectors,sp_bins", [(3.4, 90.01, 0, [0, 1]), (3.4, 90.01, 6, [0]), (3.4, 90.01, 6, None)]
 )
-def test_windrose_invalid(sp, d, sectors, sp_bins):
+def test_xr_windrose_invalid(sp, d, sectors, sp_bins):
     with pytest.raises(ValueError):
         wind.windrose(_da(sp), _da(d), sectors=sectors, speed_bins=sp_bins, percent=False)

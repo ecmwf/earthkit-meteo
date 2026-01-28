@@ -10,8 +10,6 @@
 import numpy as np
 import pytest
 
-import earthkit.meteo.thermo.array as array_thermo
-from earthkit.meteo import thermo
 from earthkit.meteo.utils.testing import NO_EKD
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
@@ -19,7 +17,7 @@ np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
 @pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
 def test_fieldlist_thermo_specific_humidity_from_mixing_ratio():
-    import earthkit.data as ekd
+    pass
+
     # TODO find sample grib file for mixing ratio
     # ds = ekd.from_source("sample", "tuv_pl.grib")
-

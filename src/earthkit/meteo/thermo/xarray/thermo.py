@@ -9,14 +9,16 @@
 
 import numpy as np
 
+from earthkit.meteo.utils.meteo_decorator import metadata_handler
+
 from .. import array
 
-from earthkit.meteo.utils.meteo_decorator import metadata_handler
 
 def _sample_arg(arg: object) -> np.ndarray:
     if hasattr(arg, "dtype"):
         return np.zeros((), dtype=arg.dtype)
     return np.zeros((), dtype=float)
+
 
 def _infer_output_dtypes(func, *args, **kwargs) -> list[np.dtype]:
     sample_args = [_sample_arg(arg) for arg in args]
@@ -40,6 +42,7 @@ def _apply_ufunc(func, *args, **kwargs):
         keep_attrs=True,
     )
 
+
 def celsius_to_kelvin(t):
     r"""Convert temperature values from Celsius to Kelvin.
 
@@ -55,6 +58,7 @@ def celsius_to_kelvin(t):
 
     """
     return _apply_ufunc(array.celsius_to_kelvin, t)
+
 
 def kelvin_to_celsius(t):
     r"""Convert temperature values from Kelvin to Celsius.
@@ -103,6 +107,7 @@ def specific_humidity_from_mixing_ratio(w, t):
     res.attrs["units"] = "kg/kg"
     return res
 
+
 @metadata_handler(inputs=["temperature", "dewpoint"], outputs=["relative_humidity"])
 def relative_humidity_from_dewpoint(t, td):
     r"""Compute the relative humidity from dew point temperature
@@ -131,6 +136,7 @@ def relative_humidity_from_dewpoint(t, td):
 
     """
     return _apply_ufunc(array.relative_humidity_from_dewpoint, t, td)
+
 
 def relative_humidity_from_specific_humidity(t, q, p):
     r"""Compute the relative humidity from specific humidity.

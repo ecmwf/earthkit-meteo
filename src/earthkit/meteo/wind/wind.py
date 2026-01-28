@@ -14,47 +14,11 @@ from typing import Any  # noqa: F401
 from typing import Iterable
 from typing import overload
 
+from earthkit.meteo.utils.meteo_decorator import dispatch
+
 if TYPE_CHECKING:
     import xarray  # type: ignore[import]
     from earthkit.data import FieldList  # type: ignore[import]
-
-
-# TODO: move these underscore functions to meteo.utils
-def _is_xarray(obj: Any) -> bool:
-    from earthkit.meteo.utils import is_module_loaded
-
-    if not is_module_loaded("xarray"):
-        return False
-
-    try:
-        import xarray as xr
-
-        return isinstance(obj, (xr.DataArray, xr.Dataset))
-    except (ImportError, RuntimeError, SyntaxError):
-        return False
-
-
-def _is_fieldlist(obj: Any) -> bool:
-    from earthkit.meteo.utils import is_module_loaded
-
-    if not is_module_loaded("earthkit.data"):
-        return False
-
-    try:
-        from earthkit.data import FieldList
-
-        return isinstance(obj, FieldList)
-    except ImportError:
-        return False
-
-
-def _call(func: str, *args: Any, **kwargs: Any) -> Any:
-    if _is_xarray(args[0]):
-        from . import xarray as _module
-    elif _is_fieldlist(args[0]):
-        from . import fieldlist as _module
-
-    return getattr(_module, func)(*args, **kwargs)
 
 
 @overload
@@ -97,6 +61,7 @@ def speed(u: "FieldList", v: "FieldList") -> "FieldList":
     ...
 
 
+@dispatch
 def speed(u: Any, v: Any) -> Any:
     r"""Compute the wind speed/vector magnitude.
 
@@ -113,7 +78,7 @@ def speed(u: Any, v: Any) -> Any:
         Wind speed/magnitude (same units as ``u`` and ``v``)
 
     """
-    return _call("speed", u, v)
+    pass
 
 
 @overload
@@ -124,10 +89,10 @@ def direction(
     ...
 
 
+@dispatch
 def direction(u: Any, v: Any, convention: str = "meteo", to_positive: bool = True) -> Any:
     r"""Compute the direction/angle of a vector quantity."""
-
-    return _call("direction", u, v, convention=convention, to_positive=to_positive)
+    pass
 
 
 @overload
@@ -140,10 +105,10 @@ def xy_to_polar(
     ...
 
 
+@dispatch
 def xy_to_polar(x: Any, y: Any, convention: str = "meteo") -> tuple[Any, Any]:
     r"""Convert wind/vector data from xy representation to polar representation."""
-
-    return _call("xy_to_polar", x, y, convention=convention)
+    pass
 
 
 @overload
@@ -156,9 +121,10 @@ def polar_to_xy(
     ...
 
 
+@dispatch
 def polar_to_xy(magnitude: Any, direction: Any, convention: str = "meteo") -> tuple[Any, Any]:
     r"""Convert wind/vector data from polar representation to xy representation."""
-    return _call("polar_to_xy", magnitude, direction, convention=convention)
+    pass
 
 
 @overload
@@ -171,9 +137,10 @@ def w_from_omega(
     ...
 
 
+@dispatch
 def w_from_omega(omega: Any, t: Any, p: Any) -> Any:
     r"""Compute the hydrostatic vertical velocity from pressure velocity"""
-    return _call("w_from_omega", omega, t, p)
+    pass
 
 
 @overload
@@ -182,10 +149,10 @@ def coriolis(lat: "xarray.DataArray") -> "xarray.DataArray":
     ...
 
 
+@dispatch
 def coriolis(lat: Any) -> Any:
     r"""Compute the Coriolis parameter"""
-
-    return _call("coriolis", lat)
+    pass
 
 
 @overload
@@ -200,6 +167,7 @@ def windrose(
     ...
 
 
+@dispatch
 def windrose(
     speed: Any,
     direction: Any,
@@ -208,12 +176,4 @@ def windrose(
     percent: bool = True,
 ) -> tuple[Any, Any]:
     r"""Generate windrose data"""
-
-    return _call(
-        "windrose",
-        speed,
-        direction,
-        sectors=sectors,
-        speed_bins=speed_bins,
-        percent=percent,
-    )
+    pass
