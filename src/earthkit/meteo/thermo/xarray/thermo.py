@@ -44,6 +44,38 @@ def _apply_ufunc(func, *args, **kwargs):
         keep_attrs=True,
     )
 
+def celsius_to_kelvin(t):
+    r"""Convert temperature values from Celsius to Kelvin.
+
+    Parameters
+    ----------
+    t : xarray.DataArray
+        Temperature in Celsius units
+
+    Returns
+    -------
+    xarray.DataArray
+        Temperature in Kelvin units
+
+    """
+    return _apply_ufunc(array.celsius_to_kelvin, t)
+
+def kelvin_to_celsius(t):
+    r"""Convert temperature values from Kelvin to Celsius.
+
+    Parameters
+    ----------
+    t : xarray.DataArray
+        Temperature in Kelvin units
+
+    Returns
+    -------
+    xarray.DataArray
+        Temperature in Celsius units
+
+    """
+    return _apply_ufunc(array.kelvin_to_celsius, t)
+
 
 def specific_humidity_from_mixing_ratio(w):
     r"""Compute the specific humidity from mixing ratio.

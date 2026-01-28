@@ -55,110 +55,74 @@ def _call(func: str, *args: Any, **kwargs: Any) -> Any:
     return getattr(_module, func)(*args, **kwargs)
 
 
-
-
 @overload
-def celsius_to_kelvin(
-    t: xr.DataArray,
-    **kwargs: Any,
-) -> xr.DataArray:
+def celsius_to_kelvin(t: "xarray.DataArray") -> "xarray.DataArray":
+    """Convert temperature values from Celsius to Kelvin.
+
+    Parameters
+    ----------
+    t : xarray.DataArray
+        Temperature in Celsius units
+
+    Returns
+    -------
+    xarray.DataArray
+        Temperature in Kelvin units
+
+    """
     ...
 
 
-@overload
-def celsius_to_kelvin(
-    t: FieldType,
-    **kwargs: Any,
-) -> FieldType:
-    ...
+def celsius_to_kelvin(t: Any) -> Any:
+    """Convert temperature values from Celsius to Kelvin.
 
+    Parameters
+    ----------
+    t : Any
+        Temperature in Celsius units
 
-# TODO 1: CF conventions through Enums?
-def celsius_to_kelvin(t, **kwargs: Any) -> Any:
-    """Convert temperature from Celsius to Kelvin."""
+    Returns
+    -------
+    Any
+        Temperature in Kelvin units
 
-    UNITS = ["celsius", "degree_celsius", "degrees_celsius", "°c"]
-    if _is_xarray(t):
-
-        # check variable
-        if "standard_name" in t.attrs:
-            if t.attrs["standard_name"] != "air_temperature":
-                raise ValueError(
-                    f"Expected 'standard_name' attribute to be 'air_temperature', got '{t.attrs['standard_name']}'"
-                )
-        elif "long_name" in t.attrs:
-            if "temperature" not in t.attrs["long_name"].lower():
-                raise ValueError(
-                    f"Expected 'long_name' attribute to contain 'temperature', got '{t.attrs['long_name']}'"
-                )
-        else:
-            raise ValueError("DataArray must have either 'standard_name' or 'long_name' attribute to convert temperature.")
-
-        # check units
-        if "units" not in t.attrs:
-            raise ValueError("DataArray must have 'units' attribute to convert temperature.")
-        if t.attrs["units"].lower() not in UNITS:
-            msg = f"Expected 'units' attribute to be one of {UNITS}, got '{t.attrs['units']}'"
-            raise ValueError(msg)
-
-        t = xr.apply_ufunc(array.celsius_to_kelvin, t)
-        t.attrs["units"] = "Kelvin"
-        return t
-
-    return array.celsius_to_kelvin(t, **kwargs)
+    """
+    return _call("celsius_to_kelvin", t)
 
 
 @overload
-def kelvin_to_celsius(
-    t: xr.DataArray,
-    *,
-    some_xarray_specific_option: Any = None,
-    **kwargs: Any,
-) -> xr.DataArray:
-    """Convert temperature from Kelvin to Celsius for xarray.DataArray."""
+def kelvin_to_celsius(t: "xarray.DataArray") -> "xarray.DataArray":
+    r"""Convert temperature values from Kelvin to Celsius.
+
+    Parameters
+    ----------
+    t : xarray.DataArray
+        Temperature in Kelvin units
+
+    Returns
+    -------
+    xarray.DataArray
+        Temperature in Celsius units
+
+    """
     ...
 
-@overload
-def kelvin_to_celsius(
-    t: FieldType,
-    *,
-    some_grib_specific_option: Any = None,
-    **kwargs: Any,
-) -> FieldType:
-    """Convert temperature from Kelvin to Celsius for earthkit objects."""
-    ...
 
-def kelvin_to_celsius(t, **kwargs):
-    """Convert temperature from Kelvin to Celsius."""
+def kelvin_to_celsius(t: Any) -> Any:
+    r"""Convert temperature values from Kelvin to Celsius.
 
-    if _is_xarray(t):
+    Parameters
+    ----------
+    t : Any
+        Temperature in Kelvin units
 
-        # check variable
-        if "standard_name" in t.attrs:
-            if t.attrs["standard_name"] != "air_temperature":
-                raise ValueError(
-                    f"Expected 'standard_name' attribute to be 'air_temperature', got '{t.attrs['standard_name']}'"
-                )
-        elif "long_name" in t.attrs:
-            if "temperature" not in t.attrs["long_name"].lower():
-                raise ValueError(
-                    f"Expected 'long_name' attribute to contain 'temperature', got '{t.attrs['long_name']}'"
-                )
-        else:
-            raise ValueError("DataArray must have either 'standard_name' or 'long_name' attribute to convert temperature.")
+    Returns
+    -------
+    Any
+        Temperature in Celsius units
 
-        # check units
-        if "units" not in t.attrs:
-            raise ValueError("DataArray must have 'units' attribute to convert temperature.")
-        if t.attrs["units"].lower() != "kelvin":
-            msg = f"Expected 'units' attribute to be 'Kelvin', got '{t.attrs['units']}'"
-            raise ValueError(msg)
-
-        t = xr.apply_ufunc(array.kelvin_to_celsius, t)
-        t.attrs["units"] = "Celsius"
-        return t
-
-    return array.kelvin_to_celsius(t, **kwargs)
+    """
+    return _call("kelvin_to_celsius", t)
 
 
 @overload
@@ -185,6 +149,7 @@ def specific_humidity_from_mixing_ratio(w: "xarray.DataArray") -> "xarray.DataAr
 
     """
     ...
+
 
 @overload
 def specific_humidity_from_mixing_ratio(w: "FieldList") -> "FieldList":
