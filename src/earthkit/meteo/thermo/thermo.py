@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     import xarray  # type: ignore[import]
     from earthkit.data import FieldList  # type: ignore[import]
 
+from . import array
+
 # TODO: move these underscore functions to meteo.utils
 def _is_xarray(obj: Any) -> bool:
     from earthkit.meteo.utils import is_module_loaded
@@ -73,21 +75,9 @@ def celsius_to_kelvin(t: "xarray.DataArray") -> "xarray.DataArray":
     ...
 
 
-def celsius_to_kelvin(t: Any) -> Any:
-    """Convert temperature values from Celsius to Kelvin.
-
-    Parameters
-    ----------
-    t : Any
-        Temperature in Celsius units
-
-    Returns
-    -------
-    Any
-        Temperature in Kelvin units
-
-    """
-    return _call("celsius_to_kelvin", t)
+def celsius_to_kelvin(t, **kwargs: Any) -> Any:
+    """Convert temperature from Celsius to Kelvin."""
+    return _call("celsius_to_kelvin", t, **kwargs)
 
 
 @overload
