@@ -175,7 +175,7 @@ class DataDispatcher(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def __call__(self, func: str, *args: Any, **kwargs: Any) -> Any:
+    def __call__(self, func: str, module: str, *args: Any, **kwargs: Any) -> Any:
         pass
 
 
