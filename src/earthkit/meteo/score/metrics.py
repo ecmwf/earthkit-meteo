@@ -1,3 +1,5 @@
+from typing import Literal
+
 import numpy as np
 import xarray as xr
 
@@ -16,11 +18,24 @@ def import_scores_or_prompt_install():
 # determinstic scores
 
 
-def error(fcst, obs, agg_method=None, agg_dim=None, agg_weights=None, is_angular=False):
+def error(
+    fcst: xr.DataArray | xr.Dataset,
+    obs: xr.DataArray | xr.Dataset,
+    agg_method: Literal["mean"] | None = None,
+    agg_dim=None,
+    agg_weights=None,
+):
     assert agg_method in (None, "mean")
     scores = import_scores_or_prompt_install()
+
+    # TODO: Add comment explaining behavior here in scores
+    reduce_dim = agg_dim or []
+
     return scores.continuous.additive_bias(
-        fcst, obs, reduce_dims=agg_dim, weights=agg_weights, is_angular=is_angular
+        fcst,
+        obs,
+        reduce_dims=reduce_dim,
+        weights=agg_weights,
     )
 
 
