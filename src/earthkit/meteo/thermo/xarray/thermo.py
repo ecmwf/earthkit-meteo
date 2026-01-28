@@ -43,3 +43,28 @@ def _apply_ufunc(func, *args, **kwargs):
         output_dtypes=output_dtypes,
         keep_attrs=True,
     )
+
+
+def specific_humidity_from_mixing_ratio(w):
+    r"""Compute the specific humidity from mixing ratio.
+
+    Parameters
+    ----------
+    w : xarray.DataArray
+        Mixing ratio (kg/kg)
+
+    Returns
+    -------
+    xarray.DataArray
+        Specific humidity (kg/kg)
+
+
+    The result is the specific humidity in kg/kg units. The computation is based on
+    the following definition [Wallace2006]_:
+
+    .. math::
+
+        q = \frac {w}{1+w}
+
+    """
+    return _apply_ufunc(array.specific_humidity_from_mixing_ratio, w)
