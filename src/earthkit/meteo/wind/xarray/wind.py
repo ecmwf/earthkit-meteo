@@ -30,10 +30,20 @@ def _infer_output_dtypes(func, *args, **kwargs) -> list[np.dtype]:
     return [np.asarray(res).dtype]
 
 
-def _apply_ufunc(func, *args, **kwargs):
+def _apply_ufunc(func, num, *args, **kwargs):
     import xarray as xr
 
     output_dtypes = _infer_output_dtypes(func, *args, **kwargs)
+
+    opt = {}
+    if num > 1:
+        input_core_dims = [x.dims for x in args]
+        output_core_dims = [x.dims for x in args]
+
+        opt = {
+            "input_core_dims": input_core_dims,
+            "output_core_dims": output_core_dims,
+        }
 
     return xr.apply_ufunc(
         func,
@@ -41,6 +51,7 @@ def _apply_ufunc(func, *args, **kwargs):
         kwargs=kwargs,
         dask="parallelized",
         output_dtypes=output_dtypes,
+        **opt,
         keep_attrs=True,
     )
 
@@ -60,7 +71,7 @@ def speed(u, v):
     xarray.DataArray
         Wind speed/magnitude (same units as ``u`` and ``v``)
     """
-    res = _apply_ufunc(array.speed, u, v)
+    res = _apply_ufunc(array.speed, 1, u, v)
     res.name = "wind_speed"
     res.attrs["standard_name"] = "wind_speed"
     res.attrs["long_name"] = "Wind Speed"
@@ -91,7 +102,7 @@ def direction(u, v, convention: str = "meteo", to_positive: bool = True):
     xarray.DataArray
         Direction/angle (degrees)
     """
-    return _apply_ufunc(array.direction, u, v, convention=convention, to_positive=to_positive)
+    return _apply_ufunc(array.direction, 1, u, v, convention=convention, to_positive=to_positive)
 
 
 def xy_to_polar(x, y, convention: str = "meteo"):
@@ -117,7 +128,7 @@ def xy_to_polar(x, y, convention: str = "meteo"):
     xarray.DataArray
         Direction (degrees)
     """
-    return _apply_ufunc(array.xy_to_polar, x, y, convention=convention)
+    return _apply_ufunc(array.xy_to_polar, 2, x, y, convention=convention)
 
 
 def polar_to_xy(magnitude, direction, convention: str = "meteo"):
@@ -143,7 +154,7 @@ def polar_to_xy(magnitude, direction, convention: str = "meteo"):
     xarray.DataArray
         Y vector component (same units as ``magnitude``)
     """
-    return _apply_ufunc(array.polar_to_xy, magnitude, direction, convention=convention)
+    return _apply_ufunc(array.polar_to_xy, 2, magnitude, direction, convention=convention)
 
 
 def w_from_omega(omega, t, p):
@@ -163,7 +174,7 @@ def w_from_omega(omega, t, p):
     xarray.DataArray
         Hydrostatic vertical velocity (m/s)
     """
-    return _apply_ufunc(array.w_from_omega, omega, t, p)
+    return _apply_ufunc(array.w_from_omega, 1, omega, t, p)
 
 
 def coriolis(lat):
@@ -179,7 +190,7 @@ def coriolis(lat):
     xarray.DataArray
         The Coriolis parameter (:math:`s^{-1}`)
     """
-    return _apply_ufunc(array.coriolis, lat)
+    return _apply_ufunc(array.coriolis, 1, lat)
 
 
 def windrose(
@@ -232,19 +243,16 @@ def windrose(
 
     speed_bins = np.asarray(speed_bins, dtype=res.dtype)
     dir_bins = np.asarray(dir_bins, dtype=res.dtype)
-    speed_centers = (speed_bins[:-1] + speed_bins[1:]) / 2.0
-    dir_centers = (dir_bins[:-1] + dir_bins[1:]) / 2.0
 
     res_da = xr.DataArray(
         res,
-        dims=("speed_bin", "direction_bin"),
+        dims={"speed_bin": res.shape[0], "direction_bin": res.shape[1]},
         coords={
-            "speed_bin": speed_centers,
-            "direction_bin": dir_centers,
-            "speed_bin_edge": ("speed_bin_edge", speed_bins),
-            "direction_bin_edge": ("direction_bin_edge", dir_bins),
+            "speed_bin": speed_bins[:-1],
+            "direction_bin": dir_bins[:-1],
         },
     )
+
     dir_bins_da = xr.DataArray(dir_bins, dims=("direction_bin_edge",))
 
     return res_da, dir_bins_da
