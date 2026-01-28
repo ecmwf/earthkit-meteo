@@ -51,3 +51,30 @@ def specific_humidity_from_mixing_ratio(w):
         result.append(wi.clone(values=q, metadata=md))
 
     return w.from_fields(result)
+
+def relative_humidity_from_dewpoint(t, td):
+    r"""Compute the relative humidity from dew point temperature
+
+    Parameters
+    ----------
+    t : "xarray.DataArray"
+        Temperature (K)
+    td: "xarray.DataArray"
+        Dewpoint (K)
+
+
+    Returns
+    -------
+    "xarray.DataArray"
+        Relative humidity (%)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        r = 100 \frac {e_{wsat}(td)}{e_{wsat}(t)}
+
+    where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
+
+    """

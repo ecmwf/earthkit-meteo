@@ -56,6 +56,7 @@ def _call(func: str, *args: Any, **kwargs: Any) -> Any:
 
 
 
+
 @overload
 def celsius_to_kelvin(
     t: xr.DataArray,
@@ -93,7 +94,7 @@ def celsius_to_kelvin(t, **kwargs: Any) -> Any:
         else:
             raise ValueError("DataArray must have either 'standard_name' or 'long_name' attribute to convert temperature.")
 
-        # check units 
+        # check units
         if "units" not in t.attrs:
             raise ValueError("DataArray must have 'units' attribute to convert temperature.")
         if t.attrs["units"].lower() not in UNITS:
@@ -103,7 +104,7 @@ def celsius_to_kelvin(t, **kwargs: Any) -> Any:
         t = xr.apply_ufunc(array.celsius_to_kelvin, t)
         t.attrs["units"] = "Kelvin"
         return t
-    
+
     return array.celsius_to_kelvin(t, **kwargs)
 
 
@@ -146,7 +147,7 @@ def kelvin_to_celsius(t, **kwargs):
         else:
             raise ValueError("DataArray must have either 'standard_name' or 'long_name' attribute to convert temperature.")
 
-        # check units 
+        # check units
         if "units" not in t.attrs:
             raise ValueError("DataArray must have 'units' attribute to convert temperature.")
         if t.attrs["units"].lower() != "kelvin":
@@ -156,9 +157,9 @@ def kelvin_to_celsius(t, **kwargs):
         t = xr.apply_ufunc(array.kelvin_to_celsius, t)
         t.attrs["units"] = "Celsius"
         return t
-    
+
     return array.kelvin_to_celsius(t, **kwargs)
-    
+
 
 @overload
 def specific_humidity_from_mixing_ratio(w: "xarray.DataArray") -> "xarray.DataArray":
@@ -282,13 +283,120 @@ def saturation_specific_humidity_slope(*args, **kwargs):
 def temperature_from_saturation_vapour_pressure(*args, **kwargs):
     return array.temperature_from_saturation_vapour_pressure(*args, **kwargs)
 
+@overload
+def relative_humidity_from_dewpoint(t: "xarray.DataArray", td: "xarray.DataArray") -> "xarray.DataArray":
+    r"""Compute the relative humidity from dew point temperature
 
-def relative_humidity_from_dewpoint(*args, **kwargs):
-    return array.relative_humidity_from_dewpoint(*args, **kwargs)
+    Parameters
+    ----------
+    t : "xarray.DataArray"
+        Temperature (K)
+    td: "xarray.DataArray"
+        Dewpoint (K)
 
 
-def relative_humidity_from_specific_humidity(*args, **kwargs):
-    return array.relative_humidity_from_specific_humidity(*args, **kwargs)
+    Returns
+    -------
+    "xarray.DataArray"
+        Relative humidity (%)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        r = 100 \frac {e_{wsat}(td)}{e_{wsat}(t)}
+
+    where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
+
+    """
+
+@overload
+def relative_humidity_from_dewpoint(t: "FieldList", td: "FieldList") -> "FieldList":
+    r"""Compute the relative humidity from dew point temperature
+
+    Parameters
+    ----------
+    t : "FieldList"
+        Temperature (K)
+    td: "FieldList"
+        Dewpoint (K)
+
+
+    Returns
+    -------
+    "FieldList"
+        Relative humidity (%)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        r = 100 \frac {e_{wsat}(td)}{e_{wsat}(t)}
+
+    where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
+
+    """
+
+def relative_humidity_from_dewpoint(t, td, **kwargs: Any) -> Any:
+    r"""Compute the relative humidity from dew point temperature
+
+    Parameters
+    ----------
+    t : Any
+        Temperature (K)
+    td: Any
+        Dewpoint (K)
+
+
+    Returns
+    -------
+    Any
+        Relative humidity (%)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        r = 100 \frac {e_{wsat}(td)}{e_{wsat}(t)}
+
+    where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
+
+    """
+    return _call("relative_humidity_from_dewpoint", t, td)
+
+@overload
+def relative_humidity_from_specific_humidity(
+    t: xr.DataArray,
+    *,
+    some_xarray_specific_option: Any = None,
+    **kwargs: Any,
+) -> xr.DataArray:
+    """Compute the relative humidity from specific humidity for xarray.DataArray.."""
+    ...
+
+@overload
+def relative_humidity_from_specific_humidity(
+    t: FieldType,
+    *,
+    some_grib_specific_option: Any = None,
+    **kwargs: Any,
+) -> FieldType:
+     """Compute the relative humidity from specific humidity for earthkit objects."""
+     ...
+
+
+def relative_humidity_from_specific_humidity(t, q, p, **kwargs):
+    """Compute the relative humidity from specific humidity."""
+
+    if isinstance(t, xr.DataArray) and isinstance(q, xr.DataArray) and isinstance(p, xr.DataArray):
+        t = xr.apply_ufunc(array.relative_humidity_from_specific_humidity, t, q, p)
+        t.attrs["units"] = "Percentage"
+        return t
+
+    return array.relative_humidity_from_specific_humidity(t, q, p, **kwargs)
 
 
 def specific_humidity_from_dewpoint(*args, **kwargs):
@@ -377,4 +485,3 @@ def wet_bulb_potential_temperature_from_specific_humidity(*args, **kwargs):
 
 def specific_gas_constant(*args, **kwargs):
     return array.specific_gas_constant(*args, **kwargs)
- 
