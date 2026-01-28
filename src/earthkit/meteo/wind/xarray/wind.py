@@ -60,7 +60,11 @@ def speed(u, v):
     xarray.DataArray
         Wind speed/magnitude (same units as ``u`` and ``v``)
     """
-    return _apply_ufunc(array.speed, u, v)
+    res = _apply_ufunc(array.speed, u, v)
+    res.name = "wind_speed"
+    res.attrs["standard_name"] = "wind_speed"
+    res.attrs["long_name"] = "Wind Speed"
+    return res
 
 
 def direction(u, v, convention: str = "meteo", to_positive: bool = True):
