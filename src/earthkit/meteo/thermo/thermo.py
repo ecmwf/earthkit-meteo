@@ -6,23 +6,55 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-from typing import overload, Any, TypeVar, TYPE_CHECKING
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from typing import Any  # noqa: F401
+from typing import Iterable
+from typing import overload
 
 if TYPE_CHECKING:
-    import xarray as xr
-    import earthkit.data as ekd
+    import xarray  # type: ignore[import]
+    from earthkit.data import FieldList  # type: ignore[import]
 
-from earthkit.meteo.utils import is_module_loaded
-from . import array
-
-
-FieldType = TypeVar("FieldType", ekd.Field, ekd.FieldList)
-
+# TODO: move these underscore functions to meteo.utils
 def _is_xarray(obj: Any) -> bool:
+    from earthkit.meteo.utils import is_module_loaded
+
     if not is_module_loaded("xarray"):
         return False
-    import xarray as xr
-    return isinstance(obj, (xr.DataArray, xr.Dataset))
+
+    try:
+        import xarray as xr
+
+        return isinstance(obj, (xr.DataArray, xr.Dataset))
+    except (ImportError, RuntimeError, SyntaxError):
+        return False
+
+
+def _is_fieldlist(obj: Any) -> bool:
+    from earthkit.meteo.utils import is_module_loaded
+
+    if not is_module_loaded("earthkit.data"):
+        return False
+
+    try:
+        from earthkit.data import FieldList
+
+        return isinstance(obj, FieldList)
+    except ImportError:
+        return False
+
+
+def _call(func: str, *args: Any, **kwargs: Any) -> Any:
+    if _is_xarray(args[0]):
+        from . import xarray as _module
+    elif _is_fieldlist(args[0]):
+        from . import fieldlist as _module
+
+    return getattr(_module, func)(*args, **kwargs)
+
+
 
 @overload
 def celsius_to_kelvin(
@@ -129,17 +161,17 @@ def kelvin_to_celsius(t, **kwargs):
     
 
 @overload
-def specific_humidity_from_mixing_ratio(w: xr.DataArray, **kwargs) -> xr.DataArray:
+def specific_humidity_from_mixing_ratio(w: "xarray.DataArray") -> "xarray.DataArray":
     r"""Compute the specific humidity from mixing ratio.
 
     Parameters
     ----------
-    w : number or array-like or xarray.DataArray
+    w : xarray.DataArray
         Mixing ratio (kg/kg)
 
     Returns
     -------
-    number or array-like or xarray.DataArray
+    xarray.DataArray
         Specific humidity (kg/kg)
 
 
@@ -151,64 +183,56 @@ def specific_humidity_from_mixing_ratio(w: xr.DataArray, **kwargs) -> xr.DataArr
         q = \frac {w}{1+w}
 
     """
-
-@overload
-def specific_humidity_from_mixing_ratio(w: FieldType, **kwargs) -> FieldType:
-    ...
-
-def specific_humidity_from_mixing_ratio(w, **kwargs):
     ...
 
 @overload
-def specific_humidity_from_mixing_ratio(
-    w: xr.DataArray,
-    *,
-    some_xarray_specific_option: Any = None,
-    **kwargs: Any,
-) -> xr.DataArray:
-    """Compute the specific humidity from mixing ratio for xarray.DataArray."""
+def specific_humidity_from_mixing_ratio(w: "FieldList") -> "FieldList":
+    r"""Compute the specific humidity from mixing ratio.
+
+    Parameters
+    ----------
+    w : "FieldList"
+        Mixing ratio (kg/kg)
+
+    Returns
+    -------
+    "FieldList"
+        Specific humidity (kg/kg)
+
+
+    The result is the specific humidity in kg/kg units. The computation is based on
+    the following definition [Wallace2006]_:
+
+    .. math::
+
+        q = \frac {w}{1+w}
+
+    """
     ...
 
+def specific_humidity_from_mixing_ratio(w: Any) -> Any:
+    r"""Compute the specific humidity from mixing ratio.
 
-@overload
-def specific_humidity_from_mixing_ratio(
-    w: FieldType,
-    *,
-    some_grib_specific_option: Any = None,
-    **kwargs: Any,
-) -> FieldType:
-    """Compute the specific humidity from mixing ratio for earthkit objects."""
-    ...
+    Parameters
+    ----------
+    w : Any
+        Mixing ratio (kg/kg)
 
-def specific_humidity_from_mixing_ratio(w, **kwargs):
-    UNITS = ["1", "Kg/Kg"] 
-    if _is_xarray(w):
-        # check variable
-        if "standard_name" in w.attrs:
-            if w.attrs["standard_name"] != "humidity_mixing_ratio":
-                raise ValueError(
-                    f"Expected 'standard_name' attribute to be 'humidity_mixing_ratio', got '{w.attrs['standard_name']}'"
-                )
-        elif "long_name" in w.attrs:
-            if "temperature" not in w.attrs["long_name"].lower():
-                raise ValueError(
-                    f"Expected 'long_name' attribute to contain 'temperature', got '{w.attrs['long_name']}'"
-                )
-        else:
-            raise ValueError("DataArray must have either 'standard_name' or 'long_name' attribute to compute the specific humidity.")
-        
-        # check units 
-        if "units" not in w.attrs:
-            raise ValueError("DataArray must have 'units' attribute to compute the specific humidity.")
-        if w.attrs["units"].lower() not in UNITS:
-            msg = f"Expected 'units' attribute to be one of {UNITS}, got '{w.attrs['units']}'"
-            raise ValueError(msg)
-        
-        q = xr.apply_ufunc(array.specific_humidity_from_mixing_ratio, w)
-        q.attrs["standard_name"] = "specific_humidity"
-        return q
+    Returns
+    -------
+    Any
+        Specific humidity (kg/kg)
 
-    return array.specific_humidity_from_mixing_ratio(w, **kwargs)
+
+    The result is the specific humidity in kg/kg units. The computation is based on
+    the following definition [Wallace2006]_:
+
+    .. math::
+
+        q = \frac {w}{1+w}
+
+    """
+    return _call("specific_humidity_from_mixing_ratio", w)
 
 
 def mixing_ratio_from_specific_humidity(*args, **kwargs):
