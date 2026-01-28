@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2025 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -93,18 +93,18 @@ def test_project_with_single_pattern_return(patterns):
     proj = regimes.project(
         np.ones((2, *patterns.shape)), patterns, weights=np.ones(patterns.shape), single=True
     )
-    # All patterns are the same
-    assert proj["dipole"].shape == (2,)
-    assert np.isclose(proj["dipole"][0], proj["dipole"][1])
+    # All patterns are the same; monopole has nonzero projection
+    assert proj["monopole"].shape == (2,)
+    assert np.isclose(proj["monopole"][0], proj["monopole"][1])
 
 
 def test_project_with_multiple_pattern_return(patterns):
     proj = regimes.project(
         np.ones((2, *patterns.shape)), patterns, weights=np.ones(patterns.shape), single=False
     )
-    # Second pattern has twice the amplitude
-    assert proj["dipole"].shape == (2,)
-    assert np.isclose(proj["dipole"][0], 0.5 * proj["dipole"][1])
+    # Second pattern has twice the amplitude; monopole has nonzero projection
+    assert proj["monopole"].shape == (2,)
+    assert np.isclose(proj["monopole"][0], 0.5 * proj["monopole"][1])
 
 
 def test_standardise_with_dict():

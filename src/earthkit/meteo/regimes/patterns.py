@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2025 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 
 import abc
+import collections.abc
 
 from earthkit.utils.array import array_namespace
 
@@ -46,11 +47,37 @@ class RegimePatterns(abc.ABC):
         return (int(abs(lat0 - lat1) / dlat) + 1, int(abs(lon0 - lon1) / dlon) + 1)
 
     @abc.abstractmethod
-    def patterns(self, **kwargs) -> dict:
+    def patterns(self, **kwargs) -> collections.abc.Mapping:
         """Patterns for all regimes."""
 
     def __repr__(self):
         return f"{self.__class__.__name__}{self.regimes}"
+
+
+class DeferredRegimePatternsDict(collections.abc.Mapping):
+    """Mapping that evaluates regime patterns on access.
+
+    Parameters
+    ----------
+    regimes : Iterable[str]
+        Regime names (keys).
+    getter : Callable[[str], array_like]
+        Function that returns the patterns for a given regime.
+    """
+
+    def __init__(self, regimes, getter):
+        self._regimes = tuple(regimes)
+        assert callable(getter)
+        self._getter = getter
+
+    def __getitem__(self, key):
+        return self._getter(key)
+
+    def __iter__(self):
+        yield from self._regimes
+
+    def __len__(self):
+        return len(self._regimes)
 
 
 class ConstantRegimePatterns(RegimePatterns):
@@ -114,9 +141,8 @@ class ModulatedRegimePatterns(RegimePatterns):
         if not callable(self.modulator):
             raise ValueError("modulator must be callable")
 
-    @property
-    def _base_patterns_dict(self):
-        return dict(zip(self._regimes, self._base_patterns))
+    def _base_pattern(self, regime):
+        return self._base_patterns[self._regimes.index(regime)]
 
     def patterns(self, **kwargs):
         """Regime patterns for a given input to the modulator function.
@@ -135,4 +161,6 @@ class ModulatedRegimePatterns(RegimePatterns):
         modulator = xp.asarray(self.modulator(**kwargs))
         # Adapt to shape of regime patterns
         modulator = modulator[(..., *((xp.newaxis,) * len(self.shape)))]
-        return {regime: modulator * base_pattern for regime, base_pattern in self._base_patterns_dict.items()}
+        return DeferredRegimePatternsDict(
+            self._regimes, lambda regime: modulator * self._base_pattern(regime)
+        )
