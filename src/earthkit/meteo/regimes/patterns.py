@@ -1,4 +1,4 @@
-# (C) Copyright 2025 ECMWF.
+# (C) Copyright 2021 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -46,13 +46,8 @@ class RegimePatterns(abc.ABC):
         return (int(abs(lat0 - lat1) / dlat) + 1, int(abs(lon0 - lon1) / dlon) + 1)
 
     @abc.abstractmethod
-    def get(self, regime, **kwargs):
-        """Patterns for a regime."""
-
-    def iter(self, **kwargs):
+    def patterns(self, **kwargs) -> dict:
         """Patterns for all regimes."""
-        for regime in self.regimes:
-            yield regime, self.get(regime, **kwargs)
 
     def __repr__(self):
         return f"{self.__class__.__name__}{self.regimes}"
@@ -80,22 +75,15 @@ class ConstantRegimePatterns(RegimePatterns):
         if len(self.regimes) != self._patterns.shape[0]:
             raise ValueError("number of regimes does not match number of patterns")
 
-    def get(self, regime):
+    def patterns(self):
         """Regime patterns.
-
-        Parameters
-        ----------
-        regime : str
-            Name of the regime to provide patterns for.
 
         Returns
         -------
         dict[str, array_like]
             Regime patterns.
         """
-        # Not fast, but the number of regimes is unlikely to be very large
-        i = self._regimes.index(regime)
-        return self._patterns[i]
+        return dict(zip(self._regimes, self._patterns))
 
 
 class ModulatedRegimePatterns(RegimePatterns):
@@ -130,13 +118,11 @@ class ModulatedRegimePatterns(RegimePatterns):
     def _base_patterns_dict(self):
         return dict(zip(self._regimes, self._base_patterns))
 
-    def get(self, regime, **kwargs):
+    def patterns(self, **kwargs):
         """Regime patterns for a given input to the modulator function.
 
         Parameters
         ----------
-        regime : str
-            Name of the regime to provide patterns for.
         **kwargs : dict[str, Any], optional
             Keyword arguments for the modulator function.
 
@@ -149,5 +135,4 @@ class ModulatedRegimePatterns(RegimePatterns):
         modulator = xp.asarray(self.modulator(**kwargs))
         # Adapt to shape of regime patterns
         modulator = modulator[(..., *((xp.newaxis,) * len(self.shape)))]
-        base_pattern = self._base_patterns_dict[regime]
-        return modulator * base_pattern
+        return {regime: modulator * base_pattern for regime, base_pattern in self._base_patterns_dict.items()}

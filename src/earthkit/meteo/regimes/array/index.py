@@ -1,4 +1,4 @@
-# (C) Copyright 2025 ECMWF.
+# (C) Copyright 2021 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -33,6 +33,8 @@ def project(field, patterns, weights, **patterns_kwargs):
             f"shape of input fields {field.shape} incompatible with shape of regime patterns {patterns.shape}"
         )
 
+    ps = patterns.patterns(**patterns_kwargs)
+
     if weights is None:
         # TODO generate area-based weights from grid of patterns with earthkit-geo
         # TODO make weights an optional argument with None default and document
@@ -43,10 +45,7 @@ def project(field, patterns, weights, **patterns_kwargs):
 
     # Project onto each regime pattern
     sum_axes = tuple(range(-ndim_field, 0, 1))
-    return {
-        regime: (field * pattern * weights).sum(axis=sum_axes)
-        for regime, pattern in patterns.iter(**patterns_kwargs)
-    }
+    return {regime: (field * pattern * weights).sum(axis=sum_axes) for regime, pattern in ps.items()}
 
 
 def standardise(projections, mean, std):
