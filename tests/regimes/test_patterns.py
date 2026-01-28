@@ -29,11 +29,9 @@ class TestConstantRegimePatterns:
     def test_shape(self):
         assert self.patterns.shape == (self.lat.size, self.lon.size)
 
-    def test_patterns(self):
-        pat = self.patterns.patterns()
-        assert len(pat) == 3
-        np.testing.assert_allclose(pat["dipole"], self.dipole)
-        np.testing.assert_allclose(pat["monopole"], self.monopole)
+    def test_get(self):
+        np.testing.assert_allclose(self.patterns.get("dipole"), self.dipole)
+        np.testing.assert_allclose(self.patterns.get("monopole"), self.monopole)
 
 
 class TestModulatedRegimePatterns:
@@ -51,9 +49,8 @@ class TestModulatedRegimePatterns:
     def test_shape(self):
         assert self.patterns.shape == (self.lat.size, self.lon.size)
 
-    def test_patterns(self):
-        pat = self.patterns.patterns(x=[3.0, 0.0, -4.0])
-        assert len(pat) == 1
-        np.testing.assert_allclose(pat["dipole"][0], self.dipole)
-        np.testing.assert_allclose(pat["dipole"][1], 0.0)
-        np.testing.assert_allclose(pat["dipole"][2], -self.dipole)
+    def test_get(self):
+        pat = self.patterns.get("dipole", x=[3.0, 0.0, -4.0])
+        np.testing.assert_allclose(pat[0], self.dipole)
+        np.testing.assert_allclose(pat[1], 0.0)
+        np.testing.assert_allclose(pat[2], -self.dipole)
