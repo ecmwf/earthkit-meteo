@@ -67,7 +67,12 @@ def specific_humidity_from_mixing_ratio(w):
         q = \frac {w}{1+w}
 
     """
-    return _apply_ufunc(array.specific_humidity_from_mixing_ratio, w)
+    res = _apply_ufunc(array.specific_humidity_from_mixing_ratio, w)
+    res.name = "specific_humidity"
+    res.attrs["standard_name"] = "specific_humidity"
+    res.attrs["long_name"] = "Specific Humidity"
+    res.attrs["units"] = "kg/kg"
+    return res
 
 def relative_humidity_from_dewpoint(t, td):
     r"""Compute the relative humidity from dew point temperature
@@ -95,4 +100,46 @@ def relative_humidity_from_dewpoint(t, td):
     where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
 
     """
-    return _apply_ufunc(array.relative_humidity_from_dewpoint, t, td)
+    res = _apply_ufunc(array.relative_humidity_from_dewpoint, t, td)
+    res.name = "relative_humidity"
+    res.attrs["standard_name"] = "relative_humidity"
+    res.attrs["long_name"] = "Relative Humidity"
+    res.attrs["units"] = "%"
+    return res
+
+def relative_humidity_from_specific_humidity(t, q, p):
+    r"""Compute the relative humidity from specific humidity.
+
+    Parameters
+    ----------
+    t: array-like
+        Temperature (K)
+    q: array-like
+        Specific humidity (kg/kg)
+    p: array-like
+        Pressure (Pa)
+
+    Returns
+    -------
+    array-like
+        Relative humidity (%)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        r = 100 \frac {e(q, p)}{e_{msat}(t)}
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_specific_humidity`)
+        * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
+
+    """
+    res = _apply_ufunc(array.relative_humidity_from_specific_humidity, t, q, p)
+    res.name = "relative_humidity"
+    res.attrs["standard_name"] = "relative_humidity"
+    res.attrs["long_name"] = "Relative Humidity"
+    res.attrs["units"] = "%"
+    return res

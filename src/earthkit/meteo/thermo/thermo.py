@@ -368,35 +368,101 @@ def relative_humidity_from_dewpoint(t, td, **kwargs: Any) -> Any:
     return _call("relative_humidity_from_dewpoint", t, td)
 
 @overload
-def relative_humidity_from_specific_humidity(
-    t: xr.DataArray,
-    *,
-    some_xarray_specific_option: Any = None,
-    **kwargs: Any,
-) -> xr.DataArray:
-    """Compute the relative humidity from specific humidity for xarray.DataArray.."""
-    ...
+def relative_humidity_from_specific_humidity(t: "xarray.DataArray", q: "xarray.DataArray", p: "xarray.DataArray") -> "xarray.DataArray":
+    r"""Compute the relative humidity from specific humidity.
+
+    Parameters
+    ----------
+    t: xarray.DataArray
+        Temperature (K)
+    q: xarray.DataArray
+        Specific humidity (kg/kg)
+    p: xarray.DataArray
+        Pressure (Pa)
+
+    Returns
+    -------
+    xarray.DataArray
+        Relative humidity (%)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        r = 100 \frac {e(q, p)}{e_{msat}(t)}
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_specific_humidity`)
+        * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
+
+    """
 
 @overload
-def relative_humidity_from_specific_humidity(
-    t: FieldType,
-    *,
-    some_grib_specific_option: Any = None,
-    **kwargs: Any,
-) -> FieldType:
-     """Compute the relative humidity from specific humidity for earthkit objects."""
-     ...
+def relative_humidity_from_specific_humidity(t: "FieldList", q: "FieldList", p: "FieldList") -> "FieldList":
+    r"""Compute the relative humidity from specific humidity.
+
+    Parameters
+    ----------
+    t: FieldList
+        Temperature (K)
+    q: FieldList
+        Specific humidity (kg/kg)
+    p: FieldList
+        Pressure (Pa)
+
+    Returns
+    -------
+    FieldList
+        Relative humidity (%)
 
 
-def relative_humidity_from_specific_humidity(t, q, p, **kwargs):
-    """Compute the relative humidity from specific humidity."""
+    The computation is based on the following formula:
 
-    if isinstance(t, xr.DataArray) and isinstance(q, xr.DataArray) and isinstance(p, xr.DataArray):
-        t = xr.apply_ufunc(array.relative_humidity_from_specific_humidity, t, q, p)
-        t.attrs["units"] = "Percentage"
-        return t
+    .. math::
 
-    return array.relative_humidity_from_specific_humidity(t, q, p, **kwargs)
+        r = 100 \frac {e(q, p)}{e_{msat}(t)}
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_specific_humidity`)
+        * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
+
+    """
+
+
+def relative_humidity_from_specific_humidity(t, q, p, **kwargs: Any) -> Any:
+    r"""Compute the relative humidity from specific humidity.
+
+    Parameters
+    ----------
+    t: FieldList
+        Temperature (K)
+    q: FieldList
+        Specific humidity (kg/kg)
+    p: FieldList
+        Pressure (Pa)
+
+    Returns
+    -------
+    FieldList
+        Relative humidity (%)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        r = 100 \frac {e(q, p)}{e_{msat}(t)}
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_specific_humidity`)
+        * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
+
+    """
+    return _call("relative_humidity_from_specific_humidity", t, q, p)
 
 
 def specific_humidity_from_dewpoint(*args, **kwargs):

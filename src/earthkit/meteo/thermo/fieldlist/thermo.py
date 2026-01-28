@@ -78,3 +78,34 @@ def relative_humidity_from_dewpoint(t, td):
     where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
 
     """
+
+def relative_humidity_from_specific_humidity(t, q, p):
+    r"""Compute the relative humidity from specific humidity.
+
+    Parameters
+    ----------
+    t: array-like
+        Temperature (K)
+    q: array-like
+        Specific humidity (kg/kg)
+    p: array-like
+        Pressure (Pa)
+
+    Returns
+    -------
+    array-like
+        Relative humidity (%)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        r = 100 \frac {e(q, p)}{e_{msat}(t)}
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_specific_humidity`)
+        * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
+
+    """
