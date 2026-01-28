@@ -174,7 +174,7 @@ class DataDispatcher(metaclass=ABCMeta):
     def match(obj: Any) -> bool:
         pass
 
-    @staticmethod
+    @abstractmethod
     def __call__(self, func: str, *args: Any, **kwargs: Any) -> Any:
         pass
 
