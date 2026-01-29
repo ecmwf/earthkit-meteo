@@ -63,7 +63,7 @@ def speed(u: "FieldList", v: "FieldList") -> "FieldList":
 
 @dispatch
 def speed(
-    u: "xarray.DataArray" | "FieldList", v: "xarray.DataArray" | "FieldList"
+    u: "xarray.DataArray" | "FieldList", v: "xarray.DataArray" | "FieldList", **kwargs
 ) -> "xarray.DataArray" | "FieldList":
     r"""Compute the wind speed/vector magnitude.
 
@@ -73,13 +73,20 @@ def speed(
         u wind/x vector component
     v: xarray.DataArray, FieldList
         v wind/y vector component (same units as ``u``)
-    kwargs: dict
-        Additional keyword arguments passed to the specific implementation
 
     Returns
     -------
     xarray.DataArray, FieldList
         Wind speed/magnitude (same units as ``u`` and ``v``)
+
+
+    Implementations
+    ------------------------
+    :func:`speed` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.wind.xarray.speed` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.wind.fieldlist.speed` for FieldList
+
 
     """
     pass

@@ -42,7 +42,8 @@ extensions = [
 ]
 
 # autodoc configuration
-autodoc_typehints = "none"
+autodoc_typehints = "description"
+# autodoc_typehints = "signature"
 
 # autoapi configuration
 autoapi_dirs = ["../src/earthkit"]
