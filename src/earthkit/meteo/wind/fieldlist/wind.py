@@ -103,7 +103,7 @@ def direction(u: FieldList, v: FieldList, convention="meteo", to_positive=True) 
 
         param_id_u = ui.metadata("paramId", default=None)
         keys = {}
-        if param_id_u not in wind_param_ids:
+        if param_id_u in wind_param_ids:
             keys["paramId"] = dir_param_id
         md = ui.metadata().override(**keys)
 

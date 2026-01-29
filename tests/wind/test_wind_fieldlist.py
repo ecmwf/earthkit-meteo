@@ -34,3 +34,22 @@ def test_fieldlist_wind_speed():
 
     ref = array_wind.speed(u[0].values, v[0].values)
     assert np.allclose(res[0].values, ref, equal_nan=True)
+
+
+@pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
+def test_fieldlist_wind_direction():
+    import earthkit.data as ekd
+
+    ds = ekd.from_source("sample", "tuv_pl.grib")
+
+    u = ds.sel(param="u").order_by("level")
+    v = ds.sel(param="v").order_by("level")
+    res = wind.direction(u, v)
+
+    assert len(u) == 6
+    assert len(res) == 6
+    assert res.metadata("paramId") == [3031] * 6
+    assert res.values.shape == u.values.shape
+
+    ref = array_wind.direction(u[0].values, v[0].values)
+    assert np.allclose(res[0].values, ref, equal_nan=True)
