@@ -9,7 +9,7 @@
 
 import numpy as np
 
-from earthkit.meteo.utils.meteo_decorator import metadata_handler
+from earthkit.meteo.utils.decorators import metadata_handler
 
 from .. import array
 
