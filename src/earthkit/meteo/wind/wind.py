@@ -13,7 +13,8 @@ from typing import TYPE_CHECKING
 from typing import Any  # noqa: F401
 from typing import overload
 
-from earthkit.meteo.utils.decorators import dispatch, metadata_handler
+from earthkit.data.utils.inputs_transformers import format_handler, metadata_handler
+from earthkit.meteo.utils.decorators import dispatch
 
 if TYPE_CHECKING:
     import xarray  # type: ignore[import]
@@ -59,7 +60,8 @@ def speed(u: "FieldList", v: "FieldList") -> "FieldList":
     """
     ...
 
-
+@format_handler()
+@metadata_handler(provenance=True) # , ensure_units={'u': 'm/s', 'v': 'm/s'})
 @dispatch
 def speed(
     u: "xarray.DataArray" | "FieldList", v: "xarray.DataArray" | "FieldList"
