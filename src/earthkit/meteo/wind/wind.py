@@ -63,7 +63,7 @@ def speed(u: "FieldList", v: "FieldList") -> "FieldList":
 
 @dispatch
 def speed(
-    u: "xarray.DataArray" | "FieldList", v: "xarray.DataArray" | "FieldList", **kwargs
+    u: "xarray.DataArray" | "FieldList", v: "xarray.DataArray" | "FieldList"
 ) -> "xarray.DataArray" | "FieldList":
     r"""Compute the wind speed/vector magnitude.
 
@@ -87,14 +87,80 @@ def speed(
     - :py:meth:`earthkit.meteo.wind.xarray.speed` for xarray.DataArray
     - :py:meth:`earthkit.meteo.wind.fieldlist.speed` for FieldList
 
-
     """
     pass
 
 
+@overload
+def direction(
+    u: "xarray.DataArray",
+    v: "xarray.DataArray",
+    convention: str = "meteo",
+    to_positive: bool = True,
+) -> "xarray.DataArray": ...
+
+
+@overload
+def direction(
+    u: "FieldList",
+    v: "FieldList",
+    convention: str = "meteo",
+    to_positive: bool = True,
+) -> "FieldList": ...
+
+
 @dispatch
-def direction(u: Any, v: Any, convention: str = "meteo", to_positive: bool = True) -> Any:
-    r"""Compute the direction/angle of a vector quantity."""
+def direction(
+    u: "xarray.DataArray" | "FieldList",
+    v: "xarray.DataArray" | "FieldList",
+    convention: str = "meteo",
+    to_positive: bool = True,
+) -> "xarray.DataArray" | "FieldList":
+    r"""Compute the direction/angle of a vector quantity.
+
+    Parameters
+    ----------
+    u: xarray.DataArray | FieldList
+        u wind/x vector component
+    v: xarray.DataArray | FieldList
+        v wind/y vector component (same units as ``u``)
+    convention: str, optional
+        Specify how the direction/angle is interpreted. The possible values are as follows:
+
+        * "meteo": the direction is the meteorological wind direction (see below for explanation)
+        * "polar": the direction is measured anti-clockwise from the x axis (East/right) to the vector
+
+    to_positive: bool, optional
+        If True, the resulting values are mapped into the [0, 360] range when
+        ``convention`` is "polar". Otherwise they lie in the [-180, 180] range.
+
+
+    Returns
+    -------
+    xarray.DataArray | FieldList
+        Direction/angle (degrees)
+
+
+    Notes
+    -----
+    The meteorological wind direction is the direction from which the wind is
+    blowing. Wind direction increases clockwise such that a northerly wind
+    is 0°, an easterly wind is 90°, a southerly wind is 180°, and a westerly
+    wind is 270°. The figure below illustrates how it is related to the actual
+    orientation of the wind vector:
+
+    .. image:: /_static/wind_direction.png
+        :width: 400px
+
+
+    Implementations
+    ------------------------
+    :func:`speed` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.wind.xarray.direction` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.wind.fieldlist.direction` for FieldList
+
+    """
     pass
 
 
