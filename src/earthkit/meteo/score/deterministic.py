@@ -119,7 +119,7 @@ def mean_error(
     Returns
     -------
     xarray object
-        The error between the forecast and observations, possibly aggregated.
+        The mean error between the forecast and observations.
     """
     return error(fcst, obs, agg_method="mean", agg_dim=over, agg_weights=weights)
 
