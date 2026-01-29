@@ -7,12 +7,16 @@
 # nor does it submit to any jurisdiction.
 #
 
+from typing import Any, TypeAlias
+
 from earthkit.utils.array import array_namespace
 
 from earthkit.meteo import constants
 
+ArrayLike: TypeAlias = Any
 
-def speed(u, v):
+
+def speed(u: ArrayLike, v: ArrayLike) -> ArrayLike:
     r"""Compute the wind speed/vector magnitude.
 
     Parameters
@@ -34,7 +38,7 @@ def speed(u, v):
     return xp.hypot(u, v)
 
 
-def _direction_meteo(u, v):
+def _direction_meteo(u: ArrayLike, v: ArrayLike) -> ArrayLike:
     xp = array_namespace(u, v)
     u = xp.asarray(u)
     v = xp.asarray(v)
@@ -49,7 +53,7 @@ def _direction_meteo(u, v):
     return d
 
 
-def _direction_polar(u, v, to_positive):
+def _direction_polar(u: ArrayLike, v: ArrayLike, to_positive: bool) -> ArrayLike:
     xp = array_namespace(u, v)
     u = xp.asarray(u)
     v = xp.asarray(v)
@@ -61,7 +65,7 @@ def _direction_polar(u, v, to_positive):
     return d
 
 
-def direction(u, v, convention="meteo", to_positive=True):
+def direction(u: ArrayLike, v: ArrayLike, convention: str = "meteo", to_positive: bool = True) -> ArrayLike:
     r"""Compute the direction/angle of a vector quantity.
 
     Parameters
@@ -107,7 +111,7 @@ def direction(u, v, convention="meteo", to_positive=True):
         raise ValueError(f"direction(): invalid convention={convention}!")
 
 
-def xy_to_polar(x, y, convention="meteo"):
+def xy_to_polar(x: ArrayLike, y: ArrayLike, convention: str = "meteo") -> tuple[ArrayLike, ArrayLike]:
     r"""Convert wind/vector data from xy representation to polar representation.
 
     Parameters
@@ -139,7 +143,7 @@ def xy_to_polar(x, y, convention="meteo"):
     return speed(x, y), direction(x, y, convention=convention)
 
 
-def _polar_to_xy_meteo(magnitude, direction):
+def _polar_to_xy_meteo(magnitude: ArrayLike, direction: ArrayLike) -> tuple[ArrayLike, ArrayLike]:
     xp = array_namespace(magnitude, direction)
     magnitude = xp.asarray(magnitude)
     direction = xp.asarray(direction)
@@ -148,7 +152,7 @@ def _polar_to_xy_meteo(magnitude, direction):
     return magnitude * xp.cos(a), magnitude * xp.sin(a)
 
 
-def _polar_to_xy_polar(magnitude, direction):
+def _polar_to_xy_polar(magnitude: ArrayLike, direction: ArrayLike) -> tuple[ArrayLike, ArrayLike]:
     xp = array_namespace(magnitude, direction)
     magnitude = xp.asarray(magnitude)
     direction = xp.asarray(direction)
@@ -157,7 +161,11 @@ def _polar_to_xy_polar(magnitude, direction):
     return magnitude * xp.cos(a), magnitude * xp.sin(a)
 
 
-def polar_to_xy(magnitude, direction, convention="meteo"):
+def polar_to_xy(
+    magnitude: ArrayLike,
+    direction: ArrayLike,
+    convention: str = "meteo",
+) -> tuple[ArrayLike, ArrayLike]:
     r"""Convert wind/vector data from polar representation to xy representation.
 
     Parameters
@@ -195,7 +203,7 @@ def polar_to_xy(magnitude, direction, convention="meteo"):
         raise ValueError(f"polar_to_xy(): invalid convention={convention}!")
 
 
-def w_from_omega(omega, t, p):
+def w_from_omega(omega: ArrayLike, t: ArrayLike, p: ArrayLike) -> ArrayLike:
     r"""Compute the hydrostatic vertical velocity from pressure velocity, temperature and pressure.
 
     Parameters
@@ -229,7 +237,7 @@ def w_from_omega(omega, t, p):
     return (-constants.Rd / constants.g) * (omega * t / p)
 
 
-def coriolis(lat):
+def coriolis(lat: ArrayLike) -> ArrayLike:
     r"""Compute the Coriolis parameter.
 
     Parameters
@@ -259,7 +267,13 @@ def coriolis(lat):
     return 2 * constants.omega * xp.sin(lat * constants.radian)
 
 
-def windrose(speed, direction, sectors=16, speed_bins=None, percent=True):
+def windrose(
+    speed: ArrayLike,
+    direction: ArrayLike,
+    sectors: int = 16,
+    speed_bins: ArrayLike | None = None,
+    percent: bool = True,
+) -> tuple[ArrayLike, ArrayLike]:
     """Generate windrose data.
 
     Parameters

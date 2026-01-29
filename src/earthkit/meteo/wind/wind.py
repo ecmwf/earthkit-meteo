@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from typing import Any  # noqa: F401
 from typing import overload
 
-from earthkit.meteo.utils.decorators import dispatch
+from earthkit.meteo.utils.decorators import dispatch, metadata_handler
 
 if TYPE_CHECKING:
     import xarray  # type: ignore[import]

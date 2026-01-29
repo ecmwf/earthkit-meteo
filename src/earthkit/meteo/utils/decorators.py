@@ -13,6 +13,8 @@ from importlib import import_module
 from typing import Any
 
 import xarray as xr
+import numpy as np
+import numpy as np
 
 # from earthkit.meteo.utils.metadata import metadata_handler
 METADATA_DEFAULTS: dict[str, dict[str, object]] = {
@@ -213,3 +215,72 @@ def dispatch(func):
                 return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
 
     return inner
+
+
+def _infer_output_count(func) -> int:
+    try:
+        import inspect
+        from typing import get_args, get_origin
+
+        annotation = inspect.signature(func).return_annotation
+    except (ValueError, TypeError):
+        return 1
+
+    if annotation is inspect.Signature.empty:
+        return 1
+
+    origin = get_origin(annotation)
+    if origin is tuple:
+        args = get_args(annotation)
+        if args and args[-1] is not Ellipsis:
+            return len(args)
+    return 1
+
+
+def xarray_ufunc(**xarray_ufunc_kwargs):
+    """
+    Decorator for xarray wrappers that call the matching array implementation via xr.apply_ufunc.
+
+    Parameters
+    ----------
+    xarray_ufunc_kwargs : dict, optional
+        Default kwargs forwarded to xarray.apply_ufunc. Call-time overrides can be
+        passed via the ``xarray_ufunc_kwargs`` kwarg on the wrapped function.
+    """
+
+    def decorator(func):
+        module_name = func.__module__.replace(".xarray.", ".array.")
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            call_ufunc_kwargs = kwargs.pop("xarray_ufunc_kwargs", None) or {}
+            merged = {
+                "dask": "parallelized",
+                "keep_attrs": True,
+            }
+            if xarray_ufunc_kwargs:
+                merged.update(xarray_ufunc_kwargs)
+            merged.update(call_ufunc_kwargs)
+
+            module = import_module(module_name)
+            array_func = getattr(module, func.__name__)
+            if "output_dtypes" not in merged:
+                output_count = _infer_output_count(array_func)
+                merged["output_dtypes"] = [float] * output_count
+
+            if "output_core_dims" not in merged and len(merged["output_dtypes"]) > 1:
+                input_core_dims = [x.dims for x in args]
+                output_core_dims = [args[0].dims for _ in merged["output_dtypes"]]
+                merged["input_core_dims"] = input_core_dims
+                merged["output_core_dims"] = output_core_dims
+
+            return xr.apply_ufunc(
+                array_func,
+                *args,
+                kwargs=kwargs,
+                **merged,
+            )
+
+        return wrapper
+
+    return decorator

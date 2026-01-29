@@ -7,43 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
-import numpy as np
+import xarray as xr
 
 from earthkit.meteo.utils.decorators import metadata_handler
-
-from .. import array
-
-
-def _sample_arg(arg: object) -> np.ndarray:
-    if hasattr(arg, "dtype"):
-        return np.zeros((), dtype=arg.dtype)
-    return np.zeros((), dtype=float)
+from earthkit.meteo.utils.decorators import xarray_ufunc
 
 
-def _infer_output_dtypes(func, *args, **kwargs) -> list[np.dtype]:
-    sample_args = [_sample_arg(arg) for arg in args]
-    res = func(*sample_args, **kwargs)
-    if isinstance(res, tuple):
-        return [np.asarray(item).dtype for item in res]
-    return [np.asarray(res).dtype]
-
-
-def _apply_ufunc(func, *args, **kwargs):
-    import xarray as xr
-
-    output_dtypes = _infer_output_dtypes(func, *args, **kwargs)
-
-    return xr.apply_ufunc(
-        func,
-        *args,
-        kwargs=kwargs,
-        dask="parallelized",
-        output_dtypes=output_dtypes,
-        keep_attrs=True,
-    )
-
-
-def celsius_to_kelvin(t):
+@xarray_ufunc()
+def celsius_to_kelvin(t: xr.DataArray) -> xr.DataArray:
     r"""Convert temperature values from Celsius to Kelvin.
 
     Parameters
@@ -57,10 +28,11 @@ def celsius_to_kelvin(t):
         Temperature in Kelvin units
 
     """
-    return _apply_ufunc(array.celsius_to_kelvin, t)
+    ...
 
 
-def kelvin_to_celsius(t):
+@xarray_ufunc()
+def kelvin_to_celsius(t: xr.DataArray) -> xr.DataArray:
     r"""Convert temperature values from Kelvin to Celsius.
 
     Parameters
@@ -74,11 +46,12 @@ def kelvin_to_celsius(t):
         Temperature in Celsius units
 
     """
-    return _apply_ufunc(array.kelvin_to_celsius, t)
+    ...
 
 
 @metadata_handler(inputs=["mixing_ratio"], outputs=["specific_humidity"])
-def specific_humidity_from_mixing_ratio(w, t):
+@xarray_ufunc()
+def specific_humidity_from_mixing_ratio(w: xr.DataArray, t: xr.DataArray) -> xr.DataArray:
     r"""Compute the specific humidity from mixing ratio.
 
     Parameters
@@ -100,23 +73,19 @@ def specific_humidity_from_mixing_ratio(w, t):
         q = \frac {w}{1+w}
 
     """
-    res = _apply_ufunc(array.specific_humidity_from_mixing_ratio, w)
-    res.name = "specific_humidity"
-    res.attrs["standard_name"] = "specific_humidity"
-    res.attrs["long_name"] = "Specific Humidity"
-    res.attrs["units"] = "kg/kg"
-    return res
+    ...
 
 
 @metadata_handler(inputs=["temperature", "dewpoint"], outputs=["relative_humidity"])
-def relative_humidity_from_dewpoint(t, td):
+@xarray_ufunc()
+def relative_humidity_from_dewpoint(t: xr.DataArray, td: xr.DataArray) -> xr.DataArray:
     r"""Compute the relative humidity from dew point temperature
 
     Parameters
     ----------
-    t : "xarray.DataArray"
+    t : xr.DataArray
         Temperature (K)
-    td: "xarray.DataArray"
+    td: xr.DataArray
         Dewpoint (K)
 
 
@@ -135,19 +104,21 @@ def relative_humidity_from_dewpoint(t, td):
     where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
 
     """
-    return _apply_ufunc(array.relative_humidity_from_dewpoint, t, td)
+    ...
 
 
-def relative_humidity_from_specific_humidity(t, q, p):
+@metadata_handler(inputs=["temperature", "dewpoint"], outputs=["relative_humidity"])
+@xarray_ufunc()
+def relative_humidity_from_specific_humidity(t: xr.DataArray, q: xr.DataArray, p: xr.DataArray) -> xr.DataArray:
     r"""Compute the relative humidity from specific humidity.
 
     Parameters
     ----------
-    t: array-like
+    t: xr.DataArray
         Temperature (K)
-    q: array-like
+    q: xr.DataArray
         Specific humidity (kg/kg)
-    p: array-like
+    p: xr.DataArray
         Pressure (Pa)
 
     Returns
@@ -168,9 +139,4 @@ def relative_humidity_from_specific_humidity(t, q, p):
         * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
 
     """
-    res = _apply_ufunc(array.relative_humidity_from_specific_humidity, t, q, p)
-    res.name = "relative_humidity"
-    res.attrs["standard_name"] = "relative_humidity"
-    res.attrs["long_name"] = "Relative Humidity"
-    res.attrs["units"] = "%"
-    return res
+    ...

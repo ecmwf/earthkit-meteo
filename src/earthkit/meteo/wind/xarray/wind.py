@@ -14,49 +14,13 @@ from typing import Iterable
 import numpy as np
 import xarray as xr
 
+from earthkit.meteo.utils.decorators import xarray_metadata
+from earthkit.meteo.utils.decorators import xarray_ufunc
+
 from .. import array
 
 
-def _sample_arg(arg: object) -> np.ndarray:
-    if hasattr(arg, "dtype"):
-        return np.zeros((), dtype=arg.dtype)
-    return np.zeros((), dtype=float)
-
-
-def _infer_output_dtypes(func, *args, **kwargs) -> list[np.dtype]:
-    sample_args = [_sample_arg(arg) for arg in args]
-    res = func(*sample_args, **kwargs)
-    if isinstance(res, tuple):
-        return [np.asarray(item).dtype for item in res]
-    return [np.asarray(res).dtype]
-
-
-def _apply_ufunc(func, num, *args, **kwargs):
-    output_dtypes = _infer_output_dtypes(func, *args, **kwargs)
-
-    opt = {}
-    # TODO: temporary fix for xarray ufunc with multiple outputs
-    # to make wind tests pass
-    if num > 1:
-        input_core_dims = [x.dims for x in args]
-        output_core_dims = [x.dims for x in args]
-
-        opt = {
-            "input_core_dims": input_core_dims,
-            "output_core_dims": output_core_dims,
-        }
-
-    return xr.apply_ufunc(
-        func,
-        *args,
-        kwargs=kwargs,
-        dask="parallelized",
-        output_dtypes=output_dtypes,
-        **opt,
-        keep_attrs=True,
-    )
-
-
+@xarray_ufunc()
 def speed(u: xr.DataArray, v: xr.DataArray) -> xr.DataArray:
     r"""Compute the wind speed/vector magnitude.
 
@@ -72,13 +36,10 @@ def speed(u: xr.DataArray, v: xr.DataArray) -> xr.DataArray:
     xarray.DataArray
         Wind speed/magnitude (same units as ``u`` and ``v``)
     """
-    res = _apply_ufunc(array.speed, 1, u, v)
-    res.name = "wind_speed"
-    res.attrs["standard_name"] = "wind_speed"
-    res.attrs["long_name"] = "Wind Speed"
-    return res
+    ...
 
 
+@xarray_ufunc()
 def direction(
     u: xr.DataArray, v: xr.DataArray, convention: str = "meteo", to_positive: bool = True
 ) -> xr.DataArray:
@@ -117,9 +78,10 @@ def direction(
         :width: 400px
 
     """
-    return _apply_ufunc(array.direction, 1, u, v, convention=convention, to_positive=to_positive)
+    ...
 
 
+@xarray_ufunc()
 def xy_to_polar(
     x: xr.DataArray, y: xr.DataArray, convention: str = "meteo"
 ) -> tuple[xr.DataArray, xr.DataArray]:
@@ -151,9 +113,10 @@ def xy_to_polar(
     In the target xy representation the x axis points East while the y axis points North.
 
     """
-    return _apply_ufunc(array.xy_to_polar, 2, x, y, convention=convention)
+    ...
 
 
+@xarray_ufunc()
 def polar_to_xy(
     magnitude: xr.DataArray, direction: xr.DataArray, convention: str = "meteo"
 ) -> tuple[xr.DataArray, xr.DataArray]:
@@ -185,9 +148,10 @@ def polar_to_xy(
     In the target xy representation the x axis points East while the y axis points North.
 
     """
-    return _apply_ufunc(array.polar_to_xy, 2, magnitude, direction, convention=convention)
+    ...
 
 
+@xarray_ufunc()
 def w_from_omega(omega: xr.DataArray, t: xr.DataArray, p: xr.DataArray) -> xr.DataArray:
     r"""Compute the hydrostatic vertical velocity from pressure velocity, temperature and pressure.
 
@@ -220,9 +184,10 @@ def w_from_omega(omega: xr.DataArray, t: xr.DataArray, p: xr.DataArray) -> xr.Da
         * :math:`g` is the gravitational acceleration (see :data:`earthkit.meteo.constants.g`)
 
     """
-    return _apply_ufunc(array.w_from_omega, 1, omega, t, p)
+    ...
 
 
+@xarray_ufunc()
 def coriolis(lat: xr.DataArray) -> xr.DataArray:
     r"""Compute the Coriolis parameter.
 
@@ -249,7 +214,7 @@ def coriolis(lat: xr.DataArray) -> xr.DataArray:
     (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
 
     """
-    return _apply_ufunc(array.coriolis, 1, lat)
+    ...
 
 
 def windrose(
