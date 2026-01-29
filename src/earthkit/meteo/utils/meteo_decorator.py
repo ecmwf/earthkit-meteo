@@ -175,7 +175,7 @@ class DataDispatcher(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def __call__(self, func: str, module: str, *args: Any, **kwargs: Any) -> Any:
+    def dispatch(self, func: str, module: str, *args: Any, **kwargs: Any) -> Any:
         pass
 
 
@@ -184,7 +184,7 @@ class XArrayDispatcher(DataDispatcher):
     def match(obj: Any) -> bool:
         return _is_xarray(obj)
 
-    def __call__(self, func, module, *args, **kwargs):
+    def dispatch(self, func, module, *args, **kwargs):
         module = import_module(module + ".xarray")
         return getattr(module, func)(*args, **kwargs)
 
@@ -194,7 +194,7 @@ class FieldListDispatcher(DataDispatcher):
     def match(obj: Any) -> bool:
         return _is_fieldlist(obj)
 
-    def __call__(self, func, module, *args, **kwargs):
+    def dispatch(self, func, module, *args, **kwargs):
         module = import_module(module + ".fieldlist")
         return getattr(module, func)(*args, **kwargs)
 
@@ -210,6 +210,6 @@ def dispatch(func):
     def inner(*args, **kwargs):
         for dispatcher in _DISPATCHERS:
             if dispatcher.match(args[0]):
-                return dispatcher(func.__name__, _module, *args, **kwargs)
+                return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
 
     return inner
