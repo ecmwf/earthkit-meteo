@@ -435,6 +435,56 @@ def pearson_correlation(
     weights: xr.DataArray | None = None,
     center: bool = True,
 ) -> T:
+    r"""
+    Calculates the Pearson correlation between a forecast and observations.
+
+    The correlation is defined as:
+
+    - for `center=True` (default)
+
+        .. math::
+            c = \frac{
+            \sum_{i=1}^N {\left(f-\overline{f}\right)\left(o-\overline{o}\right)}
+            }
+            {\sqrt{
+            \overline{\left(f-\overline{f}\right)^2}
+            \
+            \overline{\left(o-\overline{o}\right)^2}
+            }}
+
+    - for `center=False`
+
+        .. math::
+            \frac{\overline{f o}}{\sqrt{\overline{f^2}\ \overline{o^2}}}
+
+    where the averaging operator is defined as:
+
+    .. math::
+        \overline{x} = \frac{\sum_{i=1}^N x_i w_i}{\sum_{i=1}^N w_i}
+
+    and
+
+    - :math:`f_i` is the forecast,
+    - :math:`o_i` are the observations,
+    - :math:`w_i` are the weights,
+    - :math:`c` is the correlation.
+
+    Parameters
+    ----------
+    fcst : xarray object
+        The forecast xarray.
+    obs : xarray object
+        The observations xarray.
+    over : str or list of str
+        The dimension(s) over which to aggregate.
+    weights : xarray object, optional
+        Weights to apply during aggregation. Default is None.
+
+    Returns
+    -------
+    xarray object
+        The correlation between the forecast and observations.
+    """
     # TODO: Copy pasted from vtb, consolidate before merge
     # and implement xarray-native version without numpy
     # TODO: Maybe just use "unbiased" as a parameter name
