@@ -62,31 +62,27 @@ def speed(u: "FieldList", v: "FieldList") -> "FieldList":
 
 
 @dispatch
-def speed(u: Any, v: Any) -> Any:
+def speed(
+    u: "xarray.DataArray" | "FieldList", v: "xarray.DataArray" | "FieldList"
+) -> "xarray.DataArray" | "FieldList":
     r"""Compute the wind speed/vector magnitude.
 
     Parameters
     ----------
-    u: Any
+    u: xarray.DataArray, FieldList
         u wind/x vector component
-    v: Any
+    v: xarray.DataArray, FieldList
         v wind/y vector component (same units as ``u``)
+    kwargs: dict
+        Additional keyword arguments passed to the specific implementation
 
     Returns
     -------
-    Any
+    xarray.DataArray, FieldList
         Wind speed/magnitude (same units as ``u`` and ``v``)
 
     """
     pass
-
-
-@overload
-def direction(
-    u: "xarray.DataArray", v: "xarray.DataArray", convention: str = "meteo", to_positive: bool = True
-) -> "xarray.DataArray":
-    r"""Compute the direction/angle of a vector quantity."""
-    ...
 
 
 @dispatch
@@ -95,30 +91,10 @@ def direction(u: Any, v: Any, convention: str = "meteo", to_positive: bool = Tru
     pass
 
 
-@overload
-def xy_to_polar(
-    x: "xarray.DataArray",
-    y: "xarray.DataArray",
-    convention: str = "meteo",
-) -> tuple["xarray.DataArray", "xarray.DataArray"]:
-    r"""Convert wind/vector data from xy representation to polar representation."""
-    ...
-
-
 @dispatch
 def xy_to_polar(x: Any, y: Any, convention: str = "meteo") -> tuple[Any, Any]:
     r"""Convert wind/vector data from xy representation to polar representation."""
     pass
-
-
-@overload
-def polar_to_xy(
-    magnitude: "xarray.DataArray",
-    direction: "xarray.DataArray",
-    convention: str = "meteo",
-) -> tuple["xarray.DataArray", "xarray.DataArray"]:
-    r"""Convert wind/vector data from polar representation to xy representation."""
-    ...
 
 
 @dispatch
@@ -127,44 +103,16 @@ def polar_to_xy(magnitude: Any, direction: Any, convention: str = "meteo") -> tu
     pass
 
 
-@overload
-def w_from_omega(
-    omega: "xarray.DataArray",
-    t: "xarray.DataArray",
-    p: "xarray.DataArray",
-) -> "xarray.DataArray":
-    r"""Compute the hydrostatic vertical velocity from pressure velocity"""
-    ...
-
-
 @dispatch
 def w_from_omega(omega: Any, t: Any, p: Any) -> Any:
     r"""Compute the hydrostatic vertical velocity from pressure velocity"""
     pass
 
 
-@overload
-def coriolis(lat: "xarray.DataArray") -> "xarray.DataArray":
-    r"""Compute the Coriolis parameter"""
-    ...
-
-
 @dispatch
 def coriolis(lat: Any) -> Any:
     r"""Compute the Coriolis parameter"""
     pass
-
-
-@overload
-def windrose(
-    speed: "xarray.DataArray",
-    direction: "xarray.DataArray",
-    sectors: int = 16,
-    speed_bins: Iterable[float] | None = None,
-    percent: bool = True,
-) -> tuple["xarray.DataArray", "xarray.DataArray"]:
-    r"""Generate windrose data"""
-    ...
 
 
 @dispatch

@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Iterable
 
 import numpy as np
+import xarray as xr
 
 from .. import array
 
@@ -31,8 +32,6 @@ def _infer_output_dtypes(func, *args, **kwargs) -> list[np.dtype]:
 
 
 def _apply_ufunc(func, num, *args, **kwargs):
-    import xarray as xr
-
     output_dtypes = _infer_output_dtypes(func, *args, **kwargs)
 
     opt = {}
@@ -58,7 +57,7 @@ def _apply_ufunc(func, num, *args, **kwargs):
     )
 
 
-def speed(u, v):
+def speed(u: xr.DataArray, v: xr.DataArray) -> xr.DataArray:
     r"""Compute the wind speed/vector magnitude.
 
     Parameters
@@ -80,7 +79,9 @@ def speed(u, v):
     return res
 
 
-def direction(u, v, convention: str = "meteo", to_positive: bool = True):
+def direction(
+    u: xr.DataArray, v: xr.DataArray, convention: str = "meteo", to_positive: bool = True
+) -> xr.DataArray:
     r"""Compute the direction/angle of a vector quantity.
 
     Parameters
@@ -92,22 +93,36 @@ def direction(u, v, convention: str = "meteo", to_positive: bool = True):
     convention: str, optional
         Specify how the direction/angle is interpreted. The possible values are as follows:
 
-        * "meteo": the direction is the meteorological wind direction
+        * "meteo": the direction is the meteorological wind direction (see below for explanation)
         * "polar": the direction is measured anti-clockwise from the x axis (East/right) to the vector
 
     to_positive: bool, optional
-        If it is True the resulting values are mapped into the [0, 360] range when
+        If True, the resulting values are mapped into the [0, 360] range when
         ``convention`` is "polar". Otherwise they lie in the [-180, 180] range.
 
     Returns
     -------
     xarray.DataArray
         Direction/angle (degrees)
+
+    Notes
+    -----
+    The meteorological wind direction is the direction from which the wind is
+    blowing. Wind direction increases clockwise such that a northerly wind
+    is 0°, an easterly wind is 90°, a southerly wind is 180°, and a westerly
+    wind is 270°. The figure below illustrates how it is related to the actual
+    orientation of the wind vector:
+
+    .. image:: /_static/wind_direction.png
+        :width: 400px
+
     """
     return _apply_ufunc(array.direction, 1, u, v, convention=convention, to_positive=to_positive)
 
 
-def xy_to_polar(x, y, convention: str = "meteo"):
+def xy_to_polar(
+    x: xr.DataArray, y: xr.DataArray, convention: str = "meteo"
+) -> tuple[xr.DataArray, xr.DataArray]:
     r"""Convert wind/vector data from xy representation to polar representation.
 
     Parameters
@@ -129,18 +144,26 @@ def xy_to_polar(x, y, convention: str = "meteo"):
         Magnitude (same units as ``x``)
     xarray.DataArray
         Direction (degrees)
+
+
+    Notes
+    -----
+    In the target xy representation the x axis points East while the y axis points North.
+
     """
     return _apply_ufunc(array.xy_to_polar, 2, x, y, convention=convention)
 
 
-def polar_to_xy(magnitude, direction, convention: str = "meteo"):
+def polar_to_xy(
+    magnitude: xr.DataArray, direction: xr.DataArray, convention: str = "meteo"
+) -> tuple[xr.DataArray, xr.DataArray]:
     r"""Convert wind/vector data from polar representation to xy representation.
 
     Parameters
     ----------
-    magnitude: xarray.DataArray
+    magnitude: xr.DataArray
         Speed/magnitude of the vector
-    direction: xarray.DataArray
+    direction: xr.DataArray
         Direction of the vector (degrees)
     convention: str
         Specify how ``direction`` is interpreted. The possible values are as follows:
@@ -155,11 +178,17 @@ def polar_to_xy(magnitude, direction, convention: str = "meteo"):
         X vector component (same units as ``magnitude``)
     xarray.DataArray
         Y vector component (same units as ``magnitude``)
+
+
+    Notes
+    -----
+    In the target xy representation the x axis points East while the y axis points North.
+
     """
     return _apply_ufunc(array.polar_to_xy, 2, magnitude, direction, convention=convention)
 
 
-def w_from_omega(omega, t, p):
+def w_from_omega(omega: xr.DataArray, t: xr.DataArray, p: xr.DataArray) -> xr.DataArray:
     r"""Compute the hydrostatic vertical velocity from pressure velocity, temperature and pressure.
 
     Parameters
@@ -175,11 +204,26 @@ def w_from_omega(omega, t, p):
     -------
     xarray.DataArray
         Hydrostatic vertical velocity (m/s)
+
+
+    Notes
+    -----
+    The computation is based on the following hydrostatic formula:
+
+    .. math::
+
+        w = - \frac{\omega\; t R_{d}}{p g}
+
+    where
+
+        * :math:`R_{d}` is the specific gas constant for dry air (see :data:`earthkit.meteo.constants.Rd`).
+        * :math:`g` is the gravitational acceleration (see :data:`earthkit.meteo.constants.g`)
+
     """
     return _apply_ufunc(array.w_from_omega, 1, omega, t, p)
 
 
-def coriolis(lat):
+def coriolis(lat: xr.DataArray) -> xr.DataArray:
     r"""Compute the Coriolis parameter.
 
     Parameters
@@ -191,17 +235,30 @@ def coriolis(lat):
     -------
     xarray.DataArray
         The Coriolis parameter (:math:`s^{-1}`)
+
+
+    Notes
+    -----
+    The Coriolis parameter is defined by the following formula:
+
+    .. math::
+
+        f = 2 \Omega sin(\phi)
+
+    where :math:`\Omega` is the rotation rate of Earth
+    (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
+
     """
     return _apply_ufunc(array.coriolis, 1, lat)
 
 
 def windrose(
-    speed,
-    direction,
+    speed: xr.DataArray,
+    direction: xr.DataArray,
     sectors: int = 16,
     speed_bins: Iterable[float] | None = None,
     percent: bool = True,
-):
+) -> tuple[xr.DataArray, xr.DataArray]:
     """Generate windrose data.
 
     Parameters
@@ -228,6 +285,16 @@ def windrose(
         are histogrammed along the second dimension.
     xarray.DataArray
         The direction bins (i.e. the sectors) (degrees)
+
+
+    Notes
+    -----
+    The ``sectors`` parameter defines the number of direction bins the 360 degreesThe sectors do not start at 0 degrees (North) but are shifted by half a sector size.
+    E.g. if ``sectors`` is 4 the sectors are defined as:
+
+    .. image:: /_static/wind_sector.png
+        :width: 350px
+
     """
     import xarray as xr
 

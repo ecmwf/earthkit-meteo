@@ -77,7 +77,7 @@ def direction(u, v, convention="meteo", to_positive=True):
         * "polar": the direction is measured anti-clockwise from the x axis (East/right) to the vector
 
     to_positive: bool, optional
-        If it is True the resulting values are mapped into the [0, 360] range when
+        If True, the resulting values are mapped into the [0, 360] range when
         ``convention`` is "polar". Otherwise they lie in the [-180, 180] range.
 
 
@@ -86,6 +86,17 @@ def direction(u, v, convention="meteo", to_positive=True):
     array-like
         Direction/angle (degrees)
 
+
+    Notes
+    -----
+    The meteorological wind direction is the direction from which the wind is
+    blowing. Wind direction increases clockwise such that a northerly wind
+    is 0°, an easterly wind is 90°, a southerly wind is 180°, and a westerly
+    wind is 270°. The figure below illustrates how it is related to the actual
+    orientation of the wind vector:
+
+    .. image:: /_static/wind_direction.png
+        :width: 400px
 
     """
     if convention == "meteo":
@@ -120,6 +131,9 @@ def xy_to_polar(x, y, convention="meteo"):
     array-like
         Direction (degrees)
 
+    Notes
+    -----
+    In the target xy representation the x axis points East while the y axis points North.
 
     """
     return speed(x, y), direction(x, y, convention=convention)
@@ -168,6 +182,10 @@ def polar_to_xy(magnitude, direction, convention="meteo"):
         Y vector component (same units as ``magnitude``)
 
 
+    Notes
+    -----
+    In the target xy representation the x axis points East while the y axis points North.
+
     """
     if convention == "meteo":
         return _polar_to_xy_meteo(magnitude, direction)
@@ -194,6 +212,18 @@ def w_from_omega(omega, t, p):
     array-like
         Hydrostatic vertical velocity (m/s)
 
+    Notes
+    -----
+    The computation is based on the following hydrostatic formula:
+
+    .. math::
+
+        w = - \frac{\omega\; t R_{d}}{p g}
+
+    where
+
+        * :math:`R_{d}` is the specific gas constant for dry air (see :data:`earthkit.meteo.constants.Rd`).
+        * :math:`g` is the gravitational acceleration (see :data:`earthkit.meteo.constants.g`)
 
     """
     return (-constants.Rd / constants.g) * (omega * t / p)
@@ -212,6 +242,16 @@ def coriolis(lat):
     array-like
         The Coriolis parameter (:math:`s^{-1}`)
 
+    Notes
+    -----
+    The Coriolis parameter is defined by the following formula:
+
+    .. math::
+
+        f = 2 \Omega sin(\phi)
+
+    where :math:`\Omega` is the rotation rate of Earth
+    (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
 
     """
     xp = array_namespace(lat)
@@ -249,6 +289,14 @@ def windrose(speed, direction, sectors=16, speed_bins=None, percent=True):
     array-like
         The direction bins (i.e. the sectors) (degrees)
 
+
+    Notes
+    -----
+    The ``sectors`` parameter defines the number of direction bins the 360 degreesThe sectors do not start at 0 degrees (North) but are shifted by half a sector size.
+    E.g. if ``sectors`` is 4 the sectors are defined as:
+
+    .. image:: /_static/wind_sector.png
+        :width: 350px
 
     """
     speed_bins = speed_bins if speed_bins is not None else []
