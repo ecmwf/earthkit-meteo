@@ -97,7 +97,7 @@ def mean_error(
 
     .. math::
 
-        e = \frac{1}{N} \sum_{i=1}^N w_i (f_i - o_i)
+        e = \frac{\sum_{i=1}^N (f_i - o_i) w_i}{\sum_{i=1}^N w_i}
 
     where:
 
@@ -133,6 +133,39 @@ def abs_error(
     agg_weights: xr.DataArray | None = None,
     is_angular: bool = False,
 ) -> T:
+    r"""
+    Calculates the absolute error between a forecast and observations.
+
+    The absolute error is defined as:
+
+    .. math::
+
+        e_i = |f_i - o_i|
+
+    where:
+
+    - :math:`f_i` is the forecast,
+    - :math:`o_i` are the observations,
+    - :math:`e_i` is the absolute error.
+
+    Parameters
+    ----------
+    fcst : xarray object
+        The forecast xarray.
+    obs : xarray object
+        The observations xarray.
+    agg_method : str, optional
+        The aggregation method to apply over `agg_dim`. Default is None, which means no aggregation.
+    agg_dim : str or list of str, optional
+        The dimension(s) over which to aggregate. Default is None.
+    agg_weights : xarray object, optional
+        Weights to apply during aggregation. Default is None.
+
+    Returns
+    -------
+    xarray object
+        The error between the forecast and observations, possibly aggregated.
+    """
     pass
 
 
@@ -143,6 +176,38 @@ def mean_abs_error(
     weights: xr.DataArray | None = None,
     is_angular: bool = False,
 ) -> T:
+    r"""
+    Calculates the mean absolute error between a forecast and observations.
+
+    The mean absolute error is defined as:
+
+    .. math::
+
+        e = \frac{\sum_{i=1}^N |f_i - o_i| w_i}{\sum_{i=1}^N w_i}
+
+    where:
+
+    - :math:`f_i` is the forecast,
+    - :math:`o_i` are the observations,
+    - :math:`w_i` are the weights,
+    - :math:`e` is the mean absolute error.
+
+    Parameters
+    ----------
+    fcst : xarray object
+        The forecast xarray.
+    obs : xarray object
+        The observations xarray.
+    over : str or list of str
+        The dimension(s) over which to aggregate.
+    weights : xarray object, optional
+        Weights to apply during aggregation. Default is None.
+
+    Returns
+    -------
+    xarray object
+        The mean absolute error between the forecast and observations.
+    """
     pass
 
 
@@ -154,6 +219,39 @@ def squared_error(
     agg_weights: xr.DataArray | None = None,
     is_angular: bool = False,
 ) -> T:
+    r"""
+    Calculates the squared error between a forecast and observations.
+
+    The absolute error is defined as:
+
+    .. math::
+
+        e_i = (f_i - o_i)^2
+
+    where:
+
+    - :math:`f_i` is the forecast,
+    - :math:`o_i` are the observations,
+    - :math:`e_i` is the absolute error.
+
+    Parameters
+    ----------
+    fcst : xarray object
+        The forecast xarray.
+    obs : xarray object
+        The observations xarray.
+    agg_method : str, optional
+        The aggregation method to apply over `agg_dim`. Default is None, which means no aggregation.
+    agg_dim : str or list of str, optional
+        The dimension(s) over which to aggregate. Default is None.
+    agg_weights : xarray object, optional
+        Weights to apply during aggregation. Default is None.
+
+    Returns
+    -------
+    xarray object
+        The squared error between the forecast and observations, possibly aggregated.
+    """
     pass
 
 
@@ -164,6 +262,38 @@ def mean_squared_error(
     weights: xr.DataArray | None = None,
     is_angular: bool = False,
 ) -> T:
+    r"""
+    Calculates the mean squared error between a forecast and observations.
+
+    The mean squared error is defined as:
+
+    .. math::
+
+        e = \frac{\sum_{i=1}^N (f_i - o_i)^2 w_i}{\sum_{i=1}^N w_i}
+
+    where:
+
+    - :math:`f_i` is the forecast,
+    - :math:`o_i` are the observations,
+    - :math:`w_i` are the weights,
+    - :math:`e` is the mean squared error.
+
+    Parameters
+    ----------
+    fcst : xarray object
+        The forecast xarray.
+    obs : xarray object
+        The observations xarray.
+    over : str or list of str
+        The dimension(s) over which to aggregate.
+    weights : xarray object, optional
+        Weights to apply during aggregation. Default is None.
+
+    Returns
+    -------
+    xarray object
+        The mean squared error between the forecast and observations.
+    """
     pass
 
 
@@ -174,6 +304,38 @@ def root_mean_squared_error(
     weights: xr.DataArray | None = None,
     is_angular: bool = False,
 ) -> T:
+    r"""
+    Calculates the root mean squared error between a forecast and observations.
+
+    The root mean squared error is defined as:
+
+    .. math::
+
+        e = \sqrt{ \frac{\sum_{i=1}^N (f_i - o_i)^2 w_i}{\sum_{i=1}^N w_i} }
+
+    where:
+
+    - :math:`f_i` is the forecast,
+    - :math:`o_i` are the observations,
+    - :math:`w_i` are the weights,
+    - :math:`e` is the root mean squared error.
+
+    Parameters
+    ----------
+    fcst : xarray object
+        The forecast xarray.
+    obs : xarray object
+        The observations xarray.
+    over : str or list of str
+        The dimension(s) over which to aggregate.
+    weights : xarray object, optional
+        Weights to apply during aggregation. Default is None.
+
+    Returns
+    -------
+    xarray object
+        The root mean squared error between the forecast and observations.
+    """
     pass
 
 
@@ -184,4 +346,42 @@ def standard_deviation_of_error(
     weights: xr.DataArray | None = None,
     is_angular: bool = False,
 ) -> T:
+    r"""
+    Calculates the standard deviation of error between a forecast and observations.
+
+    The standard deviation of error is defined as:
+
+    .. math::
+
+        e = \sqrt{ \frac{\sum_{i=1}^N (f_i - o_i - m_e)^2 w_i}{\sum_{i=1}^N w_i} }
+
+    where:
+
+    .. math::
+
+        m_e = \sum_{i=1}^N (f_i - o_i) w_i}{\sum_{i=1}^N w_i}
+
+    where:
+
+    - :math:`f_i` is the forecast,
+    - :math:`o_i` are the observations,
+    - :math:`w_i` are the weights,
+    - :math:`e` is the standard deviation of error.
+
+    Parameters
+    ----------
+    fcst : xarray object
+        The forecast xarray.
+    obs : xarray object
+        The observations xarray.
+    over : str or list of str
+        The dimension(s) over which to aggregate.
+    weights : xarray object, optional
+        Weights to apply during aggregation. Default is None.
+
+    Returns
+    -------
+    xarray object
+        The standard deviation of error between the forecast and observations.
+    """
     pass
