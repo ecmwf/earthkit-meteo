@@ -4,176 +4,232 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from earthkit.meteo.score.metrics import error
+from earthkit.meteo.score.deterministic import error
+from earthkit.meteo.score.deterministic import mean_error
+
+LATITUDES = [40.0, 41.0, 42.0]
+LONGITUDES = [10.0, 11.0, 12.0]
+VALID_DATETIMES = [
+    datetime.datetime(2024, 1, 1, 0, 0),
+    datetime.datetime(2024, 1, 1, 6, 0),
+]
 
 
-@pytest.fixture(autouse=True)
-def numpy_random_seed():
-    # TODO: Probably this should be done more gracefully
-    np.random.seed(42)
-
-
-@pytest.fixture
-def ds_forecast_ensemble():
-    """Creates a dummy xarray dataset
-    with dimensions [latitude, longitude, number, forecast_issue_time, step]
-    and variables '2t', 'tp'.
-
-    grid is 3x3 with latitudes [40, 41, 42] and longitudes [10, 11, 12] (floats).
-
-    Use random normal noise to fill the data arrays.
-    """
-    latitudes = [40.0, 41.0, 42.0]
-    longitudes = [10.0, 11.0, 12.0]
-    numbers = list(range(3))
-    valid_datetime = [
-        datetime.datetime(2023, 1, 1, 0),
-        datetime.datetime(2023, 1, 1, 6),
-        datetime.datetime(2023, 1, 1, 12),
-    ]
-    temp = np.random.normal(
-        loc=280,
-        scale=5,
-        size=(len(latitudes), len(longitudes), len(numbers), len(valid_datetime)),
-    )
-    precip = np.random.normal(
-        loc=1,
-        scale=0.5,
-        size=(len(latitudes), len(longitudes), len(numbers), len(valid_datetime)),
-    )
-    ds = xr.Dataset(
-        {
-            "2t": (["latitude", "longitude", "number", "forecast_issue_time"], temp),
-            "tp": (["latitude", "longitude", "number", "forecast_issue_time"], precip),
-        },
+def make_dataset(values, var_name="2t"):
+    """Build a standard (time, lat, lon) dataset."""
+    return xr.Dataset(
+        {var_name: (["valid_datetime", "latitude", "longitude"], values)},
         coords={
-            "latitude": latitudes,
-            "longitude": longitudes,
-            "number": numbers,
-            "forecast_issue_time": valid_datetime,
+            "valid_datetime": VALID_DATETIMES,
+            "latitude": LATITUDES,
+            "longitude": LONGITUDES,
         },
     )
-    return ds
 
 
 @pytest.fixture
-def ds_forecast_deterministic(ds_forecast_ensemble):
-    # Create a deterministic forecast by selecting number=0
-    ds_deterministic = ds_forecast_ensemble.sel(number=0, drop=True)
-    return ds_deterministic
+def fcst():
+    """Forecast: sequential values 0-17."""
+    return make_dataset(np.arange(18.0).reshape(2, 3, 3))
 
 
 @pytest.fixture
-def ds_observation(ds_forecast_deterministic):
-    """Creates a dummy xarray dataset
-    with dimensions [latitude, longitude, forecast_issue_time]
-    and variables '2t', 'tp'.
-
-    grid is 3x3 with latitudes [40, 41, 42] and longitudes [10, 11, 12] (floats).
-
-    Use random normal noise to fill the data arrays.
-    """
-    latitudes = ds_forecast_deterministic.latitude.values
-    longitudes = ds_forecast_deterministic.longitude.values
-    valid_datetime = ds_forecast_deterministic.forecast_issue_time.values
-
-    temp = np.random.normal(
-        loc=280,
-        scale=5,
-        size=(len(latitudes), len(longitudes), len(valid_datetime)),
-    )
-    precip = np.random.normal(
-        loc=1,
-        scale=0.5,
-        size=(len(latitudes), len(longitudes), len(valid_datetime)),
-    )
-    ds = xr.Dataset(
-        {
-            "2t": (["latitude", "longitude", "forecast_issue_time"], temp),
-            "tp": (["latitude", "longitude", "forecast_issue_time"], precip),
-        },
-        coords={
-            "latitude": latitudes,
-            "longitude": longitudes,
-            "forecast_issue_time": valid_datetime,
-        },
-    )
-    return ds
+def obs():
+    """Observation: sequential values 1-18, so error = fcst - obs = -1 everywhere."""
+    return make_dataset(np.arange(1.0, 19.0).reshape(2, 3, 3))
 
 
 @pytest.fixture
-def da_error_weights():
-    """Creates weights for testing weighted aggregation."""
+def rng():
+    """Seeded random generator for reproducible tests."""
+    return np.random.default_rng(42)
+
+
+def test_error(rng):
+    fcst_values = np.arange(18.0).reshape(2, 3, 3)
+    error_values = rng.uniform(-5, 5, size=(2, 3, 3))
+    obs_values = fcst_values - error_values
+
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
+
+    result = error(fcst, obs)
+
+    expected = make_dataset(error_values)
+    xr.testing.assert_allclose(result, expected)
+
+
+def test_error_with_dataarray(rng):
+    fcst_values = np.arange(18.0).reshape(2, 3, 3)
+    error_values = rng.uniform(-5, 5, size=(2, 3, 3))
+    obs_values = fcst_values - error_values
+
+    fcst = make_dataset(fcst_values)["2t"]
+    obs = make_dataset(obs_values)["2t"]
+
+    result = error(fcst, obs)
+
+    expected = make_dataset(error_values)["2t"]
+    xr.testing.assert_allclose(result, expected)
+
+
+def test_error_with_aggregation():
+    # Error varies by dimension so we can verify correct aggregation axis
+    # Rows (lat): [1,1,1], [2,2,2], [3,3,3] -> mean over lat = [2,2,2]
+    # Cols (lon): [1,2,3], [1,2,3], [1,2,3] -> mean over lon = [2,2,2]
+    fcst_values = np.full((2, 3, 3), 10.0)
+    error_values = np.array(
+        [
+            [[1, 1, 1], [2, 2, 2], [3, 3, 3]],
+            [[1, 1, 1], [2, 2, 2], [3, 3, 3]],
+        ],
+        dtype=float,
+    )
+    obs_values = fcst_values - error_values
+
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
+
+    # Aggregate over lat only -> should preserve lon dimension
+    result_lat = error(fcst, obs, agg_method="mean", agg_dim="latitude")
+    expected_lat = xr.Dataset(
+        {"2t": (["valid_datetime", "longitude"], np.full((2, 3), 2.0))},
+        coords={"valid_datetime": VALID_DATETIMES, "longitude": LONGITUDES},
+    )
+    xr.testing.assert_equal(result_lat, expected_lat)
+
+    # Aggregate over lon only -> should preserve lat dimension
+    result_lon = error(fcst, obs, agg_method="mean", agg_dim="longitude")
+    expected_lon = xr.Dataset(
+        {"2t": (["valid_datetime", "latitude"], np.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]))},
+        coords={"valid_datetime": VALID_DATETIMES, "latitude": LATITUDES},
+    )
+    xr.testing.assert_equal(result_lon, expected_lon)
+
+    # Aggregate over both -> single value per timestep
+    result_both = error(fcst, obs, agg_method="mean", agg_dim=["latitude", "longitude"])
+    expected_both = xr.Dataset(
+        {"2t": (["valid_datetime"], np.array([2.0, 2.0]))},
+        coords={"valid_datetime": VALID_DATETIMES},
+    )
+    xr.testing.assert_equal(result_both, expected_both)
+
+
+def test_error_with_weighted_aggregation():
+    # Error pattern where weighted mean != unweighted mean
+    # Unweighted mean of [0,0,3] repeated = 1.0
+    # Weighted mean with [1,1,2] weights = 1.5
+    fcst_values = np.full((2, 3, 3), 10.0)
+    error_values = np.array(
+        [
+            [[0, 0, 3], [0, 0, 3], [0, 0, 3]],
+            [[0, 0, 3], [0, 0, 3], [0, 0, 3]],
+        ],
+        dtype=float,
+    )
+    obs_values = fcst_values - error_values
+
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
+
     weights = xr.DataArray(
-        np.array([[0.2, 0.3, 0.5], [0.1, 0.4, 0.5], [0.3, 0.3, 0.4]]),
+        np.array([[1, 1, 2], [1, 1, 2], [1, 1, 2]], dtype=float),
         dims=["latitude", "longitude"],
-    )
-    return weights
-
-
-@pytest.fixture
-def ds_ensemble_error_expected(ds_forecast_ensemble, ds_observation):
-    """Creates expected result for ensemble error test."""
-    return ds_forecast_ensemble - ds_observation
-
-
-@pytest.fixture
-def ds_ensemble_error_mean_expected(ds_forecast_ensemble, ds_observation):
-    """Creates expected result for ensemble error test with mean aggregation."""
-    error = ds_forecast_ensemble - ds_observation
-    return error.mean(dim=["latitude", "longitude"])
-
-
-@pytest.fixture
-def ds_ensemble_error_mean_weighted_expected(ds_forecast_ensemble, ds_observation):
-    """Creates expected result for ensemble error test with mean aggregation and weights."""
-    error = ds_forecast_ensemble - ds_observation
-    weights = xr.DataArray(
-        np.array([[0.2, 0.3, 0.5], [0.1, 0.4, 0.5], [0.3, 0.3, 0.4]]),
-        dims=["latitude", "longitude"],
-    )
-    weighted_error = error * weights
-    return weighted_error.sum(dim=["latitude", "longitude"]) / weights.sum(dim=["latitude", "longitude"])
-
-
-# TODO: Ignores nan handling in tests and implementation
-def test_error_correct(ds_forecast_ensemble, ds_observation, da_error_weights, ds_ensemble_error_expected):
-    # No aggregation
-    ds_result = error(
-        ds_forecast_ensemble,
-        ds_observation,
-    )
-    xr.testing.assert_equal(ds_result, ds_ensemble_error_expected)
-
-    # agg_method = "mean", no weights
-    ds_result = error(
-        ds_forecast_ensemble,
-        ds_observation,
-        agg_method="mean",
-        agg_dim=["latitude", "longitude"],
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
     )
 
-    # agg_method = "mean", with weights
-    weights = xr.DataArray(
-        np.array([[0.2, 0.3, 0.5], [0.1, 0.4, 0.5], [0.3, 0.3, 0.4]]),
-        dims=["latitude", "longitude"],
-    )
-    ds_result = error(
-        ds_forecast_ensemble,
-        ds_observation,
+    result = error(
+        fcst,
+        obs,
         agg_method="mean",
         agg_dim=["latitude", "longitude"],
         agg_weights=weights,
     )
-    ds_expected = None  # TODO: Hardcoded expected result
-    xr.testing.assert_equal(ds_result, ds_expected)
+
+    # Weighted mean = (6*0 + 3*3*2) / (6*1 + 3*2) = 18/12 = 1.5
+    expected = xr.Dataset(
+        {"2t": (["valid_datetime"], np.array([1.5, 1.5]))},
+        coords={"valid_datetime": VALID_DATETIMES},
+    )
+    xr.testing.assert_equal(result, expected)
 
 
-def test_error_invalid_agg_method(ds_forecast_ensemble, ds_observation):
+def test_error_invalid_agg_method(fcst, obs):
     with pytest.raises(AssertionError):
-        error(
-            ds_forecast_ensemble,
-            ds_observation,
-            agg_method="sum",
-            agg_dim=["latitude", "longitude"],
-        )
+        error(fcst, obs, agg_method="sum", agg_dim=["latitude", "longitude"])
+
+
+@pytest.mark.skip("TODO")
+def test_error_weights_without_agg_dim(fcst, obs):
+    weights = xr.DataArray(
+        np.ones((3, 3)),
+        dims=["latitude", "longitude"],
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+    )
+    with pytest.raises((ValueError, TypeError)):
+        error(fcst, obs, agg_weights=weights)
+
+
+@pytest.mark.skip("TODO")
+def test_error_agg_dim_without_agg_method(fcst, obs):
+    # TODO This might be silently ignored, or might raise - decide
+    with pytest.raises((ValueError)):
+        error(fcst, obs, agg_dim=["latitude"])
+
+
+def test_mean_error(rng):
+    # Error pattern: rows vary [1,2,3], so mean over lat/lon shows per-timestep variation
+    fcst_values = np.full((2, 3, 3), 10.0)
+    error_values = np.array(
+        [
+            [[1, 1, 1], [2, 2, 2], [3, 3, 3]],
+            [[2, 2, 2], [3, 3, 3], [4, 4, 4]],
+        ],
+        dtype=float,
+    )
+    obs_values = fcst_values - error_values
+
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
+
+    result = mean_error(fcst, obs, over=["latitude", "longitude"])
+
+    # First timestep: mean of [1,1,1,2,2,2,3,3,3] = 18/9 = 2.0
+    # Second timestep: mean of [2,2,2,3,3,3,4,4,4] = 27/9 = 3.0
+    expected = xr.Dataset(
+        {"2t": (["valid_datetime"], np.array([2.0, 3.0]))},
+        coords={"valid_datetime": VALID_DATETIMES},
+    )
+    xr.testing.assert_equal(result, expected)
+
+
+def test_mean_error_with_dataarray(rng):
+    fcst_values = np.full((2, 3, 3), 10.0)
+    error_values = np.array(
+        [
+            [[1, 1, 1], [2, 2, 2], [3, 3, 3]],
+            [[2, 2, 2], [3, 3, 3], [4, 4, 4]],
+        ],
+        dtype=float,
+    )
+    obs_values = fcst_values - error_values
+
+    fcst = make_dataset(fcst_values)["2t"]
+    obs = make_dataset(obs_values)["2t"]
+
+    result = mean_error(fcst, obs, over=["latitude", "longitude"])
+
+    # First timestep: mean of [1,1,1,2,2,2,3,3,3] = 18/9 = 2.0
+    # Second timestep: mean of [2,2,2,3,3,3,4,4,4] = 27/9 = 3.0
+    expected = xr.DataArray(
+        np.array([2.0, 3.0]),
+        dims=["valid_datetime"],
+        coords={"valid_datetime": VALID_DATETIMES},
+    )
+    xr.testing.assert_equal(result, expected)
+
+
+# TODO: Test NaN handling in both raw error and aggregation
+# TODO: Test with non-existent dimension in agg_dim (should raise)
+# TODO: Test single variable vs multiple variables in Dataset
+# TODO: Should we support valid_datetime coord propagation?
