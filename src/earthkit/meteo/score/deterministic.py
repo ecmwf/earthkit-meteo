@@ -97,13 +97,14 @@ def mean_error(
 
     .. math::
 
-        e_i = \frac{1}{N} \sum_{i=1}^N (f_i - o_i)
+        e = \frac{1}{N} \sum_{i=1}^N w_i (f_i - o_i)
 
     where:
 
     - :math:`f_i` is the forecast,
     - :math:`o_i` are the observations,
-    - :math:`e_i` is the mean error.
+    - :math:`w_i` are the weights,
+    - :math:`e` is the mean error.
 
     Parameters
     ----------
