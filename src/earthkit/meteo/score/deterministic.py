@@ -26,6 +26,41 @@ def error(
     agg_dim: str | list[str] | None = None,
     agg_weights: xr.DataArray | None = None,
 ) -> T:
+    r"""
+    Calculates the error between a forecast and observations.
+
+    The error is defined as:
+
+    .. math::
+
+        e_i = f_i - o_i
+
+    where:
+
+    - :math:`f_i` is the forecast,
+    - :math:`o_i` are the observations,
+    - :math:`e_i` is the error.
+
+    Unreachable nodes are given a distance of :math:`\infty`.
+
+    Parameters
+    ----------
+    fcst : xarray object
+        The forecast xarray.
+    obs : xarray object
+        The observations xarray.
+    agg_method : str, optional
+        The aggregation method to apply over `agg_dim`. Default is None, which means no aggregation.
+    agg_dim : str or list of str, optional
+        The dimension(s) over which to aggregate. Default is None.
+    agg_weights : xarray object, optional
+        Weights to apply during aggregation. Default is None.
+
+    Returns
+    -------
+    xarray object
+        The error between the forecast and observations, possibly aggregated.
+    """
     pass
 
 
