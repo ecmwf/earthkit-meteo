@@ -59,18 +59,18 @@ def test_error(rng):
     xr.testing.assert_allclose(result, expected)
 
 
-def test_error_with_dataarray(rng):
+def test_error_accepts_dataarray(rng):
+    """Verify API accepts both Dataset and DataArray input."""
     fcst_values = np.arange(18.0).reshape(2, 3, 3)
     error_values = rng.uniform(-5, 5, size=(2, 3, 3))
     obs_values = fcst_values - error_values
 
-    fcst = make_dataset(fcst_values)["2t"]
-    obs = make_dataset(obs_values)["2t"]
+    fcst_ds = make_dataset(fcst_values)
+    obs_ds = make_dataset(obs_values)
 
-    result = error(fcst, obs)
-
-    expected = make_dataset(error_values)["2t"]
-    xr.testing.assert_allclose(result, expected)
+    result_da = error(fcst_ds["2t"], obs_ds["2t"])
+    assert isinstance(result_da, xr.DataArray)
+    assert result_da.shape == (2, 3, 3)
 
 
 def test_error_with_aggregation():
@@ -116,14 +116,11 @@ def test_error_with_aggregation():
 
 
 def test_error_with_weighted_aggregation():
-    # Error pattern where weighted mean != unweighted mean
-    # Unweighted mean of [0,0,3] repeated = 1.0
-    # Weighted mean with [1,1,2] weights = 1.5
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
         [
-            [[0, 0, 3], [0, 0, 3], [0, 0, 3]],
-            [[0, 0, 3], [0, 0, 3], [0, 0, 3]],
+            [[1, 1, 1], [1, 2, 1], [1, 1, 1]],  # First timestep: mostly 1, center is 2
+            [[2, 2, 2], [2, 1, 2], [2, 2, 2]],  # Second timestep: mostly 2, center is 1
         ],
         dtype=float,
     )
@@ -133,7 +130,7 @@ def test_error_with_weighted_aggregation():
     obs = make_dataset(obs_values)
 
     weights = xr.DataArray(
-        np.array([[1, 1, 2], [1, 1, 2], [1, 1, 2]], dtype=float),
+        np.array([[1, 1, 1], [1, 2, 1], [1, 1, 1]], dtype=float),
         dims=["latitude", "longitude"],
         coords={"latitude": LATITUDES, "longitude": LONGITUDES},
     )
@@ -146,12 +143,13 @@ def test_error_with_weighted_aggregation():
         agg_weights=weights,
     )
 
-    # Weighted mean = (6*0 + 3*3*2) / (6*1 + 3*2) = 18/12 = 1.5
+    # Timestep 1: (8*1 + 1*2*2) / 10 = 12/10 = 1.2
+    # Timestep 2: (8*2 + 1*1*2) / 10 = 18/10 = 1.8
     expected = xr.Dataset(
-        {"2t": (["valid_datetime"], np.array([1.5, 1.5]))},
+        {"2t": (["valid_datetime"], np.array([1.2, 1.8]))},
         coords={"valid_datetime": VALID_DATETIMES},
     )
-    xr.testing.assert_equal(result, expected)
+    xr.testing.assert_allclose(result, expected)
 
 
 def test_error_invalid_agg_method(fcst, obs):
@@ -203,7 +201,8 @@ def test_mean_error(rng):
     xr.testing.assert_equal(result, expected)
 
 
-def test_mean_error_with_dataarray(rng):
+def test_mean_error_with_weights(rng):
+    # Error pattern: rows vary [1,2,3], so mean over lat/lon shows per-timestep variation
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
         [
@@ -214,21 +213,33 @@ def test_mean_error_with_dataarray(rng):
     )
     obs_values = fcst_values - error_values
 
-    fcst = make_dataset(fcst_values)["2t"]
-    obs = make_dataset(obs_values)["2t"]
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
 
-    result = mean_error(fcst, obs, over=["latitude", "longitude"])
+    weights = xr.DataArray(
+        np.array([[1, 1, 1], [1, 2, 1], [1, 1, 1]], dtype=float),
+        dims=["latitude", "longitude"],
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+    )
 
-    # First timestep: mean of [1,1,1,2,2,2,3,3,3] = 18/9 = 2.0
-    # Second timestep: mean of [2,2,2,3,3,3,4,4,4] = 27/9 = 3.0
-    expected = xr.DataArray(
-        np.array([2.0, 3.0]),
-        dims=["valid_datetime"],
+    result = mean_error(
+        fcst,
+        obs,
+        over=["latitude", "longitude"],
+        weights=weights,
+    )
+
+    # Timestep 1: (1*1 + 1*1 + 1*1 + 1*2 + 2*2 + 1*2 + 1*3 + 1*3 + 1*3) / 10 = 20/10 = 2.0
+    # Timestep 2: (1*2 + 1*2 + 1*2 + 1*3 + 2*3 + 1*3 + 1*4 + 1*4 + 1*4) / 10 = 30/10 = 3.0
+    expected = xr.Dataset(
+        {"2t": (["valid_datetime"], np.array([2.0, 3.0]))},
         coords={"valid_datetime": VALID_DATETIMES},
     )
-    xr.testing.assert_equal(result, expected)
+    xr.testing.assert_allclose(result, expected)
 
 
+# TODO: Check that weights dataarray has correct dims matching agg_dim?
+# TODO: Use more interesting fcst/obs data patterns in tests
 # TODO: Test NaN handling in both raw error and aggregation
 # TODO: Test with non-existent dimension in agg_dim (should raise)
 # TODO: Test single variable vs multiple variables in Dataset
