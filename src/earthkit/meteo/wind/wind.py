@@ -14,7 +14,7 @@ from typing import Any  # noqa: F401
 from typing import Iterable
 from typing import overload
 
-from earthkit.meteo.utils.meteo_decorator import dispatch
+from earthkit.meteo.utils.decorators import dispatch
 
 if TYPE_CHECKING:
     import xarray  # type: ignore[import]
