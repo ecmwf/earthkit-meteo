@@ -244,6 +244,7 @@ def crps(fcst, obs, over, return_components=False):
 
 
 # TODO: check if this belongs here
+# TODO: Not needed as standalone score? Skip for now, maybe add later
 def ginis_mean_diff(fcst, over=None):
     valid_mask = _common_valid_mask(fcst, dim=over)
     fcst, stack_dim = _stack_arr(fcst, over)
@@ -289,8 +290,11 @@ def _cigns(mean, stdev, observations, stdev_ref=None, nens=None, normalize=True)
 
 
 # TODO: double check naming - stdev reference (climatology)
+# TODO: How to handle climatology still bit of an open question
 # NB: this is not an event, just a baseline
-def continuous_ignorance(fcst, obs, over, stdev_reference=None, normalize=True, return_components=True):
+def continuous_ignorance(
+    fcst, obs, over, stdev_reference: xr.DataArray, normalize=True, return_components=True
+):
     assert return_components is True, "return_components=False not implemented yet"
     obs, _ = _stack_arr(obs, over)
     fcst, _ = _stack_arr(fcst, over)

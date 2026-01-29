@@ -1,0 +1,12 @@
+"""
+error
+mean_error
+abs_error
+mean_abs_error
+squared_error
+mean_squared_error
+root_mean_squared_error
+standard_deviation_of_error
+correlation
+kge
+"""
