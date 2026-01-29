@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any  # noqa: F401
-from typing import Iterable
 from typing import overload
 
 from earthkit.meteo.utils.decorators import dispatch
@@ -166,35 +165,130 @@ def direction(
 
 @dispatch
 def xy_to_polar(x: Any, y: Any, convention: str = "meteo") -> tuple[Any, Any]:
-    r"""Convert wind/vector data from xy representation to polar representation."""
+    r"""Convert wind/vector data from xy representation to polar representation.
+
+    Parameters
+    ----------
+    x: array-like
+        u wind/x vector component
+    y: array-like
+        v wind/y vector component (same units as ``u``)
+    convention: str
+        Specify how the direction/angle component of the target polar coordinate
+        system is interpreted. The possible values are as follows:
+
+        * "meteo": the direction is the meteorological wind direction (see :func:`direction` for explanation)
+        * "polar": the direction is measured anti-clockwise from the x axis (East/right) to the vector
+
+
+    Returns
+    -------
+    array-like
+        Magnitude (same units as ``u``)
+    array-like
+        Direction (degrees)
+
+    Notes
+    -----
+    In the target xy representation the x axis points East while the y axis points North.
+
+    """
     pass
 
 
 @dispatch
 def polar_to_xy(magnitude: Any, direction: Any, convention: str = "meteo") -> tuple[Any, Any]:
-    r"""Convert wind/vector data from polar representation to xy representation."""
+    r"""Convert wind/vector data from polar representation to xy representation.
+
+    Parameters
+    ----------
+    magnitude: array-like
+        Speed/magnitude of the vector
+    direction: array-like
+        Direction of the vector (degrees)
+    convention: str
+        Specify how ``direction`` is interpreted. The possible values are as follows:
+
+        * "meteo": ``direction`` is the meteorological wind direction
+          (see :func:`direction` for explanation)
+        * "polar": ``direction`` is the angle measured anti-clockwise from the x axis
+          (East/right) to the vector
+
+    Returns
+    -------
+    array-like
+        X vector component (same units as ``magnitude``)
+    array-like
+        Y vector component (same units as ``magnitude``)
+
+
+    Notes
+    -----
+    In the target xy representation the x axis points East while the y axis points North.
+
+    """
     pass
 
 
 @dispatch
 def w_from_omega(omega: Any, t: Any, p: Any) -> Any:
-    r"""Compute the hydrostatic vertical velocity from pressure velocity"""
+    r"""Compute the hydrostatic vertical velocity from pressure velocity
+
+    Parameters
+    ----------
+    omega : array-like
+        Hydrostatic pressure velocity (Pa/s)
+    t : array-like
+        Temperature (K)
+    p : array-like
+        Pressure (Pa)
+
+    Returns
+    -------
+    array-like
+        Hydrostatic vertical velocity (m/s)
+
+    Notes
+    -----
+    The computation is based on the following hydrostatic formula:
+
+    .. math::
+
+        w = - \frac{\omega\; t R_{d}}{p g}
+
+    where
+
+        * :math:`R_{d}` is the specific gas constant for dry air (see :data:`earthkit.meteo.constants.Rd`).
+        * :math:`g` is the gravitational acceleration (see :data:`earthkit.meteo.constants.g`)
+
+    """
     pass
 
 
 @dispatch
 def coriolis(lat: Any) -> Any:
-    r"""Compute the Coriolis parameter"""
-    pass
+    r"""Compute the Coriolis parameter
 
+    Parameters
+    ----------
+    lat : array-like
+        Latitude (degrees)
 
-@dispatch
-def windrose(
-    speed: Any,
-    direction: Any,
-    sectors: int = 16,
-    speed_bins: Iterable[float] | None = None,
-    percent: bool = True,
-) -> tuple[Any, Any]:
-    r"""Generate windrose data"""
+    Returns
+    -------
+    array-like
+        The Coriolis parameter (:math:`s^{-1}`)
+
+    Notes
+    -----
+    The Coriolis parameter is defined by the following formula:
+
+    .. math::
+
+        f = 2 \Omega sin(\phi)
+
+    where :math:`\Omega` is the rotation rate of Earth
+    (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
+
+    """
     pass
