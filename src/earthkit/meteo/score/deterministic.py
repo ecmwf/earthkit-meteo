@@ -133,7 +133,12 @@ def abs_error(
     agg_weights: xr.DataArray | None = None,
     is_angular: bool = False,
 ) -> T:
-    pass
+    assert agg_method in (None, "mean")
+    scores = import_scores_or_prompt_install()
+    reduce_dim = agg_dim or []
+    return scores.continuous.mae(
+        fcst, obs, reduce_dims=reduce_dim, weights=agg_weights, is_angular=is_angular
+    )
 
 
 def mean_abs_error(
@@ -143,7 +148,7 @@ def mean_abs_error(
     weights: xr.DataArray | None = None,
     is_angular: bool = False,
 ) -> T:
-    pass
+    return abs_error(fcst, obs, agg_method="mean", agg_dim=over, agg_weights=weights, is_angular=is_angular)
 
 
 def squared_error(
@@ -154,7 +159,12 @@ def squared_error(
     agg_weights: xr.DataArray | None = None,
     is_angular: bool = False,
 ) -> T:
-    pass
+    assert agg_method in (None, "mean")
+    scores = import_scores_or_prompt_install()
+    reduce_dim = agg_dim or []
+    return scores.continuous.mse(
+        fcst, obs, reduce_dims=reduce_dim, weights=agg_weights, is_angular=is_angular
+    )
 
 
 def mean_squared_error(
@@ -164,7 +174,9 @@ def mean_squared_error(
     weights: xr.DataArray | None = None,
     is_angular: bool = False,
 ) -> T:
-    pass
+    return squared_error(
+        fcst, obs, agg_method="mean", agg_dim=over, agg_weights=weights, is_angular=is_angular
+    )
 
 
 def root_mean_squared_error(
@@ -174,7 +186,7 @@ def root_mean_squared_error(
     weights: xr.DataArray | None = None,
     is_angular: bool = False,
 ) -> T:
-    pass
+    return mean_squared_error(fcst, obs, over, weights=weights, is_angular=is_angular) ** 0.5
 
 
 def standard_deviation_of_error(
@@ -182,6 +194,15 @@ def standard_deviation_of_error(
     obs: T,
     over: str | list[str],
     weights: xr.DataArray | None = None,
-    is_angular: bool = False,
 ) -> T:
-    pass
+    # TODO: support angular inputs in the future (is_angular)
+    # Minimal implementation using xarray operations; supports weights
+    error = fcst - obs
+
+    if weights is None:
+        mean = error.mean(dim=over)
+        var = ((error - mean) ** 2).mean(dim=over)
+    else:
+        mean = error.weighted(weights).mean(dim=over)
+        var = ((error - mean) ** 2).weighted(weights).mean(dim=over)
+    return var**0.5
