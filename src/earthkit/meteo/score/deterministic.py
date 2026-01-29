@@ -14,6 +14,7 @@ kge
 from typing import Literal
 from typing import TypeVar
 
+import numpy as np
 import xarray as xr
 
 T = TypeVar("T", xr.DataArray, xr.Dataset)
@@ -122,7 +123,13 @@ def mean_error(
     xarray object
         The mean error between the forecast and observations.
     """
-    return error(fcst, obs, agg_method="mean", agg_dim=over, agg_weights=weights)
+    return error(
+        fcst,
+        obs,
+        agg_method="mean",
+        agg_dim=over,
+        agg_weights=weights,
+    )
 
 
 def abs_error(
@@ -170,7 +177,11 @@ def abs_error(
     scores = _import_scores_or_prompt_install()
     reduce_dim = agg_dim or []
     return scores.continuous.mae(
-        fcst, obs, reduce_dims=reduce_dim, weights=agg_weights, is_angular=is_angular
+        fcst,
+        obs,
+        reduce_dims=reduce_dim,
+        weights=agg_weights,
+        is_angular=is_angular,
     )
 
 
@@ -261,7 +272,11 @@ def squared_error(
     scores = _import_scores_or_prompt_install()
     reduce_dim = agg_dim or []
     return scores.continuous.mse(
-        fcst, obs, reduce_dims=reduce_dim, weights=agg_weights, is_angular=is_angular
+        fcst,
+        obs,
+        reduce_dims=reduce_dim,
+        weights=agg_weights,
+        is_angular=is_angular,
     )
 
 
@@ -305,7 +320,12 @@ def mean_squared_error(
         The mean squared error between the forecast and observations.
     """
     return squared_error(
-        fcst, obs, agg_method="mean", agg_dim=over, agg_weights=weights, is_angular=is_angular
+        fcst,
+        obs,
+        agg_method="mean",
+        agg_dim=over,
+        agg_weights=weights,
+        is_angular=is_angular,
     )
 
 
@@ -407,3 +427,48 @@ def standard_deviation_of_error(
         mean = error.weighted(weights).mean(dim=over)
         var = ((error - mean) ** 2).weighted(weights).mean(dim=over)
     return var**0.5
+
+
+def pearson_correlation(
+    fcst: T,
+    obs: T,
+    over: str | list[str],
+    weights: xr.DataArray | None = None,
+    center: bool = True,
+) -> T:
+    # TODO: Copy pasted from vtb, consolidate before merge
+    # and implement xarray-native version without numpy
+    def _weighted_mean(array, weights, dim):
+        if weights is None:
+            return array.mean(dim)
+        return array.weighted(weights=weights).mean(dim=dim)
+
+    def _common_valid_mask(*arrays, dim=None):
+        # return a np bool array of occurrences of all values valid across dim
+        # return xr.concat(arrays, dim=dim).notnull().all(dim=dim)
+        mask = None
+        for array in arrays:
+            if dim is not None and dim in array.dims:
+                nmask = array.notnull().all(dim=dim)
+            else:
+                nmask = array.notnull()
+            if mask is None:
+                mask = nmask
+            else:
+                mask = mask & nmask
+        return mask
+
+    valid_mask = _common_valid_mask(obs, fcst, dim=None)
+    fcs = fcst.where(valid_mask)
+    obs = obs.where(valid_mask)
+    fs_var2 = _weighted_mean(fcs**2, weights, over)
+    ob_var2 = _weighted_mean(obs**2, weights, over)
+    covar = _weighted_mean(fcs * obs, weights, over)
+    if center:
+        fc_mean = _weighted_mean(fcs, weights, over)
+        ob_mean = _weighted_mean(obs, weights, over)
+        fs_var2 = fs_var2 - fc_mean**2
+        ob_var2 = ob_var2 - ob_mean**2
+        covar = covar - fc_mean * ob_mean
+    result = covar / np.sqrt(fs_var2 * ob_var2)
+    return result.where(~np.isinf(result))
