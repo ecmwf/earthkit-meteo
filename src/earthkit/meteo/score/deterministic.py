@@ -20,7 +20,7 @@ import xarray as xr
 T = TypeVar("T", xr.DataArray, xr.Dataset)
 
 
-def import_scores_or_prompt_install():
+def _import_scores_or_prompt_install():
     try:
         import scores
     except ImportError:
@@ -72,7 +72,7 @@ def error(
         The error between the forecast and observations, possibly aggregated.
     """
     assert agg_method in (None, "mean")
-    scores = import_scores_or_prompt_install()
+    scores = _import_scores_or_prompt_install()
 
     # TODO: Add comment explaining behavior here in scores
     reduce_dim = agg_dim or []
@@ -376,7 +376,6 @@ def standard_deviation_of_error(
     obs: T,
     over: str | list[str],
     weights: xr.DataArray | None = None,
-    is_angular: bool = False,
 ) -> T:
     r"""
     Calculates the standard deviation of error between a forecast and observations.
@@ -438,6 +437,8 @@ def pearson_correlation(
 ) -> T:
     # TODO: Copy pasted from vtb, consolidate before merge
     # and implement xarray-native version without numpy
+    # TODO: Maybe just use "unbiased" as a parameter name
+    #       as done in vtb
     def _weighted_mean(array, weights, dim):
         if weights is None:
             return array.mean(dim)
