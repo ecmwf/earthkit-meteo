@@ -19,7 +19,7 @@ import xarray as xr
 T = TypeVar("T", xr.DataArray, xr.Dataset)
 
 
-def import_scores_or_prompt_install():
+def _import_scores_or_prompt_install():
     try:
         import scores
     except ImportError:
@@ -71,7 +71,7 @@ def error(
         The error between the forecast and observations, possibly aggregated.
     """
     assert agg_method in (None, "mean")
-    scores = import_scores_or_prompt_install()
+    scores = _import_scores_or_prompt_install()
 
     # TODO: Add comment explaining behavior here in scores
     reduce_dim = agg_dim or []
@@ -134,7 +134,7 @@ def abs_error(
     is_angular: bool = False,
 ) -> T:
     assert agg_method in (None, "mean")
-    scores = import_scores_or_prompt_install()
+    scores = _import_scores_or_prompt_install()
     reduce_dim = agg_dim or []
     return scores.continuous.mae(
         fcst, obs, reduce_dims=reduce_dim, weights=agg_weights, is_angular=is_angular
@@ -160,7 +160,7 @@ def squared_error(
     is_angular: bool = False,
 ) -> T:
     assert agg_method in (None, "mean")
-    scores = import_scores_or_prompt_install()
+    scores = _import_scores_or_prompt_install()
     reduce_dim = agg_dim or []
     return scores.continuous.mse(
         fcst, obs, reduce_dims=reduce_dim, weights=agg_weights, is_angular=is_angular

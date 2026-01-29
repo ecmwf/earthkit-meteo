@@ -17,7 +17,7 @@ import xarray as xr
 T = TypeVar("T", xr.DataArray, xr.Dataset)
 
 
-def import_scores_or_prompt_install():
+def _import_scores_or_prompt_install():
     try:
         import scores
     except ImportError:
@@ -143,7 +143,7 @@ def crps_gaussian(fcst, obs):
     Returns
     -------
     xarray object
-        The CRPS of the forecast compared to the observations.
+        The CRPS of the Gaussian forecast compared to the observations.
     """
     # TODO: support cupy
     import scipy
@@ -208,7 +208,7 @@ def crps_from_ensemble(fcst, obs, over, method="ecdf", return_components=False):
         The CRPS of the ensemble forecast compared to the observations.
     """
 
-    scores = import_scores_or_prompt_install()
+    scores = _import_scores_or_prompt_install()
     reduce_dim = []
     return scores.ensemble.crps_for_ensemble(
         fcst,
@@ -274,10 +274,10 @@ def crps_from_cdf(fcst, obs, over, weight=None, return_components=False):
     Returns
     -------
     xarray object
-        The CRPS of the ensemble forecast compared to the observations.
+        The CRPS of the CDF forecast compared to the observations.
     """
 
-    scores = import_scores_or_prompt_install()
+    scores = _import_scores_or_prompt_install()
     reduce_dim = []
     return scores.ensemble.crps_cdf(
         fcst,
