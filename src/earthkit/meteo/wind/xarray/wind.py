@@ -36,6 +36,8 @@ def _apply_ufunc(func, num, *args, **kwargs):
     output_dtypes = _infer_output_dtypes(func, *args, **kwargs)
 
     opt = {}
+    # TODO: temporary fix for xarray ufunc with multiple outputs
+    # to make wind tests pass
     if num > 1:
         input_core_dims = [x.dims for x in args]
         output_core_dims = [x.dims for x in args]
