@@ -13,8 +13,6 @@ from importlib import import_module
 from typing import Any
 
 import xarray as xr
-import numpy as np
-import numpy as np
 
 # from earthkit.meteo.utils.metadata import metadata_handler
 METADATA_DEFAULTS: dict[str, dict[str, object]] = {
@@ -220,7 +218,8 @@ def dispatch(func):
 def _infer_output_count(func) -> int:
     try:
         import inspect
-        from typing import get_args, get_origin
+        from typing import get_args
+        from typing import get_origin
 
         annotation = inspect.signature(func).return_annotation
     except (ValueError, TypeError):

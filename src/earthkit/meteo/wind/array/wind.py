@@ -7,7 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import Any, TypeAlias
+from typing import Any
+from typing import TypeAlias
 
 from earthkit.utils.array import array_namespace
 

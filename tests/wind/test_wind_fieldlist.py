@@ -53,3 +53,22 @@ def test_fieldlist_wind_direction():
 
     ref = array_wind.direction(u[0].values, v[0].values)
     assert np.allclose(res[0].values, ref, equal_nan=True)
+
+
+@pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
+def test_fieldlist_w_from_omega():
+    import earthkit.data as ekd
+
+    ds = ekd.from_source("sample", "omega_pl.grib")
+
+    omega = ds.sel(param="w").order_by("level")
+    t = ds.sel(param="t").order_by("level")
+    res = wind.w_from_omega(omega, t, p=None)
+
+    assert len(omega) == 2
+    assert len(res) == 2
+    # assert res.metadata("paramId") == [260238] * 2
+    assert res.values.shape == omega.values.shape
+
+    ref = array_wind.w_from_omega(omega[0].values, t[0].values, omega[0].metadata("level") * 100.0)
+    assert np.allclose(res[0].values, ref, equal_nan=True)

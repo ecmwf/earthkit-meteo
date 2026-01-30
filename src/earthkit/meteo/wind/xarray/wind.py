@@ -14,7 +14,6 @@ from typing import Iterable
 import numpy as np
 import xarray as xr
 
-from earthkit.meteo.utils.decorators import xarray_metadata
 from earthkit.meteo.utils.decorators import xarray_ufunc
 
 from .. import array

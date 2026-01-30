@@ -1,19 +1,19 @@
+# (C) Copyright 2021 ECMWF.
 #
-# # (C) Copyright 2021 ECMWF.
-# #
-# # This software is licensed under the terms of the Apache Licence Version 2.0
-# # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-# # In applying this licence, ECMWF does not waive the privileges and immunities
-# # granted to it by virtue of its status as an intergovernmental organisation
-# # nor does it submit to any jurisdiction.
-# ##
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation
+# nor does it submit to any jurisdiction.
+#
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any  # noqa: F401
 from typing import overload
 
-from earthkit.meteo.utils.decorators import dispatch, metadata_handler
+from earthkit.meteo.utils.decorators import dispatch
 
 if TYPE_CHECKING:
     import xarray  # type: ignore[import]
@@ -265,18 +265,26 @@ def w_from_omega(omega: Any, t: Any, p: Any) -> Any:
     pass
 
 
+@overload
+def coriolis(lat: "xarray.DataArray") -> "xarray.DataArray": ...
+
+
+@overload
+def coriolis(lat: "FieldList") -> "FieldList": ...
+
+
 @dispatch
-def coriolis(lat: Any) -> Any:
+def coriolis(lat: "xarray.DataArray" | "FieldList") -> "xarray.DataArray" | "FieldList":
     r"""Compute the Coriolis parameter
 
     Parameters
     ----------
-    lat : array-like
+    lat : Xarray.DataArray | FieldList
         Latitude (degrees)
 
     Returns
     -------
-    array-like
+    Xarray.DataArray | FieldList
         The Coriolis parameter (:math:`s^{-1}`)
 
     Notes
@@ -289,6 +297,13 @@ def coriolis(lat: Any) -> Any:
 
     where :math:`\Omega` is the rotation rate of Earth
     (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
+
+    Implementations
+    ------------------------
+    :func:`coriolis` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.wind.xarray.coriolis` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.wind.fieldlist.coriolis` for FieldList
 
     """
     pass

@@ -10,7 +10,8 @@
 
 # import numpy as np
 
-from typing import Any, TypeAlias
+from typing import Any
+from typing import TypeAlias
 
 from earthkit.utils.array import array_namespace
 

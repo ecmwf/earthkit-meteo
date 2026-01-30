@@ -109,7 +109,9 @@ def relative_humidity_from_dewpoint(t: xr.DataArray, td: xr.DataArray) -> xr.Dat
 
 @metadata_handler(inputs=["temperature", "dewpoint"], outputs=["relative_humidity"])
 @xarray_ufunc()
-def relative_humidity_from_specific_humidity(t: xr.DataArray, q: xr.DataArray, p: xr.DataArray) -> xr.DataArray:
+def relative_humidity_from_specific_humidity(
+    t: xr.DataArray, q: xr.DataArray, p: xr.DataArray
+) -> xr.DataArray:
     r"""Compute the relative humidity from specific humidity.
 
     Parameters
