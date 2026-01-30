@@ -9,6 +9,7 @@ from earthkit.meteo.score.deterministic import error
 from earthkit.meteo.score.deterministic import mean_abs_error
 from earthkit.meteo.score.deterministic import mean_error
 from earthkit.meteo.score.deterministic import mean_squared_error
+from earthkit.meteo.score.deterministic import pearson_correlation
 from earthkit.meteo.score.deterministic import root_mean_squared_error
 from earthkit.meteo.score.deterministic import squared_error
 from earthkit.meteo.score.deterministic import standard_deviation_of_error
@@ -658,6 +659,107 @@ def test_standard_deviation_of_error_with_weights():
     # Both timesteps have weighted variance 0.16 -> std = 0.4
     expected = xr.Dataset(
         {"2t": (["valid_datetime"], np.array([0.4, 0.4]))},
+        coords={"valid_datetime": VALID_DATETIMES},
+    )
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
+def test_pearson_correlation(rng):
+    fcst_values = np.arange(18.0).reshape(2, 3, 3)
+    noise = rng.normal(0, 1, size=(2, 3, 3))
+    obs_values = fcst_values + noise
+
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
+
+    result = pearson_correlation(fcst, obs, over=["latitude", "longitude"])
+
+    expected_values = []
+    for t in range(2):
+        fcst_flat = fcst_values[t].flatten()
+        obs_flat = obs_values[t].flatten()
+        corr = np.corrcoef(fcst_flat, obs_flat)[0, 1]
+        expected_values.append(corr)
+
+    expected = xr.Dataset(
+        {"2t": (["valid_datetime"], np.array(expected_values))},
+        coords={"valid_datetime": VALID_DATETIMES},
+    )
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
+def test_pearson_correlation_with_weights(rng):
+    fcst_values = np.arange(18.0).reshape(2, 3, 3)
+    noise = rng.normal(0, 1, size=(2, 3, 3))
+    obs_values = fcst_values + noise
+
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
+
+    weights = xr.DataArray(
+        np.array([[1, 1, 1], [1, 2, 1], [1, 1, 1]], dtype=float),
+        dims=["latitude", "longitude"],
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+    )
+
+    result = pearson_correlation(
+        fcst,
+        obs,
+        over=["latitude", "longitude"],
+        weights=weights,
+    )
+
+    # TODO: maybe replace this with just the actual values
+    expected_values = []
+    for t in range(2):
+        fcst_flat = fcst_values[t].flatten()
+        obs_flat = obs_values[t].flatten()
+        w_flat = weights.values.flatten()
+        w_mean_fcst = np.average(fcst_flat, weights=w_flat)
+        w_mean_obs = np.average(obs_flat, weights=w_flat)
+        cov = np.average((fcst_flat - w_mean_fcst) * (obs_flat - w_mean_obs), weights=w_flat)
+        std_fcst = np.sqrt(np.average((fcst_flat - w_mean_fcst) ** 2, weights=w_flat))
+        std_obs = np.sqrt(np.average((obs_flat - w_mean_obs) ** 2, weights=w_flat))
+        corr = cov / (std_fcst * std_obs)
+        expected_values.append(corr)
+
+    expected = xr.Dataset(
+        {"2t": (["valid_datetime"], np.array(expected_values))},
+        coords={"valid_datetime": VALID_DATETIMES},
+    )
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
+def test_pearson_correlation_with_centering(rng):
+    fcst_values = np.arange(18.0).reshape(2, 3, 3)
+    noise = rng.normal(0, 1, size=(2, 3, 3))
+    obs_values = fcst_values + noise + 10.0  # add a bias of 10.0
+
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
+
+    result = pearson_correlation(
+        fcst,
+        obs,
+        over=["latitude", "longitude"],
+        center=True,
+    )
+
+    expected_values = []
+    for t in range(2):
+        fcst_flat = fcst_values[t].flatten()
+        obs_flat = obs_values[t].flatten()
+        # Centering
+        fcst_flat -= np.mean(fcst_flat)
+        obs_flat -= np.mean(obs_flat)
+        corr = np.corrcoef(fcst_flat, obs_flat)[0, 1]
+        expected_values.append(corr)
+
+    expected = xr.Dataset(
+        {"2t": (["valid_datetime"], np.array(expected_values))},
         coords={"valid_datetime": VALID_DATETIMES},
     )
     xr.testing.assert_allclose(result, expected)
