@@ -399,14 +399,13 @@ def standard_deviation_of_error(
 
     .. math::
 
-        e = \sqrt{ \frac{\sum_{i=1}^N (f_i - o_i - m_e)^2 w_i}{\sum_{i=1}^N w_i} }
+        e = \sqrt{ \frac{ \sum_{i=1}^N (f_i - o_i - m_e)^2 w_i }{ \sum_{i=1}^N w_i } }
 
     where:
 
     .. math::
 
-        m_e = \sum_{i=1}^N (f_i - o_i) w_i}{\sum_{i=1}^N w_i}
-
+        m_e = \frac{\sum_{i=1}^N (f_i - o_i) w_i}{\sum_{i=1}^N w_i}
     where:
 
     - :math:`f_i` is the forecast,
