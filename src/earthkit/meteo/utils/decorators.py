@@ -210,6 +210,7 @@ def dispatch(func, *args, **kwargs):
             # TODO: check if the function exists in the module
             return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
 
+
 # def dispatch(func):
 #     _module = ".".join(func.__module__.split(".")[:-1])
 #     # print(_module)
@@ -245,7 +246,7 @@ def _infer_output_count(func) -> int:
     return 1
 
 
-def xarray_ufunc(**xarray_ufunc_kwargs):
+def xarray_ufunc_deprecated(**xarray_ufunc_kwargs):
     """
     Decorator for xarray wrappers that call the matching array implementation via xr.apply_ufunc.
 
@@ -296,10 +297,10 @@ def xarray_ufunc(**xarray_ufunc_kwargs):
     return decorator
 
 
-def find_array_func():
-    module_name = func.__module__.replace(".xarray.", ".array.")
-    module = import_module(module_name)
-    array_func = getattr(module, func.__name__)
+# def find_array_func():
+#     module_name = func.__module__.replace(".xarray.", ".array.")
+#     module = import_module(module_name)
+#     array_func = getattr(module, func.__name__)
 
 
 def xarray_ufunc(func, *args, **kwargs):
@@ -329,4 +330,3 @@ def xarray_ufunc(func, *args, **kwargs):
         kwargs=kwargs,
         **merged,
     )
-

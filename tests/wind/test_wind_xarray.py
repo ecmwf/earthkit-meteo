@@ -10,7 +10,9 @@
 import numpy as np
 import pytest
 
+import earthkit.meteo.wind.array as array_wind
 from earthkit.meteo import wind
+from earthkit.meteo.utils.testing import NO_EKD
 from earthkit.meteo.utils.testing import NO_XARRAY
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
@@ -178,12 +180,28 @@ def test_xr_wind_polar_to_xy(sp, d, u_ref, v_ref):
 @pytest.mark.parametrize(
     "omega,t,p,v_ref", [([1.2, 21.3], [285.6, 261.1], [1000, 850], [-0.1003208031, -1.9152219066])]
 )
-def test_w_from_omega(omega, t, p, v_ref):
+def test_xr_w_from_omega_1(omega, t, p, v_ref):
     omega = _da(omega)
     t = _da(t)
     p = _da(p) * 100.0
     w = wind.w_from_omega(omega, t, p)
     assert np.allclose(w.values, np.asarray(v_ref))
+
+
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
+@pytest.mark.skipif(NO_EKD, reason="earthkit-data is not installed")
+def test_xr_w_from_omega_2():
+    import earthkit.data as ekd
+
+    ds = ekd.from_source("sample", "omega_pl.grib").to_xarray()
+    omega = ds["w"]
+    t = ds["t"]
+    p = ds["level"] * 100.0
+
+    w = wind.w_from_omega(omega, t, p)
+
+    w_ref = array_wind.w_from_omega(omega.values, t.values, p.values[:, np.newaxis, np.newaxis])
+    assert np.allclose(w.values, np.asarray(w_ref))
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")

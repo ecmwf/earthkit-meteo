@@ -19,7 +19,6 @@ from earthkit.meteo.utils.decorators import xarray_ufunc
 from .. import array
 
 
-@xarray_ufunc()
 def speed(u: xr.DataArray, v: xr.DataArray) -> xr.DataArray:
     r"""Compute the wind speed/vector magnitude.
 
@@ -35,10 +34,9 @@ def speed(u: xr.DataArray, v: xr.DataArray) -> xr.DataArray:
     xarray.DataArray
         Wind speed/magnitude (same units as ``u`` and ``v``)
     """
-    ...
+    return xarray_ufunc(array.speed, u, v)
 
 
-@xarray_ufunc()
 def direction(
     u: xr.DataArray, v: xr.DataArray, convention: str = "meteo", to_positive: bool = True
 ) -> xr.DataArray:
@@ -77,10 +75,9 @@ def direction(
         :width: 400px
 
     """
-    ...
+    return xarray_ufunc(array.direction, u, v, convention=convention, to_positive=to_positive)
 
 
-@xarray_ufunc()
 def xy_to_polar(
     x: xr.DataArray, y: xr.DataArray, convention: str = "meteo"
 ) -> tuple[xr.DataArray, xr.DataArray]:
@@ -112,7 +109,7 @@ def xy_to_polar(
     In the target xy representation the x axis points East while the y axis points North.
 
     """
-    ...
+    return xarray_ufunc(array.xy_to_polar, x, y, convention=convention)
 
 
 def polar_to_xy(
@@ -149,8 +146,7 @@ def polar_to_xy(
     return xarray_ufunc(array.polar_to_xy, magnitude, direction, convention=convention)
 
 
-@xarray_ufunc()
-def w_from_omega(omega: xr.DataArray, t: xr.DataArray, p: xr.DataArray) -> xr.DataArray:
+def w_from_omega(omega: xr.DataArray, t: xr.DataArray, p: xr.DataArray | None = None) -> xr.DataArray:
     r"""Compute the hydrostatic vertical velocity from pressure velocity, temperature and pressure.
 
     Parameters
@@ -182,10 +178,9 @@ def w_from_omega(omega: xr.DataArray, t: xr.DataArray, p: xr.DataArray) -> xr.Da
         * :math:`g` is the gravitational acceleration (see :data:`earthkit.meteo.constants.g`)
 
     """
-    ...
+    return xarray_ufunc(array.w_from_omega, omega, t, p)
 
 
-@xarray_ufunc()
 def coriolis(lat: xr.DataArray) -> xr.DataArray:
     r"""Compute the Coriolis parameter.
 
@@ -212,7 +207,7 @@ def coriolis(lat: xr.DataArray) -> xr.DataArray:
     (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
 
     """
-    ...
+    return xarray_ufunc(array.coriolis, lat)
 
 
 def windrose(
