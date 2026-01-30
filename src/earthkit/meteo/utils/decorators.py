@@ -14,6 +14,7 @@ from typing import Any
 
 import xarray as xr
 
+
 def _is_xarray(obj: Any) -> bool:
     from earthkit.meteo.utils import is_module_loaded
 
