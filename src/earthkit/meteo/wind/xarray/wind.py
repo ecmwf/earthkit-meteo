@@ -146,7 +146,7 @@ def polar_to_xy(
     return xarray_ufunc(array.polar_to_xy, magnitude, direction, convention=convention)
 
 
-def w_from_omega(omega: xr.DataArray, t: xr.DataArray, p: xr.DataArray | None = None) -> xr.DataArray:
+def w_from_omega(omega: xr.DataArray, t: xr.DataArray, p: xr.DataArray) -> xr.DataArray:
     r"""Compute the hydrostatic vertical velocity from pressure velocity, temperature and pressure.
 
     Parameters
