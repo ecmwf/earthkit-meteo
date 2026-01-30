@@ -7,13 +7,16 @@
 # nor does it submit to any jurisdiction.
 #
 
+from __future__ import annotations
+
 import xarray as xr
 
 from earthkit.meteo.utils.decorators import metadata_handler
 from earthkit.meteo.utils.decorators import xarray_ufunc
 
+from .. import array
 
-@xarray_ufunc()
+
 def celsius_to_kelvin(t: xr.DataArray) -> xr.DataArray:
     r"""Convert temperature values from Celsius to Kelvin.
 
@@ -28,10 +31,9 @@ def celsius_to_kelvin(t: xr.DataArray) -> xr.DataArray:
         Temperature in Kelvin units
 
     """
-    ...
+    return xarray_ufunc(array.celsius_to_kelvin, t)
 
 
-@xarray_ufunc()
 def kelvin_to_celsius(t: xr.DataArray) -> xr.DataArray:
     r"""Convert temperature values from Kelvin to Celsius.
 
@@ -46,12 +48,11 @@ def kelvin_to_celsius(t: xr.DataArray) -> xr.DataArray:
         Temperature in Celsius units
 
     """
-    ...
+    return xarray_ufunc(array.kelvin_to_celsius, t)
 
 
 @metadata_handler(inputs=["mixing_ratio"], outputs=["specific_humidity"])
-@xarray_ufunc()
-def specific_humidity_from_mixing_ratio(w: xr.DataArray, t: xr.DataArray) -> xr.DataArray:
+def specific_humidity_from_mixing_ratio(w: xr.DataArray) -> xr.DataArray:
     r"""Compute the specific humidity from mixing ratio.
 
     Parameters
@@ -73,25 +74,24 @@ def specific_humidity_from_mixing_ratio(w: xr.DataArray, t: xr.DataArray) -> xr.
         q = \frac {w}{1+w}
 
     """
-    ...
+    return xarray_ufunc(array.specific_humidity_from_mixing_ratio, w)
 
 
 @metadata_handler(inputs=["temperature", "dewpoint"], outputs=["relative_humidity"])
-@xarray_ufunc()
 def relative_humidity_from_dewpoint(t: xr.DataArray, td: xr.DataArray) -> xr.DataArray:
     r"""Compute the relative humidity from dew point temperature
 
     Parameters
     ----------
-    t : xr.DataArray
+    t : xarray.DataArray
         Temperature (K)
-    td: xr.DataArray
+    td: xarray.DataArray
         Dewpoint (K)
 
 
     Returns
     -------
-    "xarray.DataArray"
+    xarray.DataArray
         Relative humidity (%)
 
 
@@ -104,11 +104,10 @@ def relative_humidity_from_dewpoint(t: xr.DataArray, td: xr.DataArray) -> xr.Dat
     where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
 
     """
-    ...
+    return xarray_ufunc(array.relative_humidity_from_dewpoint, t, td)
 
 
 @metadata_handler(inputs=["temperature", "dewpoint"], outputs=["relative_humidity"])
-@xarray_ufunc()
 def relative_humidity_from_specific_humidity(
     t: xr.DataArray, q: xr.DataArray, p: xr.DataArray
 ) -> xr.DataArray:
@@ -116,16 +115,16 @@ def relative_humidity_from_specific_humidity(
 
     Parameters
     ----------
-    t: xr.DataArray
+    t: xarray.DataArray
         Temperature (K)
-    q: xr.DataArray
+    q: xarray.DataArray
         Specific humidity (kg/kg)
-    p: xr.DataArray
+    p: xarray.DataArray
         Pressure (Pa)
 
     Returns
     -------
-    array-like
+    xarray.DataArray
         Relative humidity (%)
 
 
@@ -142,3 +141,4 @@ def relative_humidity_from_specific_humidity(
 
     """
     ...
+    return xarray_ufunc(array.relative_humidity_from_specific_humidity, t, q, p)

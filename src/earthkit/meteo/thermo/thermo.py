@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 from typing import Any  # noqa: F401
 from typing import overload
 
+from earthkit.meteo.utils.decorators import dispatch
+
 if TYPE_CHECKING:
     import xarray  # type: ignore[import]
     from earthkit.data import FieldList  # type: ignore[import]
@@ -19,83 +21,21 @@ if TYPE_CHECKING:
 from . import array
 
 
-# TODO: move these underscore functions to meteo.utils
-def _is_xarray(obj: Any) -> bool:
-    from earthkit.meteo.utils import is_module_loaded
-
-    if not is_module_loaded("xarray"):
-        return False
-
-    try:
-        import xarray as xr
-
-        return isinstance(obj, (xr.DataArray, xr.Dataset))
-    except (ImportError, RuntimeError, SyntaxError):
-        return False
-
-
-def _is_fieldlist(obj: Any) -> bool:
-    from earthkit.meteo.utils import is_module_loaded
-
-    if not is_module_loaded("earthkit.data"):
-        return False
-
-    try:
-        from earthkit.data import FieldList
-
-        return isinstance(obj, FieldList)
-    except ImportError:
-        return False
-
-
-def _call(func: str, *args: Any, **kwargs: Any) -> Any:
-    if _is_xarray(args[0]):
-        from . import xarray as _module
-    elif _is_fieldlist(args[0]):
-        from . import fieldlist as _module
-
-    return getattr(_module, func)(*args, **kwargs)
-
-
-@overload
-def celsius_to_kelvin(t: "xarray.DataArray") -> "xarray.DataArray":
-    """Convert temperature values from Celsius to Kelvin.
+def celsius_to_kelvin(t: Any) -> Any:
+    r"""Convert temperature values from Celsius to Kelvin.
 
     Parameters
     ----------
-    t : xarray.DataArray
+    t : array-like
         Temperature in Celsius units
 
     Returns
     -------
-    xarray.DataArray
+    array-like
         Temperature in Kelvin units
 
     """
-    ...
-
-
-def celsius_to_kelvin(t, **kwargs: Any) -> Any:
-    """Convert temperature from Celsius to Kelvin."""
-    return _call("celsius_to_kelvin", t, **kwargs)
-
-
-@overload
-def kelvin_to_celsius(t: "xarray.DataArray") -> "xarray.DataArray":
-    r"""Convert temperature values from Kelvin to Celsius.
-
-    Parameters
-    ----------
-    t : xarray.DataArray
-        Temperature in Kelvin units
-
-    Returns
-    -------
-    xarray.DataArray
-        Temperature in Celsius units
-
-    """
-    ...
+    return dispatch(celsius_to_kelvin, t)
 
 
 def kelvin_to_celsius(t: Any) -> Any:
@@ -103,16 +43,16 @@ def kelvin_to_celsius(t: Any) -> Any:
 
     Parameters
     ----------
-    t : Any
+    t : array-like
         Temperature in Kelvin units
 
     Returns
     -------
-    Any
+    array-like
         Temperature in Celsius units
 
     """
-    return _call("kelvin_to_celsius", t)
+    return dispatch(kelvin_to_celsius, t)
 
 
 @overload
@@ -167,17 +107,18 @@ def specific_humidity_from_mixing_ratio(w: "FieldList") -> "FieldList":
     ...
 
 
-def specific_humidity_from_mixing_ratio(w: Any) -> Any:
+def specific_humidity_from_mixing_ratio(
+    w: "xarray.DataArray" | "FieldList") -> "xarray.DataArray" | "FieldList":
     r"""Compute the specific humidity from mixing ratio.
 
     Parameters
     ----------
-    w : Any
+    w : xarray.DataArray, FieldList
         Mixing ratio (kg/kg)
 
     Returns
     -------
-    Any
+    xarray.DataArray, FieldList
         Specific humidity (kg/kg)
 
 
@@ -189,7 +130,8 @@ def specific_humidity_from_mixing_ratio(w: Any) -> Any:
         q = \frac {w}{1+w}
 
     """
-    return _call("specific_humidity_from_mixing_ratio", w)
+    return dispatch(specific_humidity_from_mixing_ratio, w)
+
 
 
 def mixing_ratio_from_specific_humidity(*args, **kwargs):
@@ -246,15 +188,15 @@ def relative_humidity_from_dewpoint(t: "xarray.DataArray", td: "xarray.DataArray
 
     Parameters
     ----------
-    t : "xarray.DataArray"
+    t : xarray.DataArray
         Temperature (K)
-    td: "xarray.DataArray"
+    td: xarray.DataArray
         Dewpoint (K)
 
 
     Returns
     -------
-    "xarray.DataArray"
+    xarray.DataArray
         Relative humidity (%)
 
 
@@ -267,6 +209,7 @@ def relative_humidity_from_dewpoint(t: "xarray.DataArray", td: "xarray.DataArray
     where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
 
     """
+    ...
 
 
 @overload
@@ -275,15 +218,15 @@ def relative_humidity_from_dewpoint(t: "FieldList", td: "FieldList") -> "FieldLi
 
     Parameters
     ----------
-    t : "FieldList"
+    t : FieldList
         Temperature (K)
-    td: "FieldList"
+    td: FieldList
         Dewpoint (K)
 
 
     Returns
     -------
-    "FieldList"
+    FieldList
         Relative humidity (%)
 
 
@@ -296,22 +239,26 @@ def relative_humidity_from_dewpoint(t: "FieldList", td: "FieldList") -> "FieldLi
     where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
 
     """
+    ...
 
 
-def relative_humidity_from_dewpoint(t, td, **kwargs: Any) -> Any:
+def relative_humidity_from_dewpoint(
+    t: "xarray.DataArray" | "FieldList",
+    td: "xarray.DataArray" | "FieldList",
+) -> "xarray.DataArray" | "FieldList":
     r"""Compute the relative humidity from dew point temperature
 
     Parameters
     ----------
-    t : Any
+    t: xarray.DataArray | FieldList
         Temperature (K)
-    td: Any
+    td: xarray.DataArray | FieldList
         Dewpoint (K)
 
 
     Returns
     -------
-    Any
+    : xarray.DataArray | FieldList
         Relative humidity (%)
 
 
@@ -324,7 +271,8 @@ def relative_humidity_from_dewpoint(t, td, **kwargs: Any) -> Any:
     where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
 
     """
-    return _call("relative_humidity_from_dewpoint", t, td)
+    return dispatch(relative_humidity_from_dewpoint, t, td)
+
 
 
 @overload
@@ -360,6 +308,7 @@ def relative_humidity_from_specific_humidity(
         * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
 
     """
+    ...
 
 
 @overload
@@ -395,21 +344,25 @@ def relative_humidity_from_specific_humidity(t: "FieldList", q: "FieldList", p: 
     """
 
 
-def relative_humidity_from_specific_humidity(t, q, p, **kwargs: Any) -> Any:
+def relative_humidity_from_specific_humidity(
+    t: "xarray.DataArray" | "FieldList",
+    q: "xarray.DataArray" | "FieldList",
+    p: "xarray.DataArray" | "FieldList",
+) -> "xarray.DataArray" | "FieldList":
     r"""Compute the relative humidity from specific humidity.
 
     Parameters
     ----------
-    t: FieldList
+    t: xarray.DataArray | FieldList
         Temperature (K)
-    q: FieldList
+    q: xarray.DataArray | FieldList
         Specific humidity (kg/kg)
-    p: FieldList
+    p: xarray.DataArray | FieldList
         Pressure (Pa)
 
     Returns
     -------
-    FieldList
+    xarray.DataArray | FieldList
         Relative humidity (%)
 
 
@@ -425,7 +378,7 @@ def relative_humidity_from_specific_humidity(t, q, p, **kwargs: Any) -> Any:
         * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
 
     """
-    return _call("relative_humidity_from_specific_humidity", t, q, p)
+    return dispatch(relative_humidity_from_specific_humidity, t, q, p)
 
 
 def specific_humidity_from_dewpoint(*args, **kwargs):
