@@ -40,6 +40,10 @@ def error(
     - :math:`o_i` are the observations,
     - :math:`e_i` is the error.
 
+    .. seealso::
+
+        This function leverages the `scores.continuous.additive_bias <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.additive_bias>`_ function.
+
     Parameters
     ----------
     fcst : xarray object
@@ -94,6 +98,10 @@ def mean_error(
     - :math:`w_i` are the weights,
     - :math:`e` is the mean error.
 
+    .. seealso::
+
+        This function leverages the `scores.continuous.additive_bias <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.additive_bias>`_ function.
+
     Parameters
     ----------
     fcst : xarray object
@@ -141,6 +149,10 @@ def abs_error(
     - :math:`f_i` is the forecast,
     - :math:`o_i` are the observations,
     - :math:`e_i` is the absolute error.
+
+    .. seealso::
+
+        This function leverages the `scores.continuous.mae <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mae>`_ function.
 
     Parameters
     ----------
@@ -195,6 +207,10 @@ def mean_abs_error(
     - :math:`w_i` are the weights,
     - :math:`e` is the mean absolute error.
 
+    .. seealso::
+
+        This function leverages the `scores.continuous.mae <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mae>`_ function.
+
     Parameters
     ----------
     fcst : xarray object
@@ -236,6 +252,10 @@ def squared_error(
     - :math:`f_i` is the forecast,
     - :math:`o_i` are the observations,
     - :math:`e_i` is the absolute error.
+
+    .. seealso::
+
+        This function leverages the `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_ function.
 
     Parameters
     ----------
@@ -290,6 +310,10 @@ def mean_squared_error(
     - :math:`w_i` are the weights,
     - :math:`e` is the mean squared error.
 
+    .. seealso::
+
+        This function leverages the `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_ function.
+
     Parameters
     ----------
     fcst : xarray object
@@ -338,6 +362,10 @@ def root_mean_squared_error(
     - :math:`o_i` are the observations,
     - :math:`w_i` are the weights,
     - :math:`e` is the root mean squared error.
+
+    .. seealso::
+
+        This function leverages the `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_ function.
 
     Parameters
     ----------
