@@ -12,6 +12,7 @@ from earthkit.meteo.score.deterministic import mean_squared_error
 from earthkit.meteo.score.deterministic import root_mean_squared_error
 from earthkit.meteo.score.deterministic import squared_error
 from earthkit.meteo.score.deterministic import standard_deviation_of_error
+from earthkit.meteo.utils.testing import NO_SCORES
 
 LATITUDES = [40.0, 41.0, 42.0]
 LONGITUDES = [10.0, 11.0, 12.0]
@@ -64,6 +65,7 @@ def rng():
 # TODO: Should we support valid_datetime coord propagation?
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_error(rng):
     fcst_values = np.arange(18.0).reshape(2, 3, 3)
     error_values = rng.uniform(-5, 5, size=(2, 3, 3))
@@ -78,6 +80,7 @@ def test_error(rng):
     xr.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_error_accepts_dataarray(rng):
     """Verify API accepts both Dataset and DataArray input."""
     fcst_values = np.arange(18.0).reshape(2, 3, 3)
@@ -92,6 +95,7 @@ def test_error_accepts_dataarray(rng):
     assert result_da.shape == (2, 3, 3)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_error_with_aggregation():
     # Error varies by dimension so we can verify correct aggregation axis
     # Rows (lat): [1,1,1], [2,2,2], [3,3,3] -> mean over lat = [2,2,2]
@@ -139,6 +143,7 @@ def test_error_with_aggregation():
     xr.testing.assert_equal(result_both, expected_both)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_error_with_weighted_aggregation():
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
@@ -181,24 +186,25 @@ def test_error_invalid_agg_method(fcst, obs):
         error(fcst, obs, agg_method="sum", agg_dim=["latitude", "longitude"])
 
 
-@pytest.mark.skip("TODO")
-def test_error_weights_without_agg_dim(fcst, obs):
-    weights = xr.DataArray(
-        np.ones((3, 3)),
-        dims=["latitude", "longitude"],
-        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
-    )
-    with pytest.raises((ValueError, TypeError)):
-        error(fcst, obs, agg_weights=weights)
+# @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
+# def test_error_weights_without_agg_dim(fcst, obs):
+#     weights = xr.DataArray(
+#         np.ones((3, 3)),
+#         dims=["latitude", "longitude"],
+#         coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+#     )
+#     with pytest.raises((ValueError, TypeError)):
+#         error(fcst, obs, agg_weights=weights)
 
 
-@pytest.mark.skip("TODO")
-def test_error_agg_dim_without_agg_method(fcst, obs):
-    # TODO This might be silently ignored, or might raise - decide
-    with pytest.raises((ValueError)):
-        error(fcst, obs, agg_dim=["latitude"])
+# @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
+# def test_error_agg_dim_without_agg_method(fcst, obs):
+#     # TODO This might be silently ignored, or might raise - decide
+#     with pytest.raises((ValueError)):
+#         error(fcst, obs, agg_dim=["latitude"])
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_mean_error(rng):
     # Error pattern: rows vary [1,2,3], so mean over lat/lon shows per-timestep variation
     fcst_values = np.full((2, 3, 3), 10.0)
@@ -225,6 +231,7 @@ def test_mean_error(rng):
     xr.testing.assert_equal(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_mean_error_with_weights(rng):
     # Error pattern: rows vary [1,2,3], so mean over lat/lon shows per-timestep variation
     fcst_values = np.full((2, 3, 3), 10.0)
@@ -262,6 +269,7 @@ def test_mean_error_with_weights(rng):
     xr.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_abs_error():
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
@@ -282,6 +290,7 @@ def test_abs_error():
     xr.testing.assert_equal(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_abs_error_is_angular():
     # Wind directions: 350° vs 10° should have error of 20°, not 340°
     fcst_values = np.array(
@@ -317,6 +326,7 @@ def test_abs_error_is_angular():
     xr.testing.assert_equal(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_abs_error_with_aggregation():
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
@@ -351,6 +361,7 @@ def test_abs_error_with_aggregation():
     xr.testing.assert_equal(result_both, expected_both)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_abs_error_with_weighted_aggregation():
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
@@ -388,11 +399,13 @@ def test_abs_error_with_weighted_aggregation():
     xr.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_abs_error_invalid_agg_method(fcst, obs):
     with pytest.raises(AssertionError):
         abs_error(fcst, obs, agg_method="sum", agg_dim=["latitude", "longitude"])
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_mean_abs_error():
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
@@ -418,6 +431,7 @@ def test_mean_abs_error():
     xr.testing.assert_equal(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_squared_error():
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
@@ -438,6 +452,7 @@ def test_squared_error():
     xr.testing.assert_equal(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_squared_error_is_angular():
     fcst_values = np.array(
         [
@@ -472,6 +487,7 @@ def test_squared_error_is_angular():
     xr.testing.assert_equal(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_squared_error_with_aggregation():
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
@@ -496,6 +512,7 @@ def test_squared_error_with_aggregation():
     xr.testing.assert_allclose(result_both, expected_both)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_squared_error_with_weighted_aggregation():
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
@@ -533,11 +550,13 @@ def test_squared_error_with_weighted_aggregation():
     xr.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_squared_error_invalid_agg_method(fcst, obs):
     with pytest.raises(AssertionError):
         squared_error(fcst, obs, agg_method="sum", agg_dim=["latitude", "longitude"])
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_mean_squared_error():
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
@@ -561,6 +580,7 @@ def test_mean_squared_error():
     xr.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_root_mean_squared_error():
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
