@@ -54,16 +54,17 @@ def rng():
 
 
 # TODO: Consolidate aggregation tests with and without weights
-# TODO: Check that weights dataarray has correct dims matching agg_dim?
+# TODO: Check that weights dataarray has correct dims matching agg_dim? (check what scores does)
 # TODO: Use more interesting fcst/obs data patterns in tests
 # TODO: Test NaN handling in both raw error and aggregation
-#       Functions should clearly document how NaNs are handled
+#       Docstrings should clearly document how NaNs are handled
 #       (e.g., skip NaNs in aggregation, propagate NaNs in error calc, etc.)
 # TODO: Change some tests to not use lat/lon as "over" dims but use valid_datetime.
 #       All "low-level" functions should support any dims and we should verify that.
 # TODO: Test with non-existent dimension in agg_dim (should raise)
 # TODO: Test single variable vs multiple variables in Dataset
 # TODO: Should we support valid_datetime coord propagation?
+# TODO: Test cupy backed xarray also
 
 
 @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")

@@ -1,16 +1,3 @@
-"""
-error
-mean_error
-abs_error
-mean_abs_error
-squared_error
-mean_squared_error
-root_mean_squared_error
-standard_deviation_of_error
-correlation
-kge
-"""
-
 from typing import Literal
 from typing import TypeVar
 
@@ -428,34 +415,97 @@ def standard_deviation_of_error(
     return var**0.5
 
 
+def cosine_similarity(
+    fcst: T,
+    obs: T,
+    over: str | list[str],
+    weights: xr.DataArray | None = None,
+) -> T:
+    r"""
+    Calculates the cosine similarity between a forecast and observations.
+
+    The cosine similarity is defined as:
+
+    .. math::
+        \frac{\overline{f o}}{\sqrt{\overline{f^2}\ \overline{o^2}}}
+
+    where the averaging operator is defined as:
+
+    .. math::
+        \overline{x} = \frac{\sum_{i=1}^N x_i w_i}{\sum_{i=1}^N w_i}
+
+    and
+
+    - :math:`f_i` is the forecast,
+    - :math:`o_i` are the observations,
+    - :math:`w_i` are the weights,
+    - :math:`c` is the cosine similarity.
+
+    Parameters
+    ----------
+    fcst : xarray object
+        The forecast xarray.
+    obs : xarray object
+        The observations xarray.
+    over : str or list of str
+        The dimension(s) over which to aggregate.
+    weights : xarray object, optional
+        Weights to apply during aggregation. Default is None.
+
+    Returns
+    -------
+    xarray object
+        The cosine similarity between the forecast and observations.
+    """
+
+    def _weighted_mean(array, weights, dim):
+        if weights is None:
+            return array.mean(dim)
+        return array.weighted(weights=weights).mean(dim=dim)
+
+    def _common_valid_mask(*arrays):
+        # return a np bool array of occurrences of all values valid across dim
+        # return xr.concat(arrays, dim=dim).notnull().all(dim=dim)
+        mask = None
+        for array in arrays:
+            nmask = array.notnull()
+            if mask is None:
+                mask = nmask
+            else:
+                mask = mask & nmask
+        return mask
+
+    # TODO: simplify logic
+    valid_mask = _common_valid_mask(obs, fcst)
+    fcs = fcst.where(valid_mask)
+    obs = obs.where(valid_mask)
+    fs_var2 = _weighted_mean(fcs**2, weights, over)
+    ob_var2 = _weighted_mean(obs**2, weights, over)
+    covar = _weighted_mean(fcs * obs, weights, over)
+    result = covar / np.sqrt(fs_var2 * ob_var2)
+    return result.where(np.isfinite(result))
+
+
 def pearson_correlation(
     fcst: T,
     obs: T,
     over: str | list[str],
     weights: xr.DataArray | None = None,
-    center: bool = True,
 ) -> T:
     r"""
     Calculates the Pearson correlation between a forecast and observations.
 
     The correlation is defined as:
 
-    - for `center=True` (default)
-
-        .. math::
-            c = \frac{
-            \sum_{i=1}^N {\left(f-\overline{f}\right)\left(o-\overline{o}\right)}
-            }
-            {\sqrt{
-            \overline{\left(f-\overline{f}\right)^2}
-            \
-            \overline{\left(o-\overline{o}\right)^2}
-            }}
-
-    - for `center=False`
-
-        .. math::
-            \frac{\overline{f o}}{\sqrt{\overline{f^2}\ \overline{o^2}}}
+    .. math::
+        c = \frac{
+        \sum_{i=1}^N {\left(f-\overline{f}\right)\left(o-\overline{o}\right)}
+        }
+        {\sqrt{
+        \overline{\left(f-\overline{f}\right)^2}
+        \
+        \overline{\left(o-\overline{o}\right)^2}
+        }}
 
     where the averaging operator is defined as:
 
@@ -486,10 +536,6 @@ def pearson_correlation(
         The correlation between the forecast and observations.
     """
 
-    # TODO: Copy pasted from vtb, consolidate before merge
-    # and implement xarray-native version without numpy
-    # TODO: Maybe just use "unbiased" as a parameter name
-    #       as done in vtb
     def _weighted_mean(array, weights, dim):
         if weights is None:
             return array.mean(dim)
@@ -507,17 +553,20 @@ def pearson_correlation(
                 mask = mask & nmask
         return mask
 
+    # TODO: use scores implementation?
+    # TODO: call the cosine similarity function?
+    # with fcst - mean(fcst) and obs - mean(obs)
+    # (mathematically equivalent to correlation)
     valid_mask = _common_valid_mask(obs, fcst)
     fcs = fcst.where(valid_mask)
     obs = obs.where(valid_mask)
     fs_var2 = _weighted_mean(fcs**2, weights, over)
     ob_var2 = _weighted_mean(obs**2, weights, over)
     covar = _weighted_mean(fcs * obs, weights, over)
-    if center:
-        fc_mean = _weighted_mean(fcs, weights, over)
-        ob_mean = _weighted_mean(obs, weights, over)
-        fs_var2 = fs_var2 - fc_mean**2
-        ob_var2 = ob_var2 - ob_mean**2
-        covar = covar - fc_mean * ob_mean
+    fc_mean = _weighted_mean(fcs, weights, over)
+    ob_mean = _weighted_mean(obs, weights, over)
+    fs_var2 = fs_var2 - fc_mean**2
+    ob_var2 = ob_var2 - ob_mean**2
+    covar = covar - fc_mean * ob_mean
     result = covar / np.sqrt(fs_var2 * ob_var2)
-    return result.where(~np.isinf(result))
+    return result.where(np.isfinite(result))
