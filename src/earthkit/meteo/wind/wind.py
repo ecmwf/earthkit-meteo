@@ -60,7 +60,6 @@ def speed(u: "FieldList", v: "FieldList") -> "FieldList":
     ...
 
 
-@dispatch
 def speed(
     u: "xarray.DataArray" | "FieldList", v: "xarray.DataArray" | "FieldList"
 ) -> "xarray.DataArray" | "FieldList":
@@ -87,7 +86,7 @@ def speed(
     - :py:meth:`earthkit.meteo.wind.fieldlist.speed` for FieldList
 
     """
-    pass
+    return dispatch(speed, u, v)
 
 
 @overload
@@ -108,7 +107,6 @@ def direction(
 ) -> "FieldList": ...
 
 
-@dispatch
 def direction(
     u: "xarray.DataArray" | "FieldList",
     v: "xarray.DataArray" | "FieldList",
@@ -160,10 +158,9 @@ def direction(
     - :py:meth:`earthkit.meteo.wind.fieldlist.direction` for FieldList
 
     """
-    pass
+    return dispatch(direction, u, v, convention=convention, to_positive=to_positive)
 
 
-@dispatch
 def xy_to_polar(x: Any, y: Any, convention: str = "meteo") -> tuple[Any, Any]:
     r"""Convert wind/vector data from xy representation to polar representation.
 
@@ -193,10 +190,9 @@ def xy_to_polar(x: Any, y: Any, convention: str = "meteo") -> tuple[Any, Any]:
     In the target xy representation the x axis points East while the y axis points North.
 
     """
-    pass
+    return dispatch(xy_to_polar, x, y, convention=convention)
 
 
-@dispatch
 def polar_to_xy(magnitude: Any, direction: Any, convention: str = "meteo") -> tuple[Any, Any]:
     r"""Convert wind/vector data from polar representation to xy representation.
 
@@ -227,10 +223,9 @@ def polar_to_xy(magnitude: Any, direction: Any, convention: str = "meteo") -> tu
     In the target xy representation the x axis points East while the y axis points North.
 
     """
-    pass
+    return dispatch(polar_to_xy, magnitude, direction, convention=convention)
 
 
-@dispatch
 def w_from_omega(omega: Any, t: Any, p: Any) -> Any:
     r"""Compute the hydrostatic vertical velocity from pressure velocity
 
@@ -262,7 +257,7 @@ def w_from_omega(omega: Any, t: Any, p: Any) -> Any:
         * :math:`g` is the gravitational acceleration (see :data:`earthkit.meteo.constants.g`)
 
     """
-    pass
+    return dispatch(w_from_omega, omega, t, p)
 
 
 @overload
@@ -273,7 +268,6 @@ def coriolis(lat: "xarray.DataArray") -> "xarray.DataArray": ...
 def coriolis(lat: "FieldList") -> "FieldList": ...
 
 
-@dispatch
 def coriolis(lat: "xarray.DataArray" | "FieldList") -> "xarray.DataArray" | "FieldList":
     r"""Compute the Coriolis parameter
 
@@ -306,4 +300,4 @@ def coriolis(lat: "xarray.DataArray" | "FieldList") -> "xarray.DataArray" | "Fie
     - :py:meth:`earthkit.meteo.wind.fieldlist.coriolis` for FieldList
 
     """
-    pass
+    return dispatch(coriolis, lat)

@@ -115,7 +115,6 @@ def xy_to_polar(
     ...
 
 
-@xarray_ufunc()
 def polar_to_xy(
     magnitude: xr.DataArray, direction: xr.DataArray, convention: str = "meteo"
 ) -> tuple[xr.DataArray, xr.DataArray]:
@@ -147,7 +146,7 @@ def polar_to_xy(
     In the target xy representation the x axis points East while the y axis points North.
 
     """
-    ...
+    return xarray_ufunc(array.polar_to_xy, magnitude, direction, convention=convention)
 
 
 @xarray_ufunc()

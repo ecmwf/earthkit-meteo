@@ -55,7 +55,7 @@ METADATA_DEFAULTS: dict[str, dict[str, object]] = {
 }
 
 
-def metadata_handler(inputs: list[str] | dict[str, Any], outputs: list[str] | dict[str, Any]):
+def xarray_parameter_handler(inputs: list[str] | dict[str, Any], outputs: list[str] | dict[str, Any]):
     """
     Decorator to check and update CF metadata on inputs and outputs of a function.
 
@@ -202,17 +202,26 @@ class FieldListDispatcher(DataDispatcher):
 _DISPATCHERS = [XArrayDispatcher(), FieldListDispatcher()]
 
 
-def dispatch(func):
+def dispatch(func, *args, **kwargs):
     _module = ".".join(func.__module__.split(".")[:-1])
     # print(_module)
+    for dispatcher in _DISPATCHERS:
+        if dispatcher.match(args[0]):
+            # TODO: check if the function exists in the module
+            return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
 
-    @wraps(func)
-    def inner(*args, **kwargs):
-        for dispatcher in _DISPATCHERS:
-            if dispatcher.match(args[0]):
-                return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
+# def dispatch(func):
+#     _module = ".".join(func.__module__.split(".")[:-1])
+#     # print(_module)
 
-    return inner
+#     @wraps(func)
+#     def inner(*args, **kwargs):
+#         for dispatcher in _DISPATCHERS:
+#             if dispatcher.match(args[0]):
+#                 # TODO: check if the function exists in the module
+#                 return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
+
+#     return inner
 
 
 def _infer_output_count(func) -> int:
@@ -268,10 +277,12 @@ def xarray_ufunc(**xarray_ufunc_kwargs):
                 merged["output_dtypes"] = [float] * output_count
 
             if "output_core_dims" not in merged and len(merged["output_dtypes"]) > 1:
-                input_core_dims = [x.dims for x in args]
                 output_core_dims = [args[0].dims for _ in merged["output_dtypes"]]
-                merged["input_core_dims"] = input_core_dims
                 merged["output_core_dims"] = output_core_dims
+
+            if "input_core_dims" not in merged and len(merged["output_dtypes"]) > 1:
+                input_core_dims = [x.dims for x in args]
+                merged["input_core_dims"] = input_core_dims
 
             return xr.apply_ufunc(
                 array_func,
@@ -283,3 +294,39 @@ def xarray_ufunc(**xarray_ufunc_kwargs):
         return wrapper
 
     return decorator
+
+
+def find_array_func():
+    module_name = func.__module__.replace(".xarray.", ".array.")
+    module = import_module(module_name)
+    array_func = getattr(module, func.__name__)
+
+
+def xarray_ufunc(func, *args, **kwargs):
+    xarray_ufunc_kwargs = kwargs.pop("xarray_ufunc_kwargs", None) or {}
+    merged = {
+        "dask": "parallelized",
+        "keep_attrs": True,
+    }
+    if xarray_ufunc_kwargs:
+        merged.update(xarray_ufunc_kwargs)
+
+    if "output_dtypes" not in merged:
+        output_count = _infer_output_count(func)
+        merged["output_dtypes"] = [float] * output_count
+
+    if "output_core_dims" not in merged and len(merged["output_dtypes"]) > 1:
+        output_core_dims = [args[0].dims for _ in merged["output_dtypes"]]
+        merged["output_core_dims"] = output_core_dims
+
+    if "input_core_dims" not in merged and len(merged["output_dtypes"]) > 1:
+        input_core_dims = [x.dims for x in args]
+        merged["input_core_dims"] = input_core_dims
+
+    return xr.apply_ufunc(
+        func,
+        *args,
+        kwargs=kwargs,
+        **merged,
+    )
+
