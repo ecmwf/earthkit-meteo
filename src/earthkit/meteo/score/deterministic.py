@@ -485,6 +485,7 @@ def pearson_correlation(
     xarray object
         The correlation between the forecast and observations.
     """
+
     # TODO: Copy pasted from vtb, consolidate before merge
     # and implement xarray-native version without numpy
     # TODO: Maybe just use "unbiased" as a parameter name
@@ -494,22 +495,19 @@ def pearson_correlation(
             return array.mean(dim)
         return array.weighted(weights=weights).mean(dim=dim)
 
-    def _common_valid_mask(*arrays, dim=None):
+    def _common_valid_mask(*arrays):
         # return a np bool array of occurrences of all values valid across dim
         # return xr.concat(arrays, dim=dim).notnull().all(dim=dim)
         mask = None
         for array in arrays:
-            if dim is not None and dim in array.dims:
-                nmask = array.notnull().all(dim=dim)
-            else:
-                nmask = array.notnull()
+            nmask = array.notnull()
             if mask is None:
                 mask = nmask
             else:
                 mask = mask & nmask
         return mask
 
-    valid_mask = _common_valid_mask(obs, fcst, dim=None)
+    valid_mask = _common_valid_mask(obs, fcst)
     fcs = fcst.where(valid_mask)
     obs = obs.where(valid_mask)
     fs_var2 = _weighted_mean(fcs**2, weights, over)
