@@ -9,9 +9,23 @@
 from . import array
 
 
-def project(*args, **kwargs):
-    return array.project(*args, **kwargs)
+def project(field, patterns, weights, **patterns_kwargs):
+    return array.project(field, patterns, weights, **patterns_kwargs)
 
 
-def standardise(*args, **kwargs):
-    return array.standardise(*args, **kwargs)
+def standardise(projections, mean, std):
+    """Regime index by standardisation of regime projections.
+
+    Parameters
+    ----------
+    projections : TODO
+        Projections onto regime patterns.
+    mean : TODO
+    std : TODO
+
+    Returns
+    -------
+    TODO
+        ``(projection - mean) / std``
+    """
+    return (projections - mean) / std

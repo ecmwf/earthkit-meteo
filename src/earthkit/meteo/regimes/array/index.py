@@ -7,8 +7,10 @@
 # nor does it submit to any jurisdiction.
 
 
-def project(field, patterns, weights, **patterns_kwargs):
+def project(field, patterns, weights, **patterns_extra_coords):
     """Project onto the given regime patterns.
+
+    TODO: array shape expectations
 
     Parameters
     ----------
@@ -18,7 +20,7 @@ def project(field, patterns, weights, **patterns_kwargs):
         Regime patterns.
     weights : array_like
         Weights for the summation over the spatial dimensions.
-    **patterns_kwargs : dict[str, Any], optional
+    **patterns_coords : dict[str, Any], optional
         Keyword arguments for the pattern generation. E.g., a sequence of
         dates for date-modulated regime patterns.
 
@@ -45,7 +47,7 @@ def project(field, patterns, weights, **patterns_kwargs):
     sum_axes = tuple(range(-ndim_field, 0, 1))
     return {
         regime: (field * pattern * weights).sum(axis=sum_axes)
-        for regime, pattern in patterns.patterns(**patterns_kwargs).items()
+        for regime, pattern in patterns.patterns(**patterns_extra_coords).items()
     }
 
 
