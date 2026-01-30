@@ -1,14 +1,3 @@
-"""
-spread
-quantile_score
-
-crps_from_ensemble
-crps_from_gaussian
-crps_from_cdf
-
-continuous_ignorance (maybe)
-"""
-
 from typing import TypeVar
 
 import numpy as np
@@ -65,7 +54,7 @@ def spread(fcst: T, over: str | list[str], reference: T | None = None) -> T:
     else:
         if over in reference.dims:
             reference = reference.squeeze(over)
-    return ((fcst - reference) ** 2).mean(dim=over).sqrt()
+    return ((fcst - reference) ** 2).mean(dim=over) ** 0.5
 
 
 def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
