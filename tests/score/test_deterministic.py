@@ -5,6 +5,7 @@ import pytest
 import xarray as xr
 
 from earthkit.meteo.score.deterministic import abs_error
+from earthkit.meteo.score.deterministic import cosine_similarity
 from earthkit.meteo.score.deterministic import error
 from earthkit.meteo.score.deterministic import mean_abs_error
 from earthkit.meteo.score.deterministic import mean_error
@@ -734,33 +735,40 @@ def test_pearson_correlation_with_weights(rng):
 
 
 @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
-def test_pearson_correlation_with_centering(rng):
-    fcst_values = np.arange(18.0).reshape(2, 3, 3)
-    noise = rng.normal(0, 1, size=(2, 3, 3))
-    obs_values = fcst_values + noise + 10.0  # add a bias of 10.0
+def test_cosine_similarity(rng):
+    fcst_values = np.asarray(
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ]
+    )
+    # Add a bias of 10 and some noise on top
+    obs_values = fcst_values + np.asarray(
+        [
+            [
+                [10.8784503, 9.95007409, 9.81513764],
+                [9.31907046, 11.22254134, 9.84547052],
+                [9.57167218, 9.64786645, 10.53230919],
+            ],
+            [
+                [10.36544406, 10.41273261, 10.430821],
+                [12.1416476, 9.59358498, 9.48775727],
+                [9.18622727, 10.61597942, 11.12897229],
+            ],
+        ]
+    )
 
     fcst = make_dataset(fcst_values)
     obs = make_dataset(obs_values)
 
-    result = pearson_correlation(
-        fcst,
-        obs,
-        over=["latitude", "longitude"],
-        center=True,
-    )
-
-    expected_values = []
-    for t in range(2):
-        fcst_flat = fcst_values[t].flatten()
-        obs_flat = obs_values[t].flatten()
-        # Centering
-        fcst_flat -= np.mean(fcst_flat)
-        obs_flat -= np.mean(obs_flat)
-        corr = np.corrcoef(fcst_flat, obs_flat)[0, 1]
-        expected_values.append(corr)
-
+    result = cosine_similarity(fcst, obs, over=["latitude", "longitude"])
+    expected_values = np.asarray([0.9208026403441584, 0.9954127943028712])
     expected = xr.Dataset(
         {"2t": (["valid_datetime"], np.array(expected_values))},
         coords={"valid_datetime": VALID_DATETIMES},
     )
+    xr.testing.assert_allclose(result, expected)
+
+    # cosine similarity is commutative
+    result = cosine_similarity(obs, fcst, over=["latitude", "longitude"])
     xr.testing.assert_allclose(result, expected)
