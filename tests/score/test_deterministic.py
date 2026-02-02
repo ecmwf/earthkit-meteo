@@ -376,7 +376,7 @@ def test_abs_error_with_weighted_aggregation():
 
 
 @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
-def test_abs_error_invalid_agg_method(fcst, obs):
+def test_abs_error_invalid_agg_method():
     fcst = make_dataset(np.arange(18.0).reshape(2, 3, 3))
     obs = make_dataset(np.arange(1.0, 19.0).reshape(2, 3, 3))
     with pytest.raises(AssertionError):
@@ -529,7 +529,7 @@ def test_squared_error_with_weighted_aggregation():
 
 
 @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
-def test_squared_error_invalid_agg_method(fcst, obs):
+def test_squared_error_invalid_agg_method():
     fcst = make_dataset(np.arange(18.0).reshape(2, 3, 3))
     obs = make_dataset(np.arange(1.0, 19.0).reshape(2, 3, 3))
     with pytest.raises(AssertionError):
