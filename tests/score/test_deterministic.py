@@ -189,24 +189,6 @@ def test_error_invalid_agg_method(fcst, obs):
         error(fcst, obs, agg_method="sum", agg_dim=["latitude", "longitude"])
 
 
-# @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
-# def test_error_weights_without_agg_dim(fcst, obs):
-#     weights = xr.DataArray(
-#         np.ones((3, 3)),
-#         dims=["latitude", "longitude"],
-#         coords={"latitude": LATITUDES, "longitude": LONGITUDES},
-#     )
-#     with pytest.raises((ValueError, TypeError)):
-#         error(fcst, obs, agg_weights=weights)
-
-
-# @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
-# def test_error_agg_dim_without_agg_method(fcst, obs):
-#     # TODO This might be silently ignored, or might raise - decide
-#     with pytest.raises((ValueError)):
-#         error(fcst, obs, agg_dim=["latitude"])
-
-
 @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_mean_error(rng):
     # Error pattern: rows vary [1,2,3], so mean over lat/lon shows per-timestep variation
@@ -666,7 +648,6 @@ def test_standard_deviation_of_error_with_weights():
     xr.testing.assert_allclose(result, expected)
 
 
-@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_pearson_correlation(rng):
     fcst_values = np.arange(18.0).reshape(2, 3, 3)
     noise = rng.normal(0, 1, size=(2, 3, 3))
@@ -734,7 +715,6 @@ def test_pearson_correlation_with_weights(rng):
     xr.testing.assert_allclose(result, expected)
 
 
-@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_cosine_similarity():
     fcst = make_dataset(
         [
