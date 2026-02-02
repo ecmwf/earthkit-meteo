@@ -33,7 +33,7 @@ dependencies = [
   "xarray",
 ]
 optional-dependencies.all = [
-  "earthkit-meteo[samples]",
+  "earthkit-meteo[samples,scores]",
 ]
 optional-dependencies.dev = [
   "earthkit-meteo[all,docs,test]",
@@ -55,11 +55,13 @@ optional-dependencies.gpu = [
 optional-dependencies.samples = [
   "requests",
 ]
+optional-dependencies.scores = [
+  "scores",
+]
 optional-dependencies.test = [
+  "earthkit-meteo[samples,scores]",
   "pytest",
   "pytest-cov",
-  "requests",
-  "scores",
 ]
 urls.Documentation = "https://earthkit-meteo.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-meteo/"
