@@ -37,18 +37,6 @@ def make_dataset(values, var_name="2t"):
 
 
 @pytest.fixture
-def fcst():
-    """Forecast: sequential values 0-17."""
-    return make_dataset(np.arange(18.0).reshape(2, 3, 3))
-
-
-@pytest.fixture
-def obs():
-    """Observation: sequential values 1-18, so error = fcst - obs = -1 everywhere."""
-    return make_dataset(np.arange(1.0, 19.0).reshape(2, 3, 3))
-
-
-@pytest.fixture
 def rng():
     """Seeded random generator for reproducible tests."""
     return np.random.default_rng(42)
@@ -184,13 +172,16 @@ def test_error_with_weighted_aggregation():
     xr.testing.assert_allclose(result, expected)
 
 
-def test_error_invalid_agg_method(fcst, obs):
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
+def test_error_invalid_agg_method():
+    fcst = make_dataset(np.arange(18.0).reshape(2, 3, 3))
+    obs = make_dataset(np.arange(1.0, 19.0).reshape(2, 3, 3))
     with pytest.raises(AssertionError):
         error(fcst, obs, agg_method="sum", agg_dim=["latitude", "longitude"])
 
 
 @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
-def test_mean_error(rng):
+def test_mean_error():
     # Error pattern: rows vary [1,2,3], so mean over lat/lon shows per-timestep variation
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
@@ -386,6 +377,8 @@ def test_abs_error_with_weighted_aggregation():
 
 @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_abs_error_invalid_agg_method(fcst, obs):
+    fcst = make_dataset(np.arange(18.0).reshape(2, 3, 3))
+    obs = make_dataset(np.arange(1.0, 19.0).reshape(2, 3, 3))
     with pytest.raises(AssertionError):
         abs_error(fcst, obs, agg_method="sum", agg_dim=["latitude", "longitude"])
 
@@ -537,6 +530,8 @@ def test_squared_error_with_weighted_aggregation():
 
 @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_squared_error_invalid_agg_method(fcst, obs):
+    fcst = make_dataset(np.arange(18.0).reshape(2, 3, 3))
+    obs = make_dataset(np.arange(1.0, 19.0).reshape(2, 3, 3))
     with pytest.raises(AssertionError):
         squared_error(fcst, obs, agg_method="sum", agg_dim=["latitude", "longitude"])
 
