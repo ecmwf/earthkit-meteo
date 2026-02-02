@@ -30,7 +30,6 @@ dependencies = [
   "deprecation",
   "earthkit-utils>=0.0.1",
   "numpy",
-  "scores",
   "xarray",
 ]
 optional-dependencies.all = [
@@ -60,6 +59,7 @@ optional-dependencies.test = [
   "pytest",
   "pytest-cov",
   "requests",
+  "scores",
 ]
 urls.Documentation = "https://earthkit-meteo.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-meteo/"
