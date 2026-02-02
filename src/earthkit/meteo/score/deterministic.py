@@ -65,6 +65,8 @@ def error(
     assert agg_method in (None, "mean")
     scores = _import_scores_or_prompt_install()
 
+    # TODO: support is_angular in the future
+
     # TODO: Add comment explaining behavior here in scores
     reduce_dim = agg_dim or []
 
@@ -166,6 +168,8 @@ def abs_error(
         The dimension(s) over which to aggregate. Default is None.
     agg_weights : xarray object, optional
         Weights to apply during aggregation. Default is None.
+    is_angular : bool, optional
+        Whether the data represents angular quantities. Default is False.
 
     Returns
     -------
@@ -221,6 +225,8 @@ def mean_abs_error(
         The dimension(s) over which to aggregate.
     weights : xarray object, optional
         Weights to apply during aggregation. Default is None.
+    is_angular : bool, optional
+        Whether the data represents angular quantities. Default is False.
 
     Returns
     -------
@@ -269,6 +275,8 @@ def squared_error(
         The dimension(s) over which to aggregate. Default is None.
     agg_weights : xarray object, optional
         Weights to apply during aggregation. Default is None.
+    is_angular : bool, optional
+        Whether the data represents angular quantities. Default is False.
 
     Returns
     -------
@@ -324,6 +332,8 @@ def mean_squared_error(
         The dimension(s) over which to aggregate.
     weights : xarray object, optional
         Weights to apply during aggregation. Default is None.
+    is_angular : bool, optional
+        Whether the data represents angular quantities. Default is False.
 
     Returns
     -------
@@ -377,6 +387,8 @@ def root_mean_squared_error(
         The dimension(s) over which to aggregate.
     weights : xarray object, optional
         Weights to apply during aggregation. Default is None.
+    is_angular : bool, optional
+        Whether the data represents angular quantities. Default is False.
 
     Returns
     -------
