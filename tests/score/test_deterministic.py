@@ -102,7 +102,7 @@ def test_error_accepts_dataarray(rng):
 def test_error_with_aggregation():
     # Error varies by dimension so we can verify correct aggregation axis
     # Rows (lat): [1,1,1], [2,2,2], [3,3,3] -> mean over lat = [2,2,2]
-    # Cols (lon): [1,2,3], [1,2,3], [1,2,3] -> mean over lon = [2,2,2]
+    # Cols (lon): [1,2,3], [1,2,3], [1,2,3] -> mean over lon = [1,2,3]
     fcst_values = np.full((2, 3, 3), 10.0)
     error_values = np.array(
         [
@@ -233,7 +233,7 @@ def test_mean_error_with_weights(rng):
     obs = make_dataset(obs_values)
 
     weights = xr.DataArray(
-        np.array([[1, 1, 1], [1, 2, 1], [1, 1, 1]], dtype=float),
+        np.array([[1, 1, 1], [1, 2, 1], [1, 1, 11]], dtype=float),
         dims=["latitude", "longitude"],
         coords={"latitude": LATITUDES, "longitude": LONGITUDES},
     )
@@ -245,10 +245,10 @@ def test_mean_error_with_weights(rng):
         weights=weights,
     )
 
-    # Timestep 1: (1*1 + 1*1 + 1*1 + 1*2 + 2*2 + 1*2 + 1*3 + 1*3 + 1*3) / 10 = 20/10 = 2.0
-    # Timestep 2: (1*2 + 1*2 + 1*2 + 1*3 + 2*3 + 1*3 + 1*4 + 1*4 + 1*4) / 10 = 30/10 = 3.0
+    # Timestep 1: (1*1 + 1*1 + 1*1 + 1*2 + 2*2 + 1*2 + 1*3 + 1*3 + 11*3) / 20 = 50/20 = 2.5
+    # Timestep 2: (1*2 + 1*2 + 1*2 + 1*3 + 2*3 + 1*3 + 1*4 + 1*4 + 11*4) / 20 = 70/20 = 3.5
     expected = xr.Dataset(
-        {"2t": (["valid_datetime"], np.array([2.0, 3.0]))},
+        {"2t": (["valid_datetime"], np.array([2.5, 3.5]))},
         coords={"valid_datetime": VALID_DATETIMES},
     )
     xr.testing.assert_allclose(result, expected)
