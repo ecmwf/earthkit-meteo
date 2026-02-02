@@ -169,7 +169,7 @@ def abs_error(
     agg_weights : xarray object, optional
         Weights to apply during aggregation. Default is None.
     is_angular : bool, optional
-        Whether the data represents angular quantities. Default is False.
+        Whether the data represents angular quantities in degrees. Default is False.
 
     Returns
     -------
@@ -226,7 +226,7 @@ def mean_abs_error(
     weights : xarray object, optional
         Weights to apply during aggregation. Default is None.
     is_angular : bool, optional
-        Whether the data represents angular quantities. Default is False.
+        Whether the data represents angular quantities in degrees. Default is False.
 
     Returns
     -------
@@ -247,7 +247,7 @@ def squared_error(
     r"""
     Calculates the squared error between a forecast and observations.
 
-    The absolute error is defined as:
+    The squared error is defined as:
 
     .. math::
 
@@ -276,7 +276,7 @@ def squared_error(
     agg_weights : xarray object, optional
         Weights to apply during aggregation. Default is None.
     is_angular : bool, optional
-        Whether the data represents angular quantities. Default is False.
+        Whether the data represents angular quantities in degrees. Default is False.
 
     Returns
     -------
@@ -333,7 +333,7 @@ def mean_squared_error(
     weights : xarray object, optional
         Weights to apply during aggregation. Default is None.
     is_angular : bool, optional
-        Whether the data represents angular quantities. Default is False.
+        Whether the data represents angular quantities in degrees. Default is False.
 
     Returns
     -------
@@ -388,7 +388,7 @@ def root_mean_squared_error(
     weights : xarray object, optional
         Weights to apply during aggregation. Default is None.
     is_angular : bool, optional
-        Whether the data represents angular quantities. Default is False.
+        Whether the data represents angular quantities in degrees. Default is False.
 
     Returns
     -------
