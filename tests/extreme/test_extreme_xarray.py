@@ -9,6 +9,7 @@
 
 import os
 import sys
+import time
 
 import numpy as np
 import pytest
@@ -81,6 +82,39 @@ def test_xr_efi_highlevel():
     v_ref = -0.1838425040642013
     efi = extreme.efi(clim, ens)
     assert np.isclose(efi.values[0], v_ref)
+
+
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
+def test_xr_efi_perf():
+    clim = _data.clim
+    ens = _data.ens
+    clim = np.repeat(clim, 10, axis=-2)
+    clim = np.repeat(clim, 10, axis=-1)
+    ens = np.repeat(ens, 10, axis=-2)
+    ens = np.repeat(ens, 10, axis=-1)
+    clim_da = _da(clim, dims=("quantiles", "values", "x", "y"))
+    ens_da = _da(ens, dims=("number", "values", "x", "y"))
+
+    # Warm up to reduce first-call overhead in timing.
+    extreme.array.efi(clim, ens)
+    extreme_xr.efi(clim_da, ens_da)
+
+    repeats = 5
+    t0 = time.perf_counter()
+    for _ in range(repeats):
+        extreme.array.efi(clim, ens)
+    t1 = time.perf_counter()
+
+    t2 = time.perf_counter()
+    for _ in range(repeats):
+        extreme_xr.efi(clim_da, ens_da)
+    t3 = time.perf_counter()
+
+    array_time = (t1 - t0) / repeats
+    xarray_time = (t3 - t2) / repeats
+    print(f"Array EFI time: {array_time:.6f} s")
+    print(f"xarray EFI time: {xarray_time:.6f} s")
+    assert xarray_time <= 1.5 * array_time
 
 
 # ---------------------------------
