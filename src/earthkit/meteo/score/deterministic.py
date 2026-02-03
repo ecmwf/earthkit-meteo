@@ -28,6 +28,8 @@ def error(
     r"""
     Calculates the error between a forecast and observations.
 
+    .. warning:: Experimental API. This function may change or be removed without notice.
+
     The error is defined as:
 
     .. math::
@@ -87,6 +89,8 @@ def mean_error(
     r"""
     Calculates the mean error between a forecast and observations.
 
+    .. warning:: Experimental API. This function may change or be removed without notice.
+
     The mean error is defined as:
 
     .. math::
@@ -139,6 +143,8 @@ def abs_error(
 ) -> T:
     r"""
     Calculates the absolute error between a forecast and observations.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     The absolute error is defined as:
 
@@ -198,6 +204,8 @@ def mean_abs_error(
     r"""
     Calculates the mean absolute error between a forecast and observations.
 
+    .. warning:: Experimental API. This function may change or be removed without notice.
+
     The mean absolute error is defined as:
 
     .. math::
@@ -246,6 +254,8 @@ def squared_error(
 ) -> T:
     r"""
     Calculates the squared error between a forecast and observations.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     The squared error is defined as:
 
@@ -305,6 +315,8 @@ def mean_squared_error(
     r"""
     Calculates the mean squared error between a forecast and observations.
 
+    .. warning:: Experimental API. This function may change or be removed without notice.
+
     The mean squared error is defined as:
 
     .. math::
@@ -360,6 +372,8 @@ def root_mean_squared_error(
     r"""
     Calculates the root mean squared error between a forecast and observations.
 
+    .. warning:: Experimental API. This function may change or be removed without notice.
+
     The root mean squared error is defined as:
 
     .. math::
@@ -406,6 +420,8 @@ def standard_deviation_of_error(
 ) -> T:
     r"""
     Calculates the standard deviation of error between a forecast and observations.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     The standard deviation of error is defined as:
 
@@ -462,6 +478,8 @@ def cosine_similarity(
 ) -> T:
     r"""
     Calculates the cosine similarity between a forecast and observations.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     The cosine similarity is defined as:
 
@@ -533,6 +551,8 @@ def pearson_correlation(
 ) -> T:
     r"""
     Calculates the Pearson correlation between a forecast and observations.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     The correlation is defined as:
 
