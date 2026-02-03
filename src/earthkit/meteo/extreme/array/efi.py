@@ -12,23 +12,30 @@
 
 from earthkit.utils.array import array_namespace
 
+from .utils import flatten_extreme_input
+from .utils import validate_extreme_shapes
 
-def efi(clim, ens, eps=-0.1):
-    """Compute Extreme Forecast Index (EFI)
+
+def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
+    """Compute Extreme Forecast Index (EFI).
 
     Parameters
     ----------
-    clim: array-like (nclim, npoints)
-        Sorted per-point climatology
-    ens: array-like (nens, npoints)
-        Ensemble forecast
+    clim: array-like
+        Sorted per-point climatology. The reduction axis (quantiles) is set by ``clim_axis``.
+    ens: array-like
+        Ensemble forecast. The reduction axis (ensemble members) is set by ``ens_axis``.
     eps: (float)
         Epsilon factor for zero values
+    clim_axis: int
+        Axis index of the climatology/quantile dimension in ``clim``. Default is 0.
+    ens_axis: int
+        Axis index of the ensemble/member dimension in ``ens``. Default is 0.
 
     Returns
     -------
-    array-like (npoints)
-        EFI values
+    array-like
+        EFI values with the reduction axes removed.
     """
 
     xp = array_namespace(clim, ens)
@@ -36,13 +43,23 @@ def efi(clim, ens, eps=-0.1):
     ens = xp.asarray(ens)
     device = xp.device(clim)
 
+    # Compute fraction of the forecast below climatology
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
+    ens, ens_shape = flatten_extreme_input(xp, ens, ens_axis)
+    validate_extreme_shapes(
+        func="efi",
+        clim_shape=out_shape,
+        ens_shape=ens_shape,
+        clim_axis=clim_axis,
+        ens_axis=ens_axis,
+    )
+    nclim = clim.shape[0]
+    nens = ens.shape[0]
+    npoints = clim.shape[1]
+
     # locate missing values
     missing_mask = xp.logical_or(xp.sum(xp.isnan(clim), axis=0), xp.sum(xp.isnan(ens), axis=0))
 
-    # Compute fraction of the forecast below climatology
-    nclim, npoints = clim.shape
-    nens, npoints_ens = ens.shape
-    assert npoints == npoints_ens
     frac = xp.zeros_like(clim)
     ##################################
     for icl in range(nclim):
@@ -85,8 +102,7 @@ def efi(clim, ens, eps=-0.1):
 
     # apply missing values
     efi[missing_mask] = xp.nan
-
-    return efi
+    return xp.reshape(efi, out_shape)
 
 
 # @numba.jit(float64[:](float64[:,:], float64[:,:]), fastmath=False, nopython=True, nogil=True, cache=True)

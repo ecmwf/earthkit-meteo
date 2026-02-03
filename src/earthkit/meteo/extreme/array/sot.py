@@ -9,6 +9,9 @@
 
 from earthkit.utils.array import array_namespace
 
+from .utils import flatten_extreme_input
+from .utils import validate_extreme_shapes
+
 
 def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
     """Compute basic Shift of Tails (SOT) using already computed percentiles
@@ -48,30 +51,43 @@ def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
     return sot
 
 
-def sot(clim, ens, perc, eps=-1e4):
+def sot(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     """Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
     and ensemble forecast (not sorted)
 
     Parameters
     ----------
-    clim: array-like (nclim, npoints)
-        Model climatology (percentiles)
-    ens: array-like (nens, npoints)
-        Ensemble forecast
+    clim: array-like
+        Model climatology (percentiles). The reduction axis is set by ``clim_axis``.
+    ens: array-like
+        Ensemble forecast. The reduction axis is set by ``ens_axis``.
     perc: int
         Percentile value (typically 10 or 90)
     eps: (float)
         Epsilon factor for zero values
+    clim_axis: int
+        Axis index of the climatology/quantile dimension in ``clim``. Default is 0.
+    ens_axis: int
+        Axis index of the ensemble/member dimension in ``ens``. Default is 0.
 
     Returns
     -------
-    array-like (npoints)
-        SOT values
+    array-like
+        SOT values with the reduction axes removed.
     """
     xp = array_namespace(clim, ens, perc)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
+    ens, ens_shape = flatten_extreme_input(xp, ens, ens_axis)
+    validate_extreme_shapes(
+        func="sot",
+        clim_shape=out_shape,
+        ens_shape=ens_shape,
+        clim_axis=clim_axis,
+        ens_axis=ens_axis,
+    )
     # perc = xp.asarray(perc)
 
     if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (perc < 2 or perc > 98):
@@ -100,34 +116,47 @@ def sot(clim, ens, perc, eps=-1e4):
 
     sot = sot_func(qc_tail, qc, qf, eps=eps)
 
-    return sot
+    return xp.reshape(sot, out_shape)
 
 
-def sot_unsorted(clim, ens, perc, eps=-1e4):
+def sot_unsorted(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     """Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
     and ensemble forecast (not sorted)
 
     Parameters
     ----------
-    clim: array-like (nclim, npoints)
-        Model climatology (percentiles)
-    ens: array-like (nens, npoints)
-        Ensemble forecast
+    clim: array-like
+        Model climatology (percentiles). The reduction axis is set by ``clim_axis``.
+    ens: array-like
+        Ensemble forecast. The reduction axis is set by ``ens_axis``.
     perc: int
         Percentile value (typically 10 or 90)
     eps: (float)
         Epsilon factor for zero values
+    clim_axis: int
+        Axis index of the climatology/quantile dimension in ``clim``. Default is 0.
+    ens_axis: int
+        Axis index of the ensemble/member dimension in ``ens``. Default is 0.
 
     Returns
     -------
-    array-like (npoints)
-        SOT values
+    array-like
+        SOT values with the reduction axes removed.
     """
     xp = array_namespace(clim, ens, perc)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
     perc = xp.asarray(perc)
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
+    ens, ens_shape = flatten_extreme_input(xp, ens, ens_axis)
+    validate_extreme_shapes(
+        func="sot_unsorted",
+        clim_shape=out_shape,
+        ens_shape=ens_shape,
+        clim_axis=clim_axis,
+        ens_axis=ens_axis,
+    )
 
     if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (perc < 2 or perc > 98):
         raise Exception("Percentile value should be and Integer between 2 and 98, is {}".format(perc))
@@ -155,4 +184,4 @@ def sot_unsorted(clim, ens, perc, eps=-1e4):
 
     sot = sot_func(qc_tail, qc, qf, eps=eps)
 
-    return sot
+    return xp.reshape(sot, out_shape)

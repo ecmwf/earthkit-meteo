@@ -58,6 +58,7 @@ cpf_ens = np.array(
     ],
     dtype=np.float32,
 )
+cpf_ens = cpf_ens[:, :, np.newaxis, np.newaxis]
 cpf_clim = np.array(
     [
         [298.3246, 292.73083, 272.6996, 296.6996, 290.91833],
@@ -164,6 +165,7 @@ cpf_clim = np.array(
     ],
     dtype=np.float32,
 )
+cpf_clim = cpf_clim[:, :, np.newaxis, np.newaxis]
 
 cpf_val2 = np.array([0.0, 0.94230774, 0.7307692], dtype=np.float32)
 cpf_ens2 = np.array(
@@ -222,6 +224,7 @@ cpf_ens2 = np.array(
     ],
     dtype=np.float32,
 )
+cpf_ens2 = cpf_ens2[:, :, np.newaxis, np.newaxis]
 cpf_clim2 = np.array(
     [
         [0.00000000e00, 0.00000000e00, 0.00000000e00],
@@ -328,6 +331,7 @@ cpf_clim2 = np.array(
     ],
     dtype=np.float32,
 )
+cpf_clim2 = cpf_clim2[:, :, np.newaxis, np.newaxis]
 
 cpf_val3 = np.array([0.9809273481, 0.1153846383, 0.9897592068, 0.5961538553, 1.0], dtype=np.float32)
 cpf_ens3 = np.array(
@@ -386,6 +390,7 @@ cpf_ens3 = np.array(
     ],
     dtype=np.float32,
 )
+cpf_ens3 = cpf_ens3[:, :, np.newaxis, np.newaxis]
 cpf_clim3 = np.array(
     [
         [297.19958496, 294.48083496, 297.19958496, 279.07458496, 298.73083496],
@@ -492,3 +497,4 @@ cpf_clim3 = np.array(
     ],
     dtype=np.float32,
 )
+cpf_clim3 = cpf_clim3[:, :, np.newaxis, np.newaxis]

@@ -22,20 +22,17 @@ import _cpf  # noqa
 import _data  # noqa
 
 
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, [-0.1838425040642013])])
-def test_highlevel_efi(xp, device, clim, ens, v_ref):
-    clim = xp.asarray(clim, device=device)
-    ens = xp.asarray(ens, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    # clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
-    efi = extreme.efi(clim, ens)
-    assert xp.isclose(efi[0], v_ref[0])
+def _move_axis(data, axis):
+    return np.moveaxis(np.asarray(data), 0, axis)
 
+
+# ---------------------------------
+# EFI
+# ---------------------------------
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
-    "clim,ens,kwargs,v_ref",
+    "clim, ens, kwargs, v_ref",
     [
         (_data.clim, _data.ens, {}, -0.1838425040642013),
         (_data.clim, _data.ens, dict(eps=1e-4), -0.18384250406420133),
@@ -48,7 +45,7 @@ def test_highlevel_efi(xp, device, clim, ens, v_ref):
         (_data.clim_eps2, _data.ens_eps2, dict(eps=1e-4), 0.6330071575726789),
     ],
 )
-def test_efi_core(xp, device, clim, ens, kwargs, v_ref):
+def test_np_efi(xp, device, clim, ens, kwargs, v_ref):
     clim = xp.asarray(clim, device=device)
     ens = xp.asarray(ens, device=device)
     v_ref = xp.asarray(v_ref, device=device)
@@ -57,8 +54,8 @@ def test_efi_core(xp, device, clim, ens, kwargs, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, -0.18384250406420133)])
-def test_efi_sorted(xp, device, clim, ens, v_ref):
+@pytest.mark.parametrize("clim, ens, v_ref", [(_data.clim, _data.ens, -0.18384250406420133)])
+def test_xp_efi_sorted(xp, device, clim, ens, v_ref):
     clim = xp.asarray(clim, device=device)
     ens = xp.asarray(ens, device=device)
     v_ref = xp.asarray(v_ref, device=device)
@@ -72,44 +69,47 @@ def test_efi_sorted(xp, device, clim, ens, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-def test_efi_nan(xp, device):
+def test_np_efi_nan(xp, device):
     clim_nan = xp.empty((101, 1), device=device)
     clim_nan[:] = xp.nan
     ens_nan = xp.empty((51, 1), device=device)
     ens_nan[:] = xp.nan
-    # print(clim_nan)
-    # print(ens_nan)
 
     efi = extreme.array.efi(clim_nan, ens_nan)
 
-    # print(efi)
     assert xp.isnan(efi[0])
 
 
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, [-2.14617638, -1.3086723])])
-def test_sot_highlevel(xp, device, clim, ens, v_ref):
-    clim = xp.asarray(clim, device=device)
-    ens = xp.asarray(ens, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
+@pytest.mark.parametrize("axis", [0, 1, 2, 3])
+def test_np_efi_axis(axis):
+    clim = _move_axis(_data.clim, axis)
+    ens = _move_axis(_data.ens, axis)
+    ref = extreme.array.efi(_data.clim, _data.ens)
+    got = extreme.array.efi(clim, ens, clim_axis=axis, ens_axis=axis)
+    assert np.allclose(got, ref)
 
-    sot_upper = extreme.sot(clim, ens, 90)
-    sot_lower = extreme.sot(clim, ens, 10)
 
-    v_ref = xp.asarray(v_ref, dtype=sot_upper.dtype)
+@pytest.mark.parametrize("axis", [1, 2, 3])
+def test_np_efi_mixed_axis(axis):
+    clim = _data.clim
+    ens = _move_axis(_data.ens, axis)
+    ref = extreme.array.efi(_data.clim, _data.ens)
+    got = extreme.array.efi(clim, ens, clim_axis=0, ens_axis=axis)
+    assert np.allclose(got, ref)
 
-    assert xp.allclose(sot_upper[0], v_ref[0])
-    assert xp.allclose(sot_lower[0], v_ref[1])
 
+# ---------------------------------
+# SOT
+# ---------------------------------
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
-    "clim,ens,v_ref",
+    "clim, ens, v_ref",
     [
         (_data.clim, _data.ens, [-2.14617638, -1.3086723]),
     ],
 )
-def test_sot_core(xp, device, clim, ens, v_ref):
+def test_np_sot(xp, device, clim, ens, v_ref):
     clim = xp.asarray(clim, device=device)
     ens = xp.asarray(ens, device=device)
     v_ref = xp.asarray(v_ref, device=device)
@@ -124,9 +124,8 @@ def test_sot_core(xp, device, clim, ens, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-# @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
-@pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])])
-def test_sot_perc(xp, device, clim, ens, v_ref):
+@pytest.mark.parametrize("clim, ens, v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])])
+def test_np_sot_perc(xp, device, clim, ens, v_ref):
     clim = xp.asarray(clim, device=device)
     ens = xp.asarray(ens, device=device)
     v_ref = xp.asarray(v_ref, device=device)
@@ -139,9 +138,8 @@ def test_sot_perc(xp, device, clim, ens, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-# @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
 @pytest.mark.parametrize(
-    "qc_tail,qc,qf,kwargs,v_ref",
+    "qc_tail, qc, qf, kwargs, v_ref",
     [
         (
             [1.0, 1.0, 1.0, 1.0],
@@ -170,7 +168,7 @@ def test_sot_perc(xp, device, clim, ens, v_ref):
         ([np.nan], [0.1], [0.2], {}, [np.nan]),  # nan
     ],
 )
-def test_sot_func(xp, device, qc_tail, qc, qf, kwargs, v_ref):
+def test_np_sot_func(xp, device, qc_tail, qc, qf, kwargs, v_ref):
     qc_tail = xp.asarray(qc_tail, device=device)
     qc = xp.asarray(qc, device=device)
     qf = xp.asarray(qf, device=device)
@@ -183,21 +181,31 @@ def test_sot_func(xp, device, qc_tail, qc, qf, kwargs, v_ref):
     assert xp.allclose(sot, v_ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("clim,ens,v_ref", [(_cpf.cpf_clim, _cpf.cpf_ens, _cpf.cpf_val)])
-def test_cpf_highlevel(xp, device, clim, ens, v_ref):
-    clim = xp.asarray(clim, device=device)
-    ens = xp.asarray(ens, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
+@pytest.mark.parametrize("axis", [0, 1, 2, 3])
+def test_np_sot_axis(axis):
+    clim = _move_axis(_data.clim, axis)
+    ens = _move_axis(_data.ens, axis)
+    ref = extreme.array.sot(_data.clim, _data.ens, 90)
+    got = extreme.array.sot(clim, ens, 90, clim_axis=axis, ens_axis=axis)
+    assert np.allclose(got, ref)
 
-    cpf = extreme.cpf(clim, ens, sort_clim=True)
 
-    assert xp.allclose(cpf, v_ref)
+@pytest.mark.parametrize("axis", [1, 2, 3])
+def test_np_sot_mixed_axis(axis):
+    clim = _data.clim
+    ens = _move_axis(_data.ens, axis)
+    ref = extreme.array.sot(_data.clim, _data.ens, 90)
+    got = extreme.array.sot(clim, ens, 90, clim_axis=0, ens_axis=axis)
+    assert np.allclose(got, ref)
 
+
+# ---------------------------------
+# CPF
+# ---------------------------------
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
-    "clim,ens,kwargs,v_ref",
+    "clim, ens, kwargs, v_ref",
     [
         (_cpf.cpf_clim, _cpf.cpf_ens, dict(sort_clim=True), _cpf.cpf_val),
         (_cpf.cpf_clim2, _cpf.cpf_ens2, dict(sort_clim=True, epsilon=0.5), _cpf.cpf_val2),  # eps
@@ -205,10 +213,28 @@ def test_cpf_highlevel(xp, device, clim, ens, v_ref):
         (_cpf.cpf_clim, _cpf.cpf_ens, dict(sort_clim=True, from_zero=True), _cpf.cpf_val_fromzero),
     ],
 )
-def test_cpf_core(xp, device, clim, ens, v_ref, kwargs):
+def test_np_cpf(xp, device, clim, ens, v_ref, kwargs):
     clim = xp.asarray(clim, device=device)
     ens = xp.asarray(ens, device=device)
     v_ref = xp.asarray(v_ref, device=device)
 
     cpf = extreme.array.cpf(clim, ens, **kwargs)
-    assert xp.allclose(cpf, v_ref)
+    assert xp.allclose(cpf.flat, v_ref)
+
+
+@pytest.mark.parametrize("axis", [0, 1, 2, 3])
+def test_np_cpf_axis(axis):
+    clim = _move_axis(_cpf.cpf_clim, axis)
+    ens = _move_axis(_cpf.cpf_ens, axis)
+    ref = extreme.array.cpf(_cpf.cpf_clim, _cpf.cpf_ens, sort_clim=True)
+    got = extreme.array.cpf(clim, ens, sort_clim=True, clim_axis=axis, ens_axis=axis)
+    assert np.allclose(got, ref)
+
+
+@pytest.mark.parametrize("axis", [1, 2, 3])
+def test_np_cpf_mixed_axis(axis):
+    clim = _cpf.cpf_clim
+    ens = _move_axis(_cpf.cpf_ens, axis)
+    ref = extreme.array.cpf(_cpf.cpf_clim, _cpf.cpf_ens, sort_clim=True)
+    got = extreme.array.cpf(clim, ens, sort_clim=True, clim_axis=0, ens_axis=axis)
+    assert np.allclose(got, ref)
