@@ -45,7 +45,7 @@ def sot(
     Returns
     -------
     xarray.DataArray
-        SOT values with the reduction dimension removed.
+        SOT values.
     """
     default_dims = ["quantiles", "percentiles", "number", "ens", "member"]
     clim_dim = get_dim_from_defaults(clim, clim_dim, default_dims)
@@ -100,7 +100,7 @@ def sot_unsorted(
     Returns
     -------
     xarray.DataArray
-        SOT values with the reduction dimension removed.
+        SOT values.
     """
     default_dims = ["quantiles", "percentiles", "number", "ens", "member"]
     clim_dim = get_dim_from_defaults(clim, clim_dim, default_dims)

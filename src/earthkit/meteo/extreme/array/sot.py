@@ -74,7 +74,7 @@ def sot(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     Returns
     -------
     array-like
-        SOT values with the reduction axes removed.
+        SOT values.
     """
     xp = array_namespace(clim, ens, perc)
     clim = xp.asarray(clim)
@@ -142,7 +142,7 @@ def sot_unsorted(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     Returns
     -------
     array-like
-        SOT values with the reduction axes removed.
+        SOT values.
     """
     xp = array_namespace(clim, ens, perc)
     clim = xp.asarray(clim)

@@ -136,7 +136,7 @@ def cpf(
     Returns
     -------
     array-like
-        CPF values with the reduction axes removed.
+        CPF values.
     """
     xp = array_namespace(clim, ens)
     clim = xp.asarray(clim)

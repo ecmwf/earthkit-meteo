@@ -58,7 +58,7 @@ def sot(
     Returns
     -------
     xarray.DataArray
-        SOT values with the reduction dimension removed.
+        SOT values.
 
 
     Implementations
@@ -113,7 +113,7 @@ def sot_unsorted(
     Returns
     -------
     xarray.DataArray
-        SOT values with the reduction dimension removed.
+        SOT values.
 
 
     Implementations

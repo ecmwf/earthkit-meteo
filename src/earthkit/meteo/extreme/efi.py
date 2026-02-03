@@ -52,7 +52,7 @@ def efi(
     Returns
     -------
     xarray.DataArray
-        EFI values with the reduction dimension removed.
+        EFI values.
 
 
     Implementations

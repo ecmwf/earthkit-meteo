@@ -73,7 +73,7 @@ def cpf(
     Returns
     -------
     xarray.DataArray
-        CPF values with the reduction dimension removed.
+        CPF values.
 
 
     Implementations

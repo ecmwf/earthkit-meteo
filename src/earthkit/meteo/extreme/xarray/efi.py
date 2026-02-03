@@ -40,7 +40,7 @@ def efi(
     Returns
     -------
     xarray.DataArray
-        EFI values with the reduction dimension removed.
+        EFI values.
     """
     default_dims = ["quantiles", "percentiles", "number", "ens", "member"]
     clim_dim = get_dim_from_defaults(clim, clim_dim, default_dims)

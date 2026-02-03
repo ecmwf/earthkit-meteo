@@ -57,7 +57,7 @@ def cpf(
     Returns
     -------
     xarray.DataArray
-        CPF values with the reduction dimension removed.
+        CPF values.
     """
     default_dims = ["quantiles", "percentiles", "number", "ens", "member"]
     clim_dim = get_dim_from_defaults(clim, clim_dim, default_dims)

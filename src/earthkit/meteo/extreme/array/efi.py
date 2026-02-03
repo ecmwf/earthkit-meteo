@@ -35,7 +35,7 @@ def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
     Returns
     -------
     array-like
-        EFI values with the reduction axes removed.
+        EFI values.
     """
 
     xp = array_namespace(clim, ens)
