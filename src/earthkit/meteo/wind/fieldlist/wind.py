@@ -118,7 +118,88 @@ def direction(u: FieldList, v: FieldList, convention="meteo", to_positive=True) 
     return u.from_fields(result)
 
 
-def w_from_omega(omega: FieldList, t: FieldList, p: FieldList | ArrayLike) -> FieldList:
+def xy_to_polar(x: FieldList, y: FieldList, convention: str = "meteo") -> tuple[FieldList, FieldList]:
+    r"""Convert wind/vector data from xy representation to polar representation.
+
+    Parameters
+    ----------
+    x: FieldList
+        u wind/x vector component
+    y: FieldList
+        v wind/y vector component (same units as ``u``)
+    convention: str
+        Specify how the direction/angle component of the target polar coordinate
+        system is interpreted. The possible values are as follows:
+
+        * "meteo": the direction is the meteorological wind direction (see :func:`direction` for explanation)
+        * "polar": the direction is measured anti-clockwise from the x axis (East/right) to the vector
+
+
+    Returns
+    -------
+    FieldList
+        Magnitude (same units as ``u``)
+    FieldList
+        Direction (degrees)
+
+    Notes
+    -----
+    In the target xy representation the x axis points East while the y axis points North.
+
+    """
+    if len(x) != len(y):
+        raise ValueError("x and y must have the same number of fields")
+
+    return speed(x, y), direction(x, y, convention=convention)
+
+
+def polar_to_xy(
+    magnitude: FieldList,
+    direction: FieldList,
+    convention: str = "meteo",
+) -> tuple[FieldList, FieldList]:
+    r"""Convert wind/vector data from polar representation to xy representation.
+
+    Parameters
+    ----------
+    magnitude: FieldList
+        Speed/magnitude of the vector
+    direction: FieldList
+        Direction of the vector (degrees)
+    convention: str
+        Specify how ``direction`` is interpreted. The possible values are as follows:
+
+        * "meteo": ``direction`` is the meteorological wind direction
+          (see :func:`direction` for explanation)
+        * "polar": ``direction`` is the angle measured anti-clockwise from the x axis
+          (East/right) to the vector
+
+    Returns
+    -------
+    FieldList
+        X vector component (same units as ``magnitude``)
+    FieldList
+        Y vector component (same units as ``magnitude``)
+
+
+    Notes
+    -----
+    In the target xy representation the x axis points East while the y axis points North.
+
+    """
+    if len(magnitude) != len(direction):
+        raise ValueError("magnitude and direction must have the same number of fields")
+
+    result_1 = []
+    result_2 = []
+    for m, d in zip(magnitude, direction):
+        v1, v2 = array.polar_to_xy(m.values, d.values, convention=convention)
+        result_1.append(m.clone(values=v1))
+        result_2.append(m.clone(values=v2))
+    return magnitude.from_fields(result_1), magnitude.from_fields(result_2)
+
+
+def w_from_omega(omega: FieldList, t: FieldList, p: FieldList | ArrayLike | None) -> FieldList:
     r"""Compute the hydrostatic vertical velocity from pressure velocity, temperature and pressure.
 
     Parameters
@@ -127,8 +208,11 @@ def w_from_omega(omega: FieldList, t: FieldList, p: FieldList | ArrayLike) -> Fi
         Hydrostatic pressure velocity (Pa/s)
     t : FieldList
         Temperature (K). Must have the same number of fields as ``omega``.
-    p : FieldList, array-like
-        Pressure (Pa)
+    p : FieldList, array-like, None
+        Pressure (Pa). If a FieldList is provided, it must have the same number of fields as ``omega``.
+        If an array-like is provided, it must have the same number of elements as the number of fields in ``omega``.
+        If None, the pressure is taken from the level information of each field in ``omega``. Only isobaric
+        levels are supported in this case.
 
     Returns
     -------
