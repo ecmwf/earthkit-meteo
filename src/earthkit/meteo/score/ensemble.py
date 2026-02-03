@@ -21,6 +21,8 @@ def spread(fcst: T, over: str | list[str], reference: T | None = None) -> T:
     r"""
     Calculates the spread of a forecast compared to a reference.
 
+    .. warning:: Experimental API. This function may change or be removed without notice.
+
     The spread is defined as:
 
     .. math::
@@ -60,6 +62,8 @@ def spread(fcst: T, over: str | list[str], reference: T | None = None) -> T:
 def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
     r"""
     Calculates the quantile score of a forecast compared to a observations.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     The quantile score is defined as:
 
@@ -102,6 +106,8 @@ def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
 def crps_gaussian(fcst, obs):
     r"""
     Calculates the continuous ranked probability score (CRPS) of a forecast described by mean and standard deviation.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     The CRPS score for a Gaussian distribution is defined as:
 
@@ -149,6 +155,8 @@ def crps_gaussian(fcst, obs):
 def crps_from_ensemble(fcst, obs, over, method="ecdf", return_components=False):
     r"""
     Calculates the continuous ranked probability score (CRPS) of an ensemble forecast.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     The CRPS score for an ensemble forecast is defined as:
 
@@ -214,6 +222,8 @@ def crps_from_ensemble(fcst, obs, over, method="ecdf", return_components=False):
 def crps_from_cdf(fcst, obs, over, weight=None, return_components=False):
     r"""
     Calculates the continuous ranked probability score (CRPS) of the cumulative distribution function (CDF) forecast.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     The CRPS score for a CDF forecast is defined as:
 
