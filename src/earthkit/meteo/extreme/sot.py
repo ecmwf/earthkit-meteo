@@ -36,15 +36,15 @@ def sot(
     clim_dim: str | None = None,
     ens_dim: str | None = None,
 ):
-    """Compute Shift of Tails (SOT)
+    r"""Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
     and ensemble forecast (not sorted)
 
     Parameters
     ----------
-    clim: array-like
+    clim: xarray.DataArray
         Model climatology (percentiles). The reduction dimension is set by ``clim_dim``.
-    ens: array-like
+    ens: xarray.DataArrays
         Ensemble forecast. The reduction dimension is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
@@ -57,8 +57,16 @@ def sot(
 
     Returns
     -------
-    array-like
+    xarray.DataArray
         SOT values with the reduction dimension removed.
+
+
+    Implementations
+    ------------------------
+    :func:`sot` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.extreme.xarray.sot` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.extreme.array.sot` for array-like
     """
     res = dispatch(sot, clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
     return res
@@ -83,15 +91,15 @@ def sot_unsorted(
     clim_dim: str | None = None,
     ens_dim: str | None = None,
 ):
-    """Compute Shift of Tails (SOT)
+    r"""Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
     and ensemble forecast (not sorted)
 
     Parameters
     ----------
-    clim: array-like
+    clim: xarray.DataArray
         Model climatology (percentiles). The reduction dimension is set by ``clim_dim``.
-    ens: array-like
+    ens: xarray.DataArray
         Ensemble forecast. The reduction dimension is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
@@ -104,8 +112,16 @@ def sot_unsorted(
 
     Returns
     -------
-    array-like
+    xarray.DataArray
         SOT values with the reduction dimension removed.
+
+
+    Implementations
+    ------------------------
+    :func:`sot_unsorted` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.extreme.xarray.sot_unsorted` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.extreme.array.sot_unsorted` for array-like
     """
     res = dispatch(sot_unsorted, clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
     return res

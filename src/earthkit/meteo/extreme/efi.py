@@ -34,13 +34,13 @@ def efi(
     clim_dim: str | None = None,
     ens_dim: str | None = None,
 ):
-    """Compute Extreme Forecast Index (EFI).
+    r"""Compute Extreme Forecast Index (EFI).
 
     Parameters
     ----------
-    clim: array-like
+    clim: xarray.DataArray
         Sorted per-point climatology. The reduction dimension (quantiles) is set by ``clim_dim``.
-    ens: array-like
+    ens: xarray.DataArray
         Ensemble forecast. The reduction dimension (ensemble members) is set by ``ens_dim``.
     eps: (float)
         Epsilon factor for zero values
@@ -51,8 +51,16 @@ def efi(
 
     Returns
     -------
-    array-like
+    xarray.DataArray
         EFI values with the reduction dimension removed.
+
+
+    Implementations
+    ------------------------
+    :func:`efi` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.extreme.xarray.efi` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.extreme.array.efi` for array-like
     """
     res = dispatch(efi, clim, ens, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
     return res

@@ -42,15 +42,15 @@ def cpf(
     clim_dim: str | None = None,
     ens_dim: str | None = None,
 ):
-    """Compute Crossing Point Forecast (CPF).
+    r"""Compute Crossing Point Forecast (CPF).
 
     WARNING: this code is experimental, use at your own risk!
 
     Parameters
     ----------
-    clim: array-like
+    clim: xarray.DataArray
         Per-point climatology. The reduction dimension (quantiles) is set by ``clim_dim``.
-    ens: array-like
+    ens: xarray.DataArray
         Ensemble forecast. The reduction dimension (ensemble members) is set by ``ens_dim``.
     sort_clim: bool
         If True, sort the climatology first
@@ -72,8 +72,16 @@ def cpf(
 
     Returns
     -------
-    array-like
+    xarray.DataArray
         CPF values with the reduction dimension removed.
+
+
+    Implementations
+    ------------------------
+    :func:`cpf` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.extreme.xarray.cpf` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.extreme.array.cpf` for array-like
     """
     res = dispatch(
         cpf,
