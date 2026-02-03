@@ -98,6 +98,7 @@ def test_xr_efi_perf():
     # Warm up to reduce first-call overhead in timing.
     extreme.array.efi(clim, ens)
     extreme_xr.efi(clim_da, ens_da)
+    extreme.efi(clim_da, ens_da)
 
     repeats = 5
     t0 = time.perf_counter()
