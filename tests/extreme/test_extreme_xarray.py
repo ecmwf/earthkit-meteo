@@ -51,7 +51,6 @@ def test_xr_efi():
     clim = _da(_data.clim, dims=["quantiles", "values", "x", "y"])
     ens = _da(_data.ens, dims=["number", "values", "x", "y"])
     v_ref = -0.1838425040642013
-
     efi = extreme_xr.efi(clim, ens)
     assert np.isclose(efi.values[0], v_ref)
 

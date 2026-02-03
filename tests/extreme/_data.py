@@ -55,7 +55,7 @@ ens = np.array(
         273.621521,
     ]
 )
-ens = ens[:, np.newaxis, np.newaxis, np.newaxis]
+ens = np.repeat(ens[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
 
 ens_eps = np.array(
     [
@@ -112,7 +112,7 @@ ens_eps = np.array(
         0.005218505859375,
     ]
 )
-ens_eps = ens_eps[:, np.newaxis, np.newaxis, np.newaxis]
+ens_eps = np.repeat(ens_eps[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
 
 clim = np.array(
     [
@@ -219,7 +219,7 @@ clim = np.array(
         274.55859375,
     ]
 )
-clim = clim[:, np.newaxis, np.newaxis, np.newaxis]
+clim = np.repeat(clim[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
 
 clim_eps = np.array(
     [
@@ -326,7 +326,7 @@ clim_eps = np.array(
         0.02294921875,
     ]
 )
-clim_eps = clim_eps[:, np.newaxis, np.newaxis, np.newaxis]
+clim_eps = np.repeat(clim_eps[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
 
 ens_eps2 = np.array(
     [
@@ -383,7 +383,7 @@ ens_eps2 = np.array(
         1.5535354614257812,
     ]
 )
-ens_eps2 = ens_eps2[:, np.newaxis, np.newaxis, np.newaxis]
+ens_eps2 = np.repeat(ens_eps2[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
 
 clim_eps2 = np.array(
     [
@@ -490,4 +490,4 @@ clim_eps2 = np.array(
         0.48828125,
     ]
 )
-clim_eps2 = clim_eps2[:, np.newaxis, np.newaxis, np.newaxis]
+clim_eps2 = np.repeat(clim_eps2[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)

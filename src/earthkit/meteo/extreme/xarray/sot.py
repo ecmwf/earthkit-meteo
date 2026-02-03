@@ -107,9 +107,7 @@ def sot_unsorted(
     ens_dim = get_dim_from_defaults(ens, ens_dim, default_dims)
     if clim_dim is None or ens_dim is None:
         raise ValueError("sot_unsorted(): clim_dim and ens_dim must be provided or inferred")
-    axis_clim = clim.get_axis_num(clim_dim)
-    axis_ens = ens.get_axis_num(ens_dim)
-    core_dims = [[clim.dims[axis_clim]], [ens.dims[axis_ens]]]
+    core_dims = [[clim_dim], [ens_dim]]
     return xarray_ufunc(
         array.sot_unsorted,
         clim,
