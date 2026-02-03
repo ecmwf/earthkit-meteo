@@ -89,7 +89,7 @@ def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
     obs : xarray object
         The observations xarray.
     tau : float
-        The quantile level (between 0 and 1).
+        The quantile level in the range (0, 1).
     over : str or list of str
         The dimension(s) over which to compute the quantile score.
 
@@ -98,6 +98,9 @@ def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
     xarray object
         The quantile score of the forecast compared to the observations.
     """
+    if not (0.0 < tau < 1.0):
+        raise ValueError("tau must be in the range (0, 1)")
+
     qf = fcst.quantile(tau, dim=over)
     qf = qf.drop_vars("quantile")
     qscore = abs(obs - qf) + (2.0 * tau - 1.0) * (obs - qf)

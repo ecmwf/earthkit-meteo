@@ -127,12 +127,6 @@ def test_spread_with_reference():
         (0.1, np.array([[[1.98, 0.18], [0.18, 0.38]], [[0.08, 0.0], [41.58, 0.38]]])),
         (0.5, np.array([[[1.5, 0.5], [0.5, 1.5]], [[0.0, 0.4], [23.5, 1.5]]])),
         (0.9, np.array([[[0.38, 0.18], [0.18, 1.98]], [[0.08, 0.16], [4.78, 1.98]]])),
-        # Edge cases for tau=0.0 and tau=1.0.
-        # These use the min/max quantile and reduce to
-        # 2 * max(0, obs - qf) for tau=0
-        # 2 * max(0, qf - obs) for tau=1
-        (0.0, np.array([[[2.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [46.0, 0.0]]])),
-        (1.0, np.array([[[0.0, 0.0], [0.0, 2.0]], [[0.0, 0.0], [0.0, 2.0]]])),
     ],
 )
 def test_quantile_score(tau: float, expected_scores: np.ndarray):
@@ -175,15 +169,16 @@ def test_quantile_score(tau: float, expected_scores: np.ndarray):
     xr.testing.assert_allclose(qs_computed_da, qs_expected["2t"])
 
 
-def test_quantile_score_invalid_tau():
+@pytest.mark.parametrize(
+    "tau",
+    [-0.1, 0.0, 1.0, 1.1],
+)
+def test_quantile_score_invalid_tau(tau: float):
     fcst_values = np.random.rand(2, 2, 2, 10)
     obs_values = np.random.rand(2, 2, 2)
 
     fcst = make_ensemble_dataset(fcst_values)
     obs = make_deterministic_dataset(obs_values)
 
-    with pytest.raises(ValueError):
-        quantile_score(fcst, obs, tau=-0.1, over="number")
-
-    with pytest.raises(ValueError):
-        quantile_score(fcst, obs, tau=1.1, over="number")
+    with pytest.raises(ValueError, match="tau must be in the range"):
+        quantile_score(fcst, obs, tau=tau, over="number")
