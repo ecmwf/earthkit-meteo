@@ -110,11 +110,19 @@ def test_xr_efi_perf():
         extreme_xr.efi(clim_da, ens_da)
     t3 = time.perf_counter()
 
+    t4 = time.perf_counter()
+    for _ in range(repeats):
+        extreme.efi(clim_da, ens_da)
+    t5 = time.perf_counter()
+
     array_time = (t1 - t0) / repeats
     xarray_time = (t3 - t2) / repeats
+    highlevel_time = (t5 - t4) / repeats
     print(f"Array EFI time: {array_time:.6f} s")
     print(f"xarray EFI time: {xarray_time:.6f} s")
+    print(f"High-level EFI time: {highlevel_time:.6f} s")
     assert xarray_time <= 1.5 * array_time
+    assert highlevel_time <= 1.5 * array_time
 
 
 # ---------------------------------
