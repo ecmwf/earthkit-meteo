@@ -30,6 +30,7 @@ def _move_axis(data, axis):
 # EFI
 # ---------------------------------
 
+
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "clim, ens, kwargs, v_ref",
@@ -54,7 +55,9 @@ def test_np_efi(xp, device, clim, ens, kwargs, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("clim, ens, v_ref", [(_data.clim, _data.ens, -0.18384250406420133)])
+@pytest.mark.parametrize(
+    "clim, ens, v_ref", [(_data.clim, _data.ens, -0.18384250406420133)]
+)
 def test_xp_efi_sorted(xp, device, clim, ens, v_ref):
     clim = xp.asarray(clim, device=device)
     ens = xp.asarray(ens, device=device)
@@ -102,6 +105,7 @@ def test_np_efi_mixed_axis(axis):
 # SOT
 # ---------------------------------
 
+
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "clim, ens, v_ref",
@@ -124,7 +128,9 @@ def test_np_sot(xp, device, clim, ens, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("clim, ens, v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])])
+@pytest.mark.parametrize(
+    "clim, ens, v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])]
+)
 def test_np_sot_perc(xp, device, clim, ens, v_ref):
     clim = xp.asarray(clim, device=device)
     ens = xp.asarray(ens, device=device)
@@ -203,14 +209,30 @@ def test_np_sot_mixed_axis(axis):
 # CPF
 # ---------------------------------
 
+
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "clim, ens, kwargs, v_ref",
     [
         (_cpf.cpf_clim, _cpf.cpf_ens, dict(sort_clim=True), _cpf.cpf_val),
-        (_cpf.cpf_clim2, _cpf.cpf_ens2, dict(sort_clim=True, epsilon=0.5), _cpf.cpf_val2),  # eps
-        (_cpf.cpf_clim3, _cpf.cpf_ens3, dict(sort_clim=True, symmetric=True), _cpf.cpf_val3),  # sym
-        (_cpf.cpf_clim, _cpf.cpf_ens, dict(sort_clim=True, from_zero=True), _cpf.cpf_val_fromzero),
+        (
+            _cpf.cpf_clim2,
+            _cpf.cpf_ens2,
+            dict(sort_clim=True, epsilon=0.5),
+            _cpf.cpf_val2,
+        ),  # eps
+        (
+            _cpf.cpf_clim3,
+            _cpf.cpf_ens3,
+            dict(sort_clim=True, symmetric=True),
+            _cpf.cpf_val3,
+        ),  # sym
+        (
+            _cpf.cpf_clim,
+            _cpf.cpf_ens,
+            dict(sort_clim=True, from_zero=True),
+            _cpf.cpf_val_fromzero,
+        ),
     ],
 )
 def test_np_cpf(xp, device, clim, ens, v_ref, kwargs):

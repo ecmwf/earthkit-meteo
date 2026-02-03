@@ -34,8 +34,6 @@ def _da(values, dims):
 
 
 def _da_move_dim(values, dims, axis):
-    import xarray as xr
-
     data = _da(values, dims)
     new_dims = list(dims)
     pop_dim = new_dims.pop(0)
@@ -46,6 +44,7 @@ def _da_move_dim(values, dims, axis):
 # ---------------------------------
 # EFI
 # ---------------------------------
+
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_efi():
@@ -130,6 +129,7 @@ def test_xr_efi_perf():
 # SOT
 # ---------------------------------
 
+
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_sot():
     clim = _da(_data.clim, dims=("quantiles", "values", "x", "y"))
@@ -179,6 +179,7 @@ def test_xr_sot_highlevel():
 # CPF
 # ---------------------------------
 
+
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_cpf():
     clim = _da(_cpf.cpf_clim, dims=("quantiles", "values", "x", "y"))
@@ -191,7 +192,9 @@ def test_xr_cpf():
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize("axis", [0, 1, 2, 3])
 def test_xr_cpf_dims(axis):
-    clim = _da_move_dim(_cpf.cpf_clim, dims=("quantiles", "values", "x", "y"), axis=axis)
+    clim = _da_move_dim(
+        _cpf.cpf_clim, dims=("quantiles", "values", "x", "y"), axis=axis
+    )
     ens = _da_move_dim(_cpf.cpf_ens, dims=("number", "values", "x", "y"), axis=axis)
     v_ref = _cpf.cpf_val
     cpf = extreme.cpf(clim, ens, sort_clim=True)

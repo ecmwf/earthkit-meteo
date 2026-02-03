@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -118,10 +118,13 @@ def sot_unsorted(
 
     Implementations
     ------------------------
-    :func:`sot_unsorted` calls one of the following implementations depending on the type of the input arguments:
+    :func:`sot_unsorted` calls one of the following implementations depending on
+    the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.extreme.xarray.sot_unsorted` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.sot_unsorted` for array-like
     """
-    res = dispatch(sot_unsorted, clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
+    res = dispatch(
+        sot_unsorted, clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim
+    )
     return res

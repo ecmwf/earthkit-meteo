@@ -9,8 +9,7 @@
 
 from earthkit.utils.array import array_namespace
 
-from .utils import flatten_extreme_input
-from .utils import validate_extreme_shapes
+from .utils import flatten_extreme_input, validate_extreme_shapes
 
 
 def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
@@ -43,7 +42,9 @@ def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
     qf = xp.asarray(qf)
 
     min_den = max(eps, 0)
-    sot = xp.where(xp.abs(qc_tail - qc) > min_den, (qf - qc_tail) / (qc_tail - qc), xp.nan)
+    sot = xp.where(
+        xp.abs(qc_tail - qc) > min_den, (qf - qc_tail) / (qc_tail - qc), xp.nan
+    )
 
     sot[sot < lower_bound] = lower_bound
     sot[sot > upper_bound] = upper_bound
@@ -90,12 +91,20 @@ def sot(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     )
     # perc = xp.asarray(perc)
 
-    if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (perc < 2 or perc > 98):
-        raise Exception("Percentile value should be and Integer between 2 and 98, is {}".format(perc))
+    if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (
+        perc < 2 or perc > 98
+    ):
+        raise Exception(
+            "Percentile value should be and Integer between 2 and 98, is {}".format(
+                perc
+            )
+        )
 
     if clim.shape[0] != 101:
         raise Exception(
-            "Climatology array should contain 101 percentiles, it has {} values".format(clim.shape)
+            "Climatology array should contain 101 percentiles, it has {} values".format(
+                clim.shape
+            )
         )
 
     qc = clim[perc]
@@ -158,12 +167,20 @@ def sot_unsorted(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
         ens_axis=ens_axis,
     )
 
-    if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (perc < 2 or perc > 98):
-        raise Exception("Percentile value should be and Integer between 2 and 98, is {}".format(perc))
+    if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (
+        perc < 2 or perc > 98
+    ):
+        raise Exception(
+            "Percentile value should be and Integer between 2 and 98, is {}".format(
+                perc
+            )
+        )
 
     if clim.shape[0] != 101:
         raise Exception(
-            "Climatology array should contain 101 percentiles, it has {} values".format(clim.shape)
+            "Climatology array should contain 101 percentiles, it has {} values".format(
+                clim.shape
+            )
         )
 
     if eps > 0:
