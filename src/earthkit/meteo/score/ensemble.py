@@ -99,6 +99,7 @@ def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
         The quantile score of the forecast compared to the observations.
     """
     qf = fcst.quantile(tau, dim=over)
+    qf = qf.drop_vars("quantile")  # TODO: Clarify, not in vtb
     qscore = abs(obs - qf) + (2.0 * tau - 1.0) * (obs - qf)
     return qscore
 
