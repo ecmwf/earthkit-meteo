@@ -58,6 +58,7 @@ optional-dependencies.test = [
   "pytest",
   "pytest-cov",
   "requests",
+  "xarray",
 ]
 urls.Documentation = "https://earthkit-meteo.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-meteo/"
