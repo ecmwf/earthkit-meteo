@@ -94,7 +94,7 @@ class TestDailyMeanTemperatureArgTimeShift:
     def test_scalar_value_is_applied_everywhere(self, t2m, shift):
         dmt_scalar = excess_heat.daily_mean_temperature(t2m, day_start=0, time_shift=shift)
         dmt_array = excess_heat.daily_mean_temperature(
-            t2m.assign_coords({"timezone": ("x", 3 * [np.timedelta64(shift, "h")])}),
+            t2m.assign_coords({"timezone": ("x", t2m["x"].size * [np.timedelta64(shift, "h")])}),
             day_start=0,
             time_shift="timezone",
         )
@@ -146,10 +146,10 @@ def test_daily_mean_temperature_combined_day_start_and_time_shift_args():
             "timezone": (
                 "x",
                 [
-                    np.timedelta64(-5, "h"),
-                    np.timedelta64(1, "h"),
-                    np.timedelta64(3, "h"),
-                    np.timedelta64(12, "h"),
+                    np.timedelta64(-5, "h"),  # net shift -8
+                    np.timedelta64(1, "h"),  # net shift -2
+                    np.timedelta64(3, "h"),  # net shift 0
+                    np.timedelta64(12, "h"),  # net shift 9
                 ],
             ),
         },
@@ -165,3 +165,37 @@ def test_daily_mean_temperature_combined_day_start_and_time_shift_args():
             [np.nan, np.nan, 83.5, 74.5],
         ],
     )
+
+
+class TestWithLongHeatwaveSyntheticDMT:
+
+    @pytest.fixture
+    def dmt(self):
+        day = np.linspace(0, 150, 151)
+        dmt = 25 + 10 * np.exp(-((day - 60) ** 2) / 5)
+        time = np.datetime64("2025-01-01") + np.timedelta64(24, "h") * day
+        return xr.DataArray(
+            dmt, coords={"valid_time": time}, dims=["valid_time"], attrs={"units": "degree_C"}
+        )
+
+    threshold = 30.0
+
+    def test_significance_index_output_metadata(self, dmt):
+        ehi_sig = excess_heat.significance_index(dmt, threshold=self.threshold)
+        assert ehi_sig.name == "ehi_sig"
+        assert ehi_sig.attrs["long_name"] == "Significance index"
+        # assert ehi_sig.attrs["units"] == dmt.attrs["units"]
+
+    def test_acclimatisation_index_output_metadata(self, dmt):
+        ehi_accl = excess_heat.acclimatisation_index(dmt)
+        assert ehi_accl.name == "ehi_accl"
+        assert ehi_accl.attrs["long_name"] == "Acclimatisation index"
+        # assert ehi_accl.attrs["units"] == dmt.attrs["units"]
+
+    def test_excess_heat_factor_output_metadata(self, dmt):
+        ehi_sig = excess_heat.significance_index(dmt, threshold=self.threshold)
+        ehi_accl = excess_heat.acclimatisation_index(dmt)
+        exhf = excess_heat.excess_heat_factor(ehi_sig, ehi_accl)
+        assert exhf.name == "exhf"
+        assert exhf.attrs["long_name"] == "Excess heat factor"
+        # assert exhf.attrs["units"] == dmt.attrs["units"] + "2"

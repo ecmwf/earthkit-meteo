@@ -171,7 +171,7 @@ def significance_index(dmt, threshold=("quantile", 0.95), ndays=3, time_dim=None
     return current - threshold
 
 
-@_with_metadata("ehi_accl", long_name="acclimatisation_index")
+@_with_metadata("ehi_accl", long_name="Acclimatisation index")
 def acclimatisation_index(dmt, ndays=3, ndays_ref=30):
     """Acclimatisation index
 
