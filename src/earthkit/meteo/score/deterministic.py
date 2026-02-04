@@ -675,7 +675,7 @@ def kge(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.additive_bias <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.additive_bias>`_ function.
+        This function leverages the `scores.continuous.kge <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.kge>`_ function.
 
     Parameters
     ----------
