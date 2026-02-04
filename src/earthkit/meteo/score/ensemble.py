@@ -1,3 +1,4 @@
+from typing import Literal
 from typing import TypeVar
 
 import numpy as np
@@ -107,6 +108,7 @@ def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
     return qscore
 
 
+# TODO: Rename to crps_from_gaussian?
 def crps_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
     r"""
     Calculates the continuous ranked probability score (CRPS) of a forecast described by mean and standard deviation.
@@ -165,7 +167,13 @@ def crps_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
     )
 
 
-def crps_from_ensemble(fcst, obs, over, method="ecdf", return_components=False):
+def crps_from_ensemble(
+    fcst: T,
+    obs: T,
+    over: str | list[str],
+    method: Literal["ecdf", "fair"] = "ecdf",
+    return_components: bool = False,
+):
     r"""
     Calculates the continuous ranked probability score (CRPS) of an ensemble forecast.
 
@@ -220,7 +228,7 @@ def crps_from_ensemble(fcst, obs, over, method="ecdf", return_components=False):
 
     scores = _import_scores_or_prompt_install()
     reduce_dim = []
-    return scores.ensemble.crps_for_ensemble(
+    return scores.probability.crps_for_ensemble(
         fcst,
         obs,
         over,
