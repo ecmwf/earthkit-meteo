@@ -255,9 +255,15 @@ def crps_from_ensemble(
     )
 
 
-def crps_from_cdf(fcst, obs, over, weight=None, return_components=False):
+def crps_from_cdf(
+    fcst: xr.DataArray,
+    obs: xr.DataArray,
+    over: str,
+    weight: xr.DataArray | None = None,
+    return_components: bool = False,
+) -> xr.Dataset:
     r"""
-    Calculates the continuous ranked probability score (CRPS) of the cumulative distribution function (CDF) forecast.
+    Calculates the continuous ranked probability score (CRPS) for forecasts provided as CDFs.
 
     .. warning:: Experimental API. This function may change or be removed without notice.
 
@@ -267,54 +273,67 @@ def crps_from_cdf(fcst, obs, over, weight=None, return_components=False):
         :nowrap:
 
         \begin{align*}
-        o(x) &= 0 ~\text{if}~ x < \text{obs and}~ 1 ~\text{if}~ x >= \text{obs}), \\
-        \operatorname{CRPS}\left[f, o\right] &= \int_{-\infty}^{\infty}{[w(x) \times (f(x) - o(x))^2]\text{d}x},
+        o(x) &= 0 ~\text{if}~ x < \text{obs and}~ 1 ~\text{if}~ x \ge \text{obs}, \\
+        \operatorname{CRPS}\left[f, o\right] &= \int_{-\infty}^{\infty}{w(x)\,(f(x) - o(x))^2\,\text{d}x}
         \end{align*}
 
     where:
 
-    - :math:`f` is the CDF ensemble forecast,
-    - :math:`o` are the observations,
+    - :math:`f` is the forecast CDF,
+    - :math:`o` is the observation converted to CDF form,
+    - :math:`w(x)` is an optional non-negative threshold weight function.
 
-    When the `return_components` flag is set to `True`, the CRPS components are calculated as:
+    With ``return_components=True``, this function returns the decomposition defined below. The
+    output is an ``xarray.Dataset`` with **no new dimension added**; instead it contains data
+    variables named ``total``, ``underforecast_penalty``, and ``overforecast_penalty`` at the same
+    non-threshold coordinates. The overall CRPS is given by
+    ``total = underforecast_penalty + overforecast_penalty``.
+
+    .. math::
+
+        \operatorname{CRPS}[f, o] = O(f, o) + U(f, o)
 
     .. math::
         :nowrap:
 
         \begin{align*}
-        CRPS[f, o] = O(f, o) + U(f, o)
+        O(f, o) &= \int_{\text{obs}}^{\infty}{w(x)\,(f(x) - 1)^2\,\text{d}x} \quad& \text{(overforecast penalty)} \\
+        U(f, o) &= \int_{-\infty}^{\text{obs}}{w(x)\,f(x)^2\,\text{d}x} \quad& \text{(underforecast penalty)}
         \end{align*}
 
-    where
-
-    - :math:`O(f, o) = \int_{-\infty}^{\infty}{[w(x) \times f(x) - o(x))^2]\text{d}x}`, over all thresholds :math:`x` where :math:`x\geq` obs, which is the over-forecast penalty,
-    - :math:`U(f, o) = \int_{-\infty}^{\infty}{[w(x) \times f(x) - o(x))^2]\text{d}x}`, over all thresholds :math:`x` where :math:`x\leq` obs, which is the under-forecast penalty.
-
     Note that there are several ways to decompose the CRPS and this decomposition differs from the
-    one used in `crps_from_ensemble`.
+    one used in :func:`crps_from_ensemble`.
+
+    .. seealso::
+
+        This function leverages the `scores.probability.crps_cdf <https://scores.readthedocs.io/en/latest/api.html#scores.probability.crps_cdf>`_ function.
 
     Parameters
     ----------
-    fcst : xarray object
-        The ensemble forecast xarray.
-    obs : xarray object
-        The observations xarray.
-    over : str or list of str
-        The dimension(s) over which to compute the CRPS.
-    method : str, optional
-        The method to compute the CRPS. Either 'ecdf' or 'fair'. Default is 'ecdf'.
+    fcst : xarray DataArray
+        Forecast CDF values with threshold dimension ``over``.
+    obs : xarray DataArray
+        Observations (not in CDF form). Must not include the ``over`` dimension.
+    over : str
+        The single threshold dimension for the CDF values.
+    weight : xarray DataArray, optional
+        Threshold weights along ``over``. Must include ``over`` as a dimension and be broadcastable
+        to ``fcst``. If ``None``, a weight of 1 is used.
     return_components : bool, optional
-        Whether to return the components of the CRPS. Default is False.
+        Whether to return the under/over forecast components as additional data variables.
+        Default is False.
 
     Returns
     -------
-    xarray object
-        The CRPS of the CDF forecast compared to the observations.
+    xarray Dataset
+        A dataset containing ``total`` CRPS and, if requested, ``underforecast_penalty`` and
+        ``overforecast_penalty`` as data variables. No new dimension is added; the output retains
+        all non-threshold dimensions.
     """
 
     scores = _import_scores_or_prompt_install()
-    reduce_dim = []
-    return scores.ensemble.crps_cdf(
+    reduce_dim = [over]
+    return scores.probability.crps_cdf(
         fcst,
         obs,
         threshold_dim=over,

@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from earthkit.meteo.score.ensemble import crps_from_cdf
 from earthkit.meteo.score.ensemble import crps_from_ensemble
 from earthkit.meteo.score.ensemble import crps_gaussian
 from earthkit.meteo.score.ensemble import quantile_score
@@ -69,6 +70,22 @@ def make_deterministic_dataarray(values, var_name="2t"):
             "valid_datetime": VALID_DATETIMES,
             "latitude": LATITUDES,
             "longitude": LONGITUDES,
+        },
+        name=var_name,
+    )
+
+
+def make_threshold_dataarray(threshold_values, *, values, dim_name="threshold", var_name="cdf"):
+    """Build a (time, lat, lon, threshold) CDF dataarray."""
+    assert values.ndim == 4
+    return xr.DataArray(
+        values,
+        dims=["valid_datetime", "latitude", "longitude", dim_name],
+        coords={
+            "valid_datetime": VALID_DATETIMES,
+            "latitude": LATITUDES,
+            "longitude": LONGITUDES,
+            dim_name: np.asarray(threshold_values, dtype=float),
         },
         name=var_name,
     )
@@ -449,3 +466,126 @@ def test_crps_from_ensemble(method: str, expected_total: np.ndarray, expected_sp
     # Check individual components
     for component, values in expected_components.items():
         assert_component_allclose(crps_components, component, values)
+
+
+@pytest.mark.filterwarnings("ignore:numba is not available")
+def test_crps_from_cdf():
+    threshold_values = np.array([5.0, 8.333333333333334, 11.666666666666668, 15.0], dtype=float)
+    cdf_values = np.array(
+        [
+            [
+                [[0.0, 0.2, 0.7, 1.0], [0.0, 0.4, 0.6, 1.0]],
+                [[0.0, 0.1, 0.5, 1.0], [0.0, 0.3, 0.9, 1.0]],
+            ],
+            [
+                [[0.0, 0.25, 0.8, 1.0], [0.0, 0.15, 0.55, 1.0]],
+                [[0.0, 0.35, 0.75, 1.0], [0.0, 0.2, 0.5, 1.0]],
+            ],
+        ],
+        dtype=float,
+    )
+    obs_values = np.array([[[4.0, 10.5], [14.0, 7.0]], [[9.0, 12.0], [8.0, 16.0]]], dtype=float)
+
+    fcst = make_threshold_dataarray(threshold_values, values=cdf_values, var_name="cdf")
+    obs = make_deterministic_dataarray(obs_values, var_name="obs")
+
+    expected_total = np.array(
+        [
+            [[4.88888889, 1.04833333], [1.45, 1.43777778]],
+            [[0.69, 0.75111111], [1.03666667, 3.42222222]],
+        ],
+        dtype=float,
+    )
+    expected_under = np.array(
+        [
+            [[0.0, 0.64931667], [1.4425, 0.0216]],
+            [[0.13213333, 0.58708611], [0.099225, 3.42222222]],
+        ],
+        dtype=float,
+    )
+    expected_over = np.array(
+        [
+            [[4.88888889, 0.39901667], [0.0075, 1.41617778]],
+            [[0.55786667, 0.164025], [0.93744167, 0.0]],
+        ],
+        dtype=float,
+    )
+
+    result = crps_from_cdf(fcst, obs, over="threshold", return_components=True)
+    total_only = crps_from_cdf(fcst, obs, over="threshold", return_components=False)
+
+    assert set(result.data_vars) == {
+        "total",
+        "underforecast_penalty",
+        "overforecast_penalty",
+    }
+
+    expected_total_da = make_deterministic_dataarray(expected_total, var_name="total")
+    expected_under_da = make_deterministic_dataarray(expected_under, var_name="underforecast_penalty")
+    expected_over_da = make_deterministic_dataarray(expected_over, var_name="overforecast_penalty")
+
+    xr.testing.assert_allclose(result["total"], expected_total_da)
+    xr.testing.assert_allclose(result["underforecast_penalty"], expected_under_da)
+    xr.testing.assert_allclose(result["overforecast_penalty"], expected_over_da)
+    xr.testing.assert_allclose(
+        result["total"], result["underforecast_penalty"] + result["overforecast_penalty"]
+    )
+    xr.testing.assert_allclose(total_only["total"], expected_total_da)
+
+
+@pytest.mark.filterwarnings("ignore:numba is not available")
+def test_crps_from_cdf_weighted_thresholds():
+    threshold_values = np.array([5.0, 8.333333333333334, 11.666666666666668, 15.0], dtype=float)
+    cdf_values = np.array(
+        [
+            [
+                [[0.0, 0.2, 0.7, 1.0], [0.0, 0.4, 0.6, 1.0]],
+                [[0.0, 0.1, 0.5, 1.0], [0.0, 0.3, 0.9, 1.0]],
+            ],
+            [
+                [[0.0, 0.25, 0.8, 1.0], [0.0, 0.15, 0.55, 1.0]],
+                [[0.0, 0.35, 0.75, 1.0], [0.0, 0.2, 0.5, 1.0]],
+            ],
+        ],
+        dtype=float,
+    )
+    obs_values = np.array([[[4.0, 10.5], [14.0, 7.0]], [[9.0, 12.0], [8.0, 16.0]]], dtype=float)
+
+    fcst = make_threshold_dataarray(threshold_values, values=cdf_values, var_name="cdf")
+    obs = make_deterministic_dataarray(obs_values, var_name="obs")
+    weight = xr.DataArray(
+        np.array([0.0, 1.0, 0.0, 0.0], dtype=float),
+        dims=["threshold"],
+        coords={"threshold": threshold_values},
+    )
+
+    result = crps_from_cdf(fcst, obs, over="threshold", weight=weight)
+
+    expected_total = np.array(
+        [
+            [[1.0777778, 0.6927778], [0.3444444, 0.6333333]],
+            [[0.5761111, 0.4527778], [0.7194444, 0.4333333]],
+        ],
+        dtype=float,
+    )
+    expected_total_da = make_deterministic_dataarray(expected_total, var_name="total")
+    xr.testing.assert_allclose(result["total"], expected_total_da)
+
+
+@pytest.mark.filterwarnings("ignore:numba is not available")
+def test_crps_from_cdf_invalid_cdf_values():
+    threshold_values = np.array([5.0, 10.0, 15.0], dtype=float)
+    cdf_values = np.zeros(
+        (len(VALID_DATETIMES), len(LATITUDES), len(LONGITUDES), threshold_values.size),
+        dtype=float,
+    )
+    cdf_values[..., 1] = 0.5
+    cdf_values[..., 2] = 1.0
+    cdf_values[0, 0, 0, 1] = 1.2
+    obs_values = np.full((len(VALID_DATETIMES), len(LATITUDES), len(LONGITUDES)), 10.0, dtype=float)
+
+    fcst = make_threshold_dataarray(threshold_values, values=cdf_values, var_name="cdf")
+    obs = make_deterministic_dataarray(obs_values, var_name="obs")
+
+    with pytest.raises(ValueError, match="CDF"):
+        crps_from_cdf(fcst, obs, over="threshold")
