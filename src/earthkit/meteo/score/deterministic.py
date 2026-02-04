@@ -698,10 +698,14 @@ def kge(
     assert method in ("original", "modified")
     scores = _import_scores_or_prompt_install()
 
-    if method == "modified" or return_components:
-        kge = scores.continuous.kge(fcst, obs, reduce_dims=over, include_components=True)
-    else:
-        return scores.continuous.kge(fcst, obs, reduce_dims=over, include_components=False)
+    if not (method == "modified" or return_components):
+        return scores.continuous.kge(
+            fcst, obs, reduce_dims=over, scaling_factors=scaling_factors, include_components=False
+        )
+
+    kge = scores.continuous.kge(
+        fcst, obs, reduce_dims=over, scaling_factors=scaling_factors, include_components=True
+    )
 
     if method == "modified":
         kge["alpha"] = kge["alpha"] / kge["beta"]
@@ -722,7 +726,7 @@ def kge(
             )
             return kge
 
-        if return_components:
-            return kge
-        else:
-            return kge["kge"]
+    if return_components:
+        return kge
+    else:
+        return kge["kge"]
