@@ -7,6 +7,7 @@ import xarray as xr
 from earthkit.meteo.score.deterministic import abs_error
 from earthkit.meteo.score.deterministic import cosine_similarity
 from earthkit.meteo.score.deterministic import error
+from earthkit.meteo.score.deterministic import kge
 from earthkit.meteo.score.deterministic import mean_abs_error
 from earthkit.meteo.score.deterministic import mean_error
 from earthkit.meteo.score.deterministic import mean_squared_error
@@ -782,3 +783,36 @@ def test_cosine_similarity_with_weights():
         coords={"valid_datetime": VALID_DATETIMES},
     )
     xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
+def test_kge_modified_return_only_kge(rng):
+    fcst_values = np.arange(18.0).reshape(2, 3, 3)
+    noise = rng.normal(0, 1, size=(2, 3, 3))
+    obs_values = fcst_values + noise
+
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
+    # convert to dataarray
+    fcst = fcst["2t"]
+    obs = obs["2t"]
+
+    result = kge(fcst, obs, over=["valid_datetime"])
+
+    expected_values = [
+        [0.89876631, 0.81160643, 0.84475652],
+        [0.8074817, 0.70460809, 0.79378315],
+        [0.90851035, 0.9313564, 0.91618051],
+    ]
+
+    expected = xr.DataArray(
+        np.array(expected_values),
+        dims=("latitude", "longitude"),
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+        name="kge",
+    )
+
+    xr.testing.assert_allclose(result, expected)
+
+
+# TODO: add tests for returning all components, and for non-modified kge case

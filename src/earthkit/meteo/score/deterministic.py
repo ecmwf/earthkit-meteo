@@ -1,5 +1,7 @@
 from typing import Literal
+from typing import Optional
 from typing import TypeVar
+from typing import Union
 
 import numpy as np
 import xarray as xr
@@ -629,3 +631,102 @@ def pearson_correlation(
     covar = covar - fc_mean * ob_mean
     result = covar / np.sqrt(fs_var2 * ob_var2)
     return result.where(np.isfinite(result))
+
+
+def kge(
+    fcst: T,
+    obs: T,
+    over: str | list[str],
+    method: str = "modified",
+    scaling_factors: Optional[Union[list[float], np.ndarray]] = None,
+    return_components: bool = False,
+) -> T:
+    r"""
+    Calculates the Kling-Gupta Efficiency (KGE) between a forecast and observations.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
+
+    The KGE is defined as:
+
+    .. math::
+        \text{KGE} = 1 - \sqrt{\left[s_\rho \cdot (\rho - 1)\right]^2 +
+        \left[s_\alpha \cdot (\alpha - 1)\right]^2 + \left[s_\beta \cdot (\beta - 1)\right]^2}
+
+    .. math::
+    \beta = \frac{\mu_f}{\mu_o}
+
+    For the "original" method, the :math:`\alpha` term is defined as:
+
+    .. math::
+        \alpha_{orig} = \frac{\sigma_f}{\sigma_o}
+
+    Whereas for the "modified" method, the :math:`\alpha` term is defined as:
+
+    .. math::
+        \alpha_{mod} = \frac{\alpha_{orig}}{\beta}
+
+    where:
+        - :math:`\rho`  = Pearson's correlation coefficient between observed and forecast values.
+        - :math:`f` and :math:`o` are forecast and observed values, respectively
+        - :math:`\mu_f` and :math:`\mu_o` are the means of forecast and observed values, respectively
+        - :math:`\sigma_f` and :math:`\sigma_o` are the standard deviations of forecast and observed values, respectively
+        - :math:`s_\rho`, :math:`s_\alpha` and :math:`s_\beta` are the scaling factors for the correlation coefficient :math:`\rho`,
+          the variability term :math:`\alpha` and the bias term :math:`\beta`
+
+    .. seealso::
+
+        This function leverages the `scores.continuous.kge <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.kge>`_ function.
+
+    Parameters
+    ----------
+    fcst : xarray.DataArray
+        The forecast xarray.
+    obs : xarray.DataArray
+        The observations xarray.
+    over : str or list of str
+        The dimension(s) over which to compute the kge.
+    method : str, optional
+        The method to compute the variability term :math:`\alpha`. Can be either "original" or "modified". Default is "modified".
+    return_components : bool, optional
+        Whether to return the individual components (:math:`\rho`, :math:`\alpha`, :math:`\beta`) along with the KGE value. Default is False.
+
+    Returns
+    -------
+    xarray object
+        The KGE between the forecast and observations.
+    """
+    assert method in ("original", "modified")
+    scores = _import_scores_or_prompt_install()
+
+    if not (method == "modified" or return_components):
+        return scores.continuous.kge(
+            fcst, obs, reduce_dims=over, scaling_factors=scaling_factors, include_components=False
+        )
+
+    kge = scores.continuous.kge(
+        fcst, obs, reduce_dims=over, scaling_factors=scaling_factors, include_components=True
+    )
+
+    if method == "modified":
+        kge["alpha"] = kge["alpha"] / kge["beta"]
+
+        if scaling_factors is None:
+            kge["kge"] = 1 - (
+                ((kge["rho"] - 1) ** 2 + ((kge["alpha"] - 1) ** 2) + ((kge["beta"] - 1) ** 2)) ** 0.5
+            )
+        else:
+            s_rho, s_alpha, s_beta = scaling_factors
+            kge["kge"] = 1 - (
+                (
+                    (s_rho * (kge["rho"] - 1)) ** 2
+                    + (s_alpha * (kge["alpha"] - 1)) ** 2
+                    + (s_beta * (kge["beta"] - 1)) ** 2
+                )
+                ** 0.5
+            )
+            return kge
+
+    if return_components:
+        return kge
+    else:
+        return kge["kge"]
