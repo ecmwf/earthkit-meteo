@@ -693,7 +693,7 @@ def kge(
     Returns
     -------
     xarray object
-        The root mean squared error between the forecast and observations.
+        The KGE between the forecast and observations.
     """
     assert method in ("original", "modified")
     scores = _import_scores_or_prompt_install()
