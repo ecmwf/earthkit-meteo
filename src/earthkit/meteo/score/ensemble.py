@@ -107,7 +107,7 @@ def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
     return qscore
 
 
-def crps_gaussian(fcst, obs):
+def crps_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
     r"""
     Calculates the continuous ranked probability score (CRPS) of a forecast described by mean and standard deviation.
 
@@ -134,16 +134,25 @@ def crps_gaussian(fcst, obs):
 
     Parameters
     ----------
-    fcst : xarray object
+    fcst : xarray Dataset
         The forecast xarray. Must have variables "mean" and "stdev".
-    obs : xarray object
-        The observations xarray.
+    obs : xarray DataArray
+        The observations DataArray.
 
     Returns
     -------
     xarray object
         The CRPS of the Gaussian forecast compared to the observations.
     """
+    if not isinstance(fcst, xr.Dataset):
+        raise TypeError(f"Expected fcst to be an xarray.Dataset object, got {type(fcst)}")
+    if not {"mean", "stdev"}.issubset(fcst.data_vars):
+        raise ValueError(
+            f"Expected fcst to have 'mean' and 'stdev' data variables, got {list(fcst.data_vars)}"
+        )
+    if not isinstance(obs, xr.DataArray):
+        raise TypeError(f"Expected obs to be an xarray.DataArray object, got {type(obs)}")
+
     # TODO: support cupy
     import scipy
 

@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from earthkit.meteo.score.ensemble import crps_gaussian
 from earthkit.meteo.score.ensemble import quantile_score
 from earthkit.meteo.score.ensemble import spread
 
@@ -26,6 +27,22 @@ def make_ensemble_dataset(values, var_name="2t"):
             "latitude": LATITUDES,
             "longitude": LONGITUDES,
             "number": np.arange(numbers),
+        },
+    )
+
+
+def make_gaussian_ensemble_dataset(mean, stdev):
+    assert len(mean.shape) == 3
+    assert len(stdev.shape) == 3
+    return xr.Dataset(
+        {
+            "mean": (["valid_datetime", "latitude", "longitude"], mean),
+            "stdev": (["valid_datetime", "latitude", "longitude"], stdev),
+        },
+        coords={
+            "valid_datetime": VALID_DATETIMES,
+            "latitude": LATITUDES,
+            "longitude": LONGITUDES,
         },
     )
 
@@ -182,3 +199,80 @@ def test_quantile_score_invalid_tau(tau: float):
 
     with pytest.raises(ValueError, match="tau must be in the range"):
         quantile_score(fcst, obs, tau=tau, over="number")
+
+
+def test_crps_gaussian():
+    fcst_mean_values = np.array(
+        [
+            [[10.0, 20.0], [30.0, 40.0]],
+            [[15.0, 25.0], [35.0, 45.0]],
+        ]
+    )
+    fcst_stddev_values = np.array(
+        [
+            [[2.0, 3.0], [4.0, 5.0]],
+            [[2.5, 3.5], [4.5, 5.5]],
+        ]
+    )
+    obs_values = np.array(
+        [
+            [[12.0, 19.0], [29.0, 42.0]],
+            [[14.0, 27.0], [36.0, 44.0]],
+        ]
+    )
+    expected_crps_values = np.array(
+        [
+            [[1.20488272, 0.83284794], [1.03399925, 1.48344045]],
+            [[0.74172023, 1.26185368], [1.1399182, 1.35765817]],
+        ]
+    )
+
+    # TODO: Settle on stdev vs stddev
+    fcst = make_gaussian_ensemble_dataset(fcst_mean_values, fcst_stddev_values)
+    obs = make_deterministic_dataset(obs_values)["2t"]
+    crps_expected = make_deterministic_dataset(expected_crps_values)["2t"]
+
+    crps_computed = crps_gaussian(fcst, obs)
+    xr.testing.assert_allclose(crps_computed, crps_expected)
+
+
+def test_crps_gaussian_invalid_input():
+    fcst_mean_values = np.array(
+        [
+            [[10.0, 20.0], [30.0, 40.0]],
+            [[15.0, 25.0], [35.0, 45.0]],
+        ]
+    )
+    # Missing 'stdev' variable
+    fcst = xr.Dataset(
+        {
+            "mean": (["valid_datetime", "latitude", "longitude"], fcst_mean_values),
+        },
+        coords={
+            "valid_datetime": VALID_DATETIMES,
+            "latitude": LATITUDES,
+            "longitude": LONGITUDES,
+        },
+    )
+    obs_values = np.array(
+        [
+            [[12.0, 19.0], [29.0, 42.0]],
+            [[14.0, 27.0], [36.0, 44.0]],
+        ]
+    )
+    obs = make_deterministic_dataset(obs_values)["2t"]
+
+    with pytest.raises(ValueError, match="Expected fcst to have 'mean' and 'stdev' data variables"):
+        crps_gaussian(fcst, obs)
+
+    with pytest.raises(TypeError, match="Expected fcst to be an xarray.Dataset object"):
+        crps_gaussian(
+            make_gaussian_ensemble_dataset(fcst_mean_values, fcst_mean_values)["mean"],
+            make_deterministic_dataset(obs_values),
+        )
+
+    with pytest.raises(TypeError, match="Expected obs to be an xarray.DataArray object"):
+        crps_gaussian(
+            make_gaussian_ensemble_dataset(fcst_mean_values, fcst_mean_values),
+            make_deterministic_dataset(obs_values),
+        )
