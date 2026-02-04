@@ -417,8 +417,8 @@ def test_crps_from_ensemble(method: str, expected_total: np.ndarray, expected_sp
 
     expected_components = {
         "total": expected_total,
-        "underforecast_penalty": expected_under,
         "overforecast_penalty": expected_over,
+        "underforecast_penalty": expected_under,
         "spread": expected_spread,
     }
 
@@ -430,18 +430,22 @@ def test_crps_from_ensemble(method: str, expected_total: np.ndarray, expected_sp
         return_components=True,
     )
 
-    assert list(crps_components["component"].values) == [
+    # Note that we do not explicitly test the order of the components as this
+    # might change in the underlying score function implementation.
+    assert set(crps_components["component"].values) == {
         "total",
         "underforecast_penalty",
         "overforecast_penalty",
         "spread",
-    ]
+    }
 
-    for component, values in expected_components.items():
-        assert_component_allclose(crps_components, component, values)
-
+    # Check that total = under + over - spread
     total = crps_components.sel(component="total", drop=True)
     under = crps_components.sel(component="underforecast_penalty", drop=True)
     over = crps_components.sel(component="overforecast_penalty", drop=True)
     spread = crps_components.sel(component="spread", drop=True)
     xr.testing.assert_allclose(total, under + over - spread)
+
+    # Check individual components
+    for component, values in expected_components.items():
+        assert_component_allclose(crps_components, component, values)

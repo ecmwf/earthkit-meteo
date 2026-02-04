@@ -173,7 +173,7 @@ def crps_from_ensemble(
     over: str | list[str],
     method: Literal["ecdf", "fair"] = "ecdf",
     return_components: bool = False,
-):
+) -> T:
     r"""
     Calculates the continuous ranked probability score (CRPS) of an ensemble forecast.
 
@@ -194,18 +194,32 @@ def crps_from_ensemble(
     - :math:`o` are the observations,
     - :math:`K=M^2` for the 'ecdf' method and :math:`M(M-1)` for the 'fair' method,
 
-    When the `return_components` flag is set to `True`, the CRPS components are calculated as:
+    With `return_components=True`, this function returns the decomposition defined below with an
+    added ``component`` dimension. The ``component`` values are ``total``,
+    ``underforecast_penalty``, ``overforecast_penalty``, and ``spread`` (ordering is not
+    guaranteed and might differ). The overall CRPS is given by
+    ``total = underforecast_penalty + overforecast_penalty - spread``. When
+    ``return_components=False``, no ``component`` dimension is added and only the total CRPS is
+    returned.
 
     .. math::
-        CRPS[f, o] = O(f, o) + U(f, o) - S(f, f)
 
-    where
-        - :math:`O(f, o) = \frac{\sum_{i=1}^{M} ((f_i - o) \mathbb{1}{\{f_i > o\}})}{M}` which is the overforecast penalty.
-        - :math:`U(f, o) = \frac{\sum_{i=1}^{M} ((o - f_i) \mathbb{1}{\{f_i < o\}})}{M}` which is the underforecast penalty.
-        - :math:`S(f, f) = \frac{\sum_{i=1}^{M}\sum_{j=1}^{M}(|f_i - f_j|)}{2K}` which is the forecast spread term.
+        \operatorname{CRPS}[f, o] = O(f, o) + U(f, o) - S(f, f)
 
-    Note that there are several ways to decompose the CRPS and this decomposition differs from the
-    one used in `crps_from_cdf`.
+    .. math::
+        :nowrap:
+
+        \begin{align*}
+        O(f, o) &= \frac{1}{M} \sum_{i=1}^{M} (f_i - o)\,\mathbb{1}_{\{f_i > o\}} \quad& \text{(overforecast penalty)} \\
+        U(f, o) &= \frac{1}{M} \sum_{i=1}^{M} (o - f_i)\,\mathbb{1}_{\{f_i < o\}} \quad& \text{(underforecast penalty)} \\
+        S(f, f) &= \frac{1}{2K} \sum_{i=1}^{M} \sum_{j=1}^{M} |f_i - f_j| \quad& \text{(forecast spread term)}
+        \end{align*}
+
+    Other CRPS decompositions exist; compare :func:`crps_from_cdf`.
+
+    .. seealso::
+
+        This function leverages the `scores.probability.crps_for_ensemble <https://scores.readthedocs.io/en/latest/api.html#scores.probability.crps_for_ensemble>`_ function.
 
     Parameters
     ----------
@@ -227,6 +241,7 @@ def crps_from_ensemble(
     """
 
     scores = _import_scores_or_prompt_install()
+    # TODO: revisit component ordering here and in tests
     reduce_dim = []
     return scores.probability.crps_for_ensemble(
         fcst,
