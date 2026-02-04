@@ -15,7 +15,7 @@ import pytest
 from earthkit.utils.array.namespace import _NUMPY_NAMESPACE
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
-from earthkit.meteo import score
+from earthkit.meteo.score import array as score
 
 
 def crps_quaver2(x, y):
