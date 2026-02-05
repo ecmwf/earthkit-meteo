@@ -55,6 +55,7 @@ optional-dependencies.samples = [
   "requests",
 ]
 optional-dependencies.test = [
+  "netcdf4",
   "pytest",
   "pytest-cov",
   "requests",
