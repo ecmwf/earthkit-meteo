@@ -118,6 +118,7 @@ def _make_input_xr(data, coord, target_coord, expected_data, xp=np, device="cpu"
 @pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_s_s_s"))
 def test_xr_interpolate_monotonic_s_s_s(ds_input, ds_expected, mode):
     from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+
     observed = interpolate_monotonic(ds_input.data, ds_input.z, ds_expected.z, mode)
     assert observed == ds_expected
 
@@ -126,6 +127,7 @@ def test_xr_interpolate_monotonic_s_s_s(ds_input, ds_expected, mode):
 @pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_a_s"))
 def test_xr_interpolate_monotonic_a_a_s(ds_input, ds_expected, mode):
     from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+
     observed = interpolate_monotonic(ds_input.data, ds_input.z, ds_expected.z, mode)
     assert observed == ds_expected
 
@@ -134,6 +136,7 @@ def test_xr_interpolate_monotonic_a_a_s(ds_input, ds_expected, mode):
 @pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_s_s"))
 def test_xr_interpolate_monotonic_a_s_s(ds_input, ds_expected, mode):
     from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+
     observed = interpolate_monotonic(ds_input.data, ds_input.z, ds_expected.z, mode)
     assert observed == ds_expected
 
@@ -142,6 +145,7 @@ def test_xr_interpolate_monotonic_a_s_s(ds_input, ds_expected, mode):
 @pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_s_a"))
 def test_xr_interpolate_monotonic_a_s_a(ds_input, ds_expected, mode):
     from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+
     observed = interpolate_monotonic(ds_input.data, ds_input.z, ds_expected.z, mode)
     assert observed == ds_expected
 
@@ -150,5 +154,6 @@ def test_xr_interpolate_monotonic_a_s_a(ds_input, ds_expected, mode):
 @pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_a_a"))
 def test_xr_interpolate_monotonic_a_a_a(ds_input, ds_expected, mode):
     from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+
     observed = interpolate_monotonic(ds_input.data, ds_input.z, ds_expected.z, mode)
     assert observed == ds_expected

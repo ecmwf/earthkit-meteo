@@ -1,9 +1,10 @@
 import dataclasses as dc
-from typing import Any, Literal, Sequence
+from typing import Any
+from typing import Literal
+from typing import Sequence
 
 import numpy as np
 import xarray as xr
-
 
 __all__ = [
     "TargetCoordinates",
@@ -67,7 +68,9 @@ def interpolate_monotonic(
 
     # Prepare output field field_on_target on target coordinates
     field_on_target = _init_field_with_vcoord(
-        data.broadcast_like(coord), target_coord, np.nan,
+        data.broadcast_like(coord),
+        target_coord,
+        np.nan,
     )
 
     # Interpolate
@@ -161,9 +164,7 @@ def interpolate_to_pressure_levels(
     # ... supported target units and corresponding conversion factors to Pa
     target_p_unit_conversions = dict(Pa=1.0, hPa=100.0)
     if target_p_units not in target_p_unit_conversions.keys():
-        raise ValueError(
-            f"unsupported value of target_p_units: {target_p_units}"
-        )
+        raise ValueError(f"unsupported value of target_p_units: {target_p_units}")
     # ... supported range of pressure target values (in Pa)
     target_p_min = 1.0
     target_p_max = 120000.0
@@ -239,9 +240,7 @@ def interpolate_sleve_to_coord_levels(
         # ... find the height field where target is >= t0 on level k and was <= t0
         #     on level k-1 or where theta is <= th0 on level k
         #     and was >= th0 on level k-1
-        ht = h.where(
-            ((coord >= t0) & (tkm1 <= t0)) | ((coord <= t0) & (tkm1 >= t0))
-        )
+        ht = h.where(((coord >= t0) & (tkm1 <= t0)) | ((coord <= t0) & (tkm1 >= t0)))
         if folding_mode == "undef_fold":
             # ... find condition where more than one interval is found, which
             # contains the target coordinate value
@@ -325,9 +324,7 @@ def interpolate_sleve_to_theta_levels(
     #     them in cK for NetCDF (to be checked)
     th_tc_unit_conversions = dict(K=1.0, cK=0.01)
     if target_t_units not in th_tc_unit_conversions.keys():
-        raise ValueError(
-            f"unsupported value of th_tc_units: {target_t_units}"
-        )
+        raise ValueError(f"unsupported value of th_tc_units: {target_t_units}")
     # ... supported range of tc values (in K)
     th_tc_min = 1.0
     th_tc_max = 1000.0
@@ -338,8 +335,7 @@ def interpolate_sleve_to_theta_levels(
     tc_values = np.array(target_theta) * th_tc_unit_conversions[target_t_units]
     if np.any((tc_values < th_tc_min) | (tc_values > th_tc_max)):
         raise ValueError(
-            "target coordinate value "
-            f"out of range (must be in interval [{th_tc_min}, {th_tc_max}]K)"
+            "target coordinate value " f"out of range (must be in interval [{th_tc_min}, {th_tc_max}]K)"
         )
     tc = TargetCoordinates(
         type_of_level="theta",

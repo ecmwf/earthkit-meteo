@@ -1,5 +1,5 @@
-import xarray as xr
 import pytest
+import xarray as xr
 
 from earthkit.meteo import thermo
 from earthkit.meteo.utils import testing
