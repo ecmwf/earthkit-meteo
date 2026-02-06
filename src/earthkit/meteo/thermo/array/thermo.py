@@ -37,7 +37,7 @@ def celsius_to_kelvin(t: ArrayLike) -> ArrayLike:
         Temperature in Kelvin units
 
     """
-    return t + constants.T0
+    return t + constants.T_C2K
 
 
 def kelvin_to_celsius(t: ArrayLike) -> ArrayLike:
@@ -54,7 +54,7 @@ def kelvin_to_celsius(t: ArrayLike) -> ArrayLike:
         Temperature in Celsius units
 
     """
-    return t - constants.T0
+    return t - constants.T_C2K
 
 
 def specific_humidity_from_mixing_ratio(w: ArrayLike) -> ArrayLike:
