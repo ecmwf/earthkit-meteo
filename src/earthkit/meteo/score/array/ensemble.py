@@ -10,7 +10,7 @@
 from earthkit.utils.array import array_namespace
 
 
-def crps(x, y, nan_policy="propagate"):
+def crps_from_ensemble(x, y, nan_policy="propagate"):
     """Compute Continuous Ranked Probability Score (CRPS).
 
     Parameters
