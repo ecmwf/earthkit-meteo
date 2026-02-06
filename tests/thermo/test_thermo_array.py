@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
-from earthkit.meteo import thermo
+import earthkit.meteo.thermo.array as thermo
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
