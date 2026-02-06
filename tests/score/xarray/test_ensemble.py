@@ -4,11 +4,11 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from earthkit.meteo.score.ensemble import crps_from_cdf
-from earthkit.meteo.score.ensemble import crps_from_ensemble
-from earthkit.meteo.score.ensemble import crps_gaussian
-from earthkit.meteo.score.ensemble import quantile_score
-from earthkit.meteo.score.ensemble import spread
+from earthkit.meteo.score import crps_from_cdf
+from earthkit.meteo.score import crps_from_ensemble
+from earthkit.meteo.score import crps_gaussian
+from earthkit.meteo.score import quantile_score
+from earthkit.meteo.score import spread
 
 LATITUDES = [40.0, 41.0]
 LONGITUDES = [10.0, 11.0]
