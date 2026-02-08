@@ -348,3 +348,192 @@ def crps_from_cdf(
         weights=None,
         include_components=return_components,
     )
+
+
+# TODO: is the output type Dataset right?
+# TODO: complete docstring (fair CRPS)
+# TODO: test against crps_from_ensemble (CRPS and fairCRPS should be identical arrays)
+# TODO: does this work when over is a list of dimensions?
+# TODO: decide on the nan distribution strategy and make sure it's consistent with other functions (e.g. crps_from_ensemble)
+def crps_from_ensemble_hersbach(
+    fcst: T,
+    obs: T,
+    over: str | list[str],
+    components_coords: np.ndarray | list | None = None,
+) -> T:
+    r"""
+    Calculates the continuous ranked probability score (CRPS) of an ensemble forecast.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
+
+    The function returns CRPS arrays calculated by two methods
+
+        - ``crps`` the exact CRPS value for the empirical cumulative distribution function
+            constructed using the ensemble values;
+        - ``fair`` the approximated CRPS where the ensemble values can be interpreted as a
+            random sample from the underlying predictive distribution.
+
+    The exact CRPS score for an ensemble forecast is computed based on eqns (26) to (29) in Hersbach (2000) as:
+
+    .. math::
+        :nowrap:
+
+        \begin{align*}
+        \operatorname{CRPS} = \sum_{i=0}^{M} \left[ \alpha_i p_i^2 + \beta_i (1-p_i)^2 \right]
+        \end{align*}
+
+    where the components :math:`\alpha_i` and :math:`\beta_i` are defined by eqns (26) and (27) in Hersbach (2000)
+    and the probabilities
+
+    .. math::
+
+        p_i = i / M
+
+    A fair version of CRPS is then obtained by
+
+    .. math::
+
+        \operatorname{fairCRPS} = \operatorname{CRPS} + ...
+
+
+    Parameters
+    ----------
+    fcst : xarray object
+        The ensemble forecast xarray.
+    obs : xarray object
+        The observations xarray.
+    over : str or list of str
+        The dimension(s) over which to compute the CRPS.
+    components_coords : np.ndarray or list, optional
+        The coordinates to assign to the CRPS alpha and CRPS beta components dimension.
+        If None, defaults to a sequence from 1 to ensemble size + 1.
+
+    Returns
+    -------
+    xarray Dataset
+        A dataset containing ``crps`` CRPS, ``fair`` CRPS, and ``alpha`` and ``beta`` CRPS components as data variables.
+        The CRPS alpha and CRPS beta components have a dimension named ``over`` with coordinates given
+        by ``components_coords``.
+    """
+
+    ens_size = fcst.sizes[over]
+    if components_coords is None:
+        components_coords = np.arange(1, ens_size + 2)
+    else:
+        assert (
+            len(components_coords) == ens_size + 1
+        ), "component_coords must have the length of ensemble size + 1"
+    # sort forecast values along the ensemble dimension
+    fcst_sorted = _sorted_ensemble(fcst, over)
+    alpha = xr.concat(
+        [xr.zeros_like(fcst_sorted[{over: 0}])] * (ens_size + 1), dim=over
+    )
+    beta = alpha.copy()
+    # note the order in operations between forecasts and observations matters
+    # for the broadcasting to work correctly
+    obs_below_ens = fcst_sorted[{over: 0}] > obs
+    alpha[{over: 0}] = alpha[{over: 0}].where(~obs_below_ens, 1.0)
+    beta[{over: 0}] = (fcst_sorted[{over: 0}] - obs).where(obs_below_ens, 0.0)
+    alpha[{over: slice(1, -1)}] = (
+        fcst_sorted.diff(dim=over)
+        .where(
+            fcst_sorted[{over: slice(1, None)}] <= obs,
+            -fcst_sorted[{over: slice(None, -1)}] + obs,
+        )
+        .where(fcst_sorted[{over: slice(None, -1)}] <= obs, 0.0)
+    )
+    beta[{over: slice(1, -1)}] = (
+        fcst_sorted.diff(dim=over)
+        .where(
+            fcst_sorted[{over: slice(None, -1)}] > obs,
+            fcst_sorted[{over: slice(1, None)}] - obs,
+        )
+        .where(fcst_sorted[{over: slice(1, None)}] > obs, 0.0)
+    )
+    obs_above_ens = fcst_sorted[{over: -1}] < obs
+    alpha[{over: -1}] = (-fcst_sorted[{over: -1}] + obs).where(obs_above_ens, 0.0)
+    beta[{over: -1}] = beta[{over: -1}].where(~obs_above_ens, 1.0)
+    alpha = alpha.assign_coords({over: components_coords})
+    beta = beta.assign_coords({over: components_coords})
+    weight = xr.DataArray(np.arange(ens_size + 1), dims=over) / float(ens_size)
+    crps = (alpha * weight**2 + beta * (1.0 - weight) ** 2).sum(over)
+    fcrps = crps - _ginis_mean_diff(fcst_sorted, over) / (2.0 * ens_size)
+    # get the mask of valid values across observations and ensemble members
+    valid_mask = _common_valid_mask(obs, fcst_sorted, dim=over)
+    return xr.Dataset(
+        {
+            "alpha": alpha.where(valid_mask),
+            "beta": beta.where(valid_mask),
+            "crps": crps.where(valid_mask),
+            "fair": fcrps.where(valid_mask),
+        }
+    )
+
+
+def ginis_mean_diff(fcst, over):
+    r"""
+    Gini's mean difference. REFERENCE: Ferro et al. (2008)
+
+    .. math::
+
+        \frac{\sum_i^{nens} \sum_j^{nens} |x_i - x_j|}{n (n-1)}
+
+    Parameters
+    ----------
+    fcst : xarray object
+        The ensemble forecast xarray.
+    over : str or list of str
+        The dimension(s) over which to compute the CRPS.
+
+    Returns
+    -------
+    xarray object
+        Gini's mean difference.
+
+    """
+
+    valid_mask = _common_valid_mask(fcst, dim=over)
+    forecasts = _sorted_ensemble(fcst, dim=over)
+    return _ginis_mean_diff(forecasts, over).where(valid_mask)
+
+
+# TODO: is it really dask-safe?
+def _sorted_ensemble(forecasts, dim):
+    # sort forecast values along the ensemble dimension
+    return xr.apply_ufunc(
+        np.sort,
+        forecasts,
+        input_core_dims=[[dim]],
+        output_core_dims=[[dim]],
+        exclude_dims=set((dim,)),
+        kwargs={"axis": -1},
+        dask="parallelized",
+        dask_gufunc_kwargs={"output_sizes": {dim: forecasts.sizes[dim]}},
+    )
+
+
+def _common_valid_mask(*arrays, dim=None):
+    # return a numpy bool array of occurrences of all values valid across dim
+    mask = None
+    for array in arrays:
+        if dim is not None and dim in array.dims:
+            nmask = array.notnull().all(dim=dim)
+        else:
+            nmask = array.notnull()
+        if mask is None:
+            mask = nmask
+        else:
+            mask = mask & nmask
+    return mask
+
+
+def _ginis_mean_diff(fcst_sorted, over):
+    # ( sum_i sum_j abs(x_i-x_j) )/(n*(n-1)) along dimension over
+    # NB: the algorithm assumes fcst_sorted has been sorted along dimension over
+    # pretty much copied from scores.probability.crps_for_ensemble()
+    ens_size = fcst_sorted.sizes[over]
+    npairs = ens_size * (ens_size - 1)
+    i = xr.DataArray(np.arange(ens_size), dims=[over])
+    coeffs = 2 * i - fcst_sorted.count(over) + 1
+    gmd = 2 * (fcst_sorted * coeffs).sum(dim=over, skipna=True)
+    return gmd / npairs
