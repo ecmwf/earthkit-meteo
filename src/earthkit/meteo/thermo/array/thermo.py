@@ -232,9 +232,11 @@ def mixing_ratio_from_vapour_pressure(e: ArrayLike, p: ArrayLike, eps: float = 1
         raise ValueError(f"mixing_ratio_from_vapour_pressure(): eps={eps} must be > 0")
 
     xp = array_namespace(e, p)
-    v = xp.asarray(p - e)
-    v[v < eps] = xp.nan
-    return constants.epsilon * e / v
+    e = xp.asarray(e, dtype=float)
+    p = xp.asarray(p, dtype=float)
+
+    denom = p - e
+    return xp.where(denom >= eps, constants.epsilon * e / denom, xp.nan)
 
 
 def saturation_vapour_pressure(t: ArrayLike, phase: str = "mixed") -> ArrayLike:
