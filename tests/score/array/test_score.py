@@ -89,7 +89,7 @@ def test_crps_meteo(xp, device, obs, ens, v_ref, nan_policy):
     ens = xp.asarray(ens, device=device)
     v_ref = xp.asarray(v_ref, device=device)
 
-    c = score.crps(ens.T, obs[0], nan_policy)
+    c = score.crps_from_ensemble(ens.T, obs[0], nan_policy)
 
     for i in range(ens.shape[0]):
         assert xp.isclose(c[i], v_ref[i]), f"i={i}"
@@ -114,10 +114,10 @@ def test_crps_meteo_missing(xp, device, obs, ens, v_ref, nan_policy):
 
     if nan_policy == "raise":
         with pytest.raises(ValueError):
-            score.crps(ens, obs, nan_policy)
+            score.crps_from_ensemble(ens, obs, nan_policy)
     else:
-        c_all = score.crps(ens, obs, nan_policy)
-        c_non_missing = score.crps(ens[..., ~nan_mask], obs[~nan_mask])
+        c_all = score.crps_from_ensemble(ens, obs, nan_policy)
+        c_non_missing = score.crps_from_ensemble(ens[..., ~nan_mask], obs[~nan_mask])
 
         if nan_policy == "omit":
             for i in range(c_all.shape[0]):
@@ -185,5 +185,5 @@ def test_pearson(xp, device, x, y, v_ref):
     y = xp.asarray(y, device=device)
     v_ref = xp.asarray(v_ref, device=device)
 
-    r = score.pearson(x, y, axis=1)
+    r = score.pearson_correlation(x, y, axis=1)
     assert xp.allclose(r, v_ref, atol=1e-7, equal_nan=True)
