@@ -21,19 +21,25 @@ pytestmark = pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 
 def _da(x):
     import xarray as xr
+
     return xr.DataArray(np.asarray(x))
 
 
 def _scalar_da(x):
     import xarray as xr
+
     return xr.DataArray(np.asarray(x))
+
 
 def _np(x):
     return np.asarray(x)
 
+
 def _xr_da_1d(x, dim="point"):
     import xarray as xr
+
     return xr.DataArray(np.asarray(x), dims=(dim,))
+
 
 def _data_file(name):
     return os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", name)
@@ -49,9 +55,11 @@ def _read_data_file(path):
     )
     return d
 
+
 # ---------------------------------------------------------------------
 # Refs are regenerated from thermo.array (current implementation)
 # ---------------------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     "t_c",
@@ -507,7 +515,6 @@ def test_xr_saturation_ept(t, p, method):
     assert out.ndim == 0
 
 
-
 @pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
 @pytest.mark.parametrize("t_method", ["bisect", "newton"])
 def test_xr_temperature_on_moist_adiabat(ept_method, t_method):
@@ -518,9 +525,7 @@ def test_xr_temperature_on_moist_adiabat(ept_method, t_method):
     ept = _xr_da_1d(ref["ept"])
     p = _xr_da_1d(ref["p"])
 
-    out = thermo.temperature_on_moist_adiabat(
-        ept, p, ept_method=ept_method, t_method=t_method
-    )
+    out = thermo.temperature_on_moist_adiabat(ept, p, ept_method=ept_method, t_method=t_method)
 
     # reference: current numpy/array implementation
     v_ref = thermo.array.temperature_on_moist_adiabat(
@@ -534,7 +539,6 @@ def test_xr_temperature_on_moist_adiabat(ept_method, t_method):
     assert out.dims == ("point",)
 
 
-
 @pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
 @pytest.mark.parametrize("t_method", ["bisect", "newton"])
 def test_xr_wet_bulb_temperature_from_dewpoint_vectorized(ept_method, t_method):
@@ -544,13 +548,15 @@ def test_xr_wet_bulb_temperature_from_dewpoint_vectorized(ept_method, t_method):
 
     out = thermo.wet_bulb_temperature_from_dewpoint(t, td, p, ept_method=ept_method, t_method=t_method)
     ref = thermo.array.wet_bulb_temperature_from_dewpoint(
-        np.asarray(t.values), np.asarray(td.values), np.asarray(p.values),
-        ept_method=ept_method, t_method=t_method
+        np.asarray(t.values),
+        np.asarray(td.values),
+        np.asarray(p.values),
+        ept_method=ept_method,
+        t_method=t_method,
     )
 
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.dims == ("point",)
-
 
 
 @pytest.mark.parametrize(
@@ -569,8 +575,7 @@ def test_xr_wet_bulb_temperature_from_specific_humidity_vectorized(t, q, p, ept_
     )
 
     ref = thermo.array.wet_bulb_temperature_from_specific_humidity(
-        np.asarray(t), np.asarray(q), np.asarray(p),
-        ept_method=ept_method, t_method=t_method
+        np.asarray(t), np.asarray(q), np.asarray(p), ept_method=ept_method, t_method=t_method
     )
 
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -599,7 +604,6 @@ def test_xr_wet_bulb_potential_temperature_from_dewpoint(t, td, p, ept_method, t
     assert out.ndim == 0
 
 
-
 @pytest.mark.parametrize(
     "t,q,p,method",
     [
@@ -611,9 +615,7 @@ def test_xr_wet_bulb_potential_temperature_from_specific_humidity(t, q, p, metho
     q_da = _scalar_da(q)
     p_da = _scalar_da(p)
 
-    out = thermo.wet_bulb_potential_temperature_from_specific_humidity(
-        t_da, q_da, p_da, ept_method=method
-    )
+    out = thermo.wet_bulb_potential_temperature_from_specific_humidity(t_da, q_da, p_da, ept_method=method)
     ref = thermo.array.wet_bulb_potential_temperature_from_specific_humidity(
         _np(t), _np(q), _np(p), ept_method=method
     )

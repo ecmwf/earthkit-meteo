@@ -1310,7 +1310,7 @@ def temperature_on_moist_adiabat(
         {
             "standard_name": "",  # no standard name
             "units": "K",
-            "long_name": "Temperature on the moist adiabat"
+            "long_name": "Temperature on the moist adiabat",
         }
     )
 
