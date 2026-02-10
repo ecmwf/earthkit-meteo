@@ -89,7 +89,7 @@ class GumbelDistribution:
         """
         xp = array_namespace(x, self.mu, self.sigma)
         x = _expand_dims_after(x, self.ndim, xp=xp)
-        return 1.0 - xp.exp(-xp.exp((xp.asarray(self.mu) - x) / xp.asarray(self.sigma)))
+        return 1.0 - xp.exp(-xp.exp((self.mu - x) / self.sigma))
 
     def ppf(self, p):
         """Evaluate the percent point function (PPF; inverse CDF).
@@ -107,7 +107,7 @@ class GumbelDistribution:
         """
         xp = array_namespace(p, self.mu, self.sigma)
         p = _expand_dims_after(p, self.ndim, xp=xp)
-        return xp.asarray(self.mu) - xp.asarray(self.sigma) * xp.log(-xp.log(1.0 - p))
+        return self.mu - self.sigma * xp.log(-xp.log(1.0 - p))
 
 
 def value_to_return_period(dist, value):
@@ -118,7 +118,7 @@ def value_to_return_period(dist, value):
 
     Parameters
     ----------
-    dist: MaximumValueDistribution
+    dist: GumbelDistribution
         Probability distribution.
     value: Number | array_like
         Input value(s).
@@ -138,7 +138,7 @@ def return_period_to_value(dist, return_period):
 
     Parameters
     ----------
-    dist: MaximumValueDistribution
+    dist: GumbelDistribution
         Probability distribution.
     return_period: Number | array_like
         Input return period. Must be compatible with the frequency information
