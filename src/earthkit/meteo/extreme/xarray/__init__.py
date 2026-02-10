@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,13 +8,12 @@
 #
 
 """
-Extreme index functions operating on numpy arrays.
+Extreme index functions operating on xarray objects.
 """
 
 from .cpf import cpf  # noqa
 from .efi import efi  # noqa
 from .sot import sot  # noqa
-from .sot import sot_func  # noqa
 from .sot import sot_unsorted  # noqa
 
 __all__ = [
@@ -22,5 +21,4 @@ __all__ = [
     "efi",
     "sot",
     "sot_unsorted",
-    "sot_func",
 ]

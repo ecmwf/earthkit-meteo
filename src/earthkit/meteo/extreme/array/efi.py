@@ -12,37 +12,61 @@
 
 from earthkit.utils.array import array_namespace
 
+from .utils import (
+    flatten_extreme_input,
+    validate_extreme_shapes,
+)
 
-def efi(clim, ens, eps=-0.1):
-    """Compute Extreme Forecast Index (EFI)
+
+def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
+    """Compute Extreme Forecast Index (EFI).
+
+    The reduction axis (ensemble and quantiles) is configurable by the user,
+    but the other dimensions of clim and ens must be aligned and match.
 
     Parameters
     ----------
-    clim: array-like (nclim, npoints)
-        Sorted per-point climatology
-    ens: array-like (nens, npoints)
-        Ensemble forecast
+    clim: array-like
+        Sorted per-point climatology. The reduction axis (quantiles) is set by ``clim_axis``.
+    ens: array-like
+        Ensemble forecast. The reduction axis (ensemble members) is set by ``ens_axis``.
     eps: (float)
         Epsilon factor for zero values
+    clim_axis: int
+        Axis index of the climatology/quantile dimension in ``clim``. Default is 0.
+    ens_axis: int
+        Axis index of the ensemble/member dimension in ``ens``. Default is 0.
 
     Returns
     -------
-    array-like (npoints)
-        EFI values
+    array-like
+        EFI values.
     """
 
     xp = array_namespace(clim, ens)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
     device = xp.device(clim)
+    validate_extreme_shapes(
+        func="efi",
+        clim_shape=clim.shape,
+        ens_shape=ens.shape,
+        clim_axis=clim_axis,
+        ens_axis=ens_axis,
+    )
+    # Compute fraction of the forecast below climatology
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
+    ens, _ = flatten_extreme_input(xp, ens, ens_axis)
+
+    nclim = clim.shape[0]
+    nens = ens.shape[0]
+    npoints = clim.shape[1]
 
     # locate missing values
-    missing_mask = xp.logical_or(xp.sum(xp.isnan(clim), axis=0), xp.sum(xp.isnan(ens), axis=0))
+    missing_mask = xp.logical_or(
+        xp.sum(xp.isnan(clim), axis=0), xp.sum(xp.isnan(ens), axis=0)
+    )
 
-    # Compute fraction of the forecast below climatology
-    nclim, npoints = clim.shape
-    nens, npoints_ens = ens.shape
-    assert npoints == npoints_ens
     frac = xp.zeros_like(clim)
     ##################################
     for icl in range(nclim):
@@ -68,7 +92,9 @@ def efi(clim, ens, eps=-0.1):
             mask = clim[icl + 1, :] > eps
             dEFI = xp.where(
                 mask,
-                (2.0 * frac[icl, :] - 1.0) * acosdiff[icl] + acoef[icl] * dFdp[icl, :] - proddiff[icl],
+                (2.0 * frac[icl, :] - 1.0) * acosdiff[icl]
+                + acoef[icl] * dFdp[icl, :]
+                - proddiff[icl],
                 0.0,
             )
             defimax = xp.where(mask, -acosdiff[icl] - proddiff[icl], 0.0)
@@ -78,68 +104,15 @@ def efi(clim, ens, eps=-0.1):
         efi /= efimax
     else:
         for icl in range(nclim - 1):
-            dEFI = (2.0 * frac[icl, :] - 1.0) * acosdiff[icl] + acoef[icl] * dFdp[icl, :] - proddiff[icl]
+            dEFI = (
+                (2.0 * frac[icl, :] - 1.0) * acosdiff[icl]
+                + acoef[icl] * dFdp[icl, :]
+                - proddiff[icl]
+            )
             efi += dEFI
         efi *= 2.0 / xp.pi
     ##################################
 
     # apply missing values
     efi[missing_mask] = xp.nan
-
-    return efi
-
-
-# @numba.jit(float64[:](float64[:,:], float64[:,:]), fastmath=False, nopython=True, nogil=True, cache=True)
-# @numba.jit(nopython=True)
-# def efi_numba(clim, ens):
-#     """Compute EFI
-
-#     Parameters
-#     ----------
-#     clim: numpy array (nclim, npoints)
-#         Sorted per-point climatology
-#     ens: numpy array (nens, npoints)
-#         Ensemble forecast
-
-#     Returns
-#     -------
-#     numpy array (npoints)
-#         EFI values
-#     """
-
-#     # Compute fraction of the forecast below climatology
-#     nclim, npoints = clim.shape
-#     nens, npoints_ens = ens.shape
-#     assert npoints == npoints_ens
-#     frac = np.zeros_like(clim)
-#     ##################################
-#     for ifo in numba.prange(nens):
-#         for icl in range(nclim):
-#             for i in range(npoints):
-#                if ens[ifo, i] <= clim[icl, i]:
-#                    frac[icl, i] += 1
-#     ##################################
-#     frac /= nens
-
-#     # Compute formula coefficients
-#     p = np.linspace(0., 1., nclim)
-#     dp = 1 / (nclim - 1)  #np.diff(p)
-
-#     acosdiff = np.diff(np.arccos(np.sqrt(p)))
-#     proddiff = np.diff(np.sqrt(p * (1. - p)))
-
-#     acoef = (1. - 2. * p[:-1]) * acosdiff + proddiff
-
-#     # TODO: handle epsilon
-#     efi = np.zeros(npoints)
-#     ##################################
-#     for icl in numba.prange(nclim-1):
-#         for i in range(npoints):
-#             dFdp = (frac[icl+1, i] - frac[icl, i]) / dp
-#              # XXX: why proddiff here?!
-#             dEFI = (2. * frac[icl, i] - 1.) * acosdiff[icl] + acoef[icl] * dFdp - proddiff[icl]
-#             efi[i] += dEFI
-#     efi *= 2. / np.pi
-#     ##################################
-
-#     return efi
+    return xp.reshape(efi, out_shape)

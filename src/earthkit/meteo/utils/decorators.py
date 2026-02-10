@@ -246,6 +246,22 @@ def _infer_output_count(func) -> int:
     return 1
 
 
+def get_dim_from_defaults(
+    da: xr.DataArray,
+    dim: str | None,
+    dim_names: tuple[str, ...]
+) -> str | None:
+    """
+    Get dimension name from defaults if not provided.
+    """
+    if dim is not None:
+        return dim
+    for name in dim_names:
+        if name in da.dims:
+            return name
+    return None
+
+
 def xarray_ufunc_deprecated(**xarray_ufunc_kwargs):
     """
     Decorator for xarray wrappers that call the matching array implementation via xr.apply_ufunc.
