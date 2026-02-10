@@ -33,9 +33,13 @@ def validate_extreme_shapes(
     clim_axis: int,
     ens_axis: int,
 ) -> None:
-    """Validate that clim and ens shapes match after moving the reduction axes."""
-    if clim_shape != ens_shape:
+    """Validate that clim and ens shapes match in shape"""
+    clim_shape_tmp = list(clim_shape)
+    clim_shape_tmp.pop(clim_axis)
+    ens_shape_tmp = list(ens_shape)
+    ens_shape_tmp.pop(ens_axis)
+    if clim_shape_tmp != ens_shape_tmp:
         raise ValueError(
-            f"{func}(): clim and ens must match after axes "
+            f"{func}(): clim and ens must match in shape "
             f"{clim_axis=} {ens_axis=}. {clim_shape=}, {ens_shape=}"
         )

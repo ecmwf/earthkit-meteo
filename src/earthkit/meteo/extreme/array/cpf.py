@@ -142,16 +142,15 @@ def cpf(
     xp = array_namespace(clim, ens)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
-
-    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
-    ens, ens_shape = flatten_extreme_input(xp, ens, ens_axis)
     validate_extreme_shapes(
         func="cpf",
-        clim_shape=out_shape,
-        ens_shape=ens_shape,
+        clim_shape=clim.shape,
+        ens_shape=ens.shape,
         clim_axis=clim_axis,
         ens_axis=ens_axis,
     )
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
+    ens, _ = flatten_extreme_input(xp, ens, ens_axis)
 
     if sort_clim:
         clim = xp.sort(clim, axis=0)

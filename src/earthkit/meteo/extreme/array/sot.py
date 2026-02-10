@@ -9,7 +9,10 @@
 
 from earthkit.utils.array import array_namespace
 
-from .utils import flatten_extreme_input, validate_extreme_shapes
+from .utils import (
+    flatten_extreme_input,
+    validate_extreme_shapes,
+)
 
 
 def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
@@ -80,15 +83,15 @@ def sot(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     xp = array_namespace(clim, ens, perc)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
-    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
-    ens, ens_shape = flatten_extreme_input(xp, ens, ens_axis)
     validate_extreme_shapes(
         func="sot",
-        clim_shape=out_shape,
-        ens_shape=ens_shape,
+        clim_shape=clim.shape,
+        ens_shape=ens.shape,
         clim_axis=clim_axis,
         ens_axis=ens_axis,
     )
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
+    ens, _ = flatten_extreme_input(xp, ens, ens_axis)
     # perc = xp.asarray(perc)
 
     if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (
@@ -157,15 +160,15 @@ def sot_unsorted(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
     perc = xp.asarray(perc)
-    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
-    ens, ens_shape = flatten_extreme_input(xp, ens, ens_axis)
     validate_extreme_shapes(
         func="sot_unsorted",
-        clim_shape=out_shape,
-        ens_shape=ens_shape,
+        clim_shape=clim.shape,
+        ens_shape=ens.shape,
         clim_axis=clim_axis,
         ens_axis=ens_axis,
     )
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
+    ens, _ = flatten_extreme_input(xp, ens, ens_axis)
 
     if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (
         perc < 2 or perc > 98
