@@ -72,7 +72,7 @@ def test_xp_efi_sorted(xp, device, clim, ens, v_ref):
 
     efi = extreme.array.efi(clim, ens_perc)
 
-    assert xp.isclose(efi[0], v_ref)
+    assert xp.isclose(efi.flat[0], v_ref)
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)

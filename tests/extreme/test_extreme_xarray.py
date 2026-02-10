@@ -33,10 +33,10 @@ def _da(values, dims):
     return xr.DataArray(data, dims=dims)
 
 
-def _da_move_dim(values, dims, axis):
+def _da_move_dim(values, dims, axis, axis_orig=0):
     data = _da(values, dims)
     new_dims = list(dims)
-    pop_dim = new_dims.pop(0)
+    pop_dim = new_dims.pop(axis_orig)
     new_dims.insert(axis, pop_dim)
     return data.transpose(*new_dims)
 
@@ -52,7 +52,7 @@ def test_xr_efi():
     ens = _da(_data.ens, dims=["number", "values", "x", "y"])
     v_ref = -0.1838425040642013
     efi = extreme_xr.efi(clim, ens)
-    assert np.isclose(efi.values[0], v_ref)
+    assert np.isclose(efi.values.flat[0], v_ref)
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
@@ -75,12 +75,21 @@ def test_xr_efi_mixed_dims():
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
+def test_xr_efi_mixed_dims_even_more():
+    clim = _da(_data.clim, dims=["quantiles", "values", "x", "y"])
+    ens = _da_move_dim(_data.ens, dims=["number", "values", "x", "y"], axis=-1, axis_orig=1)
+    v_ref = -0.1838425040642013
+    efi = extreme.efi(clim, ens, clim_dim="quantiles", ens_dim="number")
+    assert np.isclose(efi.values.flat[0], v_ref)
+
+
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_efi_highlevel():
     clim = _da(_data.clim, dims=["quantiles", "values", "x", "y"])
     ens = _da(_data.ens, dims=["number", "values", "x", "y"])
     v_ref = -0.1838425040642013
     efi = extreme.efi(clim, ens)
-    assert np.isclose(efi.values[0], v_ref)
+    assert np.isclose(efi.values.flat[0], v_ref)
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")

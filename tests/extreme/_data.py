@@ -1,5 +1,12 @@
 import numpy as np
 
+
+def _expand_dims(data: np.ndarray) -> np.ndarray:
+    data = np.repeat(data[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
+    data = np.repeat(data, 3, axis=2)
+    data = np.repeat(data, 4, axis=3)
+    return data
+
 ens = np.array(
     [
         273.56037903,
@@ -55,7 +62,7 @@ ens = np.array(
         273.621521,
     ]
 )
-ens = np.repeat(ens[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
+ens = _expand_dims(ens)
 
 ens_eps = np.array(
     [
@@ -112,7 +119,7 @@ ens_eps = np.array(
         0.005218505859375,
     ]
 )
-ens_eps = np.repeat(ens_eps[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
+ens_eps = _expand_dims(ens_eps)
 
 clim = np.array(
     [
@@ -219,7 +226,7 @@ clim = np.array(
         274.55859375,
     ]
 )
-clim = np.repeat(clim[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
+clim = _expand_dims(clim)
 
 clim_eps = np.array(
     [
@@ -326,7 +333,7 @@ clim_eps = np.array(
         0.02294921875,
     ]
 )
-clim_eps = np.repeat(clim_eps[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
+clim_eps = _expand_dims(clim_eps)
 
 ens_eps2 = np.array(
     [
@@ -383,7 +390,7 @@ ens_eps2 = np.array(
         1.5535354614257812,
     ]
 )
-ens_eps2 = np.repeat(ens_eps2[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
+ens_eps2 = _expand_dims(ens_eps2)
 
 clim_eps2 = np.array(
     [
@@ -490,4 +497,4 @@ clim_eps2 = np.array(
         0.48828125,
     ]
 )
-clim_eps2 = np.repeat(clim_eps2[:, np.newaxis, np.newaxis, np.newaxis], 2, axis=1)
+clim_eps2 = _expand_dims(clim_eps2)
