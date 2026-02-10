@@ -5,6 +5,7 @@ import xarray as xr
 
 T = TypeVar("T", xr.DataArray, xr.Dataset)
 
+
 def nanaverage(data: T, weights: Optional[T] = None, **kwargs):
     if weights is not None:
         return data.weighted(weights).mean(**kwargs)
