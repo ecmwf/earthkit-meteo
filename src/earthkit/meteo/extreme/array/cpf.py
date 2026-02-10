@@ -107,6 +107,9 @@ def cpf(
     ens_axis=0,
 ):
     """Compute Crossing Point Forecast (CPF).
+    
+    The reduction axis (ensemble and quantiles) is configurable by the user,
+    but the other dimensions of clim and ens must be aligned and match.
 
     WARNING: this code is experimental, use at your own risk!
 

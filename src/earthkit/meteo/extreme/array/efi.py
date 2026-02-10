@@ -21,6 +21,9 @@ from .utils import (
 def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
     """Compute Extreme Forecast Index (EFI).
 
+    The reduction axis (ensemble and quantiles) is configurable by the user,
+    but the other dimensions of clim and ens must be aligned and match.
+
     Parameters
     ----------
     clim: array-like

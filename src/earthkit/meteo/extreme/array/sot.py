@@ -60,6 +60,9 @@ def sot(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     from climatology percentiles (sorted)
     and ensemble forecast (not sorted)
 
+    The reduction axis (ensemble and quantiles) is configurable by the user,
+    but the other dimensions of clim and ens must be aligned and match.
+
     Parameters
     ----------
     clim: array-like
@@ -135,6 +138,9 @@ def sot_unsorted(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     """Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
     and ensemble forecast (not sorted)
+
+    The reduction axis (ensemble and quantiles) is configurable by the user,
+    but the other dimensions of clim and ens must be aligned and match.
 
     Parameters
     ----------
