@@ -97,12 +97,12 @@ def sot(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     ens, _ = flatten_extreme_input(xp, ens, ens_axis)
     # perc = xp.asarray(perc)
 
-    if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (
-        perc < 2 or perc > 98
-    ):
+    signed_int_dtypes = xp.__array_namespace_info__().dtypes(kind="signed integer")
+    signed_int_dtypes = set(signed_int_dtypes.values())
+    if xp.asarray(perc).dtype not in signed_int_dtypes or (perc < 2 or perc > 98):
         raise Exception(
-            "Percentile value should be and Integer between 2 and 98, is {}".format(
-                perc
+            "Percentile value should be and Integer between 2 and 98, is {} {}, {}".format(
+                xp.asarray(perc).dtype, perc, signed_int_dtypes
             )
         )
 
@@ -176,12 +176,13 @@ def sot_unsorted(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
     ens, _ = flatten_extreme_input(xp, ens, ens_axis)
 
-    if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (
-        perc < 2 or perc > 98
-    ):
+    signed_int_dtypes = xp.__array_namespace_info__().dtypes(kind="signed integer")
+    signed_int_dtypes = set(signed_int_dtypes.values())
+    print(signed_int_dtypes)
+    if xp.asarray(perc).dtype not in signed_int_dtypes or (perc < 2 or perc > 98):
         raise Exception(
-            "Percentile value should be and Integer between 2 and 98, is {}".format(
-                perc
+            "Percentile value should be and Integer between 2 and 98, is {} {}".format(
+                xp.asarray(perc).dtype, perc
             )
         )
 
