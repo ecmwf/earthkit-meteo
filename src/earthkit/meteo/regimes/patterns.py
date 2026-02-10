@@ -14,35 +14,35 @@ import operator
 from earthkit.utils.array import array_namespace
 
 
-class RegimePatterns(abc.ABC):
-    """Collection of weather regime patterns.
+class Patterns(abc.ABC):
+    """Collection of patterns.
 
     Parameters
     ----------
-    regimes : Iterable[str]
-        Names of the regimes. The ordering here determines the ordering of
-        regimes in all outputs.
+    labels : Iterable[str]
+        Labels for the patterns. The ordering determines the ordering of all
+        outputs.
     grid : dict
-        The grid on which the regime patterns live.
+        The grid on which the patterns live.
     """
 
-    def __init__(self, regimes, grid):
-        self._regimes = tuple(regimes)
+    def __init__(self, labels, grid):
+        self._labels = tuple(labels)
         self._grid = grid
 
     @property
-    def regimes(self):
-        """Names of the regime patterns."""
-        return self._regimes
+    def labels(self):
+        """Labels of the patterns."""
+        return self._labels
 
     @property
     def grid(self):
-        """Grid specification of the regime patterns."""
+        """The grid on which the patterns live."""
         return self._grid
 
     @property
     def shape(self):
-        """Shape of a regime pattern."""
+        """Shape of a pattern."""
         # TODO placeholder until this functionality is available from earthkit-geo
         lat0, lon0, lat1, lon1 = self.grid["area"]
         dlat, dlon = self.grid["grid"]
@@ -50,7 +50,7 @@ class RegimePatterns(abc.ABC):
 
     @property
     def size(self):
-        """Number of grid points of a regime pattern."""
+        """Number of grid points in a pattern."""
         return functools.reduce(operator.mul, self.shape)
 
     @property
@@ -59,7 +59,7 @@ class RegimePatterns(abc.ABC):
 
     @abc.abstractmethod
     def patterns(self, **patterns_extra_coords) -> collections.abc.Mapping:
-        """Patterns for all regimes."""
+        """Patterns evaluated for the given coords (if any)."""
 
     # While it would be nice to expose the this to the user, keep it internal
     # for now until a more elegant solution is found. Ideally, this function
@@ -69,7 +69,7 @@ class RegimePatterns(abc.ABC):
     # at some point. For now, everything is taken from a reference dataset to
     # ensure that dimension order and naming matches.
     def _patterns_iterxr(self, reference_da, patterns_extra_coords):
-        """Patterns for all regimes as xarray DataArrays.
+        """Patterns evaluated for the given coords (if any) as xr.DataArrays.
 
         Parameters
         ----------
@@ -96,26 +96,26 @@ class RegimePatterns(abc.ABC):
             kwarg: extra_coords_arrs[patterns_extra_coords[kwarg]] for kwarg in patterns_extra_coords
         }
         # Delegate the pattern generation and DataArray-ify the patterns
-        for regime, patterns in self.patterns(**extra_coords).items():
-            yield regime, xr.DataArray(patterns, coords=coords, dims=dims)
+        for name, patterns in self.patterns(**extra_coords).items():
+            yield name, xr.DataArray(patterns, coords=coords, dims=dims)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}{self.regimes}"
+        return f"{self.__class__.__name__}{self.labels}"
 
 
-class DeferredRegimePatternsDict(collections.abc.Mapping):
-    """Mapping that evaluates regime patterns on access.
+class DeferredPatternsDict(collections.abc.Mapping):
+    """Mapping that evaluates patterns on access.
 
     Parameters
     ----------
-    regimes : Iterable[str]
-        Regime names (keys).
+    labels : Iterable[str]
+        Labels for the patterns (keys).
     getter : Callable[[str], array_like]
-        Function that returns the patterns for a given regime.
+        Function that returns evaluated patterns for a given label.
     """
 
-    def __init__(self, regimes, getter):
-        self._regimes = tuple(regimes)
+    def __init__(self, labels, getter):
+        self._labels = tuple(labels)
         assert callable(getter)
         self._getter = getter
 
@@ -123,78 +123,78 @@ class DeferredRegimePatternsDict(collections.abc.Mapping):
         return self._getter(key)
 
     def __iter__(self):
-        yield from self._regimes
+        yield from self._labels
 
     def __len__(self):
-        return len(self._regimes)
+        return len(self._labels)
 
 
-class ConstantRegimePatterns(RegimePatterns):
-    """Constant regime patterns.
+class ConstantPatterns(Patterns):
+    """Constant patterns.
 
     Parameters
     ----------
-    regimes : Iterable[str]
-        Regime labels.
+    labels : Iterable[str]
+        Labels for the patterns.
     grid : dict
-        Grid specification of the patterns.
+        The grid on which the patterns live.
     patterns : array_like
-        Regime patterns.
+        The patterns with the outermost dimension corresponding to the labels.
     """
 
-    def __init__(self, regimes, grid, patterns):
-        super().__init__(regimes, grid)
+    def __init__(self, labels, grid, patterns):
+        super().__init__(labels, grid)
         self._xp = array_namespace(patterns)
         self._patterns = self._xp.asarray(patterns)
         if self._patterns.ndim != 1 + len(self.shape):
-            raise ValueError("must have exactly one regime dimension in the patterns")
-        if len(self.regimes) != self._patterns.shape[0]:
-            raise ValueError("number of regimes does not match number of patterns")
+            raise ValueError("must have exactly one label axis in the patterns")
+        if len(self.labels) != self._patterns.shape[0]:
+            raise ValueError("number of labels does not match number of patterns")
 
     def patterns(self):
-        """Regime patterns.
+        """All patterns.
 
         Returns
         -------
         dict[str, array_like]
-            Regime patterns.
+            Mapping from labels to patterns.
         """
-        return dict(zip(self._regimes, self._patterns))
+        return dict(zip(self._labels, self._patterns))
 
 
-class ModulatedRegimePatterns(RegimePatterns):
-    """Regime patterns modulated by a custom scalar function.
+class ModulatedPatterns(Patterns):
+    """Patterns modulated by a custom scalar function.
 
     Parameters
     ----------
-    regimes : Iterable[str]
-        Regime labels.
+    labels : Iterable[str]
+        Labels for the patterns.
     grid : dict
         Grid specification of the patterns.
     patterns : array_like
-        Base regime patterns.
+        Base patterns.
     modulator : Callable[Any, array_like]
         Scalar function to modulate the base patterns.
     """
 
-    def __init__(self, regimes, grid, patterns, modulator):
-        super().__init__(regimes, grid)
+    def __init__(self, labels, grid, patterns, modulator):
+        super().__init__(labels, grid)
         self._xp = array_namespace(patterns)
         self._base_patterns = self._xp.asarray(patterns)
         # Pattern verification
         if self._base_patterns.ndim != 1 + len(self.shape):
-            raise ValueError("must have exactly one regime dimension in the patterns")
-        if len(self.regimes) != self._base_patterns.shape[0]:
-            raise ValueError("number of regimes does not match number of patterns")
+            raise ValueError("must have exactly one label axis in the patterns")
+        if len(self.labels) != self._base_patterns.shape[0]:
+            raise ValueError("number of labels does not match number of patterns")
         self.modulator = modulator
         if not callable(self.modulator):
             raise ValueError("modulator must be callable")
 
-    def _base_pattern(self, regime):
-        return self._base_patterns[self._regimes.index(regime)]
+    def _base_pattern(self, label):
+        return self._base_patterns[self._labels.index(label)]
 
     def patterns(self, **patterns_extra_coords):
-        """Regime patterns for a given input to the modulator function.
+        """Evaluated patterns for a given input to the modulator function.
 
         Parameters
         ----------
@@ -204,12 +204,10 @@ class ModulatedRegimePatterns(RegimePatterns):
         Returns
         -------
         dict[str, array_like]
-            Modulated regime patterns.
+            Modulated patterns.
         """
         xp = self._xp
         modulator = xp.asarray(self.modulator(**patterns_extra_coords))
-        # Adapt to shape of regime patterns
+        # Adapt to shape of patterns
         modulator = modulator[(..., *((xp.newaxis,) * len(self.shape)))]
-        return DeferredRegimePatternsDict(
-            self._regimes, lambda regime: modulator * self._base_pattern(regime)
-        )
+        return DeferredPatternsDict(self._labels, lambda label: modulator * self._base_pattern(label))

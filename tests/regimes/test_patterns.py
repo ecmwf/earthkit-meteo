@@ -12,7 +12,7 @@ import pytest
 from earthkit.meteo import regimes
 
 
-class TestConstantRegimePatterns:
+class TestConstantPatterns:
 
     lat = np.linspace(90.0, 0.0, 91)
     lon = np.linspace(60.0, -60.0, 121)
@@ -21,8 +21,8 @@ class TestConstantRegimePatterns:
 
     @pytest.fixture
     def patterns(self):
-        return regimes.ConstantRegimePatterns(
-            regimes=["dipole", "monopole", "dipole_inv"],
+        return regimes.ConstantPatterns(
+            labels=["dipole", "monopole", "dipole_inv"],
             grid={"grid": [1.0, 1.0], "area": [max(self.lat), min(self.lon), min(self.lat), max(self.lon)]},
             patterns=np.stack([self.dipole, self.monopole, -self.dipole]).copy(),
         )
@@ -46,7 +46,7 @@ class TestConstantRegimePatterns:
         np.testing.assert_allclose(pat["monopole"], self.monopole)
 
 
-class TestModulatedRegimePatterns:
+class TestModulatedPatterns:
 
     lat = np.linspace(90.0, 0.0, 91)
     lon = np.linspace(60.0, -60.0, 121)
@@ -54,8 +54,8 @@ class TestModulatedRegimePatterns:
 
     @pytest.fixture
     def patterns(self):
-        return regimes.ModulatedRegimePatterns(
-            regimes=["dipole"],
+        return regimes.ModulatedPatterns(
+            labels=["dipole"],
             grid={"grid": [1.0, 1.0], "area": [max(self.lat), min(self.lon), min(self.lat), max(self.lon)]},
             patterns=np.stack([self.dipole]).copy(),
             modulator=lambda x: np.sign(x),  # clarify the arg name

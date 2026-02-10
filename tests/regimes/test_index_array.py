@@ -14,7 +14,7 @@ from earthkit.meteo.regimes import array
 
 @pytest.fixture
 def patterns():
-    class MockRegimePatterns:
+    class MockPatterns:
 
         _lat = np.linspace(90.0, 0.0, 91)
         _lon = np.linspace(60.0, -60.0, 121)
@@ -30,7 +30,7 @@ def patterns():
                 "dipole_inv": -self._dipole if single else np.stack([-self._dipole, -2 * self._dipole]),
             }
 
-    return MockRegimePatterns()
+    return MockPatterns()
 
 
 def test_project_matches_field_and_pattern_shapes(patterns):
@@ -107,7 +107,7 @@ def test_project_with_multiple_pattern_return(patterns):
     assert np.isclose(proj["monopole"][0], 0.5 * proj["monopole"][1])
 
 
-def test_standardise_with_dict():
+def test_regime_index_with_dict():
     proj = {
         "foo": np.asarray([0.0, 1.0, 2.0, 3.0, 4.0, 5.0]),
         "bar": np.asarray([0.0, 1.0, 2.0, 3.0, 4.0, 5.0]),
@@ -115,7 +115,7 @@ def test_standardise_with_dict():
     mean = {"foo": 2.0, "bar": -4.0}
     std = {"foo": 10.0, "bar": 2.0}
 
-    index = array.standardise(proj, mean, std)
+    index = array.regime_index(proj, mean, std)
 
     assert len(index) == 2
     assert "foo" in index

@@ -7,8 +7,8 @@
 # nor does it submit to any jurisdiction.
 
 from . import array
-from .patterns import ConstantRegimePatterns
-from .patterns import ModulatedRegimePatterns
-from .patterns import RegimePatterns
+from .patterns import ConstantPatterns
+from .patterns import ModulatedPatterns
+from .patterns import Patterns
 from .xarray import project
-from .xarray import standardise
+from .xarray import regime_index

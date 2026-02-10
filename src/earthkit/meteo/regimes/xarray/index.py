@@ -10,15 +10,15 @@ import xarray as xr
 
 
 def project(field, patterns, weights, **patterns_extra_coords) -> xr.DataArray:
-    """Project onto the given regime patterns.
+    """Project onto the given patterns.
 
     Parameters
     ----------
     field : xarray.Dataarray
-        Input field(s) to project. The regime patterns are projected onto the
-        trailing dimensions of the input fields.
-    patterns : earthkit.meteo.regimes.RegimePatterns
-        Regime patterns.
+        Input field(s) to project. The patterns are projected onto the trailing
+        dimensions of the input fields.
+    patterns : earthkit.meteo.regimes.Patterns
+        Patterns to project on.
     weights : xarray.Dataarray
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1.
@@ -29,7 +29,7 @@ def project(field, patterns, weights, **patterns_extra_coords) -> xr.DataArray:
     Returns
     -------
     xarray.Dataarray
-        Results of the projection for each regime.
+        Results of the projection for each pattern.
     """
     # Dimensions of a single pattern, assumed to be the trailing dimensions
     assert field.shape[-patterns.ndim :] == patterns.shape
@@ -43,15 +43,15 @@ def project(field, patterns, weights, **patterns_extra_coords) -> xr.DataArray:
     # as a new outermost dimension
     return xr.concat(
         [
-            (field * pattern).weighted(weights).sum(dim=pattern_dims).assign_coords({"regime": regime})
-            for regime, pattern in patterns._patterns_iterxr(field, patterns_extra_coords)
+            (field * pattern).weighted(weights).sum(dim=pattern_dims).assign_coords({"pattern": label})
+            for label, pattern in patterns._patterns_iterxr(field, patterns_extra_coords)
         ],
-        dim="regime",
+        dim="pattern",
     )
 
 
-def standardise(projections, mean, std):
-    """Regime index by standardisation of regime projections.
+def regime_index(projections, mean, std):
+    """Regime index by standardisation of projections onto patterns.
 
     Parameters
     ----------
