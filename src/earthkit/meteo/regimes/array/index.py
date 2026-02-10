@@ -10,19 +10,22 @@
 def project(field, patterns, weights, **patterns_extra_coords):
     """Project onto the given regime patterns.
 
-    TODO: array shape expectations
-
     Parameters
     ----------
     field : array_like
-        Input field(s) to project.
+        Input field(s) to project. The regime patterns are projected onto the
+        trailing dimensions of the input fields.
     patterns : earthkit.meteo.regimes.RegimePatterns
         Regime patterns.
     weights : array_like
-        Weights for the summation over the spatial dimensions.
+        Weights for the summation in the projection. Weights are normalised
+        before application so the sum of weights over the domain equals 1. Must
+        have shape of the regime patterns.
     **patterns_coords : dict[str, Any], optional
         Keyword arguments for the pattern generation. E.g., a sequence of
-        dates for date-modulated regime patterns.
+        dates for date-modulated regime patterns. Must have shape of input
+        fields without the trailing dimensions onto which the patterns are
+        projected.
 
     Returns
     -------

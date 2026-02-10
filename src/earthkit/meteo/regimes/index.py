@@ -6,26 +6,14 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-from . import array
 
+def project(field, patterns, weights, **patterns_extra_coords):
+    from .xarray import project
 
-def project(field, patterns, weights, **patterns_kwargs):
-    return array.project(field, patterns, weights, **patterns_kwargs)
+    return project(field, patterns, weights, **patterns_extra_coords)
 
 
 def standardise(projections, mean, std):
-    """Regime index by standardisation of regime projections.
+    from .xarray import standardise
 
-    Parameters
-    ----------
-    projections : TODO
-        Projections onto regime patterns.
-    mean : TODO
-    std : TODO
-
-    Returns
-    -------
-    TODO
-        ``(projection - mean) / std``
-    """
-    return (projections - mean) / std
+    return standardise(projections, mean, std)

@@ -8,6 +8,8 @@
 
 import abc
 import collections.abc
+import functools
+import operator
 
 from earthkit.utils.array import array_namespace
 
@@ -45,6 +47,10 @@ class RegimePatterns(abc.ABC):
         lat0, lon0, lat1, lon1 = self.grid["area"]
         dlat, dlon = self.grid["grid"]
         return (int(abs(lat0 - lat1) / dlat) + 1, int(abs(lon0 - lon1) / dlon) + 1)
+
+    def size(self):
+        """Number of grid points of a regime pattern."""
+        return functools.reduce(operator.mul, self.shape)
 
     @property
     def ndim(self):
