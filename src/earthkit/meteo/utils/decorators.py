@@ -125,11 +125,7 @@ def _infer_output_count(func) -> int:
     return 1
 
 
-def get_dim_from_defaults(
-    da: xr.DataArray,
-    dim: str | None,
-    dim_names: tuple[str, ...]
-) -> str | None:
+def get_dim_from_defaults(da: xr.DataArray, dim: str | None, dim_names: tuple[str, ...]) -> str | None:
     """
     Get dimension name from defaults if not provided.
     """

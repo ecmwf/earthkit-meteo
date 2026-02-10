@@ -7,7 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
+from typing import overload
 
 from earthkit.meteo.utils.decorators import dispatch
 
@@ -124,7 +125,5 @@ def sot_unsorted(
     - :py:meth:`earthkit.meteo.extreme.xarray.sot_unsorted` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.sot_unsorted` for array-like
     """
-    res = dispatch(
-        sot_unsorted, clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim
-    )
+    res = dispatch(sot_unsorted, clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
     return res

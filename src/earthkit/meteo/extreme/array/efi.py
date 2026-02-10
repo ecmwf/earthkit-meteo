@@ -12,10 +12,8 @@
 
 from earthkit.utils.array import array_namespace
 
-from .utils import (
-    flatten_extreme_input,
-    validate_extreme_shapes,
-)
+from .utils import flatten_extreme_input
+from .utils import validate_extreme_shapes
 
 
 def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
@@ -63,9 +61,7 @@ def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
     npoints = clim.shape[1]
 
     # locate missing values
-    missing_mask = xp.logical_or(
-        xp.sum(xp.isnan(clim), axis=0), xp.sum(xp.isnan(ens), axis=0)
-    )
+    missing_mask = xp.logical_or(xp.sum(xp.isnan(clim), axis=0), xp.sum(xp.isnan(ens), axis=0))
 
     frac = xp.zeros_like(clim)
     ##################################
@@ -92,9 +88,7 @@ def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
             mask = clim[icl + 1, :] > eps
             dEFI = xp.where(
                 mask,
-                (2.0 * frac[icl, :] - 1.0) * acosdiff[icl]
-                + acoef[icl] * dFdp[icl, :]
-                - proddiff[icl],
+                (2.0 * frac[icl, :] - 1.0) * acosdiff[icl] + acoef[icl] * dFdp[icl, :] - proddiff[icl],
                 0.0,
             )
             defimax = xp.where(mask, -acosdiff[icl] - proddiff[icl], 0.0)
@@ -104,11 +98,7 @@ def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
         efi /= efimax
     else:
         for icl in range(nclim - 1):
-            dEFI = (
-                (2.0 * frac[icl, :] - 1.0) * acosdiff[icl]
-                + acoef[icl] * dFdp[icl, :]
-                - proddiff[icl]
-            )
+            dEFI = (2.0 * frac[icl, :] - 1.0) * acosdiff[icl] + acoef[icl] * dFdp[icl, :] - proddiff[icl]
             efi += dEFI
         efi *= 2.0 / xp.pi
     ##################################

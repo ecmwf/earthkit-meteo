@@ -9,7 +9,8 @@
 
 from earthkit.utils.array import array_namespace
 
-from .utils import flatten_extreme_input, validate_extreme_shapes
+from .utils import flatten_extreme_input
+from .utils import validate_extreme_shapes
 
 
 def _cpf(clim, ens, epsilon=None, from_zero=False):
@@ -55,10 +56,9 @@ def _cpf(clim, ens, epsilon=None, from_zero=False):
                     idx = (qv_f < qv_c) & (qv_c_2 < qv_c) & prim
 
                     # intersection between two lines
-                    tau_i = (
-                        tau_c * (qv_c_2[idx] - qv_f[idx])
-                        + tau_c_2 * (qv_f[idx] - qv_c[idx])
-                    ) / (qv_c_2[idx] - qv_c[idx])
+                    tau_i = (tau_c * (qv_c_2[idx] - qv_f[idx]) + tau_c_2 * (qv_f[idx] - qv_c[idx])) / (
+                        qv_c_2[idx] - qv_c[idx]
+                    )
 
                     # populate matrix, no values below 0
                     cpf[idx] = xp.maximum(tau_i, xp.asarray(0))
@@ -76,10 +76,9 @@ def _cpf(clim, ens, epsilon=None, from_zero=False):
 
                     idx = (qv_f > qv_c) & (qv_c_2 > qv_c) & (~mask) & prim
 
-                    tau_i = (
-                        tau_c * (qv_c_2[idx] - qv_f[idx])
-                        + tau_c_2 * (qv_f[idx] - qv_c[idx])
-                    ) / (qv_c_2[idx] - qv_c[idx])
+                    tau_i = (tau_c * (qv_c_2[idx] - qv_f[idx]) + tau_c_2 * (qv_f[idx] - qv_c[idx])) / (
+                        qv_c_2[idx] - qv_c[idx]
+                    )
 
                     # populate matrix, no values above 1
                     cpf[idx] = xp.minimum(tau_i, xp.asarray(1))
@@ -107,7 +106,7 @@ def cpf(
     ens_axis=0,
 ):
     """Compute Crossing Point Forecast (CPF).
-    
+
     The reduction axis (ensemble and quantiles) is configurable by the user,
     but the other dimensions of clim and ens must be aligned and match.
 
@@ -166,9 +165,7 @@ def cpf(
     cpf_direct = _cpf(clim, ens, epsilon, from_zero)
 
     if symmetric:
-        cpf_reverse = _cpf(
-            -xp.flip(clim, axis=0), -xp.flip(ens, axis=0), from_zero=from_zero
-        )
+        cpf_reverse = _cpf(-xp.flip(clim, axis=0), -xp.flip(ens, axis=0), from_zero=from_zero)
         mask = cpf_direct < 0.5
         cpf_direct[mask] = 1 - cpf_reverse[mask]
 

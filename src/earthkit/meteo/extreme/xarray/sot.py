@@ -9,7 +9,8 @@
 
 import xarray as xr
 
-from earthkit.meteo.utils.decorators import get_dim_from_defaults, xarray_ufunc
+from earthkit.meteo.utils.decorators import get_dim_from_defaults
+from earthkit.meteo.utils.decorators import xarray_ufunc
 
 from .. import array
 
@@ -105,9 +106,7 @@ def sot_unsorted(
     clim_dim = get_dim_from_defaults(clim, clim_dim, default_dims)
     ens_dim = get_dim_from_defaults(ens, ens_dim, default_dims)
     if clim_dim is None or ens_dim is None:
-        raise ValueError(
-            "sot_unsorted(): clim_dim and ens_dim must be provided or inferred"
-        )
+        raise ValueError("sot_unsorted(): clim_dim and ens_dim must be provided or inferred")
     core_dims = [[clim_dim], [ens_dim]]
     return xarray_ufunc(
         array.sot_unsorted,

@@ -1,9 +1,7 @@
 import numpy as np
 
 cpf_val = np.array([0.0, 1.0, 0.0, 0.53846157, 0.7307692], dtype=np.float32)
-cpf_val_fromzero = np.array(
-    [0.0, 1.0, 0.21153846, 0.53846157, 0.7307692], dtype=np.float32
-)
+cpf_val_fromzero = np.array([0.0, 1.0, 0.21153846, 0.53846157, 0.7307692], dtype=np.float32)
 cpf_ens = np.array(
     [
         [299.3667, 299.97998, 276.91553, 298.83936, 296.2339],
@@ -335,9 +333,7 @@ cpf_clim2 = np.array(
 )
 cpf_clim2 = cpf_clim2[:, :, np.newaxis, np.newaxis]
 
-cpf_val3 = np.array(
-    [0.9809273481, 0.1153846383, 0.9897592068, 0.5961538553, 1.0], dtype=np.float32
-)
+cpf_val3 = np.array([0.9809273481, 0.1153846383, 0.9897592068, 0.5961538553, 1.0], dtype=np.float32)
 cpf_ens3 = np.array(
     [
         [298.41162109, 297.77490234, 298.49560547, 284.96630859, 300.28857422],

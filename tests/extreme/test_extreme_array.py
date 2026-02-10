@@ -15,10 +15,8 @@ import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import extreme
-from earthkit.meteo.extreme.array.utils import (
-    flatten_extreme_input,
-    validate_extreme_shapes,
-)
+from earthkit.meteo.extreme.array.utils import flatten_extreme_input
+from earthkit.meteo.extreme.array.utils import validate_extreme_shapes
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -59,9 +57,7 @@ def test_np_efi(xp, device, clim, ens, kwargs, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "clim, ens, v_ref", [(_data.clim, _data.ens, -0.18384250406420133)]
-)
+@pytest.mark.parametrize("clim, ens, v_ref", [(_data.clim, _data.ens, -0.18384250406420133)])
 def test_xp_efi_sorted(xp, device, clim, ens, v_ref):
     clim = xp.asarray(clim, device=device)
     ens = xp.asarray(ens, device=device)
@@ -132,9 +128,7 @@ def test_np_sot(xp, device, clim, ens, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "clim, ens, v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])]
-)
+@pytest.mark.parametrize("clim, ens, v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])])
 def test_np_sot_perc(xp, device, clim, ens, v_ref):
     clim = xp.asarray(clim, device=device)
     ens = xp.asarray(ens, device=device)
@@ -279,10 +273,13 @@ def test_flatten_extreme_input_axis():
     assert np.array_equal(flattened, expected)
 
 
-@pytest.mark.parametrize("clim_shape, ens_shape, clim_axis, ens_axis", [
-    ((2, 4), (2, 4), 0, 0),
-    ((2, 4), (2, 4), 1, 1),
-])
+@pytest.mark.parametrize(
+    "clim_shape, ens_shape, clim_axis, ens_axis",
+    [
+        ((2, 4), (2, 4), 0, 0),
+        ((2, 4), (2, 4), 1, 1),
+    ],
+)
 def test_validate_extreme_shapes(clim_shape, ens_shape, clim_axis, ens_axis):
     validate_extreme_shapes(
         func="test",
@@ -293,11 +290,14 @@ def test_validate_extreme_shapes(clim_shape, ens_shape, clim_axis, ens_axis):
     )
 
 
-@pytest.mark.parametrize("clim_shape, ens_shape, clim_axis, ens_axis", [
-    ((2, 4), (2, 5), 0, 0),
-    ((2, 4, 3), (2, 3, 4), 0, 0),
-    ((2, 4, 3), (3, 4, 2), 1, 1),
-])
+@pytest.mark.parametrize(
+    "clim_shape, ens_shape, clim_axis, ens_axis",
+    [
+        ((2, 4), (2, 5), 0, 0),
+        ((2, 4, 3), (2, 3, 4), 0, 0),
+        ((2, 4, 3), (3, 4, 2), 1, 1),
+    ],
+)
 def test_validate_extreme_shapes_raise(clim_shape, ens_shape, clim_axis, ens_axis):
     with pytest.raises(ValueError, match="clim and ens must match in shape"):
         validate_extreme_shapes(
