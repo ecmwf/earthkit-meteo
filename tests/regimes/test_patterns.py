@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 
 import numpy as np
+import pytest
 
 from earthkit.meteo import regimes
 
@@ -17,20 +18,29 @@ class TestConstantRegimePatterns:
     lon = np.linspace(60.0, -60.0, 121)
     dipole = np.cos(np.deg2rad(lon[None, :])) * np.cos(np.deg2rad(lat[:, None]) * 2)
     monopole = np.cos(np.deg2rad(lon[None, :])) * np.sin(np.deg2rad(lat[:, None]) * 2)
-    patterns = regimes.ConstantRegimePatterns(
-        regimes=["dipole", "monopole", "dipole_inv"],
-        grid={"grid": [1.0, 1.0], "area": [max(lat), min(lon), min(lat), max(lon)]},
-        patterns=np.stack([dipole, monopole, -dipole]),
-    )
 
-    zeros = np.zeros(shape=patterns.shape)
-    ones = np.ones(shape=patterns.shape)
+    @pytest.fixture
+    def patterns(self):
+        return regimes.ConstantRegimePatterns(
+            regimes=["dipole", "monopole", "dipole_inv"],
+            grid={"grid": [1.0, 1.0], "area": [max(self.lat), min(self.lon), min(self.lat), max(self.lon)]},
+            patterns=np.stack([self.dipole, self.monopole, -self.dipole]).copy(),
+        )
 
-    def test_shape(self):
-        assert self.patterns.shape == (self.lat.size, self.lon.size)
+    zeros = np.zeros(shape=(lat.size, lon.size))
+    ones = np.ones(shape=(lat.size, lon.size))
 
-    def test_patterns(self):
-        pat = self.patterns.patterns()
+    def test_shape(self, patterns):
+        assert patterns.shape == (self.lat.size, self.lon.size)
+
+    def test_size(self, patterns):
+        assert patterns.size == self.lat.size * self.lon.size
+
+    def test_ndim(self, patterns):
+        assert patterns.ndim == 2
+
+    def test_patterns(self, patterns):
+        pat = patterns.patterns()
         assert len(pat) == 3
         np.testing.assert_allclose(pat["dipole"], self.dipole)
         np.testing.assert_allclose(pat["monopole"], self.monopole)
@@ -41,18 +51,27 @@ class TestModulatedRegimePatterns:
     lat = np.linspace(90.0, 0.0, 91)
     lon = np.linspace(60.0, -60.0, 121)
     dipole = np.cos(np.deg2rad(lon[None, :])) * np.cos(np.deg2rad(lat[:, None]) * 2)
-    patterns = regimes.ModulatedRegimePatterns(
-        regimes=["dipole"],
-        grid={"grid": [1.0, 1.0], "area": [max(lat), min(lon), min(lat), max(lon)]},
-        patterns=np.stack([dipole]),
-        modulator=lambda x: np.sign(x),  # clarify the arg name
-    )
 
-    def test_shape(self):
-        assert self.patterns.shape == (self.lat.size, self.lon.size)
+    @pytest.fixture
+    def patterns(self):
+        return regimes.ModulatedRegimePatterns(
+            regimes=["dipole"],
+            grid={"grid": [1.0, 1.0], "area": [max(self.lat), min(self.lon), min(self.lat), max(self.lon)]},
+            patterns=np.stack([self.dipole]).copy(),
+            modulator=lambda x: np.sign(x),  # clarify the arg name
+        )
 
-    def test_patterns(self):
-        pat = self.patterns.patterns(x=[3.0, 0.0, -4.0])
+    def test_shape(self, patterns):
+        assert patterns.shape == (self.lat.size, self.lon.size)
+
+    def test_size(self, patterns):
+        assert patterns.size == self.lat.size * self.lon.size
+
+    def test_ndim(self, patterns):
+        assert patterns.ndim == 2
+
+    def test_patterns(self, patterns):
+        pat = patterns.patterns(x=[3.0, 0.0, -4.0])
         assert len(pat) == 1
         np.testing.assert_allclose(pat["dipole"][0], self.dipole)
         np.testing.assert_allclose(pat["dipole"][1], 0.0)

@@ -48,6 +48,7 @@ class RegimePatterns(abc.ABC):
         dlat, dlon = self.grid["grid"]
         return (int(abs(lat0 - lat1) / dlat) + 1, int(abs(lon0 - lon1) / dlon) + 1)
 
+    @property
     def size(self):
         """Number of grid points of a regime pattern."""
         return functools.reduce(operator.mul, self.shape)
