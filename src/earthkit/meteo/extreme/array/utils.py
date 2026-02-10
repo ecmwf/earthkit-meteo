@@ -16,12 +16,7 @@ def flatten_extreme_input(xp: Any, da: Any, axis: int) -> tuple[Any, tuple[int, 
     """Move the reduction axis to position 0 and flatten the remaining dimensions."""
     da = xp.moveaxis(da, axis, 0)
     out_shape = da.shape[1:]
-
-    npoints = 1
-    for s in out_shape:
-        npoints *= s
-
-    da = xp.reshape(da, (da.shape[0], npoints))
+    da = xp.reshape(da, (da.shape[0], -1))
     return da, out_shape
 
 
