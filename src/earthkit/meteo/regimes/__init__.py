@@ -6,8 +6,9 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-from .index import project
-from .index import standardise
+from . import array
 from .patterns import ConstantRegimePatterns
 from .patterns import ModulatedRegimePatterns
 from .patterns import RegimePatterns
+from .xarray import project
+from .xarray import standardise

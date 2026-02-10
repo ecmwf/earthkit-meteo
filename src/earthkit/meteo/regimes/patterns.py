@@ -88,7 +88,9 @@ class RegimePatterns(abc.ABC):
         dims = [*extra_dims, *reference_da.dims[-self.ndim :]]
         coords = {dim: reference_da.coords[dim] for dim in dims}
         # Cartesian product of coordinates for patterns generator
-        extra_coords_arrs = dict(zip(extra_dims, np.meshgrid(*(coords[dim] for dim in extra_dims))))
+        extra_coords_arrs = dict(
+            zip(extra_dims, np.meshgrid(*(coords[dim] for dim in extra_dims), indexing="ij"))
+        )
         # Rearrange to match provided kwarg-coord mapping
         extra_coords = {
             kwarg: extra_coords_arrs[patterns_extra_coords[kwarg]] for kwarg in patterns_extra_coords

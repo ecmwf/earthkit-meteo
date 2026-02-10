@@ -41,10 +41,9 @@ def project(field, patterns, weights, **patterns_extra_coords) -> xr.DataArray:
     weights = weights / weights.sum() * weights.size / patterns.size
     # Matching the behaviour of array.project, introduce the regime dimension
     # as a new outermost dimension
-    weighted_field = field * weights
     return xr.concat(
         [
-            (weighted_field * pattern).sum(dim=pattern_dims).assign_coords({"regime": regime})
+            (field * pattern).weighted(weights).sum(dim=pattern_dims).assign_coords({"regime": regime})
             for regime, pattern in patterns._patterns_iterxr(field, patterns_extra_coords)
         ],
         dim="regime",
