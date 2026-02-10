@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -37,7 +37,7 @@ def celsius_to_kelvin(t: ArrayLike) -> ArrayLike:
         Temperature in Kelvin units
 
     """
-    return t + constants.T0
+    return t + constants.T_C2K
 
 
 def kelvin_to_celsius(t: ArrayLike) -> ArrayLike:
@@ -54,7 +54,7 @@ def kelvin_to_celsius(t: ArrayLike) -> ArrayLike:
         Temperature in Celsius units
 
     """
-    return t - constants.T0
+    return t - constants.T_C2K
 
 
 def specific_humidity_from_mixing_ratio(w: ArrayLike) -> ArrayLike:
@@ -232,9 +232,11 @@ def mixing_ratio_from_vapour_pressure(e: ArrayLike, p: ArrayLike, eps: float = 1
         raise ValueError(f"mixing_ratio_from_vapour_pressure(): eps={eps} must be > 0")
 
     xp = array_namespace(e, p)
-    v = xp.asarray(p - e)
-    v[v < eps] = xp.nan
-    return constants.epsilon * e / v
+    e = xp.asarray(e, dtype=float)
+    p = xp.asarray(p, dtype=float)
+
+    denom = p - e
+    return xp.where(denom >= eps, constants.epsilon * e / denom, xp.nan)
 
 
 def saturation_vapour_pressure(t: ArrayLike, phase: str = "mixed") -> ArrayLike:

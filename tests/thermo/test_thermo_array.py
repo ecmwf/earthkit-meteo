@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
-from earthkit.meteo import thermo
+import earthkit.meteo.thermo.array as thermo
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
