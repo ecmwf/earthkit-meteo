@@ -15,6 +15,10 @@ import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import extreme
+from earthkit.meteo.extreme.array.utils import (
+    flatten_extreme_input,
+    validate_extreme_shapes,
+)
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -260,3 +264,46 @@ def test_np_cpf_mixed_axis(axis):
     ref = extreme.array.cpf(_cpf.cpf_clim, _cpf.cpf_ens, sort_clim=True)
     got = extreme.array.cpf(clim, ens, sort_clim=True, clim_axis=0, ens_axis=axis)
     assert np.allclose(got, ref)
+
+
+# ---------------------------------
+# Utils
+# ---------------------------------
+
+
+def test_flatten_extreme_input_axis():
+    data = np.arange(2 * 3 * 4).reshape(2, 3, 4)
+    flattened, out_shape = flatten_extreme_input(np, data, axis=1)
+    expected = np.moveaxis(data, 1, 0).reshape(3, 8)
+    assert out_shape == (2, 4)
+    assert np.array_equal(flattened, expected)
+
+
+@pytest.mark.parametrize("clim_shape, ens_shape, clim_axis, ens_axis", [
+    ((2, 4), (2, 4), 0, 0),
+    ((2, 4), (2, 4), 1, 1),
+])
+def test_validate_extreme_shapes(clim_shape, ens_shape, clim_axis, ens_axis):
+    validate_extreme_shapes(
+        func="test",
+        clim_shape=clim_shape,
+        ens_shape=ens_shape,
+        clim_axis=clim_axis,
+        ens_axis=ens_axis,
+    )
+
+
+@pytest.mark.parametrize("clim_shape, ens_shape, clim_axis, ens_axis", [
+    ((2, 4), (2, 5), 0, 0),
+    ((2, 4, 3), (2, 3, 4), 0, 0),
+    ((2, 4, 3), (3, 4, 2), 1, 1),
+])
+def test_validate_extreme_shapes_raise(clim_shape, ens_shape, clim_axis, ens_axis):
+    with pytest.raises(ValueError, match="clim and ens must match in shape"):
+        validate_extreme_shapes(
+            func="test",
+            clim_shape=clim_shape,
+            ens_shape=ens_shape,
+            clim_axis=clim_axis,
+            ens_axis=ens_axis,
+        )
