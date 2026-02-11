@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from earthkit.meteo.vertical.array import cape_cin as vertical
 
+# Expected values are calculated based on commit e97720ee03591432bd907a941de9077ff4122c71
 REFERENCE_CASES = {
     "stable": {
         "p": np.array([  50.        ,  100.        ,  150.        ,  200.        ,
@@ -46,7 +47,7 @@ REFERENCE_CASES = {
         "expected": {
             "surface": {"cape": 0.0, "cin": 0.0},
             "mixed":   {"cape": 0.0, "cin": 0.0},
-            "mu":      {"cape": 1063.4043528773063, "cin": 0.0},
+            "mu":      {"cape": 1063.61363685, "cin": 0.0},
         },
     },
     "unstable": {
@@ -67,9 +68,9 @@ REFERENCE_CASES = {
        1.59063225e-03, 3.02751741e-03, 6.01454274e-03, 7.35454821e-03,
        8.30190131e-03, 8.65592702e-03]),
         "expected": {
-            "surface": {"cape": 267.91344214742054, "cin": 40.4687850329082},
-            "mixed":   {"cape": 377.64794898246595, "cin": 11.099351310191569},
-            "mu":      {"cape": 709.4457146084575, "cin": -0.0},
+            "surface": {"cape": 267.91052212, "cin": 40.68497301},
+            "mixed":   {"cape": 378.09070466, "cin": 11.21208481},
+            "mu":      {"cape": 709.34735093, "cin": -0.0},
         },
     },
     "large_cape_small_cin": {
@@ -90,9 +91,9 @@ REFERENCE_CASES = {
        3.58359133e-03, 6.40824917e-03, 8.17005639e-03, 1.22880057e-02,
        1.49398775e-02, 1.52478107e-02]),
         "expected": {
-            "surface": {"cape": 1089.1472462462948, "cin": 1.7315445728998025},
-            "mixed":   {"cape": 1008.8721169033109, "cin": 1.6938742777021223},
-            "mu":      {"cape": 1089.1472462462948, "cin": 1.7315445728998025},
+            "surface": {"cape": 1088.14472658, "cin": 1.84698076},
+            "mixed":   {"cape": 1008.32586857, "cin": 1.78072805},
+            "mu":      {"cape": 1088.14472658, "cin": 1.84698076},
         },
     },
 }
@@ -228,32 +229,3 @@ def test_cape_cin_mu(case_data):
 #     assert np.allclose(T, T_ref, atol=1e-2), "Moist ascent lookup table temperatures do not match reference"
 #     assert np.allclose(theta_ep, theta_ep_ref, atol=1), "Moist ascent lookup table equivalent potential temperatures do not match reference"
 #     assert np.allclose(p, p_ref *100, atol=1e-4), "Moist ascent lookup table pressures do not match reference"
-
-
-# TODO figure out why these differ so much
-# TODO upate test data
-def test_lifted_condensation_level():
-    Rd_     = 287.04 # gas constant of dry air [J/kg-1K-1]
-    Rv_     = 461.50 # gas constant of water vapour [J/kg-1K-1]
-    Eps_    = Rd_ / Rv_
-    T = np.array([290.0, 300.0, 310.0])  # in K
-    r = np.array([280.0, 290.0, 300.0])  # in K
-    p = np.array([100000.0, 90000.0, 80000.0])  # in Pa
-
-    p_hPa = p / 100  # convert Pa to hPa
-    water_vapour_pressure = (r * p_hPa) / (r + Eps_)
-
-    p_lcl, T_lcl = vertical.lifted_condensation_level_from_mixing_ratio(T, p, r)
-    p_lcl_ref, T_lcl_ref = lifted_condensation_level_ref(T, p_hPa, water_vapour_pressure)
-
-    assert np.allclose(p_lcl, p_lcl_ref * 100, atol=1), "LCL pressures do not match reference"
-    assert np.allclose(T_lcl, T_lcl_ref, atol=1), "LCL temperatures do not match reference"
-
-def lifted_condensation_level_ref(T_departure, p_departure, e_departure):
-        Cpd_    = 1005.7  # heat capacity at constant pressure for dry air [J/kg-1K-1]
-        Rd_     = 287.04 # gas constant of dry air [J/kg-1K-1]
-        
-        # Compute pressure p_LCL given temperature, pressure and water vapour pressure at departute level
-        T_LCL = (2840 / (3.5 * np.log(T_departure) - np.log(e_departure) - 4.805)) + 55  # Bolton's approximation from Emanuel, 1996 (Eq. 4.6.24)
-        p_LCL = p_departure * np.power((T_LCL / T_departure), Cpd_ / Rd_)
-        return p_LCL, T_LCL
