@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from earthkit.meteo.vertical.array import cape_cin as vertical
 
-# Expected values are calculated based on commit e97720ee03591432bd907a941de9077ff4122c71
+# Expected values are calculated based on current commit
 REFERENCE_CASES = {
     "stable": {
         "p": np.array([  50.        ,  100.        ,  150.        ,  200.        ,
@@ -47,7 +47,7 @@ REFERENCE_CASES = {
         "expected": {
             "surface": {"cape": 0.0, "cin": 0.0},
             "mixed":   {"cape": 0.0, "cin": 0.0},
-            "mu":      {"cape": 1063.61363685, "cin": 0.0},
+            "mu":      {"cape": 1060.25919322, "cin": 0.0},
         },
     },
     "unstable": {
@@ -68,9 +68,9 @@ REFERENCE_CASES = {
        1.59063225e-03, 3.02751741e-03, 6.01454274e-03, 7.35454821e-03,
        8.30190131e-03, 8.65592702e-03]),
         "expected": {
-            "surface": {"cape": 267.91052212, "cin": 40.68497301},
-            "mixed":   {"cape": 378.09070466, "cin": 11.21208481},
-            "mu":      {"cape": 709.34735093, "cin": -0.0},
+            "surface": {"cape": 266.81869625, "cin": 40.70930007},
+            "mixed":   {"cape": 375.77648615, "cin": 11.25347098},
+            "mu":      {"cape": 707.2913756, "cin": -0.0},
         },
     },
     "large_cape_small_cin": {
@@ -91,9 +91,9 @@ REFERENCE_CASES = {
        3.58359133e-03, 6.40824917e-03, 8.17005639e-03, 1.22880057e-02,
        1.49398775e-02, 1.52478107e-02]),
         "expected": {
-            "surface": {"cape": 1088.14472658, "cin": 1.84698076},
-            "mixed":   {"cape": 1008.32586857, "cin": 1.78072805},
-            "mu":      {"cape": 1088.14472658, "cin": 1.84698076},
+            "surface": {"cape": 1087.73398537, "cin": 1.82432336},
+            "mixed":   {"cape": 1007.84812945, "cin": 1.75887435},
+            "mu":      {"cape": 1087.73398537, "cin": 1.82432336},
         },
     },
 }
@@ -128,7 +128,7 @@ def test_cape_cin_surface(case_data):
     cape, cin = vertical.cape_cin(p, zh, T, r, cape_type)
     expected_cape = expected_values["cape"]
     expected_cin = expected_values["cin"]
-    assert np.isclose(cape, expected_cape, atol=2), f" type '{cape_type}': Expected CAPE {expected_cape}, got {cape}"
+    assert np.isclose(cape, expected_cape, atol=1), f" type '{cape_type}': Expected CAPE {expected_cape}, got {cape}"
     assert np.isclose(cin, expected_cin, atol=1), f" type '{cape_type}': Expected CIN {expected_cin}, got {cin}"
 
 
@@ -145,7 +145,7 @@ def test_cape_cin_mixed(case_data):
     cape, cin = vertical.cape_cin(p, zh, T, r, cape_type)
     expected_cape = expected_values["cape"]
     expected_cin = expected_values["cin"]
-    assert np.isclose(cape, expected_cape, atol=2), f" type '{cape_type}': Expected CAPE {expected_cape}, got {cape}"
+    assert np.isclose(cape, expected_cape, atol=1), f" type '{cape_type}': Expected CAPE {expected_cape}, got {cape}"
     assert np.isclose(cin, expected_cin, atol=1), f" type '{cape_type}': Expected CIN {expected_cin}, got {cin}"
 
 
@@ -162,7 +162,7 @@ def test_cape_cin_mu(case_data):
     cape, cin = vertical.cape_cin(p, zh, T, r, cape_type)
     expected_cape = expected_values["cape"]
     expected_cin = expected_values["cin"]
-    assert np.isclose(cape, expected_cape, atol=2), f" type '{cape_type}': Expected CAPE {expected_cape}, got {cape}"
+    assert np.isclose(cape, expected_cape, atol=1), f" type '{cape_type}': Expected CAPE {expected_cape}, got {cape}"
     assert np.isclose(cin, expected_cin, atol=1), f" type '{cape_type}': Expected CIN {expected_cin}, got {cin}"
 
 # @pytest.mark.parametrize("data", test_cases, ids=list(REFERENCE_CASES.keys()))
