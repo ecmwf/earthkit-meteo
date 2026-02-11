@@ -175,8 +175,14 @@ class DataDispatcher(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def dispatch(self, func: str, module: str, *args: Any, **kwargs: Any) -> Any:
+    def dispatch(self, func: callable, module: str, *args: Any, **kwargs: Any) -> Any:
         pass
+
+    def invoke(self, module, func, *args, **kwargs):
+        # Handle bound methods (classmethods)
+        if func.__self__ is not None:
+            module = getattr(module, func.__self__.__name__)
+        return getattr(module, func.__name__)(*args, **kwargs)
 
 
 class XArrayDispatcher(DataDispatcher):
@@ -186,7 +192,7 @@ class XArrayDispatcher(DataDispatcher):
 
     def dispatch(self, func, module, *args, **kwargs):
         module = import_module(module + ".xarray")
-        return getattr(module, func)(*args, **kwargs)
+        return self.invoke(module, func, *args, **kwargs)
 
 
 class FieldListDispatcher(DataDispatcher):
@@ -196,7 +202,7 @@ class FieldListDispatcher(DataDispatcher):
 
     def dispatch(self, func, module, *args, **kwargs):
         module = import_module(module + ".fieldlist")
-        return getattr(module, func)(*args, **kwargs)
+        return self.invoke(module, func, *args, **kwargs)
 
 
 _DISPATCHERS = [XArrayDispatcher(), FieldListDispatcher()]
@@ -208,7 +214,7 @@ def dispatch(func, *args, **kwargs):
     for dispatcher in _DISPATCHERS:
         if dispatcher.match(args[0]):
             # TODO: check if the function exists in the module
-            return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
+            return dispatcher.dispatch(func, _module, *args, **kwargs)
 
 
 # def dispatch(func):
