@@ -6,14 +6,16 @@ from earthkit.meteo.constants import constants
 
 
 # TODO check if replacing Cpd_ and Cpv_ with constants.Cpd and constants.Cpv is acceptable given the deviation of results
-Cpd_    = 1005.7  # heat capacity at constant pressure for dry air [J/kg-1K-1] # constants.Cpd
-Cpv_    = 1870.0 # heat capacity at constant pressure of water vapour [J/kg-1K-1] # constants.Cpv
+Cpd_    = 1005.7  # heat capacity at constant pressure for dry air [J/kg-1K-1] -- compare to constants.Cpd
+Cpv_    = 1870.0 # heat capacity at constant pressure of water vapour [J/kg-1K-1] -- compare to constants.Cpv
 
 
-def ept_from_mixing_ratio(temperature, pressure, mixing_ratio):
+def _ept_from_mixing_ratio(temperature, pressure, mixing_ratio):
     specific_humidity = thermo.specific_humidity_from_mixing_ratio(mixing_ratio)
     return thermo.ept_from_specific_humidity(temperature, specific_humidity, pressure, method="bolton39")
-
+# TODO add option to use the method "bolton43" for ept calculation, which is the method used in the reference implementation.
+# Use "bolton39" for now, the difference is small.
+# Potentially make method configurable, as well as the method used for lcl calculation.
 
 # TODO check if earthkit has functionality for moist adiabatic ascent
 def MoistAscentLookupTable():
@@ -22,16 +24,16 @@ def MoistAscentLookupTable():
     def dTdp(T_parcel, pressure_hPa):
         pressure = pressure_hPa
         # moist adiabatic gradient according to Emanuel, 1995 (Eq. 4.7.3) ignoring liquid and solid water, i.e. r_l = 0 and r_t = r
-        es_p = es_hPa(T_parcel)
-        r_p = constants.epsilon * es_p/pressure 
+        es_parcel = es_hPa(T_parcel)
+        r_parcel = constants.epsilon * es_parcel/pressure 
         Lv = 2501000 - 2370 * (T_parcel - constants.T0)
-        aa = - (constants.g / Cpd_) * (1 + r_p) / (1 + r_p * (Cpv_ / Cpd_))
-        bb = 1 + (Lv * r_p) / (constants.Rd * T_parcel)
-        cc = Lv * Lv * r_p * (1 + r_p / constants.epsilon)
-        dd = constants.Rv * np.power(T_parcel, 2) * (Cpd_ + r_p * Cpv_)
+        aa = - (constants.g / Cpd_) * (1 + r_parcel) / (1 + r_parcel * (Cpv_ / Cpd_))
+        bb = 1 + (Lv * r_parcel) / (constants.Rd * T_parcel)
+        cc = Lv * Lv * r_parcel * (1 + r_parcel / constants.epsilon)
+        dd = constants.Rv * np.power(T_parcel, 2) * (Cpd_ + r_parcel * Cpv_)
         
         dTdz = aa * bb / (1 + (cc / dd))
-        dzdp = - (constants.Rd * (T_parcel + 0.608 * r_p)) / (pressure * 100 * constants.g)
+        dzdp = - (constants.Rd * (T_parcel + 0.608 * r_parcel)) / (pressure * 100 * constants.g)
         dTdp = dTdz * dzdp * 100
 
         return dTdp
@@ -49,7 +51,7 @@ def MoistAscentLookupTable():
     
     my_T_start = np.arange(180, 320, 2)
     my_r_start = constants.epsilon * (es_hPa(my_T_start) / (max_p - es_hPa(my_T_start)))
-    theta_ep_range = ept_from_mixing_ratio(my_T_start, max_p * 100, my_r_start) # convert pressure to Pa for theta_ep function
+    theta_ep_range = _ept_from_mixing_ratio(my_T_start, max_p * 100, my_r_start) # convert pressure to Pa for theta_ep function
     
     p_range = np.arange(max_p, min_p, -1)
     
@@ -79,13 +81,6 @@ def _determine_mixed_layer_parcel(pressure, temperature, mixing_ratio, layer_dep
     :return:
     mixed-layer T, r and bottom_pressure
     '''
-    # Check if array is sorted in ascending order. If not, sort it.
-    is_sorted = (np.diff(pressure, axis=0) >= 0).all()
-    if is_sorted == False:
-        sorted_inds = np.argsort(pressure, axis=0)
-        pressure = np.take_along_axis(pressure, sorted_inds, axis = 0)
-        temperature = np.take_along_axis(temperature, sorted_inds, axis = 0)
-        mixing_ratio = np.take_along_axis(mixing_ratio, sorted_inds, axis = 0)
 
     # Default mixed layer depth is 50 hPa
     if layer_depth == None:
@@ -112,7 +107,7 @@ def _determine_most_unstable_parcel(pressure_arr, zh_arr, T_arr, r_arr, layer_de
     n_pressures = T_arr.shape[0]
     n_profiles = T_arr.shape[1]
 
-    theta_ep_env = ept_from_mixing_ratio(T_arr, pressure_arr, r_arr) # pseudoequivalent potential temperature
+    theta_ep_env = _ept_from_mixing_ratio(T_arr, pressure_arr, r_arr) # pseudoequivalent potential temperature
     # TODO should this be layer_depth, with default 50000 Pa?
     mupl = 50000 # top pressure level in Pa below which most unstable parcel will be found
 
@@ -154,9 +149,8 @@ def _determine_most_unstable_parcel(pressure_arr, zh_arr, T_arr, r_arr, layer_de
     r_start = r_arr[indices, np.arange(n_profiles)]
     return p_start, T_start, r_start
 
-# TODO check difference between earthkit LCL function and Ivan's reference implementation (see below)
-# only included for comparison purposes
-def lifted_condensation_level_from_mixing_ratio(T_departure, p_departure, r_departure):
+
+def _lifted_condensation_level_from_mixing_ratio(T_departure, p_departure, r_departure):
     specific_humidity = thermo.specific_humidity_from_mixing_ratio(r_departure)
     dewpoint = thermo.dewpoint_from_specific_humidity(specific_humidity, p_departure)
     T_LCL, p_LCL = thermo.lcl(T_departure, dewpoint, p_departure)
@@ -169,28 +163,13 @@ def lift_parcel(p_start, T_start, r_start, p_arr, T_arr, r_arr):
     T_parcel = np.zeros([npressures, nprofiles]) * np.nan
     r_parcel = np.zeros([npressures, nprofiles]) * np.nan
 
-
-    # TODO lcl differs from earthkit implementation above -- for lcl we see the biggest deviations from reference implementation
-    # original implementation of LCL commented out below
-    # ------------------------------
-    # def lifted_condensation_level(T_departure, p_departure, e_departure):
-    #     # Compute pressure p_LCL given temperature, pressure and water vapour pressure at departute level
-    #     T_LCL = (2840 / (3.5 * np.log(T_departure) - np.log(e_departure) - 4.805)) + 55  # Bolton's approximation from Emanuel, 1996 (Eq. 4.6.24)
-    #     p_LCL = p_departure * np.power((T_LCL / T_departure), Cpd_ / constants.Rd)
-    #     return p_LCL, T_LCL
-    # water vapour pressure at departure level
-    # e_start = (r_start * p_start) / (r_start + constants.epsilon)
-    # p_LCL, T_LCL = lifted_condensation_level(T_start, p_start, e_start)
-    # ------------------------------
-
-    # Lifted Condensation Level - LCL
-    p_LCL, T_LCL = lifted_condensation_level_from_mixing_ratio(T_start, p_start, r_start)
+    p_LCL, T_LCL = _lifted_condensation_level_from_mixing_ratio(T_start, p_start, r_start)
 
     # Potential temperature of the parcel - conserved for dry adiabatic processes
     theta_parcel = thermo.potential_temperature(T_start, p_start)
 
     # Pseudoequivalent potential temperature of the parcel
-    theta_ep_parcel = ept_from_mixing_ratio(T_start, p_start, r_start)
+    theta_ep_parcel = _ept_from_mixing_ratio(T_start, p_start, r_start)
 
     # Dry adiabatic ascent to LCL
     # ------------------------------
@@ -209,7 +188,6 @@ def lift_parcel(p_start, T_start, r_start, p_arr, T_arr, r_arr):
 
     # Create Lookup table for moist ascent and define functions:
     my_Tp, theta_ep_range, p_range = MoistAscentLookupTable()
-    # TODO replace scipy interpolate with earthkit interpolation function if available
     T_p_lookup = interpolate.RectBivariateSpline(p_range, theta_ep_range, my_Tp)
     T_parcel[above_LCL] = T_p_lookup(p_2d[above_LCL], theta_ep_parcel_2d[above_LCL], grid=False)
     es_T_parcel = thermo.saturation_vapour_pressure(T_parcel[above_LCL], phase="water")
@@ -246,28 +224,24 @@ def lift_parcel(p_start, T_start, r_start, p_arr, T_arr, r_arr):
 
 def cape_cin(pressure_arr, zh_arr, T_arr, r_arr, CAPE_type, layer_depth=None):
     # shapes of all arrays should be (n_vertical_levels, n_horizontal_locations)
-    # pressure levels should be in ascending order (from top to bottom)
+    # pressure levels should be in ascending order
     
     # Make sure pressure levels are in ascending order
-    sorted_inds = np.argsort(pressure_arr, axis=0)
-    pressure_arr = np.take_along_axis(pressure_arr, sorted_inds, axis=0)
-    zh_arr = np.take_along_axis(zh_arr, sorted_inds, axis=0)
-    T_arr = np.take_along_axis(T_arr, sorted_inds, axis=0)
-    r_arr = np.take_along_axis(r_arr, sorted_inds, axis=0)
+    is_sorted = (np.diff(pressure_arr, axis=0) >= 0).all()
+    if is_sorted == False:
+        sorted_inds = np.argsort(pressure_arr, axis=0)
+        pressure_arr = np.take_along_axis(pressure_arr, sorted_inds, axis = 0)
+        T_arr = np.take_along_axis(T_arr, sorted_inds, axis = 0)
+        r_arr = np.take_along_axis(r_arr, sorted_inds, axis = 0)
+        zh_arr = np.take_along_axis(zh_arr, sorted_inds, axis = 0)
 
     if (CAPE_type == 'surface'):
-        # Surface-based parcel is one of those:
-        # parcel starting with 2-metre temperature and humidity (if they are in the dataset)
-        # parcel starting from the lowest model level or pressure level (if 2m parameteres not in the dataset)
-        print("Surface-based parcel")
         p_start = pressure_arr[-1, :]
         T_start = T_arr[-1, :]
         r_start = r_arr[-1, :]
     elif (CAPE_type == 'mixed'):
-        print("Mixed-layer parcel")
         p_start, T_start, r_start = _determine_mixed_layer_parcel(pressure_arr, T_arr, r_arr, layer_depth)
     elif (CAPE_type == 'mu'):
-        print("Most-unstable parcel")
         p_start, T_start, r_start = _determine_most_unstable_parcel(pressure_arr, zh_arr, T_arr, r_arr, layer_depth)
     else:
         raise NotImplementedError(f"CAPE type '{CAPE_type}' not implemented")
@@ -276,13 +250,13 @@ def cape_cin(pressure_arr, zh_arr, T_arr, r_arr, CAPE_type, layer_depth=None):
     
     dCAPE = constants.g * ((B[:-1, :] + B[1:, :]) / 2) * (-np.diff(zh_arr, axis=0))
     dCIN = np.copy(dCAPE)
+
     dCAPE[dCAPE < 0] = 0
     above_LFC = (pressure_arr[1:, :] <= p_LFC[None, :])
     dCAPE[above_LFC == False] = 0
     CAPE = np.nansum(dCAPE, axis=0)
     CAPE[np.isnan(p_LFC)] = 0
     
-    # dCIN[above_LFC] = 0
     above_EL = (pressure_arr[1:, :] <= p_EL[None, :])
     dCIN[above_EL] = 0
     dCIN[dCIN > 0] = 0
