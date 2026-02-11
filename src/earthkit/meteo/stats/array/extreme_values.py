@@ -9,6 +9,8 @@
 
 from earthkit.utils.array import array_namespace
 
+from .. import GumbelDistribution as GumbelDistributionBase
+
 try:
     from scipy.stats import lmoment
 except ImportError:
@@ -21,25 +23,12 @@ def _expand_dims_after(arr, ndim, xp=None):
     return xp.expand_dims(xp.asarray(arr), axis=list(range(-ndim, 0)))
 
 
-class GumbelDistribution:
-    """Gumbel distribution for extreme value statistics.
-
-    Parameters
-    ----------
-    mu: Number | array_like
-        Offset parameter.
-    sigma: Number | array_like
-        Scale parameter.
-    freq: None | Number | timedelta
-        Temporal frequency (duration between values, technically the inverse
-        frequency) of the represented data. Provides additional context, e.g.,
-        to scale return periods computed from the distribution.
-    """
+class GumbelDistribution(GumbelDistributionBase):
 
     def __init__(self, mu, sigma, freq=None):
         xp = array_namespace(mu, sigma)
-        self.mu, self.sigma = xp.broadcast_arrays(xp.asarray(mu), xp.asarray(sigma))
-        self.freq = freq
+        mu, sigma = xp.broadcast_arrays(xp.asarray(mu), xp.asarray(sigma))
+        super().__init__(mu, sigma, freq)
 
     @classmethod
     def fit(cls, sample, axis=0, freq=None):
@@ -63,16 +52,6 @@ class GumbelDistribution:
         mu = lmom[0] - sigma * 0.5772
         return cls(mu, sigma, freq=freq)
 
-    @property
-    def shape(self):
-        """Tuple of dimensions."""
-        return self.mu.shape
-
-    @property
-    def ndim(self):
-        """Number of dimensions."""
-        return self.mu.ndim
-
     def cdf(self, x):
         """Evaluate the cumulative distribution function (CDF).
 
@@ -89,7 +68,7 @@ class GumbelDistribution:
         """
         xp = array_namespace(x, self.mu, self.sigma)
         x = _expand_dims_after(x, self.ndim, xp=xp)
-        return 1.0 - xp.exp(-xp.exp((self.mu - x) / self.sigma))
+        return super().cdf(x)
 
     def ppf(self, p):
         """Evaluate the percent point function (PPF; inverse CDF).
@@ -107,49 +86,4 @@ class GumbelDistribution:
         """
         xp = array_namespace(p, self.mu, self.sigma)
         p = _expand_dims_after(p, self.ndim, xp=xp)
-        return self.mu - self.sigma * xp.log(-xp.log(1.0 - p))
-
-
-def value_to_return_period(dist, value):
-    """Return period of a value given a distribution of extremes.
-
-    Use, e.g., to compute expected return periods of extreme precipitation or
-    flooding events based on a timeseries of past observations.
-
-    Parameters
-    ----------
-    dist: GumbelDistribution
-        Probability distribution.
-    value: Number | array_like
-        Input value(s).
-
-    Returns
-    -------
-    array_like
-        The return period of the input value, scaled with the frequency
-        information of the distribution if attached.
-    """
-    freq = 1.0 if dist.freq is None else dist.freq
-    return freq / dist.cdf(value)
-
-
-def return_period_to_value(dist, return_period):
-    """Value for a given return period of a distribution of extremes.
-
-    Parameters
-    ----------
-    dist: GumbelDistribution
-        Probability distribution.
-    return_period: Number | array_like
-        Input return period. Must be compatible with the frequency information
-        of the distribution if attached.
-    freq: number | timedelta
-        Temporal frequency of the input dataUsed to scale return periods.
-
-    Returns
-    -------
-    array_like
-        Value with return period equal to the input return period.
-    """
-    freq = 1.0 if dist.freq is None else dist.freq
-    return dist.ppf(freq / return_period)
+        return super().ppf(p)
