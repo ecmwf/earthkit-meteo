@@ -11,12 +11,13 @@
 
 from earthkit.utils.array import array_namespace
 
+from earthkit.meteo.constants import T0
+
 C1 = 611.21
 C3W = 17.502
 C4W = 32.19
 C3I = 22.587
 C4I = -0.7
-T0 = 273.16
 TI = T0 - 23
 
 PHASES = ["mixed", "water", "ice"]
