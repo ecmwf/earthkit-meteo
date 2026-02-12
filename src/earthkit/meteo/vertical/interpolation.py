@@ -32,6 +32,7 @@ def interpolate_monotonic(
     coord: xr.DataArray,
     target_coord: TargetCoordinates,
     interpolation: Literal["linear", "log", "nearest"] = "linear",
+    vertical_dim: str = "z",
 ) -> xr.DataArray:
     """Interpolate a field to isolevels of a monotonic target field.
 
@@ -48,6 +49,8 @@ def interpolate_monotonic(
         target coordinate definition
     interpolation : str
         interpolation algorithm, one of {"linear", "log", "nearest"}
+    vertical_dim : str
+        name of the vertical dimension
 
     Returns
     -------
@@ -60,8 +63,8 @@ def interpolate_monotonic(
         raise ValueError(f"Unknown interpolation: {interpolation}")
 
     # ... determine direction of target field
-    dtdz = coord.diff("z")
-    positive = np.all(dtdz > 0)
+    dtdz = coord.diff(vertical_dim)
+    positive = np.all(dtdz > 0).item()
 
     if not positive and not np.all(dtdz < 0):
         raise ValueError("target data is not monotonic in the vertical dimension")
@@ -75,8 +78,8 @@ def interpolate_monotonic(
 
     # Interpolate
     # ... prepare interpolation
-    tkm1 = coord.shift(z=1)
-    fkm1 = data.shift(z=1)
+    tkm1 = coord.shift({vertical_dim: 1})
+    fkm1 = data.shift({vertical_dim: 1})
 
     # ... loop through target values
     for target_idx, t0 in enumerate(target_coord.values):
@@ -87,19 +90,19 @@ def interpolate_monotonic(
         # ... note that if the condition above is not fulfilled, minind will
         #     be set to k_top
         if positive:
-            t2 = coord.where((coord < t0) & (tkm1 >= t0))
+            t2 = coord.where((coord >= t0) & (tkm1 <= t0))
         else:
-            t2 = coord.where((coord > t0) & (tkm1 <= t0))
+            t2 = coord.where((coord <= t0) & (tkm1 >= t0))
 
-        minind = t2.fillna(np.inf).argmin(dim="z")
+        minind = t2.fillna(np.inf).argmin(dim=vertical_dim)
 
         # ... extract pressure and field at level k
-        t2 = t2[{"z": minind}]
-        f2 = data[{"z": minind}]
+        t2 = t2[{vertical_dim: minind}]
+        f2 = data[{vertical_dim: minind}]
         # ... extract pressure and field at level k-1
         # ... note that f1 and p1 are both undefined, if minind equals k_top
-        f1 = fkm1[{"z": minind}]
-        t1 = tkm1[{"z": minind}]
+        f1 = fkm1[{vertical_dim: minind}]
+        t1 = tkm1[{vertical_dim: minind}]
 
         # ... compute the interpolation weights
         if interpolation == "linear":
@@ -120,7 +123,7 @@ def interpolate_monotonic(
             ratio = xr.where(np.abs(t0 - t1) >= np.abs(t0 - t2), 1.0, 0.0)
 
         # ... interpolate and update field_on_target
-        field_on_target[{"z": target_idx}] = (1.0 - ratio) * f1 + ratio * f2
+        field_on_target[{vertical_dim: target_idx}] = (1.0 - ratio) * f1 + ratio * f2
 
     return field_on_target
 
@@ -131,6 +134,7 @@ def interpolate_to_pressure_levels(
     target_p: Sequence[float],
     target_p_units: Literal["Pa", "hPa"] = "Pa",
     interpolation: Literal["linear", "log", "nearest"] = "linear",
+    vertical_dim: str = "z",
 ) -> xr.DataArray:
     """Interpolate a field from model (k) levels to pressure coordinates.
 
@@ -149,6 +153,8 @@ def interpolate_to_pressure_levels(
         pressure target coordinate units
     interpolation : str
         interpolation algorithm, one of {"linear", "log", "nearest"}
+    vertical_dim : str
+        name of the vertical dimension
 
     Returns
     -------
@@ -182,7 +188,7 @@ def interpolate_to_pressure_levels(
         values=target_values.tolist(),
     )
 
-    return interpolate_monotonic(data, p, target, interpolation)
+    return interpolate_monotonic(data, p, target, interpolation, vertical_dim)
 
 
 def interpolate_sleve_to_coord_levels(
@@ -191,6 +197,7 @@ def interpolate_sleve_to_coord_levels(
     coord: xr.DataArray,
     target_coord: TargetCoordinates,
     folding_mode: Literal["low_fold", "high_fold", "undef_fold"] = "undef_fold",
+    vertical_dim: str = "z",
 ) -> xr.DataArray:
     """Interpolate a field from sleve levels to coordinates w.r.t. an arbitrary field.
 
@@ -210,6 +217,8 @@ def interpolate_sleve_to_coord_levels(
     folding_mode : str
         handle when the target is observed multiple times in a column,
         one of {"low_fold", "high_fold", "undef_fold"}
+    vertical_dim : str
+        name of the vertical dimension
 
     Returns
     -------
@@ -227,16 +236,18 @@ def interpolate_sleve_to_coord_levels(
     h_max = 100000.0
 
     # Prepare output field on target coordinates
-    field_on_target = _init_field_with_vcoord(data.broadcast_like(coord), target_coord, np.nan)
+    field_on_target = _init_field_with_vcoord(
+        data.broadcast_like(coord), target_coord, np.nan, vertical_dim=vertical_dim
+    )
 
     # Interpolate
     # ... prepare interpolation
-    tkm1 = coord.shift(z=1)
-    fkm1 = data.shift(z=1)
+    tkm1 = coord.shift({vertical_dim: 1})
+    fkm1 = data.shift({vertical_dim: 1})
 
     # ... loop through tc values
     for t_idx, t0 in enumerate(target_coord.values):
-        folding_coord_exception = xr.full_like(h[{"z": 0}], False)
+        folding_coord_exception = xr.full_like(h[{vertical_dim: 0}], False)
         # ... find the height field where target is >= t0 on level k and was <= t0
         #     on level k-1 or where theta is <= th0 on level k
         #     and was >= th0 on level k-1
@@ -244,29 +255,29 @@ def interpolate_sleve_to_coord_levels(
         if folding_mode == "undef_fold":
             # ... find condition where more than one interval is found, which
             # contains the target coordinate value
-            tmp = xr.where(ht.notnull(), 1, 0).sum(dim=["z"])
+            tmp = xr.where(ht.notnull(), 1, 0).sum(dim=[vertical_dim])
             folding_coord_exception = tmp.where(tmp > 1).notnull()
         if folding_mode in ("low_fold", "undef_fold"):
             # ... extract the index k of the smallest height at which
             # the condition is fulfilled
-            tcind = ht.fillna(h_max).argmin(dim="z")
+            tcind = ht.fillna(h_max).argmin(dim=vertical_dim)
         if folding_mode == "high_fold":
             # ... extract the index k of the largest height at which the condition
             # is fulfilled
-            tcind = ht.fillna(h_min).argmax(dim="z")
+            tcind = ht.fillna(h_min).argmax(dim=vertical_dim)
 
         # ... extract theta and field at level k
-        t2 = coord[{"z": tcind}]
-        f2 = data[{"z": tcind}]
+        t2 = coord[{vertical_dim: tcind}]
+        f2 = data[{vertical_dim: tcind}]
         # ... extract theta and field at level k-1
-        f1 = fkm1[{"z": tcind}]
-        t1 = tkm1[{"z": tcind}]
+        f1 = fkm1[{vertical_dim: tcind}]
+        t1 = tkm1[{vertical_dim: tcind}]
 
         # ... compute the interpolation weights
         ratio = xr.where(np.abs(t2 - t1) > 0, (t0 - t1) / (t2 - t1), 0.0)
 
         # ... interpolate and update field on target
-        field_on_target[{"z": t_idx}] = xr.where(
+        field_on_target[{vertical_dim: t_idx}] = xr.where(
             folding_coord_exception, np.nan, (1.0 - ratio) * f1 + ratio * f2
         )
 
@@ -280,6 +291,7 @@ def interpolate_sleve_to_theta_levels(
     target_theta: Sequence[float],
     target_t_units: Literal["K", "cK"] = "K",
     folding_mode: Literal["low_fold", "high_fold", "undef_fold"] = "undef_fold",
+    vertical_dim: str = "z",
 ) -> xr.DataArray:
     """Interpolate a field from sleve levels to potential temperature coordinates.
 
@@ -301,6 +313,8 @@ def interpolate_sleve_to_theta_levels(
     folding_mode : str
         handle when the target is observed multiple times in a column,
         one of {"low_fold", "high_fold", "undef_fold"}
+    vertical_dim : str
+        name of the vertical dimension
 
     Returns
     -------
@@ -342,7 +356,7 @@ def interpolate_sleve_to_theta_levels(
         values=tc_values.tolist(),
     )
 
-    return interpolate_sleve_to_coord_levels(data, h, theta, tc, folding_mode)
+    return interpolate_sleve_to_coord_levels(data, h, theta, tc, folding_mode, vertical_dim)
 
 
 def _init_field_with_vcoord(
@@ -350,6 +364,7 @@ def _init_field_with_vcoord(
     vcoord: TargetCoordinates,
     fill_value: Any,
     dtype: np.dtype | None = None,
+    vertical_dim: str = "z",
 ) -> xr.DataArray:
     """Initialize an xarray.DataArray with new vertical coordinates.
 
@@ -367,6 +382,8 @@ def _init_field_with_vcoord(
     dtype : np.dtype, optional
         fill value data type; defaults to None (in this case
         the data type is inherited from the parent field)
+    vertical_dim : str
+        name of the vertical dimension
 
     Returns
     -------
@@ -388,12 +405,12 @@ def _init_field_with_vcoord(
     #     parent.metadata, typeOfLevel=vcoord.type_of_level
     # )
     # dims
-    sizes = dict(parent.sizes.items()) | {"z": vcoord.size}
+    sizes = dict(parent.sizes.items()) | {vertical_dim: vcoord.size}
     # coords
     # ... inherit all except for the vertical coordinates
-    coords = {c: v for c, v in parent.coords.items() if c != "z"}
+    coords = {c: v for c, v in parent.coords.items() if vertical_dim not in v.dims}
     # ... initialize the vertical target coordinates
-    coords["z"] = xr.IndexVariable("z", vcoord.values)
+    coords[vertical_dim] = xr.IndexVariable(vertical_dim, vcoord.values)
     # dtype
     if dtype is None:
         dtype = parent.data.dtype
