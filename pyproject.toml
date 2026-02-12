@@ -55,6 +55,7 @@ optional-dependencies.samples = [
   "requests",
 ]
 optional-dependencies.test = [
+  "earthkit-data",
   "pytest",
   "pytest-cov",
   "requests",
