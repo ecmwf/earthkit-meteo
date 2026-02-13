@@ -363,7 +363,7 @@ def test_crps_from_ensemble_invalid_method():
         ),
     ],
 )
-def test_crps_from_ensemble(method: str, expected_total: np.ndarray, expected_spread: np.ndarray):
+def test_crps_from_ensemble_underover(method: str, expected_total: np.ndarray, expected_spread: np.ndarray):
     fcst_values = np.array(
         [
             [
@@ -462,6 +462,133 @@ def test_crps_from_ensemble(method: str, expected_total: np.ndarray, expected_sp
     over = crps_components.sel(component="overforecast_penalty", drop=True)
     spread = crps_components.sel(component="spread", drop=True)
     xr.testing.assert_allclose(total, under + over - spread)
+
+    # Check individual components
+    for component, values in expected_components.items():
+        assert_component_allclose(crps_components, component, values)
+
+
+@pytest.mark.parametrize(
+    "method,expected_total",
+    [
+        (
+            "ecdf",
+            np.array(
+                [
+                    [[2.0, 0.2], [2.4, 6.2]],
+                    [[2.8, 0.46], [0.4, 0.0]],
+                ],
+                dtype=float,
+            ),
+        ),
+        (
+            "fair",
+            np.array(
+                [
+                    [[2.0, 0.1], [1.4, 6.0]],
+                    [[2.7, 0.3], [0.2, 0.0]],
+                ],
+                dtype=float,
+            ),
+        ),
+    ],
+)
+def test_crps_from_ensemble_hersbach(method: str, expected_total: np.ndarray):
+    fcst_values = np.array(
+        [
+            [
+                [
+                    [2.0, 2.0, 2.0, 2.0, 2.0],
+                    [1.0, 2.0, 0.0, 2.0, 1.0],
+                ],
+                [
+                    [-5.0, 0.0, 5.0, 10.0, 15.0],
+                    [1.0, 2.0, 3.0, 4.0, 5.0],
+                ],
+            ],
+            [
+                [
+                    [-3.0, -2.0, -1.0, -1.0, -2.0],
+                    [4.0, 1.0, 3.0, 1.0, 2.0],
+                ],
+                [
+                    [-2.0, -1.0, 0.0, 1.0, 2.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0],
+                ],
+            ],
+        ],
+        dtype=float,
+    )
+    obs_values = np.array(
+        [
+            [
+                [0.0, 1.0],
+                [7.0, 10.0],
+            ],
+            [
+                [-5.0, 2.5],
+                [0.0, 0.0],
+            ],
+        ],
+        dtype=float,
+    )
+
+    # TODO: these values are not correct, fix them
+    expected_alpha = np.array(
+        [
+            [[0.0, 0.0], [0.0, 0.0]],
+            [[0.0, 0.0], [0.0, 0.0]],
+        ],
+        dtype=float,
+    )
+    expected_beta = np.array(
+        [
+            [[0.0, 0.0], [0.0, 0.0]],
+            [[0.0, 0.0], [0.0, 0.0]],
+        ],
+        dtype=float,
+    )
+
+    fcst_ds = make_ensemble_dataset(fcst_values)
+    obs_ds = make_deterministic_dataset(obs_values)
+
+    crps_expected_ds = make_deterministic_dataset(expected_total)
+    crps_computed_ds = crps_from_ensemble(
+        fcst_ds, obs_ds, over="number", method=method, decomposition_method="hersbach"
+    )
+    xr.testing.assert_allclose(crps_computed_ds, crps_expected_ds)
+
+    fcst_da = fcst_ds["2t"]
+    obs_da = obs_ds["2t"]
+    crps_expected_da = crps_expected_ds["2t"]
+
+    crps_computed_da = crps_from_ensemble(
+        fcst_da, obs_da, over="number", method=method, decomposition_method="hersbach"
+    )
+    xr.testing.assert_allclose(crps_computed_da, crps_expected_da)
+
+    expected_components = {
+        "total": expected_total,
+        "alpha": expected_alpha,
+        "beta": expected_beta,
+    }
+
+    crps_components = crps_from_ensemble(
+        fcst_da,
+        obs_da,
+        over="number",
+        method=method,
+        return_components=True,
+        decomposition_method="hersbach",
+    )
+
+    # Note that we do not explicitly test the order of the components as this
+    # might change in the underlying score function implementation.
+    assert set(crps_components["component"].values) == {
+        "total",
+        "alpha",
+        "beta",
+    }
 
     # Check individual components
     for component, values in expected_components.items():
