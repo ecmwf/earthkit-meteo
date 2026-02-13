@@ -92,7 +92,7 @@ def make_input(conf_id):
                 marks.append(pytest.mark.xfail(reason="missing values unsupported"))
             if mode == "nearest":
                 marks.append(pytest.mark.xfail(reason="nearest extrapolation not implemented"))
-            yield pytest.param(*args, marks)
+            yield pytest.param(*args, marks=marks)
 
 
 def _make_input_xr(data, coord, target_coord, expected_data, vdim, xp=np, device="cpu"):
