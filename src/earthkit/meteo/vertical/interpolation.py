@@ -36,9 +36,6 @@ def interpolate_monotonic(
 ) -> xr.DataArray:
     """Interpolate a field to isolevels of a monotonic target field.
 
-    Example for vertical interpolation to isosurfaces of a target field,
-    which is strictly monotonically decreasing with height.
-
     Parameters
     ----------
     data : xarray.DataArray
@@ -74,6 +71,7 @@ def interpolate_monotonic(
         data.broadcast_like(coord),
         target_coord,
         np.nan,
+        vertical_dim=vertical_dim,
     )
 
     # Interpolate
@@ -136,9 +134,9 @@ def interpolate_to_pressure_levels(
     interpolation: Literal["linear", "log", "nearest"] = "linear",
     vertical_dim: str = "z",
 ) -> xr.DataArray:
-    """Interpolate a field from model (k) levels to pressure coordinates.
+    """Interpolate a field to pressure coordinates.
 
-    Example for vertical interpolation to isosurfaces of a target field,
+    Example for vertical interpolation to isosurfaces of a pressure field,
     which is strictly monotonically decreasing with height.
 
     Parameters
@@ -200,9 +198,6 @@ def interpolate_sleve_to_coord_levels(
     vertical_dim: str = "z",
 ) -> xr.DataArray:
     """Interpolate a field from sleve levels to coordinates w.r.t. an arbitrary field.
-
-    Example for vertical interpolation to isosurfaces of a target field
-    that is no monotonic function of height.
 
     Parameters
     ----------
@@ -294,9 +289,6 @@ def interpolate_sleve_to_theta_levels(
     vertical_dim: str = "z",
 ) -> xr.DataArray:
     """Interpolate a field from sleve levels to potential temperature coordinates.
-
-    Example for vertical interpolation to isosurfaces of a target field
-    that is no monotonic function of height.
 
     Parameters
     ----------
