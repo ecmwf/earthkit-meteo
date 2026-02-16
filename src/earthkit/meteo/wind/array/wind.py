@@ -40,7 +40,7 @@ def _direction_meteo(u, v):
     v = xp.asarray(v)
 
     minus_pi2 = -xp.pi / 2.0
-    d = xp.arctan2(v, u)
+    d = xp.atan2(v, u)
     d = xp.asarray(d)
     m = d <= minus_pi2
     d[m] = (minus_pi2 - d[m]) * constants.degree
@@ -53,7 +53,7 @@ def _direction_polar(u, v, to_positive):
     xp = array_namespace(u, v)
     u = xp.asarray(u)
     v = xp.asarray(v)
-    d = xp.arctan2(v, u) * constants.degree
+    d = xp.atan2(v, u) * constants.degree
     if to_positive:
         d = xp.asarray(d)
         m = d < 0
@@ -303,12 +303,13 @@ def windrose(speed, direction, sectors=16, speed_bins=None, percent=True):
     # TODO: atleast_1d is not part of the array API standard
     speed = xp.atleast_1d(speed)
     direction = xp.atleast_1d(direction)
+    device = xp.device(speed)
 
     dir_step = 360.0 / sectors
-    dir_bins = xp.asarray(
-        xp.linspace(int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2), dtype=speed.dtype
+    dir_bins = xp.linspace(
+        int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2, dtype=speed.dtype, device=device
     )
-    speed_bins = xp.asarray(speed_bins, dtype=speed.dtype)
+    speed_bins = xp.asarray(speed_bins, dtype=speed.dtype, device=device)
 
     # NOTE: np.histogram2d is only available in numpy. For other namespaces we use a fallback implementation
     # based on histogramdd. (See utils.compute.histogram2d). However, neither histogram2d nor
@@ -317,7 +318,6 @@ def windrose(speed, direction, sectors=16, speed_bins=None, percent=True):
         speed,
         direction,
         bins=[speed_bins, dir_bins],
-        density=False,
     )[0]
 
     # unify the north bins

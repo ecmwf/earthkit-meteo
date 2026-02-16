@@ -106,6 +106,10 @@ xref_links = {
         "earthkit-plots",
         "https://earthkit-plots.readthedocs.io/en/latest/",
     ),
+    "earthkit-utils": (
+        "earthkit-utils",
+        "https://github.com/ecmwf/earthkit-utils",
+    ),
     "fieldlist": (
         "fieldlist",
         "https://earthkit-data.readthedocs.io/en/latest/guide/data_format/grib.html",

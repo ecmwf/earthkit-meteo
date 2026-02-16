@@ -12,6 +12,7 @@ from typing import Union
 
 import numpy as np
 from earthkit.utils.array import array_namespace
+from numpy.typing import ArrayLike
 from numpy.typing import NDArray
 
 from earthkit.meteo import constants
@@ -138,21 +139,21 @@ def pressure_at_model_levels(
 
 
 def relative_geopotential_thickness(
-    alpha: NDArray[Any], delta: NDArray[Any], t: NDArray[Any], q: NDArray[Any]
-) -> NDArray[Any]:
+    alpha: ArrayLike, delta: ArrayLike, t: ArrayLike, q: ArrayLike
+) -> ArrayLike:
     """Calculate the geopotential thickness with respect to the surface on model full-levels.
 
     Parameters
     ----------
     alpha : array-like
-        alpha term of pressure calculations
+        Alpha term of pressure calculations
     delta : array-like
-        delta term of pressure calculations
+        Delta term of pressure calculations
     t : array-like
-        specific humidity on model full-levels (kg/kg).  First dimension must
+        Temperature on model full-levels (K).  First dimension must
         correspond to the model full-levels.
     q : array-like
-        temperature on model full-levels (K).  First dimension must
+        Specific humidity on model full-levels (kg/kg).  First dimension must
         correspond to the model full-levels.
 
     Returns
@@ -305,7 +306,7 @@ def pressure_at_height_levels(
     return p_height
 
 
-def geopotential_height_from_geopotential(z):
+def geopotential_height_from_geopotential(z: ArrayLike) -> ArrayLike:
     r"""Compute geopotential height from geopotential.
 
     Parameters
@@ -332,7 +333,7 @@ def geopotential_height_from_geopotential(z):
     return h
 
 
-def geopotential_from_geopotential_height(h):
+def geopotential_from_geopotential_height(h: ArrayLike) -> ArrayLike:
     r"""Compute geopotential height from geopotential.
 
     Parameters
@@ -359,7 +360,7 @@ def geopotential_from_geopotential_height(h):
     return z
 
 
-def geopotential_height_from_geometric_height(h, R_earth=constants.R_earth):
+def geopotential_height_from_geometric_height(h: ArrayLike, R_earth=constants.R_earth) -> ArrayLike:
     r"""Compute the geopotential height from geometric height.
 
     Parameters
@@ -387,7 +388,7 @@ def geopotential_height_from_geometric_height(h, R_earth=constants.R_earth):
     return zh
 
 
-def geopotential_from_geometric_height(h, R_earth=constants.R_earth):
+def geopotential_from_geometric_height(h: ArrayLike, R_earth=constants.R_earth):
     r"""Compute the geopotential from geometric height.
 
     Parameters
@@ -419,7 +420,7 @@ def geopotential_from_geometric_height(h, R_earth=constants.R_earth):
     return z
 
 
-def geometric_height_from_geopotential_height(gh, R_earth=constants.R_earth):
+def geometric_height_from_geopotential_height(gh: ArrayLike, R_earth=constants.R_earth) -> ArrayLike:
     r"""Compute the geometric height from geopotential height.
 
     Parameters
@@ -447,7 +448,7 @@ def geometric_height_from_geopotential_height(gh, R_earth=constants.R_earth):
     return h
 
 
-def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
+def geometric_height_from_geopotential(z: ArrayLike, R_earth=constants.R_earth) -> ArrayLike:
     r"""Compute the geometric height from geopotential.
 
     Parameters

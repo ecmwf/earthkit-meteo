@@ -12,9 +12,9 @@ import sys
 
 import numpy as np
 import pytest
+from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import extreme
-from earthkit.meteo.utils.testing import ARRAY_BACKENDS
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -22,15 +22,18 @@ import _cpf  # noqa
 import _data  # noqa
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, [-0.1838425040642013])])
-def test_highlevel_efi(clim, ens, v_ref, array_backend):
-    clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
+def test_highlevel_efi(xp, device, clim, ens, v_ref):
+    clim = xp.asarray(clim, device=device)
+    ens = xp.asarray(ens, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
+    # clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
     efi = extreme.efi(clim, ens)
-    assert array_backend.isclose(efi[0], v_ref[0])
+    assert xp.isclose(efi[0], v_ref[0])
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "clim,ens,kwargs,v_ref",
     [
@@ -45,32 +48,34 @@ def test_highlevel_efi(clim, ens, v_ref, array_backend):
         (_data.clim_eps2, _data.ens_eps2, dict(eps=1e-4), 0.6330071575726789),
     ],
 )
-def test_efi_core(clim, ens, kwargs, v_ref, array_backend):
-    clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
+def test_efi_core(xp, device, clim, ens, kwargs, v_ref):
+    clim = xp.asarray(clim, device=device)
+    ens = xp.asarray(ens, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
     efi = extreme.array.efi(clim, ens, **kwargs)
-    assert array_backend.allclose(efi[0], v_ref, rtol=1e-4)
+    assert xp.allclose(efi[0], v_ref, rtol=1e-4)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, -0.18384250406420133)])
-def test_efi_sorted(clim, ens, v_ref, array_backend):
-    clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
+def test_efi_sorted(xp, device, clim, ens, v_ref):
+    clim = xp.asarray(clim, device=device)
+    ens = xp.asarray(ens, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
 
     # ensures the algorithm is the same if we sort the data or not
-    ens_perc = array_backend.namespace.sort(ens)
+    ens_perc = xp.sort(ens)
 
     efi = extreme.array.efi(clim, ens_perc)
 
-    assert array_backend.isclose(efi[0], v_ref)
+    assert xp.isclose(efi[0], v_ref)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_efi_nan(array_backend):
-    xp = array_backend.namespace
-
-    clim_nan = xp.empty((101, 1))
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+def test_efi_nan(xp, device):
+    clim_nan = xp.empty((101, 1), device=device)
     clim_nan[:] = xp.nan
-    ens_nan = xp.empty((51, 1))
+    ens_nan = xp.empty((51, 1), device=device)
     ens_nan[:] = xp.nan
     # print(clim_nan)
     # print(ens_nan)
@@ -81,57 +86,59 @@ def test_efi_nan(array_backend):
     assert xp.isnan(efi[0])
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim, _data.ens, [-2.14617638, -1.3086723])])
-def test_sot_highlevel(clim, ens, v_ref, array_backend):
-    clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
+def test_sot_highlevel(xp, device, clim, ens, v_ref):
+    clim = xp.asarray(clim, device=device)
+    ens = xp.asarray(ens, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
 
     sot_upper = extreme.sot(clim, ens, 90)
     sot_lower = extreme.sot(clim, ens, 10)
 
-    v_ref = array_backend.asarray(v_ref, dtype=sot_upper.dtype)
+    v_ref = xp.asarray(v_ref, dtype=sot_upper.dtype)
 
-    assert array_backend.allclose(sot_upper[0], v_ref[0])
-    assert array_backend.allclose(sot_lower[0], v_ref[1])
+    assert xp.allclose(sot_upper[0], v_ref[0])
+    assert xp.allclose(sot_lower[0], v_ref[1])
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-# @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "clim,ens,v_ref",
     [
         (_data.clim, _data.ens, [-2.14617638, -1.3086723]),
     ],
 )
-def test_sot_core(clim, ens, v_ref, array_backend):
-    clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
+def test_sot_core(xp, device, clim, ens, v_ref):
+    clim = xp.asarray(clim, device=device)
+    ens = xp.asarray(ens, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
 
     sot_upper = extreme.array.sot(clim, ens, 90)
     sot_lower = extreme.array.sot(clim, ens, 10)
 
-    v_ref = array_backend.asarray(v_ref, dtype=sot_upper.dtype)
+    v_ref = xp.asarray(v_ref, dtype=sot_upper.dtype)
 
-    # print(sot_upper)
-    # print(sot_lower)
-
-    assert array_backend.allclose(sot_upper[0], v_ref[0])
-    assert array_backend.allclose(sot_lower[0], v_ref[1])
+    assert xp.allclose(sot_upper[0], v_ref[0])
+    assert xp.allclose(sot_lower[0], v_ref[1])
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 # @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
 @pytest.mark.parametrize("clim,ens,v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])])
-def test_sot_perc(clim, ens, v_ref, array_backend):
-    clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
+def test_sot_perc(xp, device, clim, ens, v_ref):
+    clim = xp.asarray(clim, device=device)
+    ens = xp.asarray(ens, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
 
     sot = extreme.array.sot(clim, ens, 90, eps=1e4)
 
-    v_ref = array_backend.asarray(v_ref, dtype=sot.dtype)
+    v_ref = xp.asarray(v_ref, dtype=sot.dtype)
 
-    assert array_backend.allclose(sot[0], v_ref[0], equal_nan=True)
+    assert xp.allclose(sot[0], v_ref[0], equal_nan=True)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 # @pytest.mark.parametrize("array_backend", get_array_backend(["numpy"]))
 @pytest.mark.parametrize(
     "qc_tail,qc,qf,kwargs,v_ref",
@@ -163,27 +170,32 @@ def test_sot_perc(clim, ens, v_ref, array_backend):
         ([np.nan], [0.1], [0.2], {}, [np.nan]),  # nan
     ],
 )
-def test_sot_func(qc_tail, qc, qf, kwargs, v_ref, array_backend):
-    qc_tail, qc, qf, v_ref = array_backend.asarray(qc_tail, qc, qf, v_ref)
+def test_sot_func(xp, device, qc_tail, qc, qf, kwargs, v_ref):
+    qc_tail = xp.asarray(qc_tail, device=device)
+    qc = xp.asarray(qc, device=device)
+    qf = xp.asarray(qf, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
 
     sot = extreme.array.sot_func(qc_tail, qc, qf, **kwargs)
 
-    v_ref = array_backend.asarray(v_ref, dtype=sot.dtype)
+    v_ref = xp.asarray(v_ref, dtype=sot.dtype)
 
-    assert array_backend.allclose(sot, v_ref, equal_nan=True)
+    assert xp.allclose(sot, v_ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("clim,ens,v_ref", [(_cpf.cpf_clim, _cpf.cpf_ens, _cpf.cpf_val)])
-def test_cpf_highlevel(clim, ens, v_ref, array_backend):
-    clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
+def test_cpf_highlevel(xp, device, clim, ens, v_ref):
+    clim = xp.asarray(clim, device=device)
+    ens = xp.asarray(ens, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
 
     cpf = extreme.cpf(clim, ens, sort_clim=True)
 
-    assert array_backend.allclose(cpf, v_ref)
+    assert xp.allclose(cpf, v_ref)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "clim,ens,kwargs,v_ref",
     [
@@ -193,8 +205,10 @@ def test_cpf_highlevel(clim, ens, v_ref, array_backend):
         (_cpf.cpf_clim, _cpf.cpf_ens, dict(sort_clim=True, from_zero=True), _cpf.cpf_val_fromzero),
     ],
 )
-def test_cpf_core(clim, ens, v_ref, kwargs, array_backend):
-    clim, ens, v_ref = array_backend.asarray(clim, ens, v_ref)
+def test_cpf_core(xp, device, clim, ens, v_ref, kwargs):
+    clim = xp.asarray(clim, device=device)
+    ens = xp.asarray(ens, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
 
     cpf = extreme.array.cpf(clim, ens, **kwargs)
-    assert array_backend.allclose(cpf, v_ref)
+    assert xp.allclose(cpf, v_ref)
