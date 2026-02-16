@@ -5,11 +5,6 @@ from earthkit.meteo import thermo
 from earthkit.meteo.constants import constants
 
 
-# TODO check if replacing Cpd_ and Cpv_ with constants.Cpd and constants.Cpv is acceptable given the deviation of results
-Cpd_    = 1005.7  # heat capacity at constant pressure for dry air [J/kg-1K-1] -- compare to constants.Cpd
-Cpv_    = 1870.0 # heat capacity at constant pressure of water vapour [J/kg-1K-1] -- compare to constants.Cpv
-
-
 def _ept_from_mixing_ratio(temperature, pressure, mixing_ratio):
     specific_humidity = thermo.specific_humidity_from_mixing_ratio(mixing_ratio)
     return thermo.ept_from_specific_humidity(temperature, specific_humidity, pressure, method="bolton39")
@@ -27,10 +22,10 @@ def MoistAscentLookupTable():
         es_parcel = es_hPa(T_parcel)
         r_parcel = constants.epsilon * es_parcel/pressure 
         Lv = 2501000 - 2370 * (T_parcel - constants.T0)
-        aa = - (constants.g / Cpd_) * (1 + r_parcel) / (1 + r_parcel * (Cpv_ / Cpd_))
+        aa = - (constants.g / constants.c_pd) * (1 + r_parcel) / (1 + r_parcel * (constants.c_pv / constants.c_pd))
         bb = 1 + (Lv * r_parcel) / (constants.Rd * T_parcel)
         cc = Lv * Lv * r_parcel * (1 + r_parcel / constants.epsilon)
-        dd = constants.Rv * np.power(T_parcel, 2) * (Cpd_ + r_parcel * Cpv_)
+        dd = constants.Rv * np.power(T_parcel, 2) * (constants.c_pd + r_parcel * constants.c_pv)
         
         dTdz = aa * bb / (1 + (cc / dd))
         dzdp = - (constants.Rd * (T_parcel + 0.608 * r_parcel)) / (pressure * 100 * constants.g)
@@ -74,17 +69,16 @@ def MoistAscentLookupTable():
 def _determine_mixed_layer_parcel(pressure, temperature, mixing_ratio, layer_depth=None):
     '''
     Compute mixed-layer parameters
-    :param pressure: pressure array in hPa
+    :param pressure: pressure array in Pa
     :param T: temperature array in K
     :param r: mixing ration array in in kg/kg
-    :param layer_depth: in hPa
+    :param layer_depth: in Pa
     :return:
-    mixed-layer T, r and bottom_pressure
+    bottom_pressure, mixed-layer T, mixed_layer r 
     '''
 
-    # Default mixed layer depth is 50 hPa
     if layer_depth == None:
-        layer_depth = 5000 # in Pa
+        layer_depth = 5000
 
     bottom_pressure = pressure[-1, :]
     bound_pressure = bottom_pressure - layer_depth
