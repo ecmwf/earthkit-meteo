@@ -28,11 +28,12 @@ classifiers = [
 dynamic = [ "version" ]
 dependencies = [
   "deprecation",
-  "earthkit-utils>=0.0.1",
+  "earthkit-utils>=0.2",
   "numpy",
+  "xarray",
 ]
 optional-dependencies.all = [
-  "earthkit-meteo[samples]",
+  "earthkit-meteo[samples,scores]",
 ]
 optional-dependencies.dev = [
   "earthkit-meteo[all,docs,test]",
@@ -54,11 +55,14 @@ optional-dependencies.gpu = [
 optional-dependencies.samples = [
   "requests",
 ]
+optional-dependencies.scores = [
+  "scores",
+]
 optional-dependencies.test = [
+  "earthkit-meteo[samples,scores]",
   "netcdf4",
   "pytest",
   "pytest-cov",
-  "requests",
   "xarray",
 ]
 urls.Documentation = "https://earthkit-meteo.readthedocs.io/"
