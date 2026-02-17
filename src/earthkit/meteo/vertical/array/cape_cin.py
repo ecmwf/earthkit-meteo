@@ -12,58 +12,52 @@ def _ept_from_mixing_ratio(temperature, pressure, mixing_ratio):
 # Use "bolton39" for now, the difference is small.
 # Potentially make method configurable, as well as the method used for lcl calculation.
 
-# TODO check if earthkit has functionality for moist adiabatic ascent
-def MoistAscentLookupTable():
-# still uses hPa internally, but returns pressure in Pa
 
-    def dTdp(T_parcel, pressure_hPa):
-        pressure = pressure_hPa
+def moist_ascent_lookup_table():
+
+    def dT_dp_moist(T_parcel, pressure):
         # moist adiabatic gradient according to Emanuel, 1995 (Eq. 4.7.3) ignoring liquid and solid water, i.e. r_l = 0 and r_t = r
-        es_parcel = es_hPa(T_parcel)
+        es_parcel = thermo.saturation_vapour_pressure(T_parcel, phase="water")
         r_parcel = constants.epsilon * es_parcel/pressure 
         Lv = 2501000 - 2370 * (T_parcel - constants.T0)
-        aa = - (constants.g / constants.c_pd) * (1 + r_parcel) / (1 + r_parcel * (constants.c_pv / constants.c_pd))
-        bb = 1 + (Lv * r_parcel) / (constants.Rd * T_parcel)
-        cc = Lv * Lv * r_parcel * (1 + r_parcel / constants.epsilon)
-        dd = constants.Rv * np.power(T_parcel, 2) * (constants.c_pd + r_parcel * constants.c_pv)
-        
-        dTdz = aa * bb / (1 + (cc / dd))
-        dzdp = - (constants.Rd * (T_parcel + 0.608 * r_parcel)) / (pressure * 100 * constants.g)
-        dTdp = dTdz * dzdp * 100
 
-        return dTdp
+        # Terms from Emanuel, 1995 (Eq. 4.7.3)
+        A_prefactor = - (constants.g / constants.c_pd) * (1 + r_parcel) / (1 + r_parcel * (constants.c_pv / constants.c_pd))
+        B_factor = 1 + (Lv * r_parcel) / (constants.Rd * T_parcel)
+        C_term = Lv * Lv * r_parcel * (1 + r_parcel / constants.epsilon)
+        D_term = constants.Rv * np.power(T_parcel, 2) * (constants.c_pd + r_parcel * constants.c_pv)
+        dT_dz = A_prefactor * B_factor / (1 + (C_term / D_term))
 
-    def es_hPa(T):
-        # Calculate the saturation water vapor (partial) pressure
-        # T in [K]
-        # es in hPa/mb
-        T_C = T - constants.T0 # T in deg C
-        esat = 6.112 * np.exp((18.678 - (T_C / 234.5)) * (T_C / (257.14 + T_C )))  # Buck equation
-        return esat
+        dz_dp = - (constants.Rd * (T_parcel + 0.608 * r_parcel)) / (pressure * constants.g)
+        return dT_dz * dz_dp
     
-    max_p = 1100 # in hPa
-    min_p = 10 # in hPa
+    p_max = 110000
+    p_min = 1000
     
-    my_T_start = np.arange(180, 320, 2)
-    my_r_start = constants.epsilon * (es_hPa(my_T_start) / (max_p - es_hPa(my_T_start)))
-    theta_ep_range = _ept_from_mixing_ratio(my_T_start, max_p * 100, my_r_start) # convert pressure to Pa for theta_ep function
+    T_initial = np.arange(180, 320, 2)
+    es_initial = thermo.saturation_vapour_pressure(T_initial, phase="water")
+    r_initial = constants.epsilon * (es_initial / (p_max - es_initial))
+    theta_ep_range = _ept_from_mixing_ratio(T_initial, p_max, r_initial)
     
-    p_range = np.arange(max_p, min_p, -1)
+    pressure_levels = np.arange(p_max, p_min, -100)
     
-    my_T = np.empty((p_range.shape[0], my_T_start.shape[0]))
-    my_r = np.empty((p_range.shape[0], my_r_start.shape[0]))
+    T_table = np.empty((pressure_levels.shape[0], T_initial.shape[0]))
+    r_table = np.empty((pressure_levels.shape[0], r_initial.shape[0]))
     
-    my_T[0,:] = my_T_start
-    my_r[0,:] = my_r_start
+    T_table[0,:] = T_initial
+    r_table[0,:] = r_initial
     
-    for k in range(1, p_range.shape[0]):
-        my_T[k,:] = my_T[k - 1, :] + dTdp(my_T[k - 1, :], ((p_range[k - 1] + p_range[k]) / 2)) * (p_range[k] - p_range[k - 1])
-        my_r[k, :] = constants.epsilon * es_hPa(my_T[k, :]) / (p_range[k] - es_hPa(my_T[k, :]))
+    for level in range(1, pressure_levels.shape[0]):
+        p_mid = (pressure_levels[level - 1] + pressure_levels[level]) / 2
+        dp = pressure_levels[level] - pressure_levels[level - 1]
+        T_table[level,:] = T_table[level - 1, :] + dT_dp_moist(T_table[level - 1, :], p_mid) * dp
+        es_level = thermo.saturation_vapour_pressure(T_table[level, :], phase="water")
+        r_table[level, :] = constants.epsilon * es_level / (pressure_levels[level] - es_level)
 
-    my_T = my_T[::-10, :]
-    p_range = p_range[::-10]
+    T_table = T_table[::-10, :]
+    pressure_levels = pressure_levels[::-10]
 
-    return my_T, theta_ep_range, p_range * 100  # return pressure in Pa
+    return { "temperature": T_table, "theta_ep": theta_ep_range, "pressure": pressure_levels }
 
 
 def _determine_mixed_layer_parcel(pressure, temperature, mixing_ratio, layer_depth=None):
@@ -181,7 +175,8 @@ def lift_parcel(p_start, T_start, r_start, p_arr, T_arr, r_arr):
     theta_ep_parcel_2d = theta_ep_parcel[None, :] * np.ones((npressures, nprofiles))
 
     # Create Lookup table for moist ascent and define functions:
-    my_Tp, theta_ep_range, p_range = MoistAscentLookupTable()
+    lookup_table = moist_ascent_lookup_table()
+    my_Tp, theta_ep_range, p_range = lookup_table["temperature"], lookup_table["theta_ep"], lookup_table["pressure"]
     T_p_lookup = interpolate.RectBivariateSpline(p_range, theta_ep_range, my_Tp)
     T_parcel[above_LCL] = T_p_lookup(p_2d[above_LCL], theta_ep_parcel_2d[above_LCL], grid=False)
     es_T_parcel = thermo.saturation_vapour_pressure(T_parcel[above_LCL], phase="water")

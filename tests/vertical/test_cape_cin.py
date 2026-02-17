@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from earthkit.meteo.vertical.array import cape_cin as vertical
+from earthkit.meteo import thermo
 
 # Expected values are calculated based on current commit
 REFERENCE_CASES = {
@@ -220,12 +221,3 @@ def test_cape_cin_mu(case_data):
 #     assert np.allclose(p_LCL, p_LCL_ref * 100 , atol=1), "LCL pressures do not match reference"
 #     assert np.allclose(p_LFC, p_LFC_ref * 100, atol=1), "LFC pressures do not match reference"
 #     assert np.allclose(p_EL, p_EL_ref * 100, atol=1), "EL pressures do not match reference"
-
-# def test_moist_ascent_lookup_table():
-#     from cape_cin_reference import MoistAscentLookupTable as MoistAscentLookupTableRef
-
-#     T, theta_ep, p = vertical._moist_ascent_lookup_table()
-#     T_ref, theta_ep_ref, p_ref  = MoistAscentLookupTableRef()
-#     assert np.allclose(T, T_ref, atol=1e-2), "Moist ascent lookup table temperatures do not match reference"
-#     assert np.allclose(theta_ep, theta_ep_ref, atol=1), "Moist ascent lookup table equivalent potential temperatures do not match reference"
-#     assert np.allclose(p, p_ref *100, atol=1e-4), "Moist ascent lookup table pressures do not match reference"
