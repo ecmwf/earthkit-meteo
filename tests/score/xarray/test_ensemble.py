@@ -63,14 +63,29 @@ def make_deterministic_dataset(values, var_name="2t"):
 
 def make_deterministic_dataarray(values, var_name="2t"):
     """Build a deterministic (time, lat, lon) dataarray."""
+    match len(values.shape):
+        case 3:
+            dims = ["valid_datetime", "latitude", "longitude"]
+            coords = {
+                "valid_datetime": VALID_DATETIMES,
+                "latitude": LATITUDES,
+                "longitude": LONGITUDES,
+            }
+        case 4:
+            dims = ["number", "valid_datetime", "latitude", "longitude"]
+            nens = values.shape[0]
+            coords = {
+                "valid_datetime": VALID_DATETIMES,
+                "latitude": LATITUDES,
+                "longitude": LONGITUDES,
+                "number": np.arange(1, nens + 1),
+            }
+        case _:
+            raise ValueError("Invalid dimensions")
     return xr.DataArray(
         values,
-        dims=["valid_datetime", "latitude", "longitude"],
-        coords={
-            "valid_datetime": VALID_DATETIMES,
-            "latitude": LATITUDES,
-            "longitude": LONGITUDES,
-        },
+        dims=dims,
+        coords=coords,
         name=var_name,
     )
 
@@ -93,7 +108,10 @@ def make_threshold_dataarray(threshold_values, *, values, dim_name="threshold", 
 
 def assert_component_allclose(components: xr.DataArray, component: str, expected_values: np.ndarray):
     expected = make_deterministic_dataarray(expected_values, var_name=component)
-    computed = components.sel(component=component, drop=True).rename(component)
+    if isinstance(components, xr.Dataset):
+        computed = components[component]
+    else:
+        computed = components.sel(component=component, drop=True).rename(component)
     xr.testing.assert_allclose(computed, expected)
 
 
@@ -536,15 +554,23 @@ def test_crps_from_ensemble_hersbach(method: str, expected_total: np.ndarray):
     # TODO: these values are not correct, fix them
     expected_alpha = np.array(
         [
-            [[0.0, 0.0], [0.0, 0.0]],
-            [[0.0, 0.0], [0.0, 0.0]],
+            [[[1.0, 0.0], [0.0, 0.0]], [[1.0, 0.0], [0.0, 0.0]]],
+            [[[0.0, 1.0], [5.0, 1.0]], [[0.0, 0.0], [1.0, 0.0]]],
+            [[[0.0, 0.0], [5.0, 1.0]], [[0.0, 1.0], [1.0, 0.0]]],
+            [[[0.0, 0.0], [2.0, 1.0]], [[0.0, 0.5], [0.0, 0.0]]],
+            [[[0.0, 0.0], [0.0, 1.0]], [[0.0, 0.0], [0.0, 0.0]]],
+            [[[0.0, 0.0], [0.0, 5.0]], [[0.0, 0.0], [0.0, 0.0]]],
         ],
         dtype=float,
     )
     expected_beta = np.array(
         [
-            [[0.0, 0.0], [0.0, 0.0]],
-            [[0.0, 0.0], [0.0, 0.0]],
+            [[[2.0, 0.0], [0.0, 0.0]], [[2.0, 0.0], [0.0, 0.0]]],
+            [[[0.0, 0.0], [0.0, 0.0]], [[1.0, 0.0], [0.0, 0.0]]],
+            [[[0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]]],
+            [[[0.0, 1.0], [3.0, 0.0]], [[1.0, 0.5], [1.0, 0.0]]],
+            [[[0.0, 0.0], [5.0, 0.0]], [[0.0, 1.0], [1.0, 0.0]]],
+            [[[0.0, 0.0], [0.0, 1.0]], [[0.0, 0.0], [0.0, 0.0]]],
         ],
         dtype=float,
     )
@@ -584,7 +610,7 @@ def test_crps_from_ensemble_hersbach(method: str, expected_total: np.ndarray):
 
     # Note that we do not explicitly test the order of the components as this
     # might change in the underlying score function implementation.
-    assert set(crps_components["component"].values) == {
+    assert set(crps_components.keys()) == {
         "total",
         "alpha",
         "beta",

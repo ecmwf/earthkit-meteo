@@ -361,7 +361,7 @@ def _crps_from_ensemble_hersbach(
     # sort forecast values along the ensemble dimension
     fcst_sorted = _sorted_ensemble(fcst, over)
     alpha = xr.concat([xr.zeros_like(fcst_sorted[{over: 0}])] * (ens_size + 1), dim=over)
-    beta = alpha.copy()
+    beta = alpha.copy(deep=True)
     # note the order in operations between forecasts and observations matters
     # for the broadcasting to work correctly
     obs_below_ens = fcst_sorted[{over: 0}] > obs
