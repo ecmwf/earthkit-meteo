@@ -24,11 +24,14 @@ class Patterns(abc.ABC):
         outputs.
     grid : dict
         The grid on which the patterns live.
+    xp : array_namespace, optional
+        Array namespace of the generated patterns.
     """
 
-    def __init__(self, labels, grid):
+    def __init__(self, labels, grid, xp=None):
         self._labels = tuple(labels)
         self._grid = grid
+        self._xp = xp
 
     @property
     def labels(self):
@@ -42,7 +45,7 @@ class Patterns(abc.ABC):
 
     @property
     def shape(self):
-        """Shape of a pattern."""
+        """Shape of a single pattern."""
         # TODO placeholder until this functionality is available from earthkit-geo
         lat0, lon0, lat1, lon1 = self.grid["area"]
         dlat, dlon = self.grid["grid"]
@@ -50,12 +53,22 @@ class Patterns(abc.ABC):
 
     @property
     def size(self):
-        """Number of grid points in a pattern."""
+        """Number of grid points in a single pattern."""
         return functools.reduce(operator.mul, self.shape)
 
     @property
     def ndim(self):
+        """Number of dimensions/axes in a single pattern."""
         return len(self.shape)
+
+    @property
+    def xp(self):
+        """Array namespace of the generated patterns."""
+        if self._xp is None:
+            import numpy as np
+
+            return np
+        return self._xp
 
     @abc.abstractmethod
     def patterns(self, **patterns_extra_coords) -> collections.abc.Mapping:
@@ -79,7 +92,6 @@ class Patterns(abc.ABC):
             Mapping of extra coordinates argument names (as given to .patterns)
             to DataArray coordinate names (as used in reference_da).
         """
-        import numpy as np
         import xarray as xr
 
         # Extra coordinate dims, in order of reference dims
@@ -89,13 +101,13 @@ class Patterns(abc.ABC):
         coords = {dim: reference_da.coords[dim] for dim in dims}
         # Cartesian product of coordinates for patterns generator
         extra_coords_arrs = dict(
-            zip(extra_dims, np.meshgrid(*(coords[dim] for dim in extra_dims), indexing="ij"))
+            zip(extra_dims, self.xp.meshgrid(*(coords[dim] for dim in extra_dims), indexing="ij"))
         )
         # Rearrange to match provided kwarg-coord mapping
         extra_coords = {
             kwarg: extra_coords_arrs[patterns_extra_coords[kwarg]] for kwarg in patterns_extra_coords
         }
-        # Delegate the pattern generation and DataArray-ify the patterns
+        # Delegate the pattern generation and package the patterns as DataArrays
         for name, patterns in self.patterns(**extra_coords).items():
             yield name, xr.DataArray(patterns, coords=coords, dims=dims)
 
@@ -143,8 +155,7 @@ class ConstantPatterns(Patterns):
     """
 
     def __init__(self, labels, grid, patterns):
-        super().__init__(labels, grid)
-        self._xp = array_namespace(patterns)
+        super().__init__(labels, grid, xp=array_namespace(patterns))
         self._patterns = self._xp.asarray(patterns)
         if self._patterns.ndim != 1 + len(self.shape):
             raise ValueError("must have exactly one label axis in the patterns")
@@ -178,9 +189,8 @@ class ModulatedPatterns(Patterns):
     """
 
     def __init__(self, labels, grid, patterns, modulator):
-        super().__init__(labels, grid)
-        self._xp = array_namespace(patterns)
-        self._base_patterns = self._xp.asarray(patterns)
+        super().__init__(labels, grid, xp=array_namespace(patterns))
+        self._base_patterns = self.xp.asarray(patterns)
         # Pattern verification
         if self._base_patterns.ndim != 1 + len(self.shape):
             raise ValueError("must have exactly one label axis in the patterns")
@@ -206,8 +216,7 @@ class ModulatedPatterns(Patterns):
         dict[str, array_like]
             Modulated patterns.
         """
-        xp = self._xp
-        modulator = xp.asarray(self.modulator(**patterns_extra_coords))
+        modulator = self.xp.asarray(self.modulator(**patterns_extra_coords))
         # Adapt to shape of patterns
-        modulator = modulator[(..., *((xp.newaxis,) * len(self.shape)))]
+        modulator = modulator[(..., *((self.xp.newaxis,) * len(self.shape)))]
         return DeferredPatternsDict(self._labels, lambda label: modulator * self._base_pattern(label))
