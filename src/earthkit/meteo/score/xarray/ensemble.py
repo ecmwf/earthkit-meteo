@@ -245,8 +245,10 @@ def crps_from_ensemble(
     xarray object
         The CRPS of the ensemble forecast compared to the observations.
     """
-    assert decomposition_method in ["underover", "hersbach"]
-    assert method in ["fair", "ecdf"]
+    if decomposition_method not in ["underover", "hersbach"]:
+        raise ValueError("decomposition_method must be one of 'underover' or 'hersbach'")
+    if method not in ["fair", "ecdf"]:
+        raise ValueError("method must be one of 'fair' or 'ecdf'")
     if decomposition_method == "underover":
         scores = _import_scores_or_prompt_install()
         # TODO: revisit component ordering here and in tests

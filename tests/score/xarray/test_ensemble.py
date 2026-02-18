@@ -551,7 +551,6 @@ def test_crps_from_ensemble_hersbach(method: str, expected_total: np.ndarray):
         dtype=float,
     )
 
-    # TODO: these values are not correct, fix them
     expected_alpha = np.array(
         [
             [[[1.0, 0.0], [0.0, 0.0]], [[1.0, 0.0], [0.0, 0.0]]],
