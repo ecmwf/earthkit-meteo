@@ -3,9 +3,17 @@ Version 0.6 Updates
 /////////////////////////
 
 
-Version 0.6.0
+Version 0.6.1
 ===============
 
+Changes
+-------------------------
+
+- Revert change to shape of array returned from :py:meth:`meteo.stats.array.iter_quantiles` with ``method=sort``. The output shape should be the same as that returned by other methods. (:pr:`107`)
+
+
+Version 0.6.0
+===============
 
 Refactored array backends
 -------------------------
