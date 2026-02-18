@@ -573,6 +573,7 @@ def test_crps_from_ensemble_hersbach(method: str, expected_total: np.ndarray):
         ],
         dtype=float,
     )
+    expected_crps = np.array([[[2.0, 0.2], [2.4, 6.2]], [[2.8, 0.46], [0.4, 0.0]]])
 
     fcst_ds = make_ensemble_dataset(fcst_values)
     obs_ds = make_deterministic_dataset(obs_values)
@@ -592,11 +593,19 @@ def test_crps_from_ensemble_hersbach(method: str, expected_total: np.ndarray):
     )
     xr.testing.assert_allclose(crps_computed_da, crps_expected_da)
 
-    expected_components = {
-        "total": expected_total,
-        "alpha": expected_alpha,
-        "beta": expected_beta,
-    }
+    if method == "ecdf":
+        expected_components = {
+            "crps": expected_total,
+            "alpha": expected_alpha,
+            "beta": expected_beta,
+        }
+    elif method == "fair":
+        expected_components = {
+            "fcrps": expected_total,
+            "crps": expected_crps,
+            "alpha": expected_alpha,
+            "beta": expected_beta,
+        }
 
     crps_components = crps_from_ensemble(
         fcst_da,
@@ -609,11 +618,7 @@ def test_crps_from_ensemble_hersbach(method: str, expected_total: np.ndarray):
 
     # Note that we do not explicitly test the order of the components as this
     # might change in the underlying score function implementation.
-    assert set(crps_components.keys()) == {
-        "total",
-        "alpha",
-        "beta",
-    }
+    assert set(crps_components.keys()) == expected_components.keys()
 
     # Check individual components
     for component, values in expected_components.items():

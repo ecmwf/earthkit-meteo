@@ -271,7 +271,8 @@ def crps_from_ensemble(
                     {
                         "alpha": alpha.where(valid_mask),
                         "beta": beta.where(valid_mask),
-                        "total": fcrps.where(valid_mask),
+                        "crps": crps.where(valid_mask),
+                        "fcrps": fcrps.where(valid_mask),
                     }
                 )
             else:
@@ -279,7 +280,7 @@ def crps_from_ensemble(
                     {
                         "alpha": alpha.where(valid_mask),
                         "beta": beta.where(valid_mask),
-                        "total": crps.where(valid_mask),
+                        "crps": crps.where(valid_mask),
                     }
                 )
 
