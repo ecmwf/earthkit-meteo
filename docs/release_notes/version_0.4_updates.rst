@@ -3,6 +3,17 @@ Version 0.4 Updates
 /////////////////////////
 
 
+Version 0.4.3
+===============
+
+Dependency updates
++++++++++++++++++++++
+
+Ensure compatibility between earthkit components by restricting the following dependencies:
+
+- ``earthkit-utils<0.2``
+
+
 Version 0.4.0
 ===============
 
