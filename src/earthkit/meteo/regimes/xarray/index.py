@@ -32,12 +32,19 @@ def project(field, patterns, weights, **patterns_extra_coords) -> xr.DataArray:
         Results of the projection for each pattern.
     """
     # Dimensions of a single pattern, assumed to be the trailing dimensions
-    assert field.shape[-patterns.ndim :] == patterns.shape
+    field_trailing_shape = field.shape[-patterns.ndim :]
+    if field_trailing_shape != patterns.shape:
+        raise ValueError(
+            "trailing dimensions of input field must match shape of patterns: "
+            f"expected {patterns.shape}, got {field_trailing_shape}"
+        )
     pattern_dims = field.dims[-patterns.ndim :]
     # Normalise weights so they sum to zero over the pattern domain and
     # compensate for weights that don't have all pattern dimensions
     if weights is None:
         raise NotImplementedError("automatic generation of weights")
+    if set(weights.dims) - set(pattern_dims):
+        raise ValueError("weight must only be specified over pattern dimensions")
     weights = weights / weights.sum() * weights.size / patterns.size
     # Matching the behaviour of array.project, introduce the regime dimension
     # as a new outermost dimension
