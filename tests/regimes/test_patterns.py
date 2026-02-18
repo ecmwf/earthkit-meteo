@@ -11,6 +11,8 @@ import pytest
 
 from earthkit.meteo import regimes
 
+# from earthkit.meteo.utils.testing import NO_XARRAY
+
 
 class TestConstantPatterns:
 
@@ -58,7 +60,23 @@ class TestModulatedPatterns:
             labels=["dipole"],
             grid={"grid": [1.0, 1.0], "area": [max(self.lat), min(self.lon), min(self.lat), max(self.lon)]},
             patterns=np.stack([self.dipole]).copy(),
-            modulator=lambda x: np.sign(x),  # clarify the arg name
+            modulator=lambda x, y: y * np.sign(x),
+        )
+
+    @pytest.fixture
+    def data_xr(self):
+        import xarray as xr
+
+        return xr.DataArray(
+            data=np.ones((4, 3, 2, self.lat.size, self.lon.size)),
+            coords={
+                "foo": (["foo"], [1.0, 2.0, 3.0, 4.0]),
+                "bar": (["bar"], [-1.0, 1.0, 2.0]),
+                "baz": (["baz"], [3.0, -1.0]),
+                "lat": (["lat"], self.lat),
+                "lon": (["lon"], self.lon),
+            },
+            dims=["foo", "bar", "baz", "lat", "lon"],
         )
 
     def test_shape(self, patterns):
@@ -70,9 +88,34 @@ class TestModulatedPatterns:
     def test_ndim(self, patterns):
         assert patterns.ndim == 2
 
-    def test_patterns(self, patterns):
-        pat = patterns.patterns(x=[3.0, 0.0, -4.0])
+    def test_patterns_one_argument_scalar(self, patterns):
+        pat = patterns.patterns(x=[3.0, 0.0, -4.0], y=1.0)
         assert len(pat) == 1
+        assert pat["dipole"].shape == (3, *self.dipole.shape)
         np.testing.assert_allclose(pat["dipole"][0], self.dipole)
         np.testing.assert_allclose(pat["dipole"][1], 0.0)
         np.testing.assert_allclose(pat["dipole"][2], -self.dipole)
+
+    def test_patterns_both_arguments_vectors(self, patterns):
+        pat = patterns.patterns(x=[3.0, -4.0], y=[1.0, 2.0])
+        assert len(pat) == 1
+        assert pat["dipole"].shape == (2, *self.dipole.shape)
+        np.testing.assert_allclose(pat["dipole"][0], self.dipole)
+        np.testing.assert_allclose(pat["dipole"][1], -2 * self.dipole)
+
+    # @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
+    def test_patterns_iterxr_with_extra_coordinate_mapping(self, data_xr, patterns):
+        it = patterns._patterns_iterxr(data_xr, patterns_extra_coords={"x": "baz", "y": "bar"})
+        name, pat = next(it)
+        assert name == "dipole"
+        assert pat.dims == ("bar", "baz", "lat", "lon")
+        # In contrast to array-level .patterns, _patterns_iterxr takes cartesian product
+        assert pat.shape == (3, 2, self.lat.size, self.lon.size)
+        np.testing.assert_allclose(pat.sel(bar=-1.0, baz=3.0).values, -self.dipole)
+        np.testing.assert_allclose(pat.sel(bar=-1.0, baz=-1).values, self.dipole)
+        np.testing.assert_allclose(pat.sel(bar=1.0, baz=3.0).values, self.dipole)
+        np.testing.assert_allclose(pat.sel(bar=1.0, baz=-1).values, -self.dipole)
+        np.testing.assert_allclose(pat.sel(bar=2.0, baz=3.0).values, 2.0 * self.dipole)
+        np.testing.assert_allclose(pat.sel(bar=2.0, baz=-1).values, -2.0 * self.dipole)
+        with pytest.raises(StopIteration):
+            next(it)
