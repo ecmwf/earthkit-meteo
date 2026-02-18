@@ -3,6 +3,18 @@ Version 0.5 Updates
 /////////////////////////
 
 
+Version 0.5.1
+===============
+
+Dependency updates
++++++++++++++++++++++
+
+Ensure compatibility between earthkit components by restricting the following dependencies:
+
+- ``earthkit-utils<0.2``
+
+
+
 Version 0.5.0
 ===============
 
