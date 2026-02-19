@@ -1,4 +1,4 @@
-# (C) Copyright 2024 ECMWF.
+# (C) Copyright 2021 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,8 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-from . import array
 
+def simple_download(url, target):
+    import requests
 
-def pearson(*args, **kwargs):
-    return array.pearson(*args, **kwargs)
+    r = requests.get(url, allow_redirects=True)
+    r.raise_for_status()
+    open(target, "wb").write(r.content)
+
+    # import urllib.request
+    # urllib.request.urlretrieve(url, target)

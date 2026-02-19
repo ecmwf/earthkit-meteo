@@ -65,7 +65,7 @@ def iter_quantiles(
     if method == "sort":
         arr = xp.asarray(arr)
         arr = xp.sort(arr, axis=axis)
-        missing = xp.any(xp.isnan(arr), axis=axis, keepdims=True)
+        missing = xp.any(xp.isnan(arr), axis=axis)
 
     for q in qs:
         if method == "numpy":
