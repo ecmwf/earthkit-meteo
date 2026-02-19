@@ -9,7 +9,7 @@
 import xarray as xr
 
 
-def project(field, patterns, weights, **patterns_extra_coords) -> xr.DataArray:
+def project(field, patterns, weights, **patterns_extra_coords):
     """Project onto the given patterns.
 
     Parameters
@@ -22,14 +22,15 @@ def project(field, patterns, weights, **patterns_extra_coords) -> xr.DataArray:
     weights : xarray.Dataarray
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1.
-    **patterns_coords : dict[str, str], optional
+    **patterns_coords : dict[str,str], optional
         Mapping of coordinate names to keyword arguments of the pattern
-        generation. The coordinates must be dimensions of `field`.
+        generation function. Only coordinates that are dimensions of `field`
+        can be mapped.
 
     Returns
     -------
-    xarray.Dataarray
-        Results of the projection for each pattern.
+    xarray.DataArray
+        The projection(s) for each pattern.
     """
     # Dimensions of a single pattern, assumed to be the trailing dimensions
     field_trailing_shape = field.shape[-patterns.ndim :]
@@ -54,7 +55,7 @@ def project(field, patterns, weights, **patterns_extra_coords) -> xr.DataArray:
             for label, pattern in patterns._patterns_iterxr(field, patterns_extra_coords)
         ],
         dim="pattern",
-    )
+    ).rename("projection")
 
 
 def regime_index(projections, mean, std):
@@ -72,4 +73,4 @@ def regime_index(projections, mean, std):
     xarray.Dataarray
         ``(projection - mean) / std``
     """
-    return (projections - mean) / std
+    return ((projections - mean) / std).rename("IWR")

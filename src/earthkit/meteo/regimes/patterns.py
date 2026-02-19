@@ -15,7 +15,7 @@ from earthkit.utils.array import array_namespace
 
 
 class Patterns(abc.ABC):
-    """Collection of patterns.
+    """Collection/Generator of patterns.
 
     Parameters
     ----------
@@ -23,12 +23,12 @@ class Patterns(abc.ABC):
         Labels for the patterns. The ordering determines the ordering of all
         outputs.
     grid : dict
-        The grid on which the patterns live.
+        Specification of the grid on which the patterns live.
     xp : array_namespace, optional
         Array namespace of the generated patterns.
     """
 
-    def __init__(self, labels, grid, xp=None):
+    def __init__(self, labels, grid, xp):
         self._labels = tuple(labels)
         self._grid = grid
         self._xp = xp
@@ -39,7 +39,7 @@ class Patterns(abc.ABC):
         return self._labels
 
     @property
-    def grid(self):
+    def grid(self) -> dict:
         """The grid on which the patterns live."""
         return self._grid
 
@@ -52,22 +52,18 @@ class Patterns(abc.ABC):
         return (int(abs(lat0 - lat1) / dlat) + 1, int(abs(lon0 - lon1) / dlon) + 1)
 
     @property
-    def size(self):
+    def size(self) -> int:
         """Number of grid points in a single pattern."""
         return functools.reduce(operator.mul, self.shape)
 
     @property
-    def ndim(self):
+    def ndim(self) -> int:
         """Number of dimensions/axes in a single pattern."""
         return len(self.shape)
 
     @property
     def xp(self):
         """Array namespace of the generated patterns."""
-        if self._xp is None:
-            import numpy as np
-
-            return np
         return self._xp
 
     @abc.abstractmethod
@@ -142,20 +138,25 @@ class DeferredPatternsDict(collections.abc.Mapping):
 
 
 class ConstantPatterns(Patterns):
-    """Constant patterns.
+    """Collection of constant/fixed patterns.
 
     Parameters
     ----------
     labels : Iterable[str]
         Labels for the patterns.
     grid : dict
-        The grid on which the patterns live.
+        Specification of the grid on which the patterns live.
     patterns : array_like
-        The patterns with the outermost dimension corresponding to the labels.
+        The patterns (one for each label, stacked into a single array).
+    xp : array_namespace, optional
+        The array namespace used for the patterns and their generation. By
+        default, it is inferred from the type of `base_patterns`.
     """
 
-    def __init__(self, labels, grid, patterns):
-        super().__init__(labels, grid, xp=array_namespace(patterns))
+    def __init__(self, labels, grid, patterns, xp=None):
+        if xp is None:
+            xp = array_namespace(patterns)
+        super().__init__(labels, grid, xp)
         self._patterns = self._xp.asarray(patterns)
         if self._patterns.ndim != 1 + len(self.shape):
             raise ValueError("must have exactly one label axis in the patterns")
@@ -167,37 +168,44 @@ class ConstantPatterns(Patterns):
 
         Returns
         -------
-        dict[str, array_like]
+        dict[str,array_like]
             Mapping from labels to patterns.
         """
         return dict(zip(self._labels, self._patterns))
 
 
 class ModulatedPatterns(Patterns):
-    """Patterns modulated by a custom scalar function.
+    """Patterns generated from a set of base patterns and a custom scalar function.
 
     Parameters
     ----------
     labels : Iterable[str]
         Labels for the patterns.
     grid : dict
-        Grid specification of the patterns.
-    patterns : array_like
-        Base patterns.
-    modulator : Callable[Any, array_like]
-        Scalar function to modulate the base patterns.
+        Specification of the grid on which the patterns live.
+    base_patterns : array_like
+        Base patterns (one for each label, stacked into a single array).
+    modulator : Callable[Any,array_like]
+        Scalar function to modulate the base patterns. The parameters required
+        to evaluate this function must be provided when projecting as
+        `patterns_extra_coords` kwargs.
+    xp : array_namespace, optional
+        The array namespace used for the patterns and their generation. By
+        default, it is inferred from the type of `base_patterns`.
     """
 
-    def __init__(self, labels, grid, patterns, modulator):
-        super().__init__(labels, grid, xp=array_namespace(patterns))
-        self._base_patterns = self.xp.asarray(patterns)
+    def __init__(self, labels, grid, base_patterns, modulator, xp=None):
+        if xp is None:
+            xp = array_namespace(base_patterns)
+        super().__init__(labels, grid, xp)
+        self._base_patterns = self.xp.asarray(base_patterns)
         # Pattern verification
         if self._base_patterns.ndim != 1 + len(self.shape):
             raise ValueError("must have exactly one label axis in the patterns")
         if len(self.labels) != self._base_patterns.shape[0]:
             raise ValueError("number of labels does not match number of patterns")
-        self.modulator = modulator
-        if not callable(self.modulator):
+        self._modulator = modulator
+        if not callable(self._modulator):
             raise ValueError("modulator must be callable")
 
     def _base_pattern(self, label):
@@ -208,15 +216,15 @@ class ModulatedPatterns(Patterns):
 
         Parameters
         ----------
-        **patterns_extra_coords : dict[str, Any], optional
+        **patterns_extra_coords : dict[str,Any], optional
             Keyword arguments for the modulator function.
 
         Returns
         -------
-        dict[str, array_like]
+        Mapping[str,array_like]
             Modulated patterns.
         """
-        modulator = self.xp.asarray(self.modulator(**patterns_extra_coords))
+        modulator = self.xp.asarray(self._modulator(**patterns_extra_coords))
         # Adapt to shape of patterns
         modulator = modulator[(..., *((self.xp.newaxis,) * len(self.shape)))]
         return DeferredPatternsDict(self._labels, lambda label: modulator * self._base_pattern(label))
