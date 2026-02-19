@@ -30,7 +30,10 @@ def project(field, patterns, weights, **patterns_extra_coords):
     Returns
     -------
     xarray.DataArray
-        The projection(s) for each pattern.
+        The projection(s) for each pattern, with "pattern" as a new leftmost
+        dimension and all dimensions of field following except for the
+        dimensions reduced in the projection (i.e., the spatial dimensions of
+        the patterns are missing on the right).
     """
     # Dimensions of a single pattern, assumed to be the trailing dimensions
     field_trailing_shape = field.shape[-patterns.ndim :]

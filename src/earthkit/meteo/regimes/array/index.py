@@ -30,7 +30,9 @@ def project(field, patterns, weights, **patterns_extra_coords):
     -------
     dict[str,array_like]
         Results of the projection. One item per pattern label, output fields
-        have projected dimensions removed.
+        have same shape as input field except for the dimensions reduced during
+        the projection (i.e., the spatial dimensions of the patterns are missing
+        on the right).
     """
     ndim_field = len(patterns.shape)
     if field.shape[-ndim_field:] != patterns.shape:
