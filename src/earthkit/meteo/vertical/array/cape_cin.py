@@ -5,6 +5,7 @@ from earthkit.meteo import thermo
 from earthkit.meteo.constants import constants
 
 
+
 def _ept_from_mixing_ratio(temperature, pressure, mixing_ratio):
     specific_humidity = thermo.specific_humidity_from_mixing_ratio(mixing_ratio)
     return thermo.ept_from_specific_humidity(temperature, specific_humidity, pressure, method="bolton39")
@@ -18,7 +19,7 @@ def moist_ascent_lookup_table():
     def dT_dp_moist(T_parcel, pressure):
         # moist adiabatic gradient according to Emanuel, 1995 (Eq. 4.7.3) ignoring liquid and solid water, i.e. r_l = 0 and r_t = r
         es_parcel = thermo.saturation_vapour_pressure(T_parcel, phase="water")
-        r_parcel = constants.epsilon * es_parcel/pressure 
+        r_parcel = constants.epsilon * es_parcel/pressure
         Lv = 2501000 - 2370 * (T_parcel - constants.T0)
 
         # Terms from Emanuel, 1995 (Eq. 4.7.3)
@@ -28,7 +29,8 @@ def moist_ascent_lookup_table():
         D_term = constants.Rv * np.power(T_parcel, 2) * (constants.c_pd + r_parcel * constants.c_pv)
         dT_dz = A_prefactor * B_factor / (1 + (C_term / D_term))
 
-        dz_dp = - (constants.Rd * (T_parcel + 0.608 * r_parcel)) / (pressure * constants.g)
+        Tv = thermo.virtual_temperature(T_parcel, thermo.specific_humidity_from_mixing_ratio(r_parcel))
+        dz_dp = - (constants.Rd * Tv) / (pressure * constants.g)
         return dT_dz * dz_dp
     
     p_max = 110000
