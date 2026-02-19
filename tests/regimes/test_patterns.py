@@ -57,7 +57,7 @@ class TestModulatedPatterns:
         return regimes.ModulatedPatterns(
             labels=["dipole"],
             grid={"grid": [1.0, 1.0], "area": [max(self.lat), min(self.lon), min(self.lat), max(self.lon)]},
-            patterns=np.stack([self.dipole]).copy(),
+            base_patterns=np.stack([self.dipole]).copy(),
             modulator=lambda x, y: y * np.sign(x),
         )
 
