@@ -42,7 +42,8 @@ extensions = [
 ]
 
 # autodoc configuration
-autodoc_typehints = "none"
+autodoc_typehints = "description"
+# autodoc_typehints = "signature"
 
 # autoapi configuration
 autoapi_dirs = ["../src/earthkit"]
@@ -62,7 +63,7 @@ autoapi_own_page_level = "function"
 autoapi_python_use_implicit_namespaces = True
 
 # napoleon configuration
-napoleon_google_docstring = False
+napoleon_google_docstring = False  #
 napoleon_numpy_docstring = True
 napoleon_preprocess_types = True
 

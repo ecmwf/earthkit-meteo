@@ -1,2 +1,4 @@
+earthkit.data
 numpy
 requests
+xarray

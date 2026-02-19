@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
-from earthkit.meteo import wind
+import earthkit.meteo.wind.array as wind
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 

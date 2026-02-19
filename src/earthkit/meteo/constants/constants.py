@@ -50,6 +50,9 @@ r"""Epsilon coefficient used in humidity formulas :math:`\epsilon = \frac{R_{d}}
 T0 = 273.16
 r"""Triple point of water [K]."""
 
+T_C2K = 273.15
+r"""Celsius-to-Kelvin conversion offset."""
+
 g = 9.80665
 r"""Gravitational acceleration on the surface of the Earth [:math:`m s^{-2}`].
 See [IFS-CY47R3-PhysicalProcesses]_ (Chapter 12)."""

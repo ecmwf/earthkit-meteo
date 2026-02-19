@@ -24,6 +24,10 @@ def _skip_api_items(app, what, name, obj, skip, options):
         skip = True
     elif what == "module" and len(name.split(".")) > 3:
         skip = True
+    elif what == "function" and name.endswith("dispatch"):
+        skip = True
+    elif name.endswith("ArrayLike"):
+        skip = True
 
     # if not skip:
     #     print(f"{what} {name}")

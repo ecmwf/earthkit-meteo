@@ -136,3 +136,4 @@ class Tolerance:
 
 
 NO_XARRAY = not modules_installed("xarray")
+NO_EKD = not modules_installed("earthkit.data")
