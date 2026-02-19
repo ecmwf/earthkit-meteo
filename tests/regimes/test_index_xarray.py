@@ -12,22 +12,16 @@ import pytest
 from earthkit.meteo.regimes.xarray import project
 from earthkit.meteo.regimes.xarray import regime_index
 
-# from earthkit.meteo.utils.testing import NO_XARRAY
-
-# pytestmark = pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
+xr = pytest.importorskip("xarray")
 
 
 @pytest.fixture
 def weights1d():
-    import xarray as xr
-
     return xr.DataArray(data=[1.0, 3.0], coords={"lat": (["lat"], [60.0, 50.0])}, dims=["lat"])
 
 
 @pytest.fixture
 def data3d():
-    import xarray as xr
-
     data2d = xr.DataArray(
         data=[[0.0, 1.0, 2.0, 3.0], [4.0, 5.0, 6.0, 7.0]],
         coords={"lat": (["lat"], [60.0, 50.0]), "lon": (["lon"], [-10.0, 0.0, 10.0, 20.0])},
@@ -38,8 +32,6 @@ def data3d():
 
 @pytest.fixture
 def patterns():
-    import xarray as xr
-
     class MockPatterns:
 
         # Necessary properties to mock Patterns

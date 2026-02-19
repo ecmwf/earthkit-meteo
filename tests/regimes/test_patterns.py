@@ -11,8 +11,6 @@ import pytest
 
 from earthkit.meteo import regimes
 
-# from earthkit.meteo.utils.testing import NO_XARRAY
-
 
 class TestConstantPatterns:
 
@@ -65,7 +63,7 @@ class TestModulatedPatterns:
 
     @pytest.fixture
     def data_xr(self):
-        import xarray as xr
+        xr = pytest.importorskip("xarray")
 
         return xr.DataArray(
             data=np.ones((4, 3, 2, self.lat.size, self.lon.size)),
@@ -103,7 +101,6 @@ class TestModulatedPatterns:
         np.testing.assert_allclose(pat["dipole"][0], self.dipole)
         np.testing.assert_allclose(pat["dipole"][1], -2 * self.dipole)
 
-    # @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
     def test_patterns_iterxr_with_extra_coordinate_mapping(self, data_xr, patterns):
         it = patterns._patterns_iterxr(data_xr, patterns_extra_coords={"x": "baz", "y": "bar"})
         name, pat = next(it)
