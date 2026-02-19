@@ -16,6 +16,14 @@ Statistics
     return_period.ipynb
 
 
+Regimes
+++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+
+    seven_weather_regimes.ipynb
+
 
 Vertical
 ++++++++++++++
