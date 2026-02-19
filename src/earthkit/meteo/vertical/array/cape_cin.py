@@ -4,7 +4,7 @@ from scipy import interpolate
 from earthkit.meteo import thermo
 from earthkit.meteo.constants import constants
 
-
+C_pl = 4180
 
 def _ept_from_mixing_ratio(temperature, pressure, mixing_ratio):
     specific_humidity = thermo.specific_humidity_from_mixing_ratio(mixing_ratio)
@@ -20,7 +20,9 @@ def moist_ascent_lookup_table():
         # moist adiabatic gradient according to Emanuel, 1995 (Eq. 4.7.3) ignoring liquid and solid water, i.e. r_l = 0 and r_t = r
         es_parcel = thermo.saturation_vapour_pressure(T_parcel, phase="water")
         r_parcel = constants.epsilon * es_parcel/pressure
-        Lv = 2501000 - 2370 * (T_parcel - constants.T0)
+        
+        dLv_dT = constants.c_pv - C_pl
+        Lv = constants.Lv + dLv_dT * (T_parcel - constants.T0)
 
         # Terms from Emanuel, 1995 (Eq. 4.7.3)
         A_prefactor = - (constants.g / constants.c_pd) * (1 + r_parcel) / (1 + r_parcel * (constants.c_pv / constants.c_pd))
