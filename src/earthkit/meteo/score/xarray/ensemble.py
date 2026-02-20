@@ -195,19 +195,18 @@ def crps_from_ensemble(
     - :math:`o` are the observations,
     - :math:`K=M^2` for the 'ecdf' method and :math:`M(M-1)` for the 'fair' method,
 
-    With `return_components=True`, this function returns the decomposition defined below with an
-    added ``component`` dimension.
+    With `return_components=True`, this function returns an ``xr.Dataset`` with variables for the decompositions defined below.
 
-    If the decomposition method is ``underover``, the ``component`` values are ``total``,
-    ``underforecast_penalty``, ``overforecast_penalty``, and ``spread`` (ordering is not
+    If the `decomposition_method="underover"`, the ``xr.Dataset`` variables values are
+    ``underforecast_penalty``, ``overforecast_penalty``, ``spread`` and either ``fcrps`` if `method="fair"` or ``crps`` if `method="ecdf"` (ordering is not
     guaranteed and might differ). The overall CRPS is given by
-    ``total = underforecast_penalty + overforecast_penalty - spread``. When
-    ``return_components=False``, no ``component`` dimension is added and only the total CRPS is
-    returned.
+    ``underforecast_penalty + overforecast_penalty - spread``.
 
     .. math::
 
         \operatorname{CRPS}[f, o] = O(f, o) + U(f, o) - S(f, f)
+
+    where
 
     .. math::
         :nowrap:
@@ -218,10 +217,64 @@ def crps_from_ensemble(
         S(f, f) &= \frac{1}{2K} \sum_{i=1}^{M} \sum_{j=1}^{M} |f_i - f_j| \quad& \text{(forecast spread term)}
         \end{align*}
 
-    If the decomposition method is ``hersbach`, the ``component`` values are ...
-    [ TODO: fill ]
+    If the decomposition method is `decomposition_method="hersbach"`, the ``xr.Dataset`` variables values are
+    ``alpha``, ``beta``, ``crps`` and additionally also ``fcrps`` if `method="fair"` (ordering is not guaranteed and might differ).
+
+    We denote by :math:`x_1 \le x_2 \le \dots \le x_M` the members of the ensemble forecast :math:`f` after sorting. The unfair CRPS decomposition for `decomposition_method="hersbach"` is then given by
+
+    .. math::
+        :nowrap:
+
+        \begin{align*}
+        \operatorname{CRPS}\left[f, o\right] =  \sum_{i=1}^{M} \alpha_i p_i^2 + \beta_i (1-p_i)^2
+        \end{align*}
+
+    where
+
+    .. math::
+        :nowrap:
+
+        \begin{align*}
+        \alpha_i = & \begin{cases}
+        o - x_M & \text{if } o > x_M \\
+        x_{i+1} - x_i & \text{if } o > x_{i+1} \\
+        o - x_i & \text{if } x_{i+1} > o > x_{i} \\
+        0 & \text{if } o < x_{i} \\
+        0 & \text{if } o < x_{1} \\
+        \end{cases} \\
+        \beta_i = & \begin{cases}
+        0 & \text{if } o > x_M \\
+        0 & \text{if } o > x_{i+1} \\
+        x_{i+1} - o & \text{if } x_{i+1} > o > x_{i} \\
+        x_{i+1} - x_i & \text{if } o < x_{i} \\
+        x_1 - o & \text{if } o < x_{1} \\
+        \end{cases} \\
+        p_i = & \begin{cases}
+        \frac{i}{M} & \text{if } 0<i<M \\
+        0 & \text{if } i=0 \\
+        1 & \text{if } i=M \\
+        \end{cases}
+        \end{align*}
+
+    Fair CRPS is obtained by adding a correcting term :math:`\frac{G}{2M}` to the previous expression i.e.
+
+    .. math::
+        :nowrap:
+
+        \begin{align*}
+        \operatorname{CRPS}\left[f, o\right] = \sum_{i=1}^{M} \alpha_i p_i^2 + \beta_i (1-p_i)^2 - \frac{G}{2M}
+        \end{align*}
+
+    where
+
+    .. math::
+
+        G = \frac{\sum_{i=1}^{M} \sum_{j=1}^{M} |x_i - x_j|}{M (M-1)}
 
     Note that other CRPS decompositions exist; compare :func:`crps_from_cdf`.
+
+    When ``return_components=False``, only a ``xr.DataArray`` of the total CRPS is
+    returned.
 
     .. seealso::
 
@@ -229,9 +282,9 @@ def crps_from_ensemble(
 
     Parameters
     ----------
-    fcst : xarray object
+    fcst : xarray.DataArray
         The ensemble forecast xarray.
-    obs : xarray object
+    obs : xarray.DataArray
         The observations xarray.
     over : str or list of str
         The dimension(s) over which to compute the CRPS.
@@ -242,18 +295,20 @@ def crps_from_ensemble(
 
     Returns
     -------
-    xarray object
+    xarray.DataArray or xarray.Dataset
         The CRPS of the ensemble forecast compared to the observations.
     """
     if decomposition_method not in ["underover", "hersbach"]:
         raise ValueError("decomposition_method must be one of 'underover' or 'hersbach'")
     if method not in ["fair", "ecdf"]:
         raise ValueError("method must be one of 'fair' or 'ecdf'")
+    if not isinstance(fcst, xr.DataArray) or not isinstance(obs, xr.DataArray):
+        raise TypeError("fcst and obs must be xarray DataArray objects")
     if decomposition_method == "underover":
         scores = _import_scores_or_prompt_install()
         # TODO: revisit component ordering here and in tests
         reduce_dim = []
-        return scores.probability.crps_for_ensemble(
+        scores_xr = scores.probability.crps_for_ensemble(
             fcst,
             obs,
             over,
@@ -263,6 +318,12 @@ def crps_from_ensemble(
             weights=None,
             include_components=return_components,
         )
+        if return_components:
+            return scores_xr.to_dataset(dim="component").rename(
+                {"total": "crps" if method == "ecdf" else "fcrps"}
+            )
+        else:
+            return scores_xr
     else:
         valid_mask, alpha, beta, crps, fcrps = _crps_from_ensemble_hersbach(fcst, obs, over)
         if return_components:
@@ -299,61 +360,6 @@ def _crps_from_ensemble_hersbach(
     over: str | list[str],
     components_coords: np.ndarray | list | None = None,
 ) -> T:
-    r"""
-    Calculates the continuous ranked probability score (CRPS) of an ensemble forecast.
-
-    .. warning:: Experimental API. This function may change or be removed without notice.
-
-    The function returns CRPS arrays calculated by two methods
-
-        - ``crps`` the exact CRPS value for the empirical cumulative distribution function
-            constructed using the ensemble values;
-        - ``fair`` the approximated CRPS where the ensemble values can be interpreted as a
-            random sample from the underlying predictive distribution.
-
-    The exact CRPS score for an ensemble forecast is computed based on eqns (26) to (29) in Hersbach (2000) as:
-
-    .. math::
-        :nowrap:
-
-        \begin{align*}
-        \operatorname{CRPS} = \sum_{i=0}^{M} \left[ \alpha_i p_i^2 + \beta_i (1-p_i)^2 \right]
-        \end{align*}
-
-    where the components :math:`\alpha_i` and :math:`\beta_i` are defined by eqns (26) and (27) in Hersbach (2000)
-    and the probabilities
-
-    .. math::
-
-        p_i = i / M
-
-    A fair version of CRPS is then obtained by
-
-    .. math::
-
-        \operatorname{fairCRPS} = \operatorname{CRPS} + ...
-
-
-    Parameters
-    ----------
-    fcst : xarray object
-        The ensemble forecast xarray.
-    obs : xarray object
-        The observations xarray.
-    over : str or list of str
-        The dimension(s) over which to compute the CRPS.
-    components_coords : np.ndarray or list, optional
-        The coordinates to assign to the CRPS alpha and CRPS beta components dimension.
-        If None, defaults to a sequence from 1 to ensemble size + 1.
-
-    Returns
-    -------
-    xarray Dataset
-        A dataset containing ``crps`` CRPS, ``fair`` CRPS, and ``alpha`` and ``beta`` CRPS components as data variables.
-        The CRPS alpha and CRPS beta components have a dimension named ``over`` with coordinates given
-        by ``components_coords``.
-    """
-
     ens_size = fcst.sizes[over]
     if components_coords is None:
         components_coords = np.arange(1, ens_size + 2)
@@ -412,7 +418,7 @@ def crps_from_cdf(
     over: str,
     weight: xr.DataArray | None = None,
     return_components: bool = False,
-) -> xr.Dataset:
+) -> T:
     r"""
     Calculates the continuous ranked probability score (CRPS) for forecasts provided as CDFs.
 
@@ -436,9 +442,9 @@ def crps_from_cdf(
 
     With ``return_components=True``, this function returns the decomposition defined below. The
     output is an ``xarray.Dataset`` with **no new dimension added**; instead it contains data
-    variables named ``total``, ``underforecast_penalty``, and ``overforecast_penalty`` at the same
+    variables named ``crps``, ``underforecast_penalty``, and ``overforecast_penalty`` at the same
     non-threshold coordinates. The overall CRPS is given by
-    ``total = underforecast_penalty + overforecast_penalty``.
+    ``underforecast_penalty + overforecast_penalty``.
 
     .. math::
 
@@ -476,38 +482,55 @@ def crps_from_cdf(
 
     Returns
     -------
-    xarray Dataset
-        A dataset containing ``total`` CRPS and, if requested, ``underforecast_penalty`` and
-        ``overforecast_penalty`` as data variables. No new dimension is added; the output retains
-        all non-threshold dimensions.
+    xarray.DataArray or xarray.Dataset
+        The CRPS of the CDF compared to the observations.
     """
 
     scores = _import_scores_or_prompt_install()
     reduce_dim = [over]
-    return scores.probability.crps_cdf(
-        fcst,
-        obs,
-        threshold_dim=over,
-        threshold_weight=weight,
-        additional_thresholds=None,
-        propagate_nans=True,
-        fcst_fill_method="linear",
-        threshold_weight_fill_method="forward",
-        integration_method="exact",
-        reduce_dims=reduce_dim,
-        preserve_dims=None,
-        weights=None,
-        include_components=return_components,
-    )
+    if return_components:
+        return scores.probability.crps_cdf(
+            fcst,
+            obs,
+            threshold_dim=over,
+            threshold_weight=weight,
+            additional_thresholds=None,
+            propagate_nans=True,
+            fcst_fill_method="linear",
+            threshold_weight_fill_method="forward",
+            integration_method="exact",
+            reduce_dims=reduce_dim,
+            preserve_dims=None,
+            weights=None,
+            include_components=return_components,
+        ).rename({"total": "crps"})
+    else:
+        return scores.probability.crps_cdf(
+            fcst,
+            obs,
+            threshold_dim=over,
+            threshold_weight=weight,
+            additional_thresholds=None,
+            propagate_nans=True,
+            fcst_fill_method="linear",
+            threshold_weight_fill_method="forward",
+            integration_method="exact",
+            reduce_dims=reduce_dim,
+            preserve_dims=None,
+            weights=None,
+            include_components=return_components,
+        )["total"]
 
 
 def ginis_mean_diff(fcst, over):
     r"""
-    Gini's mean difference. REFERENCE: Ferro et al. (2008)
+    Gini's mean difference.
+
+    We denote by :math:`x_1 \le x_2 \le \dots \le x_M` the members of the ensemble forecast :math:`f` after sorting.
 
     .. math::
 
-        \frac{\sum_i^{nens} \sum_j^{nens} |x_i - x_j|}{n (n-1)}
+        G = \frac{\sum_i^{M} \sum_j^{M} |x_i - x_j|}{M (M-1)}
 
     Parameters
     ----------
