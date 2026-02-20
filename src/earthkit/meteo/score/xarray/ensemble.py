@@ -108,8 +108,7 @@ def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
     return qscore
 
 
-# TODO: Rename to crps_from_gaussian?
-def crps_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
+def crps_from_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
     r"""
     Calculates the continuous ranked probability score (CRPS) of a forecast described by mean and standard deviation.
 
@@ -349,9 +348,6 @@ def crps_from_ensemble(
             return fcrps.where(valid_mask) if method == "fair" else crps.where(valid_mask)
 
 
-# TODO: is the output type Dataset right?
-# TODO: complete docstring (fair CRPS)
-# TODO: test against crps_from_ensemble (CRPS and fairCRPS should be identical arrays)
 # TODO: does this work when over is a list of dimensions?
 # TODO: decide on the nan distribution strategy and make sure it's consistent with other functions (e.g. crps_from_ensemble)
 def _crps_from_ensemble_hersbach(

@@ -6,7 +6,7 @@ import xarray as xr
 
 from earthkit.meteo.score import crps_from_cdf
 from earthkit.meteo.score import crps_from_ensemble
-from earthkit.meteo.score import crps_gaussian
+from earthkit.meteo.score import crps_from_gaussian as crps_gaussian
 from earthkit.meteo.score import quantile_score
 from earthkit.meteo.score import spread
 
