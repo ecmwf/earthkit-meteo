@@ -1,4 +1,6 @@
 earthkit.data
+netcdf4
 numpy
 requests
+scores
 xarray
