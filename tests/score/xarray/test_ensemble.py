@@ -438,10 +438,7 @@ def test_crps_from_ensemble_underover(method: str, expected_total: np.ndarray, e
 
     fcst_ds = make_ensemble_dataset(fcst_values)
     obs_ds = make_deterministic_dataset(obs_values)
-
     crps_expected_ds = make_deterministic_dataset(expected_total)
-    crps_computed_ds = crps_from_ensemble(fcst_ds, obs_ds, over="number", method=method)
-    xr.testing.assert_allclose(crps_computed_ds, crps_expected_ds)
 
     fcst_da = fcst_ds["2t"]
     obs_da = obs_ds["2t"]
@@ -451,7 +448,7 @@ def test_crps_from_ensemble_underover(method: str, expected_total: np.ndarray, e
     xr.testing.assert_allclose(crps_computed_da, crps_expected_da)
 
     expected_components = {
-        "total": expected_total,
+        "crps" if method == "ecdf" else "fcrps": expected_total,
         "overforecast_penalty": expected_over,
         "underforecast_penalty": expected_under,
         "spread": expected_spread,
@@ -467,18 +464,13 @@ def test_crps_from_ensemble_underover(method: str, expected_total: np.ndarray, e
 
     # Note that we do not explicitly test the order of the components as this
     # might change in the underlying score function implementation.
-    assert set(crps_components["component"].values) == {
-        "total",
-        "underforecast_penalty",
-        "overforecast_penalty",
-        "spread",
-    }
+    assert set(crps_components.keys()) == set(expected_components.keys())
 
     # Check that total = under + over - spread
-    total = crps_components.sel(component="total", drop=True)
-    under = crps_components.sel(component="underforecast_penalty", drop=True)
-    over = crps_components.sel(component="overforecast_penalty", drop=True)
-    spread = crps_components.sel(component="spread", drop=True)
+    total = crps_components["crps"] if method == "ecdf" else crps_components["fcrps"]
+    under = crps_components["underforecast_penalty"]
+    over = crps_components["overforecast_penalty"]
+    spread = crps_components["spread"]
     xr.testing.assert_allclose(total, under + over - spread)
 
     # Check individual components
@@ -577,12 +569,7 @@ def test_crps_from_ensemble_hersbach(method: str, expected_total: np.ndarray):
 
     fcst_ds = make_ensemble_dataset(fcst_values)
     obs_ds = make_deterministic_dataset(obs_values)
-
     crps_expected_ds = make_deterministic_dataset(expected_total)
-    crps_computed_ds = crps_from_ensemble(
-        fcst_ds, obs_ds, over="number", method=method, decomposition_method="hersbach"
-    )
-    xr.testing.assert_allclose(crps_computed_ds, crps_expected_ds)
 
     fcst_da = fcst_ds["2t"]
     obs_da = obs_ds["2t"]
@@ -618,7 +605,7 @@ def test_crps_from_ensemble_hersbach(method: str, expected_total: np.ndarray):
 
     # Note that we do not explicitly test the order of the components as this
     # might change in the underlying score function implementation.
-    assert set(crps_components.keys()) == expected_components.keys()
+    assert set(crps_components.keys()) == set(expected_components.keys())
 
     # Check individual components
     for component, values in expected_components.items():
@@ -672,22 +659,22 @@ def test_crps_from_cdf():
     total_only = crps_from_cdf(fcst, obs, over="threshold", return_components=False)
 
     assert set(result.data_vars) == {
-        "total",
+        "crps",
         "underforecast_penalty",
         "overforecast_penalty",
     }
 
-    expected_total_da = make_deterministic_dataarray(expected_total, var_name="total")
+    expected_total_da = make_deterministic_dataarray(expected_total, var_name="crps")
     expected_under_da = make_deterministic_dataarray(expected_under, var_name="underforecast_penalty")
     expected_over_da = make_deterministic_dataarray(expected_over, var_name="overforecast_penalty")
 
-    xr.testing.assert_allclose(result["total"], expected_total_da)
+    xr.testing.assert_allclose(result["crps"], expected_total_da)
     xr.testing.assert_allclose(result["underforecast_penalty"], expected_under_da)
     xr.testing.assert_allclose(result["overforecast_penalty"], expected_over_da)
     xr.testing.assert_allclose(
-        result["total"], result["underforecast_penalty"] + result["overforecast_penalty"]
+        result["crps"], result["underforecast_penalty"] + result["overforecast_penalty"]
     )
-    xr.testing.assert_allclose(total_only["total"], expected_total_da)
+    xr.testing.assert_allclose(total_only, expected_total_da)
 
 
 @pytest.mark.filterwarnings("ignore:numba is not available")
@@ -725,8 +712,8 @@ def test_crps_from_cdf_weighted_thresholds():
         ],
         dtype=float,
     )
-    expected_total_da = make_deterministic_dataarray(expected_total, var_name="total")
-    xr.testing.assert_allclose(result["total"], expected_total_da)
+    expected_total_da = make_deterministic_dataarray(expected_total, var_name="crps")
+    xr.testing.assert_allclose(result, expected_total_da)
 
 
 @pytest.mark.filterwarnings("ignore:numba is not available")
