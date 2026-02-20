@@ -60,8 +60,10 @@ optional-dependencies.scores = [
 ]
 optional-dependencies.test = [
   "earthkit-meteo[samples,scores]",
+  "netcdf4",
   "pytest",
   "pytest-cov",
+  "xarray",
 ]
 urls.Documentation = "https://earthkit-meteo.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-meteo/"
