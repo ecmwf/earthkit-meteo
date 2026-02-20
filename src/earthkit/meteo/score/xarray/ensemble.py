@@ -519,34 +519,6 @@ def crps_from_cdf(
         )["total"]
 
 
-def ginis_mean_diff(fcst, over):
-    r"""
-    Gini's mean difference.
-
-    We denote by :math:`x_1 \le x_2 \le \dots \le x_M` the members of the ensemble forecast :math:`f` after sorting.
-
-    .. math::
-
-        G = \frac{\sum_i^{M} \sum_j^{M} |x_i - x_j|}{M (M-1)}
-
-    Parameters
-    ----------
-    fcst : xarray object
-        The ensemble forecast xarray.
-    over : str or list of str
-        The dimension(s) over which to compute.
-
-    Returns
-    -------
-    xarray object
-        Gini's mean difference.
-    """
-
-    valid_mask = _common_valid_mask(fcst, dim=over)
-    forecasts = _sorted_ensemble(fcst, dim=over)
-    return _ginis_mean_diff(forecasts, over).where(valid_mask)
-
-
 # TODO: is it really dask-safe?
 def _sorted_ensemble(forecasts, dim):
     # sort forecast values along the ensemble dimension
