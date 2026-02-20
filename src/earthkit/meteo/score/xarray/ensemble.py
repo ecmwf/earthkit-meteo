@@ -108,6 +108,7 @@ def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
     return qscore
 
 
+# TODO: try to unify returns with crps_from_cdf and crps_from_ensemble
 def crps_from_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
     r"""
     Calculates the continuous ranked probability score (CRPS) of a forecast described by mean and standard deviation.
@@ -142,7 +143,7 @@ def crps_from_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
 
     Returns
     -------
-    xarray object
+    xarray.DataArray
         The CRPS of the Gaussian forecast compared to the observations.
     """
     if not isinstance(fcst, xr.Dataset):
