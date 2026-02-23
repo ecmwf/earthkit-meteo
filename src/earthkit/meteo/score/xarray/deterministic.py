@@ -638,7 +638,7 @@ def kge(
     fcst: T,
     obs: T,
     over: str | list[str],
-    method: str = "modified",
+    method: Literal["original", "modified"] = "modified",
     scaling_factors: Optional[Union[list[float], np.ndarray]] = None,
     return_components: bool = False,
 ) -> T:
@@ -647,24 +647,27 @@ def kge(
 
     .. warning:: Experimental API. This function may change or be removed without notice.
 
-    The KGE is defined as:
+    The KGE is defined as follows:
 
     .. math::
-        \text{KGE} = 1 - \sqrt{\left[s_\rho \cdot (\rho - 1)\right]^2 +
-        \left[s_\alpha \cdot (\alpha - 1)\right]^2 + \left[s_\beta \cdot (\beta - 1)\right]^2}
+        :nowrap:
+
+        \begin{align*}
+        \text{KGE} = & \begin{cases}
+        1 - \sqrt{\left[s_\rho \cdot (\rho - 1)\right]^2 +
+        \left[s_\alpha \cdot (\alpha - 1)\right]^2 + \left[s_\beta \cdot (\beta - 1)\right]^2} & \text{if method = "original"} \\
+        1 - \sqrt{\left[s_\rho \cdot (\rho - 1)\right]^2 +
+        \left[s_\alpha \cdot (\gamma - 1)\right]^2 + \left[s_\beta \cdot (\beta - 1)\right]^2} & \text{if method = "modified"} \\
+        \end{cases}
+        \end{align*}
+
+    Each of the components of the KGE is defined as follows:
 
     .. math::
-    \beta = \frac{\mu_f}{\mu_o}
 
-    For the "original" method, the :math:`\alpha` term is defined as:
-
-    .. math::
-        \alpha_{orig} = \frac{\sigma_f}{\sigma_o}
-
-    Whereas for the "modified" method, the :math:`\alpha` term is defined as:
-
-    .. math::
-        \alpha_{mod} = \frac{\alpha_{orig}}{\beta}
+        \beta = \frac{\mu_f}{\mu_o}
+        \alpha = \frac{\sigma_f}{\sigma_o}
+        \gamma = \frac{\alpha}{\beta}
 
     where:
         - :math:`\rho`  = Pearson's correlation coefficient between observed and forecast values.
@@ -688,15 +691,19 @@ def kge(
         The dimension(s) over which to compute the kge.
     method : str, optional
         The method to compute the variability term :math:`\alpha`. Can be either "original" or "modified". Default is "modified".
+    scaling_factors : list of float or np.ndarray, optional
+        Scaling factors for the correlation coefficient :math:`\rho`, the variability term :math:`\alpha` (or :math:`\gamma`) and the bias term :math:`\beta`. Should be provided in the order [:math:`s_\rho`, :math:`s_\alpha`, :math:`s_\beta`].
+        Default is None, which means no scaling (i.e., all scaling factors are 1).
     return_components : bool, optional
-        Whether to return the individual components (:math:`\rho`, :math:`\alpha`, :math:`\beta`) along with the KGE value. Default is False.
+        Whether to return the individual components (:math:`\rho`, :math:`\alpha` (or :math:`\gamma`), :math:`\beta`) along with the KGE value. Default is False.
 
     Returns
     -------
     xarray object
         The KGE between the forecast and observations.
     """
-    assert method in ("original", "modified")
+    if method not in ("original", "modified"):
+        raise ValueError("method must be one of 'original' or 'modified'")
     scores = _import_scores_or_prompt_install()
 
     if not (method == "modified" or return_components):
@@ -725,6 +732,8 @@ def kge(
                 )
                 ** 0.5
             )
+
+        kge = kge.rename({"alpha": "gamma"})
 
     if return_components:
         return kge
