@@ -815,4 +815,184 @@ def test_kge_modified_return_only_kge(rng):
     xr.testing.assert_allclose(result, expected)
 
 
-# TODO: add tests for returning all components, and for non-modified kge case
+def test_kge_original_return_only_kge(rng):
+    fcst_values = np.arange(18.0).reshape(2, 3, 3)
+    noise = rng.normal(0, 1, size=(2, 3, 3))
+    obs_values = fcst_values + noise
+
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
+    # convert to dataarray
+    fcst = fcst["2t"]
+    obs = obs["2t"]
+
+    result = kge(fcst, obs, over=["valid_datetime"], method="original")
+
+    expected_values = [
+        [0.838742, 0.823599, 0.894765],
+        [0.875346, 0.740101, 0.829375],
+        [0.87163, 0.929236, 0.876233],
+    ]
+
+    expected = xr.DataArray(
+        np.array(expected_values),
+        dims=("latitude", "longitude"),
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+        name="kge",
+    )
+
+    xr.testing.assert_allclose(result, expected)
+
+
+def test_kge_modified_return_components(rng):
+    fcst_values = np.arange(18.0).reshape(2, 3, 3)
+    noise = rng.normal(0, 1, size=(2, 3, 3))
+    obs_values = fcst_values + noise
+
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
+    # convert to dataarray
+    fcst = fcst["2t"]
+    obs = obs["2t"]
+
+    result = kge(fcst, obs, over=["valid_datetime"], return_components=True)
+
+    expected_kge_values = [
+        [0.89876631, 0.81160643, 0.84475652],
+        [0.8074817, 0.70460809, 0.79378315],
+        [0.90851035, 0.9313564, 0.91618051],
+    ]
+
+    expected_gamma_values = [
+        [1.077712, 0.81219, 1.114172],
+        [1.181958, 0.709031, 0.798967],
+        [1.084071, 0.931394, 1.073324],
+    ]
+
+    expected_beta_values = [
+        [1.064878, 1.014815, 0.894809],
+        [0.937114, 1.050926, 1.045949],
+        [1.036088, 0.997722, 1.040612],
+    ]
+
+    expected_rho_values = [
+        [1.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+    ]
+
+    expected_kge = xr.DataArray(
+        np.array(expected_kge_values),
+        dims=("latitude", "longitude"),
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+        name="kge",
+    )
+
+    expected_gamma = xr.DataArray(
+        np.array(expected_gamma_values),
+        dims=("latitude", "longitude"),
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+        name="alpha",
+    )
+
+    expected_beta = xr.DataArray(
+        np.array(expected_beta_values),
+        dims=("latitude", "longitude"),
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+        name="beta",
+    )
+
+    expected_rho = xr.DataArray(
+        np.array(expected_rho_values),
+        dims=("latitude", "longitude"),
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+        name="r",
+    )
+
+    expected = xr.Dataset(
+        {
+            "kge": expected_kge,
+            "gamma": expected_gamma,
+            "beta": expected_beta,
+            "rho": expected_rho,
+        }
+    )
+
+    xr.testing.assert_allclose(result, expected)
+
+
+def test_kge_original_return_components(rng):
+    fcst_values = np.arange(18.0).reshape(2, 3, 3)
+    noise = rng.normal(0, 1, size=(2, 3, 3))
+    obs_values = fcst_values + noise
+
+    fcst = make_dataset(fcst_values)
+    obs = make_dataset(obs_values)
+    # convert to dataarray
+    fcst = fcst["2t"]
+    obs = obs["2t"]
+
+    result = kge(fcst, obs, over=["valid_datetime"], return_components=True, method="original")
+
+    expected_kge_values = [
+        [0.838742, 0.823599, 0.894765],
+        [0.875346, 0.740101, 0.829375],
+        [0.87163, 0.929236, 0.876233],
+    ]
+
+    expected_alpha_values = [
+        [1.147631, 0.824222, 0.996971],
+        [1.107629, 0.745139, 0.835679],
+        [1.123193, 0.929273, 1.116914],
+    ]
+
+    expected_beta_values = [
+        [1.064878, 1.014815, 0.894809],
+        [0.937114, 1.050926, 1.045949],
+        [1.036088, 0.997722, 1.040612],
+    ]
+
+    expected_rho_values = [
+        [1.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+    ]
+
+    expected_kge = xr.DataArray(
+        np.array(expected_kge_values),
+        dims=("latitude", "longitude"),
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+        name="kge",
+    )
+
+    expected_alpha = xr.DataArray(
+        np.array(expected_alpha_values),
+        dims=("latitude", "longitude"),
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+        name="alpha",
+    )
+
+    expected_beta = xr.DataArray(
+        np.array(expected_beta_values),
+        dims=("latitude", "longitude"),
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+        name="beta",
+    )
+
+    expected_rho = xr.DataArray(
+        np.array(expected_rho_values),
+        dims=("latitude", "longitude"),
+        coords={"latitude": LATITUDES, "longitude": LONGITUDES},
+        name="r",
+    )
+
+    expected = xr.Dataset(
+        {
+            "kge": expected_kge,
+            "alpha": expected_alpha,
+            "beta": expected_beta,
+            "rho": expected_rho,
+        }
+    )
+
+    xr.testing.assert_allclose(result, expected)
