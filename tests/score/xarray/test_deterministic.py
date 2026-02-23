@@ -815,6 +815,7 @@ def test_kge_modified_return_only_kge(rng):
     xr.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_kge_original_return_only_kge(rng):
     fcst_values = np.arange(18.0).reshape(2, 3, 3)
     noise = rng.normal(0, 1, size=(2, 3, 3))
@@ -844,6 +845,7 @@ def test_kge_original_return_only_kge(rng):
     xr.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_kge_modified_return_components(rng):
     fcst_values = np.arange(18.0).reshape(2, 3, 3)
     noise = rng.normal(0, 1, size=(2, 3, 3))
@@ -921,6 +923,7 @@ def test_kge_modified_return_components(rng):
     xr.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_kge_original_return_components(rng):
     fcst_values = np.arange(18.0).reshape(2, 3, 3)
     noise = rng.normal(0, 1, size=(2, 3, 3))
