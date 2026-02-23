@@ -9,10 +9,9 @@
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 from earthkit.meteo.utils.testing import NO_XARRAY
-
-# TODO: implement tests once xarray interpolation is implemented
 
 # These tests reuse the same test cases as in test_array_monotonic.py
 
@@ -26,7 +25,7 @@ from earthkit.meteo.utils.testing import NO_XARRAY
 #  - target_coord is scalar
 
 
-def _make_xr(xp, data, coord):
+def _make_xr(xp, data, coord, vdim):
     """Make xarray Dataset from data and coord arrays"""
     import xarray as xr
 
@@ -36,23 +35,17 @@ def _make_xr(xp, data, coord):
     if data_is_scalar and coord_is_scalar:
         data_da = xr.DataArray(
             data,
-            dims=("level",),
-            coords={"level": coord},
+            dims=(vdim,),
+            coords={vdim: coord},
         )
 
         ds = xr.Dataset({"data": data_da})
 
     elif not data_is_scalar and coord_is_scalar:
-        x_num = data.shape[1]
-        level_num = data.shape[0]
-
-        x_dim = xp.arange(x_num)
-        level_dim = xp.arange(level_num)
-
         data_da = xr.DataArray(
             data,
-            dims=("level", "x"),
-            coords={"level": level_dim, "x": x_dim},
+            dims=(vdim, "x"),
+            coords={vdim: coord},
         )
 
         ds = xr.Dataset({"data": data_da})
@@ -60,21 +53,13 @@ def _make_xr(xp, data, coord):
     elif not data_is_scalar and not coord_is_scalar:
         assert data.shape == coord.shape
 
-        x_num = data.shape[1]
-        level_num = data.shape[0]
-
-        x_dim = xp.arange(x_num)
-        level_dim = xp.arange(level_num)
-
         data_da = xr.DataArray(
             data,
-            dims=("level", "x"),
-            coords={"level": level_dim, "x": x_dim},
+            dims=(vdim, "x"),
+            coords={"coord": ((vdim, "x"), coord)},
         )
 
-        level_da = xr.DataArray(coord, dims=("level", "x"), coords={"level": level_dim, "x": x_dim})
-
-        ds = xr.Dataset({"data": data_da, "level_coord": level_da})
+        ds = xr.Dataset({"data": data_da})
 
     return ds
 
@@ -100,49 +85,56 @@ def make_input(conf_id):
 
     for d in DATA[conf_id]:
         data, coord, target_coord, mode, expected_data = d
+        for vdim in ("z", "level"):
+            args = *_make_input_xr(data, coord, target_coord, expected_data, vdim), mode
+            marks = []
+            if np.any(np.isnan(data)):
+                marks.append(pytest.mark.xfail(reason="missing values unsupported"))
+            if mode == "nearest":
+                marks.append(pytest.mark.xfail(reason="nearest extrapolation not implemented"))
+            yield pytest.param(*args, marks=marks)
 
-        yield *_make_input_xr(data, coord, target_coord, expected_data), mode
 
-
-def _make_input_xr(data, coord, target_coord, expected_data, xp=np, device="cpu"):
+def _make_input_xr(data, coord, target_coord, expected_data, vdim, xp=np, device="cpu"):
     data = xp.asarray(data, device=device)
     coord = xp.asarray(coord, device=device)
     target_coord = xp.asarray(target_coord, device=device)
     expected_data = xp.asarray(expected_data, device=device)
 
-    ds_input = _make_xr(xp, data, coord)
-    ds_expected = _make_xr(xp, expected_data, target_coord)
+    ds_input = _make_xr(xp, data, coord, vdim)
+    ds_expected = _make_xr(xp, expected_data, target_coord, vdim)
 
-    return ds_input, ds_expected
-
-
-@pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
-@pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_s_s_s"))
-def test_xr_interpolate_monotonic_s_s_s(ds_input, ds_expected, mode):
-    # print(ds_input)
-    # print(ds_expected)
-    pass
+    return ds_input, ds_expected, vdim
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
-@pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_a_s"))
-def test_xr_interpolate_monotonic_a_a_s(ds_input, ds_expected, mode):
-    pass
+@pytest.mark.parametrize("ds_input,ds_expected,vdim,mode", make_input("pressure_s_s_s"))
+def test_xr_interpolate_monotonic_s_s_s(ds_input, ds_expected, vdim, mode):
+    from earthkit.meteo.vertical.interpolation import TargetCoordinates
+    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+
+    tc = TargetCoordinates("isobaricInhPa", ds_expected[vdim])
+    observed = interpolate_monotonic(ds_input.data, ds_input[vdim], tc, mode, vertical_dim=vdim)
+    assert_allclose(observed, ds_expected.data)
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
-@pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_s_s"))
-def test_xr_interpolate_monotonic_a_s_s(ds_input, ds_expected, mode):
-    pass
+@pytest.mark.parametrize("ds_input,ds_expected,vdim,mode", make_input("pressure_a_a_s"))
+def test_xr_interpolate_monotonic_a_a_s(ds_input, ds_expected, vdim, mode):
+    from earthkit.meteo.vertical.interpolation import TargetCoordinates
+    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+
+    tc = TargetCoordinates("isobaricInhPa", ds_expected[vdim].values)
+    observed = interpolate_monotonic(ds_input.data, ds_input.coord, tc, mode, vertical_dim=vdim)
+    assert_allclose(observed, ds_expected.data)
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
-@pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_s_a"))
-def test_xr_interpolate_monotonic_a_s_a(ds_input, ds_expected, mode):
-    pass
+@pytest.mark.parametrize("ds_input,ds_expected,vdim,mode", make_input("pressure_a_s_s"))
+def test_xr_interpolate_monotonic_a_s_s(ds_input, ds_expected, vdim, mode):
+    from earthkit.meteo.vertical.interpolation import TargetCoordinates
+    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
 
-
-@pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
-@pytest.mark.parametrize("ds_input,ds_expected,mode", make_input("pressure_a_a_a"))
-def test_xr_interpolate_monotonic_a_a_a(ds_input, ds_expected, mode):
-    pass
+    tc = TargetCoordinates("isobaricInhPa", ds_expected[vdim].values)
+    observed = interpolate_monotonic(ds_input.data, ds_input[vdim], tc, mode, vertical_dim=vdim)
+    assert_allclose(observed, ds_expected.data)
