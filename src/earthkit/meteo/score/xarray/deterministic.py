@@ -725,7 +725,6 @@ def kge(
                 )
                 ** 0.5
             )
-            return kge
 
     if return_components:
         return kge
