@@ -26,9 +26,9 @@ class GumbelDistribution:
 
     Parameters
     ----------
-    mu: Number | array_like
+    mu: array_like
         Offset parameter.
-    sigma: Number | array_like
+    sigma: array_like
         Scale parameter.
     freq: None | Number | timedelta
         Temporal frequency (duration between values, technically the inverse
@@ -36,32 +36,13 @@ class GumbelDistribution:
         to scale return periods computed from the distribution.
     """
 
-    def __init__(self, mu, sigma, freq=None):
+    def __init__(self, mu, sigma, dims=None, coords=None):
         xp = array_namespace(mu, sigma)
-        self.mu, self.sigma = xp.broadcast_arrays(xp.asarray(mu), xp.asarray(sigma))
-        self.freq = freq
-
-    @classmethod
-    def fit(cls, sample, axis=0, freq=None):
-        """Gumbel distribution with parameters fitted to a sample of values.
-
-        Results derived from the fitted distribution will only be meaningful
-        if it is representative of the sample statistics.
-
-        Parameters
-        ----------
-        sample: numpy.ndarray
-            Sample values.
-        axis: int
-            The axis along which to compute the parameters.
-        freq: None | Number | timedelta
-            Temporal frequency (duration between values) of the sample.
-        """
-        xp = array_namespace(sample)
-        lmom = lmoment(sample, axis=axis, order=[1, 2])
-        sigma = lmom[1] / xp.log(2)
-        mu = lmom[0] - sigma * 0.5772
-        return cls(mu, sigma, freq=freq)
+        self.mu, self.sigma = xp.broadcast_arrays(mu, sigma)
+        # Optional metadata
+        self._dims = dims
+        self._coords = coords
+        assert self._dims is None or len(self._dims) == self.ndim
 
     @property
     def shape(self):
@@ -73,17 +54,27 @@ class GumbelDistribution:
         """Number of dimensions."""
         return self.mu.ndim
 
+    @property
+    def dims(self):
+        if self._dims is not None:
+            return tuple(self._dims)
+        return tuple(f"dim{i}" for i in self.ndim)
+
+    @property
+    def coords(self):
+        return self._coords
+
     def cdf(self, x):
         """Evaluate the cumulative distribution function (CDF).
 
         Parameters
         ----------
-        x: Number | array_like
+        x: array_like
             Input value.
 
         Returns
         -------
-        Number | array_like
+        array_like
             The probability that a random variable X from the distribution is
             less than or equal to the input x.
         """
@@ -96,12 +87,12 @@ class GumbelDistribution:
 
         Parameters
         ----------
-        p: Number | array_like
+        p: array_like
             Probability in interval [0, 1].
 
         Returns
         -------
-        Number | array_like
+        array_like
             x such that the probability of a random variable from the
             distribution taking a value less than or equal to x is p.
         """
@@ -110,7 +101,29 @@ class GumbelDistribution:
         return self.mu - self.sigma * xp.log(-xp.log(1.0 - p))
 
 
-def value_to_return_period(dist, value):
+def fit_gumbel(sample, over=0, **kwargs):
+    """Gumbel distribution with parameters fitted to a sample of values.
+
+    Results derived from the fitted distribution will only be meaningful
+    if it is representative of the sample statistics.
+
+    Parameters
+    ----------
+    sample: numpy.ndarray
+        Sample values.
+    over: int
+        The axis along which to compute the distribution parameters.
+    **kwargs: dict[str,Any]
+        Keyword arguments forwarded to the distribution constructor.
+    """
+    xp = array_namespace(sample)
+    lmom = lmoment(sample, axis=over, order=[1, 2])
+    sigma = lmom[1] / xp.log(2)
+    mu = lmom[0] - sigma * 0.5772
+    return GumbelDistribution(mu, sigma, **kwargs)
+
+
+def value_to_return_period(value, dist):
     """Return period of a value given a distribution of extremes.
 
     Use, e.g., to compute expected return periods of extreme precipitation or
@@ -120,7 +133,7 @@ def value_to_return_period(dist, value):
     ----------
     dist: GumbelDistribution
         Probability distribution.
-    value: Number | array_like
+    value: array_like
         Input value(s).
 
     Returns
@@ -129,27 +142,25 @@ def value_to_return_period(dist, value):
         The return period of the input value, scaled with the frequency
         information of the distribution if attached.
     """
-    freq = 1.0 if dist.freq is None else dist.freq
-    return freq / dist.cdf(value)
+    xp = array_namespace(value)
+    return 1.0 / dist.cdf(xp.asarray(value))
 
 
-def return_period_to_value(dist, return_period):
+def return_period_to_value(return_period, dist):
     """Value for a given return period of a distribution of extremes.
 
     Parameters
     ----------
     dist: GumbelDistribution
         Probability distribution.
-    return_period: Number | array_like
+    return_period: array_like
         Input return period. Must be compatible with the frequency information
         of the distribution if attached.
-    freq: number | timedelta
-        Temporal frequency of the input dataUsed to scale return periods.
 
     Returns
     -------
     array_like
         Value with return period equal to the input return period.
     """
-    freq = 1.0 if dist.freq is None else dist.freq
-    return dist.ppf(freq / return_period)
+    xp = array_namespace(return_period)
+    return dist.ppf(1.0 / xp.asarray(return_period))

@@ -1,17 +1,16 @@
-# (C) Copyright 2021 ECMWF.
-#
+# (C) Copyright 2026- ECMWF and individual contributors.
+
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 # In applying this licence, ECMWF does not waive the privileges and immunities
-# granted to it by virtue of its status as an intergovernmental organisation
-# nor does it submit to any jurisdiction.
-#
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
+
+from ...utils.decorators import xarray_ufunc
+from .. import array
 
 
-from ..utils.decorators import dispatch
-
-
-def fit_gumbel(sample, over, freq=None):
+def fit_gumbel(sample, over):
     """Gumbel distribution with parameters fitted to a sample of values.
 
     Results derived from the fitted distribution will only be meaningful
@@ -21,10 +20,16 @@ def fit_gumbel(sample, over, freq=None):
     ----------
     sample: numpy.ndarray
         Sample values.
-    over: int | str
-        The axis along which to compute the parameters.
+    over: str
+        The dimension along which to compute the distribution parameters.
+    **kwargs: dict[str,Any]
+        Keyword arguments forwarded to the distribution constructor.
     """
-    return dispatch(fit_gumbel, sample, over)
+    assert over in sample.dims
+    over_axis = sample.dims.index(over)
+    parameter_dims = [dim for dim in sample.dims if dim != over]
+    parameter_coords = {dim: values for dim, values in sample.coords.items() if dim in parameter_dims}
+    return array.fit_gumbel(sample.data, over=over_axis, dims=parameter_dims, coords=parameter_coords)
 
 
 def value_to_return_period(value, dist):
@@ -46,7 +51,13 @@ def value_to_return_period(value, dist):
         The return period of the input value, scaled with the frequency
         information of the distribution if attached.
     """
-    return dispatch(value_to_return_period, value, dist)
+    assert dist.dims is None or not (set(value.dims) & set(dist.dims))
+    return xarray_ufunc(
+        array.value_to_return_period,
+        value,
+        dist=dist,
+        xarray_ufunc_kwargs={"input_core_dims": [[]], "output_core_dims": [dist.dims]},
+    ).assign_coords(dist.coords)
 
 
 def return_period_to_value(return_period, dist):
@@ -59,10 +70,18 @@ def return_period_to_value(return_period, dist):
     return_period: array_like
         Input return period. Must be compatible with the frequency information
         of the distribution if attached.
+    freq: number | timedelta
+        Temporal frequency of the input dataUsed to scale return periods.
 
     Returns
     -------
     array_like
         Value with return period equal to the input return period.
     """
-    return dispatch(return_period_to_value, return_period, dist)
+    assert dist.dims is None or not (set(return_period.dims) & set(dist.dims))
+    return xarray_ufunc(
+        array.return_period_to_value,
+        return_period,
+        dist=dist,
+        xarray_ufunc_kwargs={"input_core_dims": [[]], "output_core_dims": [dist.dims]},
+    ).assign_coords(dist.coords)
