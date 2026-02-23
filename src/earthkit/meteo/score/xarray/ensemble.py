@@ -43,7 +43,7 @@ def spread(fcst: T, over: str | list[str], reference: T | None = None) -> T:
     over : str or list of str
         The dimension(s) over which to compute the spread.
     reference : xarray object, optional
-        The reference xarray to compare against. If not provided, the mean of the forecastover `over` is used.
+        The reference xarray to compare against. If not provided, the mean of the forecast over `over` is used.
 
     Returns
     -------
