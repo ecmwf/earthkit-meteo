@@ -62,7 +62,7 @@ def spread(fcst: T, over: str | list[str], reference: T | None = None) -> T:
 
 def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
     r"""
-    Calculates the quantile score of a forecast compared to a observations.
+    Calculates the quantile score of a forecast compared to a set of observations.
 
     .. warning:: Experimental API. This function may change or be removed without notice.
 
