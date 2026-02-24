@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -16,6 +16,24 @@ DAYS_PER_YEAR = 365.25
 
 
 def julian_day(date):
+    """Day of year as a fractional value.
+
+    Parameters
+    ----------
+    date : array-like
+        Input date.
+
+    Returns
+    -------
+    array-like
+        Number of days since January 1st of the same year, including
+        fractional day component based on the time of day.
+
+    Notes
+    -----
+    This is not the astronomical Julian Day Number. It is the day-of-year
+    (DOY) expressed as a floating-point value.
+    """
     if date.tzinfo is not None and date.tzinfo.utcoffset(date) is not None:
         year_start = datetime.datetime(date.year, 1, 1, tzinfo=date.tzinfo)
     else:
@@ -25,6 +43,25 @@ def julian_day(date):
 
 
 def solar_declination_angle(date):
+    """Compute solar declination and time correction.
+
+    Parameters
+    ----------
+    date : array-like
+        Input date.
+
+    Returns
+    -------
+    tuple of float
+        declination : float
+            Solar declination angle [degrees].
+        time_correction : float
+            Time correction factor [hour-degrees].
+
+    Notes
+    -----
+    Uses a trigonometric approximation based on the fractional year angle.
+    """
     angle = julian_day(date) / DAYS_PER_YEAR * np.pi * 2
 
     # declination in [degrees]

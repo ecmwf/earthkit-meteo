@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -13,12 +13,12 @@ from importlib import import_module
 from typing import TYPE_CHECKING, Any, TypeAlias, overload
 
 from earthkit.meteo.utils.decorators import _is_xarray
+from earthkit.meteo.utils.decorators import dispatch
 
 from . import array
 
 if TYPE_CHECKING:
     import datetime
-
     import xarray  # type: ignore[import]
 
 ArrayLike: TypeAlias = Any
@@ -39,8 +39,27 @@ def julian_day(date: "xarray.DataArray") -> "xarray.DataArray": ...
 @overload
 def julian_day(date: "datetime.datetime") -> float: ...
 def julian_day(date):
-    r = _dispatch_if_xarray("julian_day", date)
-    return r if r is not None else array.julian_day(date)
+    r"""Compute the Julian day (day of year as a fractional number).
+
+    Parameters
+    ----------
+    date: datetime.datetime | xarray.DataArray
+        Date/time. When ``date`` is an xarray.DataArray it is processed element-wise.
+
+    Returns
+    -------
+    float | xarray.DataArray
+        Day of year as a fractional number. January 1st at 00:00 is 0.0.
+
+    Implementations
+    ------------------------
+    :func:`julian_day` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.solar.xarray.julian_day` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.solar.array.julian_day` for array-like/scalar inputs
+
+    """
+    return dispatch(julian_day, date)
 
 
 @overload
@@ -48,8 +67,30 @@ def solar_declination_angle(date: "xarray.DataArray") -> tuple["xarray.DataArray
 @overload
 def solar_declination_angle(date: "datetime.datetime") -> tuple[float, float]: ...
 def solar_declination_angle(date):
-    r = _dispatch_if_xarray("solar_declination_angle", date)
-    return r if r is not None else array.solar_declination_angle(date)
+    r"""Compute the solar declination angle and time correction.
+
+    Parameters
+    ----------
+    date: datetime.datetime | xarray.DataArray
+        Date/time. When ``date`` is an xarray.DataArray it is processed element-wise.
+
+    Returns
+    -------
+    (float, float) | (xarray.DataArray, xarray.DataArray)
+        Tuple of
+
+        * solar declination angle (degrees)
+        * time correction (degrees)
+
+    Implementations
+    ------------------------
+    :func:`solar_declination_angle` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.solar.xarray.solar_declination_angle` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.solar.array.solar_declination_angle` for array-like/scalar inputs
+
+    """
+    return dispatch(solar_declination_angle, date)
 
 
 @overload
@@ -59,6 +100,34 @@ def cos_solar_zenith_angle(
 @overload
 def cos_solar_zenith_angle(date: "datetime.datetime", latitudes: ArrayLike, longitudes: ArrayLike): ...
 def cos_solar_zenith_angle(date, latitudes, longitudes):
+    r"""Compute the cosine of the solar zenith angle.
+
+    Parameters
+    ----------
+    date: datetime.datetime
+        Date/time (typically a scalar applying to all latitude/longitude points).
+    latitudes: array-like | xarray.DataArray
+        Latitude (degrees).
+    longitudes: array-like | xarray.DataArray
+        Longitude (degrees).
+
+    Returns
+    -------
+    array-like | xarray.DataArray
+        Cosine of the solar zenith angle (clipped to be non-negative).
+
+    Notes
+    -----
+    The result is clipped to the [0, 1] range by setting negative values to 0.
+
+    Implementations
+    ------------------------
+    :func:`cos_solar_zenith_angle` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle` when any input is xarray.DataArray
+    - :py:meth:`earthkit.meteo.solar.array.cos_solar_zenith_angle` otherwise
+
+    """
     r = _dispatch_if_xarray("cos_solar_zenith_angle", date, latitudes, longitudes)
     return r if r is not None else array.cos_solar_zenith_angle(date, latitudes, longitudes)
 
@@ -92,6 +161,37 @@ def cos_solar_zenith_angle_integrated(
     intervals_per_hour: int = 1,
     integration_order: int = 3,
 ):
+    r"""Compute the time-integrated cosine of the solar zenith angle.
+
+    Parameters
+    ----------
+    begin_date: datetime.datetime
+        Start of the integration interval.
+    end_date: datetime.datetime
+        End of the integration interval.
+    latitudes: array-like | xarray.DataArray
+        Latitude (degrees).
+    longitudes: array-like | xarray.DataArray
+        Longitude (degrees).
+    intervals_per_hour: int, optional
+        Number of sub-intervals per hour used in the numerical integration.
+    integration_order: int, optional
+        Order of the integration scheme.
+
+    Returns
+    -------
+    array-like | xarray.DataArray
+        Time-integrated cosine of the solar zenith angle.
+
+    Implementations
+    ------------------------
+    :func:`cos_solar_zenith_angle_integrated` calls one of the following implementations depending on the type
+    of the input arguments:
+
+    - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle_integrated` when any input is xarray.DataArray
+    - :py:meth:`earthkit.meteo.solar.array.cos_solar_zenith_angle_integrated` otherwise
+
+    """
     r = _dispatch_if_xarray(
         "cos_solar_zenith_angle_integrated",
         begin_date,
@@ -120,6 +220,26 @@ def incoming_solar_radiation(date: "xarray.DataArray") -> "xarray.DataArray": ..
 @overload
 def incoming_solar_radiation(date: "datetime.datetime") -> float: ...
 def incoming_solar_radiation(date):
+    r"""Compute the incoming solar radiation at the top of the atmosphere (TOA).
+
+    Parameters
+    ----------
+    date: datetime.datetime | xarray.DataArray
+        Date/time. When ``date`` is an xarray.DataArray it is processed element-wise.
+
+    Returns
+    -------
+    float | xarray.DataArray
+        Incoming solar radiation at TOA.
+
+    Implementations
+    ------------------------
+    :func:`incoming_solar_radiation` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.solar.xarray.incoming_solar_radiation` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.solar.array.incoming_solar_radiation` for array-like/scalar inputs
+
+    """
     r = _dispatch_if_xarray("incoming_solar_radiation", date)
     return r if r is not None else array.incoming_solar_radiation(date)
 
@@ -153,6 +273,37 @@ def toa_incident_solar_radiation(
     intervals_per_hour: int = 1,
     integration_order: int = 3,
 ):
+    r"""Compute the time-integrated incident solar radiation at the top of the atmosphere (TOA).
+
+    Parameters
+    ----------
+    begin_date: datetime.datetime
+        Start of the integration interval.
+    end_date: datetime.datetime
+        End of the integration interval.
+    latitudes: array-like | xarray.DataArray
+        Latitude (degrees).
+    longitudes: array-like | xarray.DataArray
+        Longitude (degrees).
+    intervals_per_hour: int, optional
+        Number of sub-intervals per hour used in the numerical integration.
+    integration_order: int, optional
+        Order of the integration scheme.
+
+    Returns
+    -------
+    array-like | xarray.DataArray
+        Time-integrated incident solar radiation at TOA.
+
+    Implementations
+    ------------------------
+    :func:`toa_incident_solar_radiation` calls one of the following implementations depending on the type
+    of the input arguments:
+
+    - :py:meth:`earthkit.meteo.solar.xarray.toa_incident_solar_radiation` when any input is xarray.DataArray
+    - :py:meth:`earthkit.meteo.solar.array.toa_incident_solar_radiation` otherwise
+
+    """
     r = _dispatch_if_xarray(
         "toa_incident_solar_radiation",
         begin_date,

@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -17,17 +17,67 @@ from .. import array
 
 
 def julian_day(date: xr.DataArray) -> xr.DataArray:
-    # Elementwise over `date` (typically a time coordinate/array).
-    # NOTE: if `date` is numpy.datetime64, the underlying array implementation
-    # must support that (or convert).
+    r"""Compute the Julian day (day of year as a fractional number).
+
+    Parameters
+    ----------
+    date: xarray.DataArray
+        Date/time. Computation is performed element-wise.
+
+    Returns
+    -------
+    xarray.DataArray
+        Day of year as a fractional number. January 1st at 00:00 is 0.0.
+
+    Notes
+    -----
+    If ``date`` uses a numpy datetime64 dtype, the underlying array implementation must be able to
+    handle that representation (or the values must be converted to ``datetime.datetime``).
+    """
     return xarray_ufunc(array.julian_day, date, xarray_ufunc_kwargs={"vectorize": True})
 
 
 def solar_declination_angle(date: xr.DataArray) -> tuple[xr.DataArray, xr.DataArray]:
+    r"""Compute the solar declination angle and time correction.
+
+    Parameters
+    ----------
+    date: xarray.DataArray
+        Date/time. Computation is performed element-wise.
+
+    Returns
+    -------
+    xarray.DataArray
+        Solar declination angle (degrees).
+    xarray.DataArray
+        Time correction (degrees).
+
+    """
     return xarray_ufunc(array.solar_declination_angle, date, xarray_ufunc_kwargs={"vectorize": True})
 
 
 def cos_solar_zenith_angle(date, latitudes: xr.DataArray, longitudes: xr.DataArray) -> xr.DataArray:
+    r"""Compute the cosine of the solar zenith angle.
+
+    Parameters
+    ----------
+    date: datetime.datetime
+        Date/time (typically a scalar applying to all latitude/longitude points).
+    latitudes: xarray.DataArray
+        Latitude (degrees).
+    longitudes: xarray.DataArray
+        Longitude (degrees).
+
+    Returns
+    -------
+    xarray.DataArray
+        Cosine of the solar zenith angle (clipped to be non-negative).
+
+    Notes
+    -----
+    The result is clipped to the [0, 1] range by setting negative values to 0.
+    """
+
     def _impl(lat, lon):
         return array.cos_solar_zenith_angle(date, lat, lon)
 
@@ -43,6 +93,30 @@ def cos_solar_zenith_angle_integrated(
     intervals_per_hour: int = 1,
     integration_order: int = 3,
 ) -> xr.DataArray:
+    r"""Compute the time-integrated cosine of the solar zenith angle.
+
+    Parameters
+    ----------
+    begin_date: datetime.datetime
+        Start of the integration interval.
+    end_date: datetime.datetime
+        End of the integration interval.
+    latitudes: xarray.DataArray
+        Latitude (degrees).
+    longitudes: xarray.DataArray
+        Longitude (degrees).
+    intervals_per_hour: int, optional
+        Number of sub-intervals per hour used in the numerical integration.
+    integration_order: int, optional
+        Order of the integration scheme.
+
+    Returns
+    -------
+    xarray.DataArray
+        Time-integrated cosine of the solar zenith angle.
+
+    """
+
     def _impl(lat, lon):
         return array.cos_solar_zenith_angle_integrated(
             begin_date,
@@ -57,6 +131,23 @@ def cos_solar_zenith_angle_integrated(
 
 
 def incoming_solar_radiation(date: xr.DataArray) -> xr.DataArray:
+    r"""Compute the incoming solar radiation at the top of the atmosphere (TOA).
+
+    Parameters
+    ----------
+    date: xarray.DataArray
+        Date/time. Computation is performed element-wise.
+
+    Returns
+    -------
+    xarray.DataArray
+        Incoming solar radiation at TOA.
+
+    Notes
+    -----
+    If ``date`` uses a numpy datetime64 dtype, the underlying array implementation must be able to
+    handle that representation (or the values must be converted to ``datetime.datetime``).
+    """
     return xarray_ufunc(array.incoming_solar_radiation, date, xarray_ufunc_kwargs={"vectorize": True})
 
 
@@ -69,6 +160,30 @@ def toa_incident_solar_radiation(
     intervals_per_hour: int = 1,
     integration_order: int = 3,
 ) -> xr.DataArray:
+    r"""Compute the time-integrated incident solar radiation at the top of the atmosphere (TOA).
+
+    Parameters
+    ----------
+    begin_date: datetime.datetime
+        Start of the integration interval.
+    end_date: datetime.datetime
+        End of the integration interval.
+    latitudes: xarray.DataArray
+        Latitude (degrees).
+    longitudes: xarray.DataArray
+        Longitude (degrees).
+    intervals_per_hour: int, optional
+        Number of sub-intervals per hour used in the numerical integration.
+    integration_order: int, optional
+        Order of the integration scheme.
+
+    Returns
+    -------
+    xarray.DataArray
+        Time-integrated incident solar radiation at TOA.
+
+    """
+
     def _impl(lat, lon):
         return array.toa_incident_solar_radiation(
             begin_date,
