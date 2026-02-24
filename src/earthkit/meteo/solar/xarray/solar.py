@@ -28,12 +28,6 @@ def julian_day(date: xr.DataArray) -> xr.DataArray:
     -------
     xarray.DataArray
         Day of year as a fractional number. January 1st at 00:00 is 0.0.
-
-    Notes
-    -----
-    Xarray typically stores time values as ``numpy.datetime64``. The underlying
-    array implementation must be able to handle that representation (or convert
-    to ``datetime.datetime``).
     """
     return xarray_ufunc(array.julian_day, date, xarray_ufunc_kwargs={"vectorize": True})
 
@@ -153,12 +147,6 @@ def incoming_solar_radiation(date: xr.DataArray) -> xr.DataArray:
     -------
     xarray.DataArray
         Incoming solar radiation at TOA.
-
-    Notes
-    -----
-    Xarray typically stores time values as ``numpy.datetime64``. The underlying
-    array implementation must be able to handle that representation (or convert
-    to ``datetime.datetime``).
     """
     return xarray_ufunc(array.incoming_solar_radiation, date, xarray_ufunc_kwargs={"vectorize": True})
 

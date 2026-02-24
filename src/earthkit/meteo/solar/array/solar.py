@@ -20,7 +20,7 @@ def _julian_day_scalar(d: datetime.datetime) -> float:
 
     Parameters
     ----------
-    d : datetime.datetime
+    d: datetime.datetime
         Input datetime.
 
     Returns
@@ -41,7 +41,7 @@ def julian_day(date) -> float:
 
     Parameters
     ----------
-    date : datetime.datetime, numpy.datetime64, or numpy.ndarray
+    date: datetime.datetime, numpy.datetime64, or numpy.ndarray
         Input date(s). May be a scalar or array of numpy.datetime64 or
         datetime.datetime objects.
 
@@ -80,7 +80,7 @@ def solar_declination_angle(date) -> tuple[float, float]:
 
     Parameters
     ----------
-    date : datetime.datetime, numpy.datetime64, or numpy.ndarray
+    date: datetime.datetime, numpy.datetime64, or numpy.ndarray
         Input date(s). May be scalar or array.
 
     Returns
@@ -105,6 +105,7 @@ def solar_declination_angle(date) -> tuple[float, float]:
     """
     angle = julian_day(date) / DAYS_PER_YEAR * np.pi * 2
 
+    # declination in [degrees]
     declination = (
         0.396372
         - 22.91327 * np.cos(angle)
@@ -114,7 +115,7 @@ def solar_declination_angle(date) -> tuple[float, float]:
         - 0.154527 * np.cos(3 * angle)
         + 0.084798 * np.sin(3 * angle)
     )
-
+    # time correction in [ h.degrees ]
     time_correction = (
         0.004297
         + 0.107029 * np.cos(angle)
@@ -138,44 +139,46 @@ def cos_solar_zenith_angle(
 
     Parameters
     ----------
-    date : datetime.datetime
-        Date and time of the observation.
-    latitudes : array-like
+    date: datetime.datetime
+        Date.
+    latitudes: array-like
         Latitude values in degrees.
-    longitudes : array-like
+    longitudes: array-like
         Longitude values in degrees.
 
     Returns
     -------
     array-like
         Cosine of the solar zenith angle. Negative values are clipped to 0.
+        [Hogan_and_Hirahara2015]_. See also:
+        http://answers.google.com/answers/threadview/id/782886.html
 
-    Notes
-    -----
-    Supports any array type compatible with the Python Array API standard,
-    including numpy, cupy, and torch tensors.
-
-    The result is clipped to ensure physically meaningful values.
     """
     xp = array_namespace(latitudes, longitudes)
     latitudes = xp.asarray(latitudes)
     longitudes = xp.asarray(longitudes)
     device = xp.device(latitudes)
 
+    # declination angle + time correction for solar angle
     declination, time_correction = solar_declination_angle(date)
 
     declination = xp.asarray(declination, device=device)
     time_correction = xp.asarray(time_correction, device=device)
 
+    # solar_declination_angle returns degrees
+    # TODO: deg2rad() is not part of the array API standard
     declination = xp.deg2rad(declination)
     latitudes = xp.deg2rad(latitudes)
 
     sindec_sinlat = xp.sin(declination) * xp.sin(latitudes)
     cosdec_coslat = xp.cos(declination) * xp.cos(latitudes)
 
+    # solar hour angle [h.deg]
+    # TODO: deg2rad() is not part of the array API standard
     solar_angle = xp.deg2rad((date.hour - 12) * 15 + longitudes + time_correction)
     zenith_angle = sindec_sinlat + cosdec_coslat * xp.cos(solar_angle)
 
+    # Clip negative values
     return xp.clip(zenith_angle, 0.0, None)
 
 
