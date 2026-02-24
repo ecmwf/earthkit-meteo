@@ -26,14 +26,16 @@ if TYPE_CHECKING:
     import numpy as np
     import xarray  # type: ignore[import]
 
-# NOTE: this must exist at runtime too (don’t put it under TYPE_CHECKING)
 DateLike: TypeAlias = "datetime.datetime | np.datetime64"
 
 ArrayLike: TypeAlias = Any
 
 
 def _dispatch_if_xarray(func_name: str, *args: Any, **kwargs: Any) -> Any | None:
-    """Dispatch to the xarray implementation if any positional argument is xarray."""
+    # Solar functions often take `date` as a scalar and lat/lon as xarray objects.
+    # The default dispatch() only checks the first argument, so it would incorrectly
+    # select the array backend and drop xarray metadata. This ensures we use the
+    # xarray implementation whenever any argument is xarray.
     if any(_is_xarray(a) for a in args):
         module = import_module(__name__.rsplit(".", 1)[0] + ".xarray")
         return getattr(module, func_name)(*args, **kwargs)
@@ -63,10 +65,10 @@ def julian_day(date):
 
     - :py:meth:`earthkit.meteo.solar.xarray.julian_day` for xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.julian_day` for scalar/array inputs
-      (including ``numpy.datetime64``)
 
     """
-    return dispatch(julian_day, date)
+    r = dispatch(julian_day, date)
+    return r if r is not None else array.julian_day(date)
 
 
 @overload
@@ -95,10 +97,10 @@ def solar_declination_angle(date):
 
     - :py:meth:`earthkit.meteo.solar.xarray.solar_declination_angle` for xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.solar_declination_angle` for scalar/array inputs
-      (including ``numpy.datetime64``)
 
     """
-    return dispatch(solar_declination_angle, date)
+    r = dispatch(solar_declination_angle, date)
+    return r if r is not None else array.solar_declination_angle(date)
 
 
 @overload
