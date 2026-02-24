@@ -199,3 +199,23 @@ class TestWithLongHeatwaveSyntheticDMT:
         assert exhf.name == "exhf"
         assert exhf.attrs["long_name"] == "Excess heat factor"
         # assert exhf.attrs["units"] == dmt.attrs["units"] + "2"
+
+
+def test_heatwave_severity_index_with_given_threshold():
+    da = xr.DataArray([[0.0, 1.0, 3.0, 4.0], [1.0, 2.0, 1.0, 0.0]], dims=["foo", "time"])
+    tr = xr.DataArray([2.5, 2.0], dims=["foo"])
+    hsi = excess_heat.heatwave_severity_index(da, threshold=tr)
+    assert hsi.name == "hsi"
+    assert hsi.attrs["long_name"] == "Heatwave severity index"
+    assert "units" not in hsi.attrs or hsi.attrs["units"] == "1"
+    xr.testing.assert_allclose(
+        hsi, xr.DataArray([[0.0, 0.4, 1.2, 1.6], [0.5, 1.0, 0.5, 0.0]], dims=["foo", "time"])
+    )
+
+
+def test_heatwave_severity_index_with_automatic_threshold():
+    da = xr.DataArray([[0.0, 1.0, 4.0, 5.0, 2.0], [1.0, 2.0, 1.0, 0.0, 3.0]], dims=["foo", "time"])
+    hsi = excess_heat.heatwave_severity_index(da, threshold=("quantile", 0.75))
+    xr.testing.assert_allclose(
+        hsi, xr.DataArray([[0.0, 0.25, 1.0, 1.25, 0.5], [0.5, 1.0, 0.5, 0.0, 1.5]], dims=["foo", "time"])
+    )

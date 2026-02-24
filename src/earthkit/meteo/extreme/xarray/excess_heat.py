@@ -9,7 +9,6 @@
 import functools
 import numbers
 
-import earthkit.transforms._tools as _ekt_tools
 import earthkit.transforms.temporal
 import numpy as np
 import xarray as xr
@@ -39,6 +38,12 @@ def _rolling_mean(da, n, shift_days=0):
     )
 
 
+def _compute_threshold_from_spec(da, spec):
+    if spec[0] == "quantile":
+        return earthkit.transforms.temporal.reduce(da, how="quantile", q=spec[1]).drop_vars("quantile")
+    raise NotImplementedError
+
+
 __DMT_TIME_SHIFT_COORD = "__daily_mean_temperature_time_shift"
 
 
@@ -62,7 +67,7 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
 
     Assume that the time coordinate of the data is given in UTC and we want to
     define the day from 10:00 to 10:00 Atlantic Standard Time (UTC -4 hours),
-    then we need to call
+    then we need to call::
 
         daily_mean_temperature(..., day_start=10, time_shift=-4)
 
@@ -71,7 +76,7 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
     value is different to match their use as outlined in the text above. Set
     `day_start` to zero and integrate the start offset into `time_shift` if
     you prefer to specify only a single offset for both settings. The above
-    call is equivalent to
+    call is equivalent to::
 
         daily_mean_temperature(..., day_start=0, time_shift=-14)
 
@@ -144,8 +149,8 @@ def significance_index(dmt, threshold=("quantile", 0.95), ndays=3, time_dim=None
     ----------
     dmt : xr.DataArray
         Daily mean temperature.
-    threshold : number
-        TODO
+    threshold : number | TODO
+        Significance threshold.
     ndays : number
         Length of evaluation time window.
     time_dim : None | str
@@ -156,16 +161,9 @@ def significance_index(dmt, threshold=("quantile", 0.95), ndays=3, time_dim=None
     xr.DataArray
         Significance index.
     """
-    # Time coordinate detection compatible with earthkit.transforms
-    if time_dim is None:
-        time_dim = _ekt_tools.get_dim_key(dmt, "t", raise_error=True)
     # Compute threshold as quantile
     if isinstance(threshold, tuple):
-        assert len(threshold) == 2
-        if threshold[0] == "quantile":
-            threshold = dmt.quantile(threshold[1], dim=time_dim)
-        else:
-            raise NotImplementedError
+        threshold = _compute_threshold_from_spec(dmt, threshold)
     # TODO: also support day-of-year climatology to detect warm spells
     current = _rolling_mean(dmt, ndays, shift_days=(1 - ndays))
     return current - threshold
@@ -210,7 +208,24 @@ def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=True):
     return ehi_sig * np.maximum(1.0, ehi_accl)
 
 
+@_with_metadata("hsi", long_name="Heatwave severity index", units="1")
+def heatwave_severity_index(exhf, threshold=("quantile", 0.85)):
+    """Heatwave severity index
+
+    Parameters
+    ----------
+    exhf : xarray.DataArray
+        Excess heat factor.
+    threshold : number | xarray.DataArray | TODO
+        Excess heat factor threshold.
+    """
+    if isinstance(threshold, tuple):
+        threshold = _compute_threshold_from_spec(exhf, threshold)
+    return exhf / threshold
+
+
 # https://codes.ecmwf.int/grib/param-db/261025
 @_with_metadata("excf", long_name="Excess cold factor")
 def excess_cold_factor(ehi_sig, ehi_accl, nonnegative=True):
+    """Excess cold factor"""
     return NotImplementedError  # TODO

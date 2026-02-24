@@ -10,4 +10,5 @@ from .xarray.excess_heat import acclimatisation_index  # noqa
 from .xarray.excess_heat import daily_mean_temperature  # noqa
 from .xarray.excess_heat import excess_cold_factor  # noqa
 from .xarray.excess_heat import excess_heat_factor  # noqa
+from .xarray.excess_heat import heatwave_severity_index  # noqa
 from .xarray.excess_heat import significance_index  # noqa
