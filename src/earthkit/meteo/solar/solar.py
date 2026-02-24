@@ -19,7 +19,10 @@ from . import array
 
 if TYPE_CHECKING:
     import datetime
+    import numpy as np
     import xarray  # type: ignore[import]
+
+DateLike: TypeAlias = datetime.datetime | np.datetime64
 
 ArrayLike: TypeAlias = Any
 
@@ -37,7 +40,7 @@ def _dispatch_if_xarray(func_name: str, *args: Any, **kwargs: Any) -> Any | None
 @overload
 def julian_day(date: "xarray.DataArray") -> "xarray.DataArray": ...
 @overload
-def julian_day(date: "datetime.datetime") -> float: ...
+def julian_day(date: DateLike) -> float: ...
 def julian_day(date):
     r"""Compute the Julian day (day of year as a fractional number).
 
@@ -65,7 +68,7 @@ def julian_day(date):
 @overload
 def solar_declination_angle(date: "xarray.DataArray") -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
 @overload
-def solar_declination_angle(date: "datetime.datetime") -> tuple[float, float]: ...
+def solar_declination_angle(date: DateLike) -> tuple[float, float]: ...
 def solar_declination_angle(date):
     r"""Compute the solar declination angle and time correction.
 
@@ -218,7 +221,7 @@ def cos_solar_zenith_angle_integrated(
 @overload
 def incoming_solar_radiation(date: "xarray.DataArray") -> "xarray.DataArray": ...
 @overload
-def incoming_solar_radiation(date: "datetime.datetime") -> float: ...
+def incoming_solar_radiation(date: DateLike) -> float: ...
 def incoming_solar_radiation(date):
     r"""Compute the incoming solar radiation at the top of the atmosphere (TOA).
 
