@@ -167,7 +167,24 @@ def test_daily_mean_temperature_combined_day_start_and_time_shift_args():
     )
 
 
-class TestWithLongHeatwaveSyntheticDMT:
+def test_heatwave_severity_with_given_threshold():
+    da = xr.DataArray([[0.0, 1.0, 3.0, 4.0], [1.0, 2.0, 1.0, 0.0]], dims=["foo", "time"])
+    tr = xr.DataArray([2.5, 2.0], dims=["foo"])
+    hsev = excess_heat.heatwave_severity(da, threshold=tr)
+    xr.testing.assert_allclose(
+        hsev, xr.DataArray([[0.0, 0.4, 1.2, 1.6], [0.5, 1.0, 0.5, 0.0]], dims=["foo", "time"])
+    )
+
+
+def test_heatwave_severity_with_automatic_threshold():
+    da = xr.DataArray([[0.0, 1.0, 4.0, 5.0, 2.0], [1.0, 2.0, 1.0, 0.0, 3.0]], dims=["foo", "time"])
+    hsi = excess_heat.heatwave_severity(da, threshold=("quantile", 0.75))
+    xr.testing.assert_allclose(
+        hsi, xr.DataArray([[0.0, 0.25, 1.0, 1.25, 0.5], [0.5, 1.0, 0.5, 0.0, 1.5]], dims=["foo", "time"])
+    )
+
+
+class TestMetadataWithLongHeatwaveSyntheticDMT:
 
     @pytest.fixture
     def dmt(self):
@@ -178,44 +195,38 @@ class TestWithLongHeatwaveSyntheticDMT:
             dmt, coords={"valid_time": time}, dims=["valid_time"], attrs={"units": "degree_C"}
         )
 
-    threshold = 30.0
+    @pytest.fixture
+    def ehi_sig(self, dmt):
+        return excess_heat.significance_index(dmt)
 
-    def test_significance_index_output_metadata(self, dmt):
-        ehi_sig = excess_heat.significance_index(dmt, threshold=self.threshold)
+    @pytest.fixture
+    def ehi_accl(self, dmt):
+        return excess_heat.acclimatisation_index(dmt)
+
+    @pytest.fixture
+    def exhf(self, ehi_sig, ehi_accl):
+        return excess_heat.excess_heat_factor(ehi_sig, ehi_accl)
+
+    @pytest.fixture
+    def hsev(self, exhf):
+        return excess_heat.heatwave_severity(exhf, threshold=900.0)
+
+    def test_significance_index_output_metadata(self, ehi_sig):
         assert ehi_sig.name == "ehi_sig"
         assert ehi_sig.attrs["long_name"] == "Significance index"
-        # assert ehi_sig.attrs["units"] == dmt.attrs["units"]
+        # assert ehi_sig.attrs["units"] == "degree_C"
 
-    def test_acclimatisation_index_output_metadata(self, dmt):
-        ehi_accl = excess_heat.acclimatisation_index(dmt)
+    def test_acclimatisation_index_output_metadata(self, ehi_accl):
         assert ehi_accl.name == "ehi_accl"
         assert ehi_accl.attrs["long_name"] == "Acclimatisation index"
-        # assert ehi_accl.attrs["units"] == dmt.attrs["units"]
+        # assert ehi_accl.attrs["units"] == "degree_C"
 
-    def test_excess_heat_factor_output_metadata(self, dmt):
-        ehi_sig = excess_heat.significance_index(dmt, threshold=self.threshold)
-        ehi_accl = excess_heat.acclimatisation_index(dmt)
-        exhf = excess_heat.excess_heat_factor(ehi_sig, ehi_accl)
+    def test_excess_heat_factor_output_metadata(self, exhf):
         assert exhf.name == "exhf"
         assert exhf.attrs["long_name"] == "Excess heat factor"
-        # assert exhf.attrs["units"] == dmt.attrs["units"] + "2"
+        # assert exhf.attrs["units"] == "degree_C2"
 
-
-def test_heatwave_severity_index_with_given_threshold():
-    da = xr.DataArray([[0.0, 1.0, 3.0, 4.0], [1.0, 2.0, 1.0, 0.0]], dims=["foo", "time"])
-    tr = xr.DataArray([2.5, 2.0], dims=["foo"])
-    hsi = excess_heat.heatwave_severity_index(da, threshold=tr)
-    assert hsi.name == "hsi"
-    assert hsi.attrs["long_name"] == "Heatwave severity index"
-    assert "units" not in hsi.attrs or hsi.attrs["units"] == "1"
-    xr.testing.assert_allclose(
-        hsi, xr.DataArray([[0.0, 0.4, 1.2, 1.6], [0.5, 1.0, 0.5, 0.0]], dims=["foo", "time"])
-    )
-
-
-def test_heatwave_severity_index_with_automatic_threshold():
-    da = xr.DataArray([[0.0, 1.0, 4.0, 5.0, 2.0], [1.0, 2.0, 1.0, 0.0, 3.0]], dims=["foo", "time"])
-    hsi = excess_heat.heatwave_severity_index(da, threshold=("quantile", 0.75))
-    xr.testing.assert_allclose(
-        hsi, xr.DataArray([[0.0, 0.25, 1.0, 1.25, 0.5], [0.5, 1.0, 0.5, 0.0, 1.5]], dims=["foo", "time"])
-    )
+    def test_excess_heatwave_severity_metadata(self, hsev):
+        assert hsev.name == "hsev"
+        assert hsev.attrs["long_name"] == "Heatwave severity"
+        assert "units" not in hsev.attrs or hsev.attrs["units"] == "1"

@@ -9,6 +9,7 @@
 import functools
 import numbers
 
+import earthkit.transforms.climatology
 import earthkit.transforms.temporal
 import numpy as np
 import xarray as xr
@@ -164,8 +165,12 @@ def significance_index(dmt, threshold=("quantile", 0.95), ndays=3, time_dim=None
     # Compute threshold as quantile
     if isinstance(threshold, tuple):
         threshold = _compute_threshold_from_spec(dmt, threshold)
-    # TODO: also support day-of-year climatology to detect warm spells
     current = _rolling_mean(dmt, ndays, shift_days=(1 - ndays))
+    # TODO: earthkit-transforms also supports weekly and monthly climatologies,
+    #       make them work too, ideally without hardcoding coordinate names
+    if isinstance(threshold, xr.DataArray) and "dayofyear" in threshold.coords:
+        # Support warm/cold spells with threshold as a function of day-of-year
+        return earthkit.transforms.climatology.anomaly(current, threshold)
     return current - threshold
 
 
@@ -208,8 +213,8 @@ def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=True):
     return ehi_sig * np.maximum(1.0, ehi_accl)
 
 
-@_with_metadata("hsi", long_name="Heatwave severity index", units="1")
-def heatwave_severity_index(exhf, threshold=("quantile", 0.85)):
+@_with_metadata("hsev", long_name="Heatwave severity", units="1")
+def heatwave_severity(exhf, threshold=("quantile", 0.85)):
     """Heatwave severity index
 
     Parameters
