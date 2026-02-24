@@ -10,7 +10,10 @@
 from __future__ import annotations
 
 from importlib import import_module
-from typing import TYPE_CHECKING, Any, TypeAlias, overload
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import TypeAlias
+from typing import overload
 
 from earthkit.meteo.utils.decorators import _is_xarray
 from earthkit.meteo.utils.decorators import dispatch
@@ -19,18 +22,18 @@ from . import array
 
 if TYPE_CHECKING:
     import datetime
+
     import numpy as np
     import xarray  # type: ignore[import]
 
-DateLike: TypeAlias = datetime.datetime | np.datetime64
+# NOTE: this must exist at runtime too (don’t put it under TYPE_CHECKING)
+DateLike: TypeAlias = "datetime.datetime | np.datetime64"
 
 ArrayLike: TypeAlias = Any
 
 
 def _dispatch_if_xarray(func_name: str, *args: Any, **kwargs: Any) -> Any | None:
-    # Solar functions often take `date` as the first argument (scalar datetime),
-    # while lat/lon are xarray objects. The default `dispatch()` only checks args[0],
-    # so we do a custom dispatch: if *any* positional arg is xarray, use xarray impl.
+    """Dispatch to the xarray implementation if any positional argument is xarray."""
     if any(_is_xarray(a) for a in args):
         module = import_module(__name__.rsplit(".", 1)[0] + ".xarray")
         return getattr(module, func_name)(*args, **kwargs)
@@ -46,7 +49,7 @@ def julian_day(date):
 
     Parameters
     ----------
-    date: datetime.datetime | xarray.DataArray
+    date: datetime.datetime | numpy.datetime64 | xarray.DataArray
         Date/time. When ``date`` is an xarray.DataArray it is processed element-wise.
 
     Returns
@@ -59,7 +62,8 @@ def julian_day(date):
     :func:`julian_day` calls one of the following implementations depending on the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.solar.xarray.julian_day` for xarray.DataArray
-    - :py:meth:`earthkit.meteo.solar.array.julian_day` for array-like/scalar inputs
+    - :py:meth:`earthkit.meteo.solar.array.julian_day` for scalar/array inputs
+      (including ``numpy.datetime64``)
 
     """
     return dispatch(julian_day, date)
@@ -74,8 +78,8 @@ def solar_declination_angle(date):
 
     Parameters
     ----------
-    date: datetime.datetime | xarray.DataArray
-        Date/time. When ``date`` is an xarray.DataArray it is processed element-wise.
+    date: datetime.datetime | numpy.datetime64 | xarray.DataArray
+        Date/time.
 
     Returns
     -------
@@ -90,7 +94,8 @@ def solar_declination_angle(date):
     :func:`solar_declination_angle` calls one of the following implementations depending on the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.solar.xarray.solar_declination_angle` for xarray.DataArray
-    - :py:meth:`earthkit.meteo.solar.array.solar_declination_angle` for array-like/scalar inputs
+    - :py:meth:`earthkit.meteo.solar.array.solar_declination_angle` for scalar/array inputs
+      (including ``numpy.datetime64``)
 
     """
     return dispatch(solar_declination_angle, date)
@@ -98,16 +103,16 @@ def solar_declination_angle(date):
 
 @overload
 def cos_solar_zenith_angle(
-    date: "datetime.datetime", latitudes: "xarray.DataArray", longitudes: "xarray.DataArray"
+    date: DateLike, latitudes: "xarray.DataArray", longitudes: "xarray.DataArray"
 ) -> "xarray.DataArray": ...
 @overload
-def cos_solar_zenith_angle(date: "datetime.datetime", latitudes: ArrayLike, longitudes: ArrayLike): ...
+def cos_solar_zenith_angle(date: DateLike, latitudes: ArrayLike, longitudes: ArrayLike): ...
 def cos_solar_zenith_angle(date, latitudes, longitudes):
     r"""Compute the cosine of the solar zenith angle.
 
     Parameters
     ----------
-    date: datetime.datetime
+    date: datetime.datetime | numpy.datetime64
         Date/time (typically a scalar applying to all latitude/longitude points).
     latitudes: array-like | xarray.DataArray
         Latitude (degrees).
@@ -121,7 +126,7 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
 
     Notes
     -----
-    The result is clipped to the [0, 1] range by setting negative values to 0.
+    The result is clipped by setting negative values to 0.
 
     Implementations
     ------------------------
@@ -137,8 +142,8 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
 
 @overload
 def cos_solar_zenith_angle_integrated(
-    begin_date: "datetime.datetime",
-    end_date: "datetime.datetime",
+    begin_date: DateLike,
+    end_date: DateLike,
     latitudes: "xarray.DataArray",
     longitudes: "xarray.DataArray",
     *,
@@ -147,8 +152,8 @@ def cos_solar_zenith_angle_integrated(
 ) -> "xarray.DataArray": ...
 @overload
 def cos_solar_zenith_angle_integrated(
-    begin_date: "datetime.datetime",
-    end_date: "datetime.datetime",
+    begin_date: DateLike,
+    end_date: DateLike,
     latitudes: ArrayLike,
     longitudes: ArrayLike,
     *,
@@ -168,9 +173,9 @@ def cos_solar_zenith_angle_integrated(
 
     Parameters
     ----------
-    begin_date: datetime.datetime
+    begin_date: datetime.datetime | numpy.datetime64
         Start of the integration interval.
-    end_date: datetime.datetime
+    end_date: datetime.datetime | numpy.datetime64
         End of the integration interval.
     latitudes: array-like | xarray.DataArray
         Latitude (degrees).
@@ -227,8 +232,8 @@ def incoming_solar_radiation(date):
 
     Parameters
     ----------
-    date: datetime.datetime | xarray.DataArray
-        Date/time. When ``date`` is an xarray.DataArray it is processed element-wise.
+    date: datetime.datetime | numpy.datetime64 | xarray.DataArray
+        Date/time.
 
     Returns
     -------
@@ -240,17 +245,17 @@ def incoming_solar_radiation(date):
     :func:`incoming_solar_radiation` calls one of the following implementations depending on the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.solar.xarray.incoming_solar_radiation` for xarray.DataArray
-    - :py:meth:`earthkit.meteo.solar.array.incoming_solar_radiation` for array-like/scalar inputs
+    - :py:meth:`earthkit.meteo.solar.array.incoming_solar_radiation` for scalar/array inputs
+      (including ``numpy.datetime64``)
 
     """
-    r = _dispatch_if_xarray("incoming_solar_radiation", date)
-    return r if r is not None else array.incoming_solar_radiation(date)
+    return dispatch(incoming_solar_radiation, date)
 
 
 @overload
 def toa_incident_solar_radiation(
-    begin_date: "datetime.datetime",
-    end_date: "datetime.datetime",
+    begin_date: DateLike,
+    end_date: DateLike,
     latitudes: "xarray.DataArray",
     longitudes: "xarray.DataArray",
     *,
@@ -259,8 +264,8 @@ def toa_incident_solar_radiation(
 ) -> "xarray.DataArray": ...
 @overload
 def toa_incident_solar_radiation(
-    begin_date: "datetime.datetime",
-    end_date: "datetime.datetime",
+    begin_date: DateLike,
+    end_date: DateLike,
     latitudes: ArrayLike,
     longitudes: ArrayLike,
     *,
@@ -280,9 +285,9 @@ def toa_incident_solar_radiation(
 
     Parameters
     ----------
-    begin_date: datetime.datetime
+    begin_date: datetime.datetime | numpy.datetime64
         Start of the integration interval.
-    end_date: datetime.datetime
+    end_date: datetime.datetime | numpy.datetime64
         End of the integration interval.
     latitudes: array-like | xarray.DataArray
         Latitude (degrees).

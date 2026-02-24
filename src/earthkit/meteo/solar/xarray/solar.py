@@ -31,8 +31,9 @@ def julian_day(date: xr.DataArray) -> xr.DataArray:
 
     Notes
     -----
-    If ``date`` uses a numpy datetime64 dtype, the underlying array implementation must be able to
-    handle that representation (or the values must be converted to ``datetime.datetime``).
+    Xarray typically stores time values as ``numpy.datetime64``. The underlying
+    array implementation must be able to handle that representation (or convert
+    to ``datetime.datetime``).
     """
     return xarray_ufunc(array.julian_day, date, xarray_ufunc_kwargs={"vectorize": True})
 
@@ -52,8 +53,19 @@ def solar_declination_angle(date: xr.DataArray) -> tuple[xr.DataArray, xr.DataAr
     xarray.DataArray
         Time correction (degrees).
 
+    Notes
+    -----
+    This function returns two outputs. We explicitly provide ``output_dtypes`` to
+    ensure xarray correctly allocates the outputs when vectorizing.
     """
-    return xarray_ufunc(array.solar_declination_angle, date, xarray_ufunc_kwargs={"vectorize": True})
+    return xarray_ufunc(
+        array.solar_declination_angle,
+        date,
+        xarray_ufunc_kwargs={
+            "vectorize": True,
+            "output_dtypes": [float, float],
+        },
+    )
 
 
 def cos_solar_zenith_angle(date, latitudes: xr.DataArray, longitudes: xr.DataArray) -> xr.DataArray:
@@ -114,7 +126,6 @@ def cos_solar_zenith_angle_integrated(
     -------
     xarray.DataArray
         Time-integrated cosine of the solar zenith angle.
-
     """
 
     def _impl(lat, lon):
@@ -145,8 +156,9 @@ def incoming_solar_radiation(date: xr.DataArray) -> xr.DataArray:
 
     Notes
     -----
-    If ``date`` uses a numpy datetime64 dtype, the underlying array implementation must be able to
-    handle that representation (or the values must be converted to ``datetime.datetime``).
+    Xarray typically stores time values as ``numpy.datetime64``. The underlying
+    array implementation must be able to handle that representation (or convert
+    to ``datetime.datetime``).
     """
     return xarray_ufunc(array.incoming_solar_radiation, date, xarray_ufunc_kwargs={"vectorize": True})
 
@@ -181,7 +193,6 @@ def toa_incident_solar_radiation(
     -------
     xarray.DataArray
         Time-integrated incident solar radiation at TOA.
-
     """
 
     def _impl(lat, lon):
