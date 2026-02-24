@@ -10,9 +10,11 @@ from abc import ABCMeta
 from abc import abstractmethod
 from functools import wraps
 from importlib import import_module
+from inspect import signature
 from typing import Any
 
 import xarray as xr
+from earthkit.utils.array import array_namespace
 
 
 def _is_xarray(obj: Any) -> bool:
@@ -78,30 +80,75 @@ class FieldListDispatcher(DataDispatcher):
         return getattr(module, func)(*args, **kwargs)
 
 
-_DISPATCHERS = [XArrayDispatcher(), FieldListDispatcher()]
+class ArrayDispatcher(DataDispatcher):
+    @staticmethod
+    def match(obj: Any) -> bool:
+        xp = array_namespace(obj)
+        try:
+            xp.asarray(obj)
+            return True
+        except Exception:
+            return False
+
+    def dispatch(self, func, module, *args, **kwargs):
+        module = import_module(module + ".array")
+        return getattr(module, func)(*args, **kwargs)
 
 
-def dispatch(func, *args, **kwargs):
-    _module = ".".join(func.__module__.split(".")[:-1])
-    # print(_module)
-    for dispatcher in _DISPATCHERS:
-        if dispatcher.match(args[0]):
-            # TODO: check if the function exists in the module
-            return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
+_DISPATCHERS = [XArrayDispatcher(), FieldListDispatcher(), ArrayDispatcher()]
 
 
-# def dispatch(func):
-#     _module = ".".join(func.__module__.split(".")[:-1])
-#     # print(_module)
+def dispatch(func, match=0, xarray=True, fieldlist=True, array=False):
+    """ "
+    Decorator to dispatch function calls based on input data types.
+    The dispatch will attempt to route the call to the appropriate implementation based on the type of the specified argument.
+    The implementations are assumed to live in submodules named after the data type (e.g., .xarray, .fieldlist, .array) with the same function name as the toplevel function.
 
-#     @wraps(func)
-#     def inner(*args, **kwargs):
-#         for dispatcher in _DISPATCHERS:
-#             if dispatcher.match(args[0]):
-#                 # TODO: check if the function exists in the module
-#                 return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
+    Parameters
+    ----------
+    func: function
+        The toplevel function to be decorated.
+    match: int or str
+        The index or name of the argument to check for dispatching. Default is 0 (the first argument).
+    xarray: bool
+        Whether to include the xarray dispatcher. Default is True.
+    fieldlist: bool
+        Whether to include the FieldList dispatcher. Default is True.
+    array: bool
+        Whether to include the array dispatcher. Default is False.
 
-#     return inner
+    Returns
+    -------
+    function
+        The decorated function with dispatching capability.
+    """
+    DISPATCHERS = []
+    if xarray:
+        DISPATCHERS.append(_DISPATCHERS[0])
+    if fieldlist:
+        DISPATCHERS.append(_DISPATCHERS[1])
+    if array:
+        DISPATCHERS.append(_DISPATCHERS[2])
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        sig = signature(func)
+        bound_args = sig.bind(*args, **kwargs)
+        bound_args.apply_defaults()
+        if isinstance(match, int):
+            param_name = list(sig.parameters)[match]
+        else:
+            param_name = match
+
+        obj_to_check = bound_args.arguments[param_name]
+
+        _module = ".".join(func.__module__.split(".")[:-1])
+        for dispatcher in DISPATCHERS:
+            if dispatcher.match(obj_to_check):
+                return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
+        raise TypeError(f"No matching dispatcher found for the input type: {type(obj_to_check)}")
+
+    return wrapper
 
 
 def _infer_output_count(func) -> int:
