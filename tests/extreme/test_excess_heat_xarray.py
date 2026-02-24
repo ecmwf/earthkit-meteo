@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from earthkit.meteo.extreme import excess_heat
+from earthkit.meteo.extreme.xarray import excess_heat
 
 
 class TestDailyMeanTemeratureArgDayStart:
