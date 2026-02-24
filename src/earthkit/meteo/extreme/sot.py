@@ -69,8 +69,7 @@ def sot(
     - :py:meth:`earthkit.meteo.extreme.xarray.sot` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.sot` for array-like
     """
-    res = dispatch(sot, clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
-    return res
+    return dispatch(sot)(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
 
 
 @overload
@@ -125,5 +124,4 @@ def sot_unsorted(
     - :py:meth:`earthkit.meteo.extreme.xarray.sot_unsorted` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.sot_unsorted` for array-like
     """
-    res = dispatch(sot_unsorted, clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
-    return res
+    return dispatch(sot_unsorted)(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)

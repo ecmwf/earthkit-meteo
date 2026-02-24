@@ -84,8 +84,7 @@ def cpf(
     - :py:meth:`earthkit.meteo.extreme.xarray.cpf` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.cpf` for array-like
     """
-    res = dispatch(
-        cpf,
+    return dispatch(cpf)(
         clim,
         ens,
         sort_clim=sort_clim,
@@ -96,4 +95,3 @@ def cpf(
         clim_dim=clim_dim,
         ens_dim=ens_dim,
     )
-    return res

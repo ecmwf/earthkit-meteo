@@ -89,7 +89,7 @@ def speed(
     - :py:meth:`earthkit.meteo.wind.fieldlist.speed` for FieldList
 
     """
-    return dispatch(speed, u, v)
+    return dispatch(speed)(u, v)
 
 
 @overload
@@ -161,7 +161,7 @@ def direction(
     - :py:meth:`earthkit.meteo.wind.fieldlist.direction` for FieldList
 
     """
-    return dispatch(direction, u, v, convention=convention, to_positive=to_positive)
+    return dispatch(direction)(u, v, convention=convention, to_positive=to_positive)
 
 
 @overload
@@ -216,7 +216,7 @@ def xy_to_polar(
 
 
     """
-    return dispatch(xy_to_polar, x, y, convention=convention)
+    return dispatch(xy_to_polar)(x, y, convention=convention)
 
 
 @overload
@@ -277,7 +277,7 @@ def polar_to_xy(
     - :py:meth:`earthkit.meteo.wind.fieldlist.polar_to_xy` for FieldList
 
     """
-    return dispatch(polar_to_xy, magnitude, direction, convention=convention)
+    return dispatch(polar_to_xy)(magnitude, direction, convention=convention)
 
 
 @overload
@@ -344,7 +344,7 @@ def w_from_omega(
     - :py:meth:`earthkit.meteo.wind.fieldlist.w_from_omega` for FieldList
 
     """
-    return dispatch(w_from_omega, omega, t, p)
+    return dispatch(w_from_omega)(omega, t, p)
 
 
 @overload
@@ -387,4 +387,4 @@ def coriolis(lat: "xarray.DataArray" | "FieldList") -> "xarray.DataArray" | "Fie
     - :py:meth:`earthkit.meteo.wind.fieldlist.coriolis` for FieldList
 
     """
-    return dispatch(coriolis, lat)
+    return dispatch(coriolis)(lat)

@@ -63,5 +63,4 @@ def efi(
     - :py:meth:`earthkit.meteo.extreme.xarray.efi` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.efi` for array-like
     """
-    res = dispatch(efi, clim, ens, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
-    return res
+    return dispatch(efi)(clim, ens, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
