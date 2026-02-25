@@ -635,8 +635,8 @@ def pearson_correlation(
 
 
 def kge(
-    fcst: T,
-    obs: T,
+    fcst: xr.DataArray,
+    obs: xr.DataArray,
     over: str | list[str],
     method: Literal["original", "modified"] = "modified",
     scaling_factors: Optional[Union[list[float], np.ndarray]] = None,
