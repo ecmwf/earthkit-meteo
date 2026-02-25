@@ -434,6 +434,7 @@ def standard_deviation_of_error(
     .. math::
 
         m_e = \frac{\sum_{i=1}^N (f_i - o_i) w_i}{\sum_{i=1}^N w_i}
+
     where:
 
     - :math:`f_i` is the forecast,

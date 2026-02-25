@@ -1,0 +1,76 @@
+# (C) Copyright 2025- ECMWF and individual contributors.
+
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
+
+
+def project(field, patterns, weights, **patterns_extra_coords):
+    """Project onto the given regime patterns.
+
+    Parameters
+    ----------
+    field : array_like
+        Input field(s) to project. The patterns are projected onto the trailing
+        dimensions of the input fields.
+    patterns : earthkit.meteo.regimes.Patterns
+        Patterns to project on.
+    weights : array_like
+        Weights for the summation in the projection. Weights are normalised
+        before application so the sum of weights over the domain equals 1. Must
+        have shape of the patterns.
+    **patterns_coords : dict[str,Any], optional
+        Keyword arguments for the pattern generation. E.g., a sequence of
+        dates for date-modulated patterns. Must have the shape of `field`
+        without the trailing dimensions onto which the patterns are projected.
+
+    Returns
+    -------
+    dict[str,array_like]
+        Results of the projection. One item per pattern label, output fields
+        have same shape as input field except for the dimensions reduced during
+        the projection (i.e., the spatial dimensions of the patterns are missing
+        on the right).
+    """
+    ndim_field = len(patterns.shape)
+    if field.shape[-ndim_field:] != patterns.shape:
+        raise ValueError(
+            f"shape of input fields {field.shape} incompatible with shape of patterns {patterns.shape}"
+        )
+
+    if weights is None:
+        # TODO generate area-based weights from grid of patterns with earthkit-geo
+        # TODO make weights an optional argument with None default and document
+        raise NotImplementedError("automatic generation of weights")
+    if weights.shape != patterns.shape:
+        raise ValueError(f"shape of weights {weights.shape} must match shape of patterns {patterns.shape}")
+    weights = weights / weights.sum()
+
+    # Project onto each pattern
+    sum_axes = tuple(range(-ndim_field, 0, 1))
+    return {
+        label: (field * pattern * weights).sum(axis=sum_axes)
+        for label, pattern in patterns.patterns(**patterns_extra_coords).items()
+    }
+
+
+def regime_index(projections, mean, std):
+    """Regime index by standardisation of projections onto patterns.
+
+    Convenience function to work with dictionaries.
+
+    Parameters
+    ----------
+    projections : dict[str, array_like]
+        Projections onto regime patterns.
+    mean : dict[str, array_like]
+    std : dict[str, array_like]
+
+    Returns
+    -------
+    dict[str, array_like]
+        ``(projection - mean) / std`` for each regime
+    """
+    return {label: (proj - mean[label]) / std[label] for label, proj in projections.items()}
