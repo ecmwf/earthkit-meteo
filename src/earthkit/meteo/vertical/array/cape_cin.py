@@ -5,9 +5,9 @@ from earthkit.meteo.constants import constants
 
 C_pl = 4180
 
-def _ept_from_mixing_ratio(temperature, pressure, mixing_ratio):
-    specific_humidity = thermo.specific_humidity_from_mixing_ratio(mixing_ratio)
-    return thermo.ept_from_specific_humidity(temperature, specific_humidity, pressure, method="bolton39")
+def _ept_from_mixing_ratio(t, p, r):
+    specific_humidity = thermo.specific_humidity_from_mixing_ratio(r)
+    return thermo.ept_from_specific_humidity(t, specific_humidity, p, method="bolton39")
 # TODO add option to use the method "bolton43" for ept calculation, which is the method used in the reference implementation.
 # Use "bolton39" for now, the difference is small.
 # Potentially make method configurable, as well as the method used for lcl calculation.
@@ -15,96 +15,95 @@ def _ept_from_mixing_ratio(temperature, pressure, mixing_ratio):
 
 def _moist_ascent_lookup_table():
 
-    def dT_dp_moist(T_parcel, pressure):
+    def dt_dp_moist(t_parcel, p):
         # moist adiabatic gradient according to Emanuel, 1995 (Eq. 4.7.3) ignoring liquid and solid water, i.e. r_l = 0 and r_t = r
-        es_parcel = thermo.saturation_vapour_pressure(T_parcel, phase="water")
-        r_parcel = constants.epsilon * es_parcel/pressure
+        es_parcel = thermo.saturation_vapour_pressure(t_parcel, phase="water")
+        r_parcel = constants.epsilon * es_parcel/p
         
-        dLv_dT = constants.c_pv - C_pl
-        Lv = constants.Lv + dLv_dT * (T_parcel - constants.T0)
+        dlv_dt = constants.c_pv - C_pl
+        lv = constants.Lv + dlv_dt * (t_parcel - constants.T0)
 
         # Terms from Emanuel, 1995 (Eq. 4.7.3)
-        A_prefactor = - (constants.g / constants.c_pd) * (1 + r_parcel) / (1 + r_parcel * (constants.c_pv / constants.c_pd))
-        B_factor = 1 + (Lv * r_parcel) / (constants.Rd * T_parcel)
-        C_term = Lv * Lv * r_parcel * (1 + r_parcel / constants.epsilon)
-        D_term = constants.Rv * np.power(T_parcel, 2) * (constants.c_pd + r_parcel * constants.c_pv)
-        dT_dz = A_prefactor * B_factor / (1 + (C_term / D_term))
+        a_prefactor = - (constants.g / constants.c_pd) * (1 + r_parcel) / (1 + r_parcel * (constants.c_pv / constants.c_pd))
+        b_factor = 1 + (lv * r_parcel) / (constants.Rd * t_parcel)
+        c_term = lv * lv * r_parcel * (1 + r_parcel / constants.epsilon)
+        d_term = constants.Rv * np.power(t_parcel, 2) * (constants.c_pd + r_parcel * constants.c_pv)
+        dt_dz = a_prefactor * b_factor / (1 + (c_term / d_term))
 
-        Tv = thermo.virtual_temperature(T_parcel, thermo.specific_humidity_from_mixing_ratio(r_parcel))
-        dz_dp = - (constants.Rd * Tv) / (pressure * constants.g)
-        return dT_dz * dz_dp
+        t_v = thermo.virtual_temperature(t_parcel, thermo.specific_humidity_from_mixing_ratio(r_parcel))
+        dz_dp = - (constants.Rd * t_v) / (p * constants.g)
+        return dt_dz * dz_dp
     
     p_max = 110000
     p_min = 1000
     
-    T_initial = np.arange(180, 320, 2)
-    es_initial = thermo.saturation_vapour_pressure(T_initial, phase="water")
+    t_initial = np.arange(180, 320, 2)
+    es_initial = thermo.saturation_vapour_pressure(t_initial, phase="water")
     r_initial = constants.epsilon * (es_initial / (p_max - es_initial))
-    theta_ep_range = _ept_from_mixing_ratio(T_initial, p_max, r_initial)
+    theta_ep_range = _ept_from_mixing_ratio(t_initial, p_max, r_initial)
     
     pressure_levels = np.arange(p_max, p_min, -100)
     
-    T_lookup = np.empty((pressure_levels.shape[0], T_initial.shape[0]))
+    t_lookup = np.empty((pressure_levels.shape[0], t_initial.shape[0]))
     r_lookup = np.empty((pressure_levels.shape[0], r_initial.shape[0]))
     
-    T_lookup[0,:] = T_initial
+    t_lookup[0,:] = t_initial
     r_lookup[0,:] = r_initial
     
     for level in range(1, pressure_levels.shape[0]):
         p_mid = (pressure_levels[level - 1] + pressure_levels[level]) / 2
         dp = pressure_levels[level] - pressure_levels[level - 1]
-        T_lookup[level,:] = T_lookup[level - 1, :] + dT_dp_moist(T_lookup[level - 1, :], p_mid) * dp
-        es_level = thermo.saturation_vapour_pressure(T_lookup[level, :], phase="water")
+        t_lookup[level,:] = t_lookup[level - 1, :] + dt_dp_moist(t_lookup[level - 1, :], p_mid) * dp
+        es_level = thermo.saturation_vapour_pressure(t_lookup[level, :], phase="water")
         r_lookup[level, :] = constants.epsilon * es_level / (pressure_levels[level] - es_level)
 
-    T_lookup = T_lookup[::-10, :]
+    t_lookup = t_lookup[::-10, :]
     pressure_levels = pressure_levels[::-10]
 
-    return { "temperature": T_lookup, "theta_ep": theta_ep_range, "pressure": pressure_levels }
+    return { "temperature": t_lookup, "theta_ep": theta_ep_range, "pressure": pressure_levels }
 
 
-def _determine_mixed_layer_parcel(pressure, temperature, mixing_ratio, layer_depth=None):
+def _determine_mixed_layer_parcel(p, t, r, layer_depth=None):
     '''
     Compute mixed-layer parameters
-    :param pressure: pressure array in Pa
-    :param T: temperature array in K
-    :param r: mixing ration array in in kg/kg
+    :param p: pressure array in Pa
+    :param t: temperature array in K
+    :param r: mixing ratio array in kg/kg
     :param layer_depth: in Pa
     :return:
-    bottom_pressure, mixed-layer T, mixed_layer r 
+    bottom pressure, mixed-layer t, mixed_layer r 
     '''
 
     if layer_depth == None:
         layer_depth = 5000
 
-    bottom_pressure = pressure[-1, :]
-    bound_pressure = bottom_pressure - layer_depth
-    indx = (np.abs(pressure - bound_pressure)).argmin(axis=0)
-    top_pressure = pressure[indx, np.arange(len(indx))]
+    p_bottom = p[-1, :]
+    p_bound = p_bottom - layer_depth
+    indx = (np.abs(p - p_bound)).argmin(axis=0)
+    p_top = p[indx, np.arange(len(indx))]
 
-    theta = thermo.potential_temperature(temperature, pressure)
-    theta[(pressure > bottom_pressure) | (pressure < top_pressure)] = np.nan
+    theta = thermo.potential_temperature(t, p)
+    theta[(p > p_bottom) | (p < p_top)] = np.nan
     theta_mean = np.nanmean(theta, axis=0)
-    T_mixed = thermo.temperature_from_potential_temperature(theta_mean, bottom_pressure)
+    t_mixed = thermo.temperature_from_potential_temperature(theta_mean, p_bottom)
 
-    r_copy = np.copy(mixing_ratio)
-    r_copy[(pressure > bottom_pressure) | (pressure < top_pressure)] = np.nan
+    r_copy = np.copy(r)
+    r_copy[(p > p_bottom) | (p < p_top)] = np.nan
     r_mixed = np.nanmean(r_copy, axis=0)
 
-    return bottom_pressure, T_mixed, r_mixed
+    return p_bottom, t_mixed, r_mixed
 
 
-def _determine_most_unstable_parcel(pressure_arr, zh_arr, T_arr, r_arr, layer_depth=None):
-    n_pressures = T_arr.shape[0]
-    n_profiles = T_arr.shape[1]
+def _determine_most_unstable_parcel(p, zh, t, r, layer_depth=None):
+    n_pressures = t.shape[0]
+    n_profiles = t.shape[1]
 
-    theta_ep_env = _ept_from_mixing_ratio(T_arr, pressure_arr, r_arr)
-
+    theta_ep_env = _ept_from_mixing_ratio(t, p, r)
     if layer_depth is None:
         layer_depth = 50000
 
     # find local maxima of theta_ep in the vertical profile at pressures below layer_depth
-    theta_ep_env[pressure_arr < layer_depth] = np.nan
+    theta_ep_env[p < layer_depth] = np.nan
     theta_ep_copy = np.nan_to_num(theta_ep_env)
     theta_grad = theta_ep_copy[1:, :] - theta_ep_copy[:-1, :]
 
@@ -121,152 +120,151 @@ def _determine_most_unstable_parcel(pressure_arr, zh_arr, T_arr, r_arr, layer_de
 
     localmaxarg = localmaxarg[:-maxtrues-1 :-1, :]
 
-    CAPE_max = np.zeros(n_profiles)
+    cape_max = np.zeros(n_profiles)
     start_index_max = np.zeros(n_profiles, dtype=int)
 
     profile_indices = np.arange(0, n_profiles)
-    layer_thickness = -np.diff(zh_arr, axis=0)
+    layer_thickness = -np.diff(zh, axis=0)
 
     # TODO can we vectorise this loop? less readable but potentially faster
     for k_candidate in np.arange(0, localmaxarg.shape[0]):
 
         start_level_indices = localmaxarg[k_candidate, :]
-        p_start_candidate = pressure_arr[start_level_indices, profile_indices]
-        T_start_candidate = T_arr[start_level_indices, profile_indices]
-        r_start_candidate = r_arr[start_level_indices, profile_indices]
+        p_start_candidate = p[start_level_indices, profile_indices]
+        t_start_candidate = t[start_level_indices, profile_indices]
+        r_start_candidate = r[start_level_indices, profile_indices]
 
-        B, dTv, p_LCL, T_LCL, p_LFC, T_LFC, p_EL, T_EL, Tv_parcel, Tv_env = _lift_parcel(p_start_candidate, T_start_candidate, r_start_candidate, pressure_arr, T_arr, r_arr)
+        buoyancy, _, _, _, _, _, _, _, _, _ = _lift_parcel(p_start_candidate, t_start_candidate, r_start_candidate, p, t, r)
         
-        dCAPE = constants.g * ((B[:-1, :] + B[1:, :]) / 2) * layer_thickness
-        dCAPE[dCAPE < 0] = 0
-        CAPE = np.nansum(dCAPE, axis=0)
+        dcape = constants.g * ((buoyancy[:-1, :] + buoyancy[1:, :]) / 2) * layer_thickness
+        dcape[dcape < 0] = 0
+        cape = np.nansum(dcape, axis=0)
 
-        is_greater = CAPE > CAPE_max
+        is_greater = cape > cape_max
         is_valid = localmaxarg[k_candidate, :] > 0
         mask = is_greater & is_valid
 
-        CAPE_max[mask] = CAPE[mask]
+        cape_max[mask] = cape[mask]
         start_index_max[mask] = localmaxarg[k_candidate, :][mask]
 
-    p_start = pressure_arr[start_index_max, np.arange(n_profiles)]
-    T_start = T_arr[start_index_max, np.arange(n_profiles)]
-    r_start = r_arr[start_index_max, np.arange(n_profiles)]
-    return p_start, T_start, r_start
+    p_start = p[start_index_max, np.arange(n_profiles)]
+    t_start = t[start_index_max, np.arange(n_profiles)]
+    r_start = r[start_index_max, np.arange(n_profiles)]
+    return p_start, t_start, r_start
 
 
-def _lifted_condensation_level_from_mixing_ratio(T_departure, p_departure, r_departure):
+def _lifted_condensation_level_from_mixing_ratio(t_departure, p_departure, r_departure):
     specific_humidity = thermo.specific_humidity_from_mixing_ratio(r_departure)
     dewpoint = thermo.dewpoint_from_specific_humidity(specific_humidity, p_departure)
-    T_LCL, p_LCL = thermo.lcl(T_departure, dewpoint, p_departure)
-    return p_LCL, T_LCL
+    t_LCL, p_LCL = thermo.lcl(t_departure, dewpoint, p_departure)
+    return p_LCL, t_LCL
 
 
-def _lift_parcel(p_start, T_start, r_start, p_arr, T_arr, r_arr):
-    npressures = p_arr.shape[0]
-    nprofiles = p_arr.shape[1]
-    T_parcel = np.zeros([npressures, nprofiles]) * np.nan
+def _lift_parcel(p_start, t_start, r_start, p, t, r):
+    npressures = p.shape[0]
+    nprofiles = p.shape[1]
+    t_parcel = np.zeros([npressures, nprofiles]) * np.nan
     r_parcel = np.zeros([npressures, nprofiles]) * np.nan
 
-    p_LCL, T_LCL = _lifted_condensation_level_from_mixing_ratio(T_start, p_start, r_start)
+    p_lcl, t_lcl = _lifted_condensation_level_from_mixing_ratio(t_start, p_start, r_start)
 
     # Potential temperature of the parcel - conserved for dry adiabatic processes
-    theta_parcel = thermo.potential_temperature(T_start, p_start)
+    theta_parcel = thermo.potential_temperature(t_start, p_start)
 
     # Pseudoequivalent potential temperature of the parcel
-    theta_ep_parcel = _ept_from_mixing_ratio(T_start, p_start, r_start)
+    theta_ep_parcel = _ept_from_mixing_ratio(t_start, p_start, r_start)
 
     # Dry adiabatic ascent to LCL
     # ------------------------------
-    between_start_and_LCL = (p_arr > p_LCL[None, :]) * (p_arr <= p_start[None, :])
-    T_parcel[between_start_and_LCL] = thermo.temperature_from_potential_temperature(theta_parcel[None, :], p_arr)[between_start_and_LCL]
-    r_parcel[between_start_and_LCL] = (r_start[None, :] * np.ones((npressures, nprofiles)))[between_start_and_LCL]
+    between_start_and_lcl = (p > p_lcl[None, :]) * (p <= p_start[None, :])
+    t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(theta_parcel[None, :], p)[between_start_and_lcl]
+    r_parcel[between_start_and_lcl] = (r_start[None, :] * np.ones((npressures, nprofiles)))[between_start_and_lcl]
 
     # Moist adiabatic ascent
     # ------------------------------
     # first integrate to the first full pressure level above the LCL
     # for k in range(npressures - 1, 0, -1): # loop from top to bottom
     # boolean mask with True values where given point is first level above LCL
-    above_LCL = (p_LCL[None, :] > p_arr)
-    p_2d = p_arr * np.ones((npressures, nprofiles))
+    above_lcl = (p_lcl[None, :] > p)
+    p_2d = p * np.ones((npressures, nprofiles))
     theta_ep_parcel_2d = theta_ep_parcel[None, :] * np.ones((npressures, nprofiles))
 
     lookup_table = _moist_ascent_lookup_table()
-    T_moist_adiabat, theta_ep_range, p_range = lookup_table["temperature"], lookup_table["theta_ep"], lookup_table["pressure"]
-    T_interp = interpolate.RectBivariateSpline(p_range, theta_ep_range, T_moist_adiabat)
-    T_parcel[above_LCL] = T_interp(p_2d[above_LCL], theta_ep_parcel_2d[above_LCL], grid=False)
-    es_T_parcel = thermo.saturation_vapour_pressure(T_parcel[above_LCL], phase="water")
-    r_parcel[above_LCL] = constants.epsilon * es_T_parcel / (p_2d[above_LCL] - es_T_parcel)
+    t_moist_adiabat, theta_ep_range, p_range = lookup_table["temperature"], lookup_table["theta_ep"], lookup_table["pressure"]
+    t_interp = interpolate.RectBivariateSpline(p_range, theta_ep_range, t_moist_adiabat)
+    t_parcel[above_lcl] = t_interp(p_2d[above_lcl], theta_ep_parcel_2d[above_lcl], grid=False)
+    es_t_parcel = thermo.saturation_vapour_pressure(t_parcel[above_lcl], phase="water")
+    r_parcel[above_lcl] = constants.epsilon * es_t_parcel / (p_2d[above_lcl] - es_t_parcel)
 
     # Calculate buoyancy
-    specific_humidity_arr = thermo.specific_humidity_from_mixing_ratio(r_arr)
-    Tv_env = thermo.virtual_temperature(T_arr, specific_humidity_arr)
+    specific_humidity_arr = thermo.specific_humidity_from_mixing_ratio(r)
+    tv_env = thermo.virtual_temperature(t, specific_humidity_arr)
 
     specific_humidity_parcel = thermo.specific_humidity_from_mixing_ratio(r_parcel)
-    Tv_parcel = thermo.virtual_temperature(T_parcel, specific_humidity_parcel)
-    dTv = Tv_parcel - Tv_env
-    B = dTv / Tv_env
-    #B[~above_LCL] = 0
+    tv_parcel = thermo.virtual_temperature(t_parcel, specific_humidity_parcel)
+    dtv = tv_parcel - tv_env
+    buoyancy = dtv / tv_env
 
-    buoyant_3d = (B > 0.0) * (T_arr < T_LCL[None, :])
+    buoyant_3d = (buoyancy > 0.0) * (t < t_lcl[None, :])
     
-    LFC_index = buoyant_3d.shape[0] - np.argmax(buoyant_3d[::-1, :], axis=0) - 1
-    EL_index = np.argmax(buoyant_3d, axis=0)
+    index_lfc = buoyant_3d.shape[0] - np.argmax(buoyant_3d[::-1, :], axis=0) - 1
+    index_el = np.argmax(buoyant_3d, axis=0)
 
 
     # For now, this gives the pressure at which the parcel is not buoyant i.e. it does not interpolate
-    p_LFC = p_arr[LFC_index, np.arange(0, p_arr.shape[1])]
-    T_LFC = T_arr[LFC_index, np.arange(0, p_arr.shape[1])]
+    p_lfc = p[index_lfc, np.arange(0, p.shape[1])]
+    t_lfc = t[index_lfc, np.arange(0, t.shape[1])]
 
-    p_EL = p_arr[EL_index, np.arange(0, p_arr.shape[1])]
-    T_EL = T_arr[EL_index, np.arange(0, p_arr.shape[1])]
+    p_el = p[index_el, np.arange(0, p.shape[1])]
+    t_el = t[index_el, np.arange(0, t.shape[1])]
 
     buoyant_2d = np.max(buoyant_3d, axis=0)
-    p_LFC[~buoyant_2d] = np.nan
+    p_lfc[~buoyant_2d] = np.nan
     
-    return B, dTv, p_LCL, T_LCL, p_LFC, T_LFC, p_EL, T_EL, Tv_parcel, Tv_env
+    return buoyancy, dtv, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env
 
 
-def _cape_cin(pressure_arr, zh_arr, T_arr, r_arr, CAPE_type, layer_depth=None):
+def _cape_cin(p, zh, t, r, cape_type, layer_depth=None):
     # shapes of all arrays should be (n_vertical_levels, n_horizontal_locations)
     # pressure levels should be in ascending order
     
     # Make sure pressure levels are in ascending order
-    is_sorted = (np.diff(pressure_arr, axis=0) >= 0).all()
+    is_sorted = (np.diff(p, axis=0) >= 0).all()
     if is_sorted == False:
-        sorted_inds = np.argsort(pressure_arr, axis=0)
-        pressure_arr = np.take_along_axis(pressure_arr, sorted_inds, axis = 0)
-        T_arr = np.take_along_axis(T_arr, sorted_inds, axis = 0)
-        r_arr = np.take_along_axis(r_arr, sorted_inds, axis = 0)
-        zh_arr = np.take_along_axis(zh_arr, sorted_inds, axis = 0)
+        sorted_inds = np.argsort(p, axis=0)
+        p = np.take_along_axis(p, sorted_inds, axis = 0)
+        t = np.take_along_axis(t, sorted_inds, axis = 0)
+        r = np.take_along_axis(r, sorted_inds, axis = 0)
+        zh = np.take_along_axis(zh, sorted_inds, axis = 0)
 
-    if (CAPE_type == 'surface'):
-        p_start = pressure_arr[-1, :]
-        T_start = T_arr[-1, :]
-        r_start = r_arr[-1, :]
-    elif (CAPE_type == 'mixed'):
-        p_start, T_start, r_start = _determine_mixed_layer_parcel(pressure_arr, T_arr, r_arr, layer_depth)
-    elif (CAPE_type == 'mu'):
-        p_start, T_start, r_start = _determine_most_unstable_parcel(pressure_arr, zh_arr, T_arr, r_arr, layer_depth)
+    if (cape_type == 'surface'):
+        p_start = p[-1, :]
+        t_start = t[-1, :]
+        r_start = r[-1, :]
+    elif (cape_type == 'mixed'):
+        p_start, t_start, r_start = _determine_mixed_layer_parcel(p, t, r, layer_depth)
+    elif (cape_type == 'mu'):
+        p_start, t_start, r_start = _determine_most_unstable_parcel(p, zh, t, r, layer_depth)
     else:
-        raise NotImplementedError(f"CAPE type '{CAPE_type}' not implemented")
+        raise NotImplementedError(f"CAPE type '{cape_type}' not implemented")
         
-    B, dTv, p_LCL, T_LCL, p_LFC, T_LFC, p_EL, T_EL, Tv_parcel, Tv_env = _lift_parcel(p_start, T_start, r_start, pressure_arr, T_arr, r_arr)
+    buoyancy, dtv, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env = _lift_parcel(p_start, t_start, r_start, p, t, r)
     
-    dCAPE = constants.g * ((B[:-1, :] + B[1:, :]) / 2) * (-np.diff(zh_arr, axis=0))
-    dCIN = np.copy(dCAPE)
+    dcape = constants.g * ((buoyancy[:-1, :] + buoyancy[1:, :]) / 2) * (-np.diff(zh, axis=0))
+    dcin = np.copy(dcape)
 
-    dCAPE[dCAPE < 0] = 0
-    above_LFC = (pressure_arr[1:, :] <= p_LFC[None, :])
-    dCAPE[above_LFC == False] = 0
-    CAPE = np.nansum(dCAPE, axis=0)
-    CAPE[np.isnan(p_LFC)] = 0
+    dcape[dcape < 0] = 0
+    above_lfc = (p[1:, :] <= p_lfc[None, :])
+    dcape[above_lfc == False] = 0
+    cape = np.nansum(dcape, axis=0)
+    cape[np.isnan(p_lfc)] = 0
     
-    above_EL = (pressure_arr[1:, :] <= p_EL[None, :])
-    dCIN[above_EL] = 0
-    dCIN[dCIN > 0] = 0
+    above_el = (p[1:, :] <= p_el[None, :])
+    dcin[above_el] = 0
+    dcin[dcin > 0] = 0
 
-    CIN = -np.nansum(dCIN, axis=0)
-    CIN[CAPE <= 1] = 0
+    cin = -np.nansum(dcin, axis=0)
+    cin[cape <= 1] = 0
 
     # TODO include LI calculation and see if we can use earthkit's vertical interpolation function instead of the custom Interpolate function from the reference implementation
     # [LI] = Interpolate(pressure_arr, [dTv], 500)
@@ -274,12 +272,12 @@ def _cape_cin(pressure_arr, zh_arr, T_arr, r_arr, CAPE_type, layer_depth=None):
     # LI[np.isnan(LI)] = 0
 
 
-    return CAPE, CIN #, LI, p_start, T_start, p_LFC, T_LFC, p_LCL, T_LCL, p_EL, Tv_parcel, Tv_env
+    return cape, cin #, LI, p_start, T_start, p_LFC, T_LFC, p_LCL, T_LCL, p_EL, Tv_parcel, Tv_env
 
 
-def cape_cin(p, zh, t, r, type, layer_depth=None, output="CAPE_CIN", vertical_axis=0):
-    # TODO add options for output: "CAPE_CIN", "CAPE_CIN_LI", "full" where full includes parcel_path and intermediate variables for debugging/validation
-    if output not in ["CAPE_CIN"]:
+def cape_cin(p, zh, t, r, type, layer_depth=None, output="cape_cin", vertical_axis=0):
+    # TODO add options for output: "cape_cin", "cape_cin_li", "full" where full includes parcel_path and intermediate variables for debugging/validation
+    if output not in ["cape_cin"]:
         raise ValueError(f"Invalid output option '{output}'")
     
     if vertical_axis != 0:
