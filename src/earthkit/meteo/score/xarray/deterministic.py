@@ -706,9 +706,9 @@ def kge(
         raise ValueError("method must be one of 'original' or 'modified'")
     scores = _import_scores_or_prompt_install()
 
-    if not (method == "modified" or return_components):
+    if method == "original":
         return scores.continuous.kge(
-            fcst, obs, reduce_dims=over, scaling_factors=scaling_factors, include_components=False
+            fcst, obs, reduce_dims=over, scaling_factors=scaling_factors, include_components=return_components
         )
 
     kge = scores.continuous.kge(
