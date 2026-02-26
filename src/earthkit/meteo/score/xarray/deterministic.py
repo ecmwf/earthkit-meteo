@@ -638,7 +638,7 @@ def kge(
     fcst: xr.DataArray,
     obs: xr.DataArray,
     over: str | list[str],
-    method: Literal["original", "modified"] = "modified",
+    method: Literal["original", "modified"] = "original",
     scaling_factors: Optional[Union[list[float], np.ndarray]] = None,
     return_components: bool = False,
 ) -> T:
