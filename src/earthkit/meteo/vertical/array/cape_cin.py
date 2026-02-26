@@ -98,12 +98,12 @@ def _determine_most_unstable_parcel(pressure_arr, zh_arr, T_arr, r_arr, layer_de
     n_pressures = T_arr.shape[0]
     n_profiles = T_arr.shape[1]
 
-    theta_ep_env = _ept_from_mixing_ratio(T_arr, pressure_arr, r_arr) # pseudoequivalent potential temperature
+    theta_ep_env = _ept_from_mixing_ratio(T_arr, pressure_arr, r_arr)
 
     if layer_depth is None:
         layer_depth = 50000
 
-    # find local maxima of theta_ep in the vertical profile at pressures below mupl hPa
+    # find local maxima of theta_ep in the vertical profile at pressures below layer_depth
     theta_ep_env[pressure_arr < layer_depth] = np.nan
     theta_ep_copy = np.nan_to_num(theta_ep_env)
     theta_grad = theta_ep_copy[1:, :] - theta_ep_copy[:-1, :]
@@ -129,7 +129,7 @@ def _determine_most_unstable_parcel(pressure_arr, zh_arr, T_arr, r_arr, layer_de
 
     # TODO can we vectorise this loop? less readable but potentially faster
     for k_candidate in np.arange(0, localmaxarg.shape[0]):
-        
+
         start_level_indices = localmaxarg[k_candidate, :]
         p_start_candidate = pressure_arr[start_level_indices, profile_indices]
         T_start_candidate = T_arr[start_level_indices, profile_indices]
@@ -190,7 +190,6 @@ def _lift_parcel(p_start, T_start, r_start, p_arr, T_arr, r_arr):
     p_2d = p_arr * np.ones((npressures, nprofiles))
     theta_ep_parcel_2d = theta_ep_parcel[None, :] * np.ones((npressures, nprofiles))
 
-    # Create Lookup table for moist ascent and define functions:
     lookup_table = _moist_ascent_lookup_table()
     T_moist_adiabat, theta_ep_range, p_range = lookup_table["temperature"], lookup_table["theta_ep"], lookup_table["pressure"]
     T_interp = interpolate.RectBivariateSpline(p_range, theta_ep_range, T_moist_adiabat)
@@ -227,7 +226,7 @@ def _lift_parcel(p_start, T_start, r_start, p_arr, T_arr, r_arr):
     return B, dTv, p_LCL, T_LCL, p_LFC, T_LFC, p_EL, T_EL, Tv_parcel, Tv_env
 
 
-def cape_cin(pressure_arr, zh_arr, T_arr, r_arr, CAPE_type, layer_depth=None):
+def _cape_cin(pressure_arr, zh_arr, T_arr, r_arr, CAPE_type, layer_depth=None):
     # shapes of all arrays should be (n_vertical_levels, n_horizontal_locations)
     # pressure levels should be in ascending order
     
@@ -276,3 +275,20 @@ def cape_cin(pressure_arr, zh_arr, T_arr, r_arr, CAPE_type, layer_depth=None):
 
 
     return CAPE, CIN #, LI, p_start, T_start, p_LFC, T_LFC, p_LCL, T_LCL, p_EL, Tv_parcel, Tv_env
+
+
+def cape_cin(p, zh, t, r, type, layer_depth=None, output="CAPE_CIN", vertical_axis=0):
+    # TODO add options for output: "CAPE_CIN", "CAPE_CIN_LI", "full" where full includes parcel_path and intermediate variables for debugging/validation
+    if output not in ["CAPE_CIN"]:
+        raise ValueError(f"Invalid output option '{output}'")
+    
+    if vertical_axis != 0:
+        if vertical_axis < 0 or vertical_axis >= p.ndim:
+            raise ValueError(f"Invalid vertical_axis {vertical_axis} for input arrays with {p.ndim} dimensions")
+        
+        p = np.swapaxes(p, 0, vertical_axis)
+        zh = np.swapaxes(zh, 0, vertical_axis)
+        t = np.swapaxes(t, 0, vertical_axis)
+        r = np.swapaxes(r, 0, vertical_axis)
+
+    return _cape_cin(p, zh, t, r, type, layer_depth)
