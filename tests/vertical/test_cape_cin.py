@@ -99,24 +99,8 @@ REFERENCE_CASES = {
     },
 }
 
-test_cases = list(REFERENCE_CASES.values())
 
-# @pytest.mark.parametrize("case_data", test_cases, ids=list(REFERENCE_CASES.keys()))
-# def test_cape_cin(case_data):
-#     # for case_name, case_data in REFERENCE_CASES.items():
-#     p = case_data["p"][:, None]*100
-#     t = case_data["t"][:, None]
-#     r = case_data["r"][:, None]
-#     zh = case_data["zh"][:, None]
-#     for cape_type, expected_values in case_data["expected"].items():
-#         cape, cin = cape_cin(p, zh, t, r, cape_type)
-#         expected_cape = expected_values["cape"]
-#         expected_cin = expected_values["cin"]
-#         assert np.isclose(cape, expected_cape, atol=1e-2), f" type '{cape_type}': Expected CAPE {expected_cape}, got {cape}"
-#         assert np.isclose(cin, expected_cin, atol=1e-2), f" type '{cape_type}': Expected CIN {expected_cin}, got {cin}"
-
-
-@pytest.mark.parametrize("case_data", test_cases, ids=list(REFERENCE_CASES.keys()))
+@pytest.mark.parametrize("case_data", list(REFERENCE_CASES.values()), ids=list(REFERENCE_CASES.keys()))
 def test_cape_cin_surface(case_data):
 
     p = case_data["p"][:, None]*100
@@ -133,7 +117,7 @@ def test_cape_cin_surface(case_data):
     assert np.isclose(cin, expected_cin, atol=1), f" type '{cape_type}': Expected CIN {expected_cin}, got {cin}"
 
 
-@pytest.mark.parametrize("case_data", test_cases, ids=list(REFERENCE_CASES.keys()))
+@pytest.mark.parametrize("case_data", list(REFERENCE_CASES.values()), ids=list(REFERENCE_CASES.keys()))
 def test_cape_cin_mixed(case_data):
 
     p = case_data["p"][:, None]*100
@@ -150,7 +134,7 @@ def test_cape_cin_mixed(case_data):
     assert np.isclose(cin, expected_cin, atol=1), f" type '{cape_type}': Expected CIN {expected_cin}, got {cin}"
 
 
-@pytest.mark.parametrize("case_data", test_cases, ids=list(REFERENCE_CASES.keys()))
+@pytest.mark.parametrize("case_data", list(REFERENCE_CASES.values()), ids=list(REFERENCE_CASES.keys()))
 def test_cape_cin_mu(case_data):
 
     p = case_data["p"][:, None]*100
@@ -165,3 +149,91 @@ def test_cape_cin_mu(case_data):
     expected_cin = expected_values["cin"]
     assert np.isclose(cape, expected_cape, atol=1), f" type '{cape_type}': Expected CAPE {expected_cape}, got {cape}"
     assert np.isclose(cin, expected_cin, atol=1), f" type '{cape_type}': Expected CIN {expected_cin}, got {cin}"
+
+
+@pytest.fixture()
+def reference_cases_stacked():
+    reference_cases = list(REFERENCE_CASES.values())
+    p = np.stack([case["p"]*100 for case in reference_cases], axis=-1)
+    t = np.stack([case["t"] for case in reference_cases], axis=-1)
+    r = np.stack([case["r"] for case in reference_cases], axis=-1)
+    zh = np.stack([case["zh"] for case in reference_cases], axis=-1)
+
+    expected_values = {"cape": {}, "cin": {}}
+    for cape_type in ["surface", "mixed", "mu"]:
+        expected_values["cape"][cape_type] = np.array([case["expected"][cape_type]["cape"] for case in reference_cases])
+        expected_values["cin"][cape_type] = np.array([case["expected"][cape_type]["cin"] for case in reference_cases])
+
+    return p, zh, t, r, expected_values
+
+
+def test_cape_cin_stacked(reference_cases_stacked):
+    p, zh, t, r, expected_values = reference_cases_stacked
+
+
+    for cape_type in ["surface", "mixed", "mu"]:
+        cape, cin = vertical.cape_cin(p, zh, t, r, cape_type)
+        expected_cape = expected_values["cape"][cape_type]
+        expected_cin = expected_values["cin"][cape_type]
+        assert (np.isclose(cape, expected_cape, atol=1)).all()
+        assert (np.isclose(cin, expected_cin, atol=1)).all()
+
+
+def test_cape_cin_vertical_axis_minus_1(reference_cases_stacked):
+    p, zh, t, r, expected_values = reference_cases_stacked
+
+    # Move vertical axis to the end
+    p = np.transpose(p, (1, 0))
+    t = np.transpose(t, (1, 0))
+    r = np.transpose(r, (1, 0))
+    zh = np.transpose(zh, (1, 0))
+
+    for cape_type in ["surface", "mixed", "mu"]:
+        cape, cin = vertical.cape_cin(p, zh, t, r, cape_type, vertical_axis=-1)
+
+        expected_cape = expected_values["cape"][cape_type]
+        expected_cin = expected_values["cin"][cape_type]
+
+        assert np.isclose(cape, expected_cape, atol=1).all()
+        assert np.isclose(cin, expected_cin, atol=1).all()
+
+
+def test_cape_cin_arbitrary_nd_shape():
+    nz = 3
+    horiz_shape = (2, 3, 4)
+
+    shape = (nz,) + horiz_shape
+
+    p = np.broadcast_to(np.array([1000, 900, 800])[:, None, None, None], shape)
+    t = np.broadcast_to(np.array([290, 280, 270])[:, None, None, None], shape)
+    r = np.broadcast_to(np.array([0.01, 0.02, 0.03])[:, None, None, None], shape)
+    zh = np.broadcast_to(np.array([100, 200, 300])[:, None, None, None], shape)
+
+    for cape_type in ["surface", "mixed", "mu"]:
+        cape, cin = vertical.cape_cin(p, zh, t, r, cape_type)
+
+        assert cape.shape == horiz_shape
+        assert cin.shape == horiz_shape
+
+
+def test_cape_cin_lat_lon(reference_cases_stacked):
+    p, zh, t, r, expected_values = reference_cases_stacked
+
+    ny, nx = 2, 2
+    ncols = ny * nx
+
+    nz = p.shape[0]
+    p = p.reshape(nz, ny, nx)
+    t = t.reshape(nz, ny, nx)
+    r = r.reshape(nz, ny, nx)
+    zh = zh.reshape(nz, ny, nx)
+
+    for cape_type in ["surface", "mixed", "mu"]:
+        cape, cin = vertical.cape_cin(p, zh, t, r, cape_type)
+
+        expected_cape = expected_values["cape"][cape_type].reshape(ny, nx)
+        expected_cin = expected_values["cin"][cape_type].reshape(ny, nx)
+
+        assert np.isclose(cape, expected_cape, atol=1).all()
+        assert np.isclose(cin, expected_cin, atol=1).all()
+

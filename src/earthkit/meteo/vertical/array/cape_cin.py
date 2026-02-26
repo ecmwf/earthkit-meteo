@@ -80,7 +80,7 @@ def _determine_mixed_layer_parcel(p, t, r, layer_depth=None):
     p_bottom = p[-1, :]
     p_bound = p_bottom - layer_depth
     indx = (np.abs(p - p_bound)).argmin(axis=0)
-    p_top = p[indx, np.arange(len(indx))]
+    p_top = np.take_along_axis(p, indx[None, ...], axis=0).squeeze(0)
 
     theta = thermo.potential_temperature(t, p)
     theta[(p > p_bottom) | (p < p_top)] = np.nan
@@ -95,8 +95,7 @@ def _determine_mixed_layer_parcel(p, t, r, layer_depth=None):
 
 
 def _determine_most_unstable_parcel(p, zh, t, r, layer_depth=None):
-    n_pressures = t.shape[0]
-    n_profiles = t.shape[1]
+    t_shape = t.shape
 
     theta_ep_env = _ept_from_mixing_ratio(t, p, r)
     if layer_depth is None:
@@ -109,30 +108,32 @@ def _determine_most_unstable_parcel(p, zh, t, r, layer_depth=None):
 
     # localmax is a boolean array with Trues where a local maximum of theta_ep was found
     maxima = (theta_grad[1:, :] < 0) * (theta_grad[:-1, :] > 0)
-    localmax = np.ones((n_pressures, n_profiles), dtype=bool)
+    localmax = np.ones((t_shape), dtype=bool)
     localmax[1:-1, :] = maxima
     trues = localmax.sum(axis=0)
     maxtrues = np.amax(trues)
     
     # localmaxarg is an integer array with values of k where a local maximum of theta_ep was found
-    localmaxarg = localmax * np.meshgrid(np.arange(0, n_profiles), np.arange(0, n_pressures))[1]
+    nz = t.shape[0]
+    vertical_indices = np.arange(nz)[(...,) + (None,) * (t.ndim - 1)]
+    
+    localmaxarg = np.where(localmax, vertical_indices, 0)
     localmaxarg = np.sort(localmaxarg, axis=0)
 
     localmaxarg = localmaxarg[:-maxtrues-1 :-1, :]
 
-    cape_max = np.zeros(n_profiles)
-    start_index_max = np.zeros(n_profiles, dtype=int)
+    cape_max = np.zeros(t_shape[1:])
+    start_index_max = np.zeros(t_shape[1:], dtype=int)
 
-    profile_indices = np.arange(0, n_profiles)
     layer_thickness = -np.diff(zh, axis=0)
 
     # TODO can we vectorise this loop? less readable but potentially faster
     for k_candidate in np.arange(0, localmaxarg.shape[0]):
 
-        start_level_indices = localmaxarg[k_candidate, :]
-        p_start_candidate = p[start_level_indices, profile_indices]
-        t_start_candidate = t[start_level_indices, profile_indices]
-        r_start_candidate = r[start_level_indices, profile_indices]
+        start_level_indices = localmaxarg[k_candidate, ...]
+        p_start_candidate = np.take_along_axis(p, start_level_indices[None, ...], axis=0).squeeze(0)
+        t_start_candidate = np.take_along_axis(t, start_level_indices[None, ...], axis=0).squeeze(0)
+        r_start_candidate = np.take_along_axis(r, start_level_indices[None, ...], axis=0).squeeze(0)
 
         buoyancy, _, _, _, _, _, _, _, _, _ = _lift_parcel(p_start_candidate, t_start_candidate, r_start_candidate, p, t, r)
         
@@ -147,9 +148,9 @@ def _determine_most_unstable_parcel(p, zh, t, r, layer_depth=None):
         cape_max[mask] = cape[mask]
         start_index_max[mask] = localmaxarg[k_candidate, :][mask]
 
-    p_start = p[start_index_max, np.arange(n_profiles)]
-    t_start = t[start_index_max, np.arange(n_profiles)]
-    r_start = r[start_index_max, np.arange(n_profiles)]
+    p_start = np.take_along_axis(p, start_index_max[None, ...], axis=0).squeeze(0)
+    t_start = np.take_along_axis(t, start_index_max[None, ...], axis=0).squeeze(0)
+    r_start = np.take_along_axis(r, start_index_max[None, ...], axis=0).squeeze(0)
     return p_start, t_start, r_start
 
 
@@ -161,10 +162,11 @@ def _lifted_condensation_level_from_mixing_ratio(t_departure, p_departure, r_dep
 
 
 def _lift_parcel(p_start, t_start, r_start, p, t, r):
-    npressures = p.shape[0]
-    nprofiles = p.shape[1]
-    t_parcel = np.zeros([npressures, nprofiles]) * np.nan
-    r_parcel = np.zeros([npressures, nprofiles]) * np.nan
+    # npressures = p.shape[0]
+    # nprofiles = p.shape[1]
+    p_shape = p.shape
+    t_parcel = np.zeros(p_shape) * np.nan
+    r_parcel = np.zeros(p_shape) * np.nan
 
     p_lcl, t_lcl = _lifted_condensation_level_from_mixing_ratio(t_start, p_start, r_start)
 
@@ -176,18 +178,18 @@ def _lift_parcel(p_start, t_start, r_start, p, t, r):
 
     # Dry adiabatic ascent to LCL
     # ------------------------------
-    between_start_and_lcl = (p > p_lcl[None, :]) * (p <= p_start[None, :])
-    t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(theta_parcel[None, :], p)[between_start_and_lcl]
-    r_parcel[between_start_and_lcl] = (r_start[None, :] * np.ones((npressures, nprofiles)))[between_start_and_lcl]
+    between_start_and_lcl = (p > p_lcl[None, ...]) * (p <= p_start[None, ...])
+    t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(theta_parcel[None, ...], p)[between_start_and_lcl]
+    r_parcel[between_start_and_lcl] = (r_start[None, ...] * np.ones(p_shape))[between_start_and_lcl]
 
     # Moist adiabatic ascent
     # ------------------------------
     # first integrate to the first full pressure level above the LCL
     # for k in range(npressures - 1, 0, -1): # loop from top to bottom
     # boolean mask with True values where given point is first level above LCL
-    above_lcl = (p_lcl[None, :] > p)
-    p_2d = p * np.ones((npressures, nprofiles))
-    theta_ep_parcel_2d = theta_ep_parcel[None, :] * np.ones((npressures, nprofiles))
+    above_lcl = (p_lcl[None, ...] > p)
+    p_2d = p * np.ones(p_shape)
+    theta_ep_parcel_2d = theta_ep_parcel[None, ...] * np.ones(p_shape)
 
     lookup_table = _moist_ascent_lookup_table()
     t_moist_adiabat, theta_ep_range, p_range = lookup_table["temperature"], lookup_table["theta_ep"], lookup_table["pressure"]
@@ -205,21 +207,23 @@ def _lift_parcel(p_start, t_start, r_start, p, t, r):
     dtv = tv_parcel - tv_env
     buoyancy = dtv / tv_env
 
-    buoyant_3d = (buoyancy > 0.0) * (t < t_lcl[None, :])
+    buoyant_layer_mask = (buoyancy > 0.0) * (t < t_lcl[None, ...])
     
-    index_lfc = buoyant_3d.shape[0] - np.argmax(buoyant_3d[::-1, :], axis=0) - 1
-    index_el = np.argmax(buoyant_3d, axis=0)
+    lfc_index = buoyant_layer_mask.shape[0] - np.argmax(buoyant_layer_mask[::-1, ...], axis=0) - 1
+    el_index = np.argmax(buoyant_layer_mask, axis=0)
 
 
     # For now, this gives the pressure at which the parcel is not buoyant i.e. it does not interpolate
-    p_lfc = p[index_lfc, np.arange(0, p.shape[1])]
-    t_lfc = t[index_lfc, np.arange(0, t.shape[1])]
+    p_lfc = np.take_along_axis(p, lfc_index[None, ...], axis=0).squeeze(0)
+    t_lfc = np.take_along_axis(t, lfc_index[None, ...], axis=0).squeeze(0)
 
-    p_el = p[index_el, np.arange(0, p.shape[1])]
-    t_el = t[index_el, np.arange(0, t.shape[1])]
 
-    buoyant_2d = np.max(buoyant_3d, axis=0)
-    p_lfc[~buoyant_2d] = np.nan
+    p_el = np.take_along_axis(p, el_index[None, ...], axis=0).squeeze(0)
+    t_el = np.take_along_axis(t, el_index[None, ...], axis=0).squeeze(0)
+
+    buoyant_mask = np.max(buoyant_layer_mask, axis=0)
+    p_lfc = np.where(buoyant_mask, p_lfc.astype(float), np.nan)
+    # p_lfc[~buoyant_2d] = np.nan
     
     return buoyancy, dtv, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env
 
@@ -281,6 +285,8 @@ def cape_cin(p, zh, t, r, type, layer_depth=None, output="cape_cin", vertical_ax
         raise ValueError(f"Invalid output option '{output}'")
     
     if vertical_axis != 0:
+        if vertical_axis == -1:
+            vertical_axis = p.ndim - 1
         if vertical_axis < 0 or vertical_axis >= p.ndim:
             raise ValueError(f"Invalid vertical_axis {vertical_axis} for input arrays with {p.ndim} dimensions")
         
