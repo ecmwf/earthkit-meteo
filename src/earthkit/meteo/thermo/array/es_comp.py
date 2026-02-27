@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -11,12 +11,13 @@
 
 from earthkit.utils.array import array_namespace
 
+from earthkit.meteo.constants import T0
+
 C1 = 611.21
 C3W = 17.502
 C4W = 32.19
 C3I = 22.587
 C4I = -0.7
-T0 = 273.16
 TI = T0 - 23
 
 PHASES = ["mixed", "water", "ice"]

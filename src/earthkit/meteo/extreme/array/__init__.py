@@ -11,6 +11,16 @@
 Extreme index functions operating on numpy arrays.
 """
 
-from .cpf import *  # noqa
-from .efi import *  # noqa
-from .sot import *  # noqa
+from .cpf import cpf  # noqa
+from .efi import efi  # noqa
+from .sot import sot  # noqa
+from .sot import sot_func  # noqa
+from .sot import sot_unsorted  # noqa
+
+__all__ = [
+    "cpf",
+    "efi",
+    "sot",
+    "sot_unsorted",
+    "sot_func",
+]

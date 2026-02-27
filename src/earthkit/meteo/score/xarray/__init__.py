@@ -7,8 +7,5 @@
 # nor does it submit to any jurisdiction.
 #
 
-from . import array
-
-
-def crps(*args, **kwargs):
-    return array.crps(*args, **kwargs)
+from .deterministic import *  # noqa
+from .ensemble import *  # noqa

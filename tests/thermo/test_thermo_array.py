@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -62,16 +62,8 @@ class ThermoInputData:
         self.p = xp.asarray(d["p"], device=device)
 
 
-# high level method call
-def test_high_level_celsius_to_kelvin():
-    t = np.array([-10, 23.6])
-    v = thermo.celsius_to_kelvin(t)
-    v_ref = np.array([263.16, 296.76])
-    np.testing.assert_allclose(v, v_ref)
-
-
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("t, v_ref", [([-10, 23.6], [263.16, 296.76])])
+@pytest.mark.parametrize("t, v_ref", [([-10, 23.6], [263.15, 296.75])])
 def test_celsius_to_kelvin(xp, device, t, v_ref):
     t, v_ref = xp.asarray(t, device=device), xp.asarray(v_ref, device=device)
     tk = thermo.array.celsius_to_kelvin(t)
@@ -79,7 +71,7 @@ def test_celsius_to_kelvin(xp, device, t, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("t, v_ref", [([263.16, 296.76], [-10, 23.6])])
+@pytest.mark.parametrize("t, v_ref", [([263.15, 296.75], [-10, 23.6])])
 def test_kelvin_to_celsius(xp, device, t, v_ref):
     t, v_ref = xp.asarray(t, device=device), xp.asarray(v_ref, device=device)
     tc = thermo.array.kelvin_to_celsius(t)
@@ -380,12 +372,12 @@ def test_temperature_from_saturation_vapour_pressure_numbers(es, v_ref, xp, devi
             [20.0, 10, -10, 32, -15, -24, -3],
             [
                 100.0000000000,
-                52.5224541378,
-                46.8714823296,
-                84.5391163313,
-                21.9244774232,
-                46.1081101229,
-                15.4779832381,
+                52.5198104846,
+                46.8684705534,
+                84.5380816134,
+                21.9216523446,
+                46.1048851305,
+                15.4756839898,
             ],  # reference was tested with an online relhum calculator at:
             # https://bmcnoldy.rsmas.miami.edu/Humidity.html
         ),
@@ -416,13 +408,7 @@ def test_relative_humidity_from_dewpoint(t, td, v_ref, xp, device):
                 0.0076785187585422,
                 0.0114808182580539,
             ],
-            [
-                99.70488530734642,
-                100.25885732613531,
-                97.15956159465799,
-                71.37937968160273,
-                73.41420898756694,
-            ],
+            [99.8080506652, 100.3543440126, 97.2415646352, 71.4272979062, 73.4602316794],
         ),
     ],
 )
@@ -445,14 +431,7 @@ def test_relative_humidity_from_specific_humidity(t, p, q, v_ref, xp, device):
         (
             [21.78907, 19.90885, 16.50236, 7.104064, -0.3548709, -16.37916],
             [967.5085, 936.3775, 872.248, 756.1647, 649.157, 422.4207],
-            [
-                0.0169461501,
-                0.0155840075,
-                0.0134912382,
-                0.0083409720,
-                0.0057268584,
-                0.0025150791,
-            ],
+            [0.0169356947, 0.0155742615, 0.0134825872, 0.0083352286, 0.0057226735, 0.0025129738],
         )
     ],
 )
@@ -481,13 +460,7 @@ def test_specific_humidity_from_dewpoint(td, p, v_ref, xp, device):
                 71.37937968160273,
                 73.41420898756694,
             ],
-            [
-                0.000845416891024797,
-                0.00277950354211498,
-                0.00464489207661245,
-                0.0076785187585422,
-                0.0114808182580539,
-            ],
+            [0.0008445426, 0.0027768544, 0.0046409640, 0.0076733435, 0.0114735754],
         )
     ],
 )
@@ -545,9 +518,17 @@ def test_dewpoint_from_relative_humidity(t, r, v_ref, xp, device):
         (
             [0.0169461501, 0.0155840075, 0.0134912382, 0.0083409720, 0.0057268584, 0.0025150791, 0],
             [967.5085, 936.3775, 872.248, 756.1647, 649.157, 422.4207, 422.4207],
-            [21.78907, 19.90885, 16.50236, 7.104064, -0.3548709, -16.37916, np.nan],
+            [
+                21.7990700406,
+                19.9188500011,
+                16.5123600124,
+                7.1140640717,
+                -0.3448708823,
+                -16.3691599922,
+                np.nan,
+            ],
         ),
-        (0.0169461501, 967.508, 21.78907),
+        (0.0169461501, 967.508, 21.7990615803605),
     ],
 )
 def test_dewpoint_from_specific_humidity(q, p, v_ref, xp, device):
@@ -665,22 +646,22 @@ def test_pressure_on_dry_adibat(t_def, p_def, t, v_ref, xp, device):
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
-    "t,td,p,t_ref, p_ref,,method",
+    "t,td,p,t_ref,p_ref,method",
     [
         (
             [10, 30, 43, 20],
             [-2, 26, 5, 28],
             [95000, 100500, 100100, 100200],
-            [268.706024, 298.200936, 270.517934, 303.138144],
-            [79081.766347, 94862.350635, 57999.83367, 112654.210439],
+            [268.6961602000, 298.1909814000, 270.5083653000, 303.1280532000],
+            [79081.3807962804, 94862.2190390715, 57999.0739181804, 112654.5350850349],
             "davies",
         ),
         (
             [10, 30, 43, 20],
             [-2, 26, 5, 28],
             [95000, 100500, 100100, 100200],
-            [268.683018, 298.182282, 270.531264, 303.199544],
-            [79058.068785, 94841.581142, 58009.838027, 112734.100243],
+            [268.6731581990, 298.1723299393, 270.5216903464, 303.1894465236],
+            [79057.6869611039, 94841.4516879465, 58009.0748225555, 112734.4185866570],
             "bolton",
         ),
     ],
@@ -754,6 +735,8 @@ def test_saturation_ept(method, xp, device):
 def test_temperature_on_moist_adiabat(ept_method, t_method, xp, device):
     ref_file = "t_on_most_adiabat.csv"
 
+    # ept_methods = ["ifs", "bolton35", "bolton39"]
+    # t_methods = ["bisect", "newton"]
     # ept = np.array([220, 250, 273.16, 300, 330, 360, 400, 500, 600, 700, 800, 900])
     # p = np.array([1010, 1000, 925, 850, 700, 500, 300]) * 100
     # o = {"ept": np.repeat(ept, repeats=len(p)), "p": np.array(p.tolist() * len(ept))}
@@ -782,6 +765,8 @@ def test_wet_bulb_temperature(ept_method, t_method, xp, device):
     ref_file = "t_wet.csv"
 
     # o = {}
+    # ept_methods = ["ifs", "bolton35", "bolton39"]
+    # t_methods = ["bisect", "newton"]
     # for m_ept in ept_methods:
     #     for m_t in t_methods:
     #         o[f"{m_ept}_{m_t}_td"] = thermo.array.wet_bulb_temperature_from_dewpoint(
@@ -818,16 +803,14 @@ def test_wet_bulb_potential_temperature(ept_method, t_method, xp, device):
     ref_file = "t_wetpt.csv"
 
     # o = {}
+    # ept_methods = ["ifs", "bolton35", "bolton39"]
+    # t_methods = ["bisect", "newton", "direct"]
     # for m_ept in ept_methods:
     #     for m_t in t_methods:
-    #         o[
-    #             f"{m_ept}_{m_t}_td"
-    #         ] = thermo.array.wet_bulb_potential_temperature_from_dewpoint(
+    #         o[f"{m_ept}_{m_t}_td"] = thermo.array.wet_bulb_potential_temperature_from_dewpoint(
     #             data.t, data.td, data.p, ept_method=m_ept, t_method=m_t
     #         )
-    #         o[
-    #             f"{m_ept}_{m_t}_q"
-    #         ] = thermo.array.wet_bulb_potential_temperature_from_specific_humidity(
+    #         o[f"{m_ept}_{m_t}_q"] = thermo.array.wet_bulb_potential_temperature_from_specific_humidity(
     #             data.t, data.q, data.p, ept_method=m_ept, t_method=m_t
     #         )
     # save_test_reference(ref_file, o)
