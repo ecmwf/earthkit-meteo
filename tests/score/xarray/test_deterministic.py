@@ -797,7 +797,7 @@ def test_kge_modified_return_only_kge(rng):
     fcst = fcst["2t"]
     obs = obs["2t"]
 
-    result = kge(fcst, obs, over=["valid_datetime"])
+    result = kge(fcst, obs, over=["valid_datetime"], method="modified")
 
     expected_values = [
         [0.89876631, 0.81160643, 0.84475652],
@@ -857,7 +857,7 @@ def test_kge_modified_return_components(rng):
     fcst = fcst["2t"]
     obs = obs["2t"]
 
-    result = kge(fcst, obs, over=["valid_datetime"], return_components=True)
+    result = kge(fcst, obs, over=["valid_datetime"], return_components=True, method="modified")
 
     expected_kge_values = [
         [0.89876631, 0.81160643, 0.84475652],
