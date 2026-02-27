@@ -1,7 +1,5 @@
 from typing import Literal
-from typing import Optional
 from typing import TypeVar
-from typing import Union
 
 import numpy as np
 import xarray as xr
@@ -639,7 +637,6 @@ def kge(
     obs: xr.DataArray,
     over: str | list[str],
     method: Literal["original", "modified"] = "original",
-    scaling_factors: Optional[Union[list[float], np.ndarray]] = None,
     return_components: bool = False,
 ) -> T:
     r"""
@@ -654,10 +651,10 @@ def kge(
 
         \begin{align*}
         \text{KGE} = & \begin{cases}
-        1 - \sqrt{\left[s_\rho \cdot (\rho - 1)\right]^2 +
-        \left[s_\alpha \cdot (\alpha - 1)\right]^2 + \left[s_\beta \cdot (\beta - 1)\right]^2} & \text{if method = "original"} \\
-        1 - \sqrt{\left[s_\rho \cdot (\rho - 1)\right]^2 +
-        \left[s_\alpha \cdot (\gamma - 1)\right]^2 + \left[s_\beta \cdot (\beta - 1)\right]^2} & \text{if method = "modified"} \\
+        1 - \sqrt{(\rho - 1)^2 +
+        (\alpha - 1)^2 + (\beta - 1)^2} & \text{if method = "original"} \\
+        1 - \sqrt{(\rho - 1)^2 +
+        (\gamma - 1)^2 + (\beta - 1)^2} & \text{if method = "modified"} \\
         \end{cases}
         \end{align*}
 
@@ -674,8 +671,6 @@ def kge(
         - :math:`f` and :math:`o` are forecast and observed values, respectively
         - :math:`\mu_f` and :math:`\mu_o` are the means of forecast and observed values, respectively
         - :math:`\sigma_f` and :math:`\sigma_o` are the standard deviations of forecast and observed values, respectively
-        - :math:`s_\rho`, :math:`s_\alpha` and :math:`s_\beta` are the scaling factors for the correlation coefficient :math:`\rho`,
-          the variability term :math:`\alpha` (or :math:`\gamma`) and the bias term :math:`\beta`
 
     .. seealso::
 
@@ -691,9 +686,6 @@ def kge(
         The dimension(s) over which to compute the kge.
     method : str, optional
         The method to compute the variability term :math:`\alpha`. Can be either "original" or "modified". Default is "modified".
-    scaling_factors : list of float or np.ndarray, optional
-        Scaling factors for the correlation coefficient :math:`\rho`, the variability term :math:`\alpha` (or :math:`\gamma`) and the bias term :math:`\beta`. Should be provided in the order [:math:`s_\rho`, :math:`s_\alpha`, :math:`s_\beta`].
-        Default is None, which means no scaling (i.e., all scaling factors are 1).
     return_components : bool, optional
         Whether to return the individual components (:math:`\rho`, :math:`\alpha` (or :math:`\gamma`), :math:`\beta`) along with the KGE value. Default is False.
 
@@ -707,31 +699,16 @@ def kge(
     scores = _import_scores_or_prompt_install()
 
     if method == "original":
-        return scores.continuous.kge(
-            fcst, obs, reduce_dims=over, scaling_factors=scaling_factors, include_components=return_components
-        )
+        return scores.continuous.kge(fcst, obs, reduce_dims=over, include_components=return_components)
 
-    kge = scores.continuous.kge(
-        fcst, obs, reduce_dims=over, scaling_factors=scaling_factors, include_components=True
-    )
+    kge = scores.continuous.kge(fcst, obs, reduce_dims=over, include_components=True)
 
     if method == "modified":
         kge["alpha"] = kge["alpha"] / kge["beta"]
 
-        if scaling_factors is None:
-            kge["kge"] = 1 - (
-                ((kge["rho"] - 1) ** 2 + ((kge["alpha"] - 1) ** 2) + ((kge["beta"] - 1) ** 2)) ** 0.5
-            )
-        else:
-            s_rho, s_alpha, s_beta = scaling_factors
-            kge["kge"] = 1 - (
-                (
-                    (s_rho * (kge["rho"] - 1)) ** 2
-                    + (s_alpha * (kge["alpha"] - 1)) ** 2
-                    + (s_beta * (kge["beta"] - 1)) ** 2
-                )
-                ** 0.5
-            )
+        kge["kge"] = 1 - (
+            ((kge["rho"] - 1) ** 2 + ((kge["alpha"] - 1) ** 2) + ((kge["beta"] - 1) ** 2)) ** 0.5
+        )
 
         kge = kge.rename({"alpha": "gamma"})
 
