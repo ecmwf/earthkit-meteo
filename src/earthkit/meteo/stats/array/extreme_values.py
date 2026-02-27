@@ -32,10 +32,10 @@ class GumbelDistribution:
         Offset parameter.
     sigma: array_like
         Scale parameter.
-    dims: None | tuple[str], optional
+    dims: tuple[str], optional
         Ordered sequence of dimension labels. To be used by metadata-aware
         functions working with the distribution.
-    coords: None | dict[str,Any], optional
+    coords: dict[str,Any], optional
         Coordinates corresponding to the labelled dimensions provided in `dims`.
         To be used by metadata-aware functions working with the distribution.
     """
