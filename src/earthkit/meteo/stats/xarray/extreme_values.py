@@ -9,21 +9,29 @@
 from ...utils.decorators import xarray_ufunc
 from .. import array
 
+__all__ = ["fit_gumbel", "value_to_return_period", "return_period_to_value"]
+
 
 def fit_gumbel(sample, over):
     """Gumbel distribution with parameters fitted to a sample of values.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     Results derived from the fitted distribution will only be meaningful
     if it is representative of the sample statistics.
 
     Parameters
     ----------
-    sample: numpy.ndarray
+    sample: xarray.DataArray
         Sample values.
     over: str
-        The dimension along which to compute the distribution parameters.
-    **kwargs: dict[str,Any]
-        Keyword arguments forwarded to the distribution constructor.
+        The dimension over which to compute the parameters.
+
+    Returns
+    -------
+    GumbelDistribution
+        Fitting over a dimension of a multi-dimensional sample array, the
+        outcome is a collection of (scalar-valued) distributions.
     """
     assert over in sample.dims
     over_axis = sample.dims.index(over)
@@ -35,21 +43,20 @@ def fit_gumbel(sample, over):
 def value_to_return_period(value, dist):
     """Return period of a value given a distribution of extremes.
 
-    Use, e.g., to compute expected return periods of extreme precipitation or
-    flooding events based on a timeseries of past observations.
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     Parameters
     ----------
     dist: GumbelDistribution
         Probability distribution.
-    value: array_like
+    value: xarray.DataArray
         Input value(s).
 
     Returns
     -------
-    array_like
-        The return period of the input value, scaled with the frequency
-        information of the distribution if attached.
+    xarray.DataArray
+        The return period of the input value. Distribution dimensions are added
+        at the end.
     """
     assert dist.dims is None or not (set(value.dims) & set(dist.dims))
     return xarray_ufunc(
@@ -63,20 +70,20 @@ def value_to_return_period(value, dist):
 def return_period_to_value(return_period, dist):
     """Value for a given return period of a distribution of extremes.
 
+    .. warning:: Experimental API. This function may change or be removed without notice.
+
     Parameters
     ----------
     dist: GumbelDistribution
         Probability distribution.
-    return_period: array_like
-        Input return period. Must be compatible with the frequency information
-        of the distribution if attached.
-    freq: number | timedelta
-        Temporal frequency of the input dataUsed to scale return periods.
+    return_period: xarray.DataArray
+        Input return period.
 
     Returns
     -------
-    array_like
-        Value with return period equal to the input return period.
+    xarray.DataArray
+        Value with return period equal to the input return period. Distribution
+        dimensions are added at the end.
     """
     assert dist.dims is None or not (set(return_period.dims) & set(dist.dims))
     return xarray_ufunc(

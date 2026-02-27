@@ -24,41 +24,43 @@ def _expand_dims_after(arr, ndim, xp=None):
 class GumbelDistribution:
     """Gumbel distribution for extreme value statistics.
 
+    .. warning:: Experimental API. This class may change or be removed without notice.
+
     Parameters
     ----------
     mu: array_like
         Offset parameter.
     sigma: array_like
         Scale parameter.
-    freq: None | Number | timedelta
-        Temporal frequency (duration between values, technically the inverse
-        frequency) of the represented data. Provides additional context, e.g.,
-        to scale return periods computed from the distribution.
+    dims: None | tuple[str], optional
+        Ordered sequence of dimension labels. To be used by metadata-aware
+        functions working with the distribution.
+    coords: None | dict[str,Any], optional
+        Coordinates corresponding to the labelled dimensions provided in `dims`.
+        To be used by metadata-aware functions working with the distribution.
     """
 
     def __init__(self, mu, sigma, dims=None, coords=None):
         xp = array_namespace(mu, sigma)
         self.mu, self.sigma = xp.broadcast_arrays(mu, sigma)
         # Optional metadata
-        self._dims = dims
+        self._dims = tuple(dims) if dims is not None else dims
         self._coords = coords
-        assert self._dims is None or len(self._dims) == self.ndim
+        assert self.dims is None or len(self.dims) == self.ndim
 
     @property
-    def shape(self):
+    def shape(self) -> tuple[int]:
         """Tuple of dimensions."""
         return self.mu.shape
 
     @property
-    def ndim(self):
+    def ndim(self) -> int:
         """Number of dimensions."""
         return self.mu.ndim
 
     @property
-    def dims(self):
-        if self._dims is not None:
-            return tuple(self._dims)
-        return tuple(f"dim{i}" for i in self.ndim)
+    def dims(self) -> None | tuple[str]:
+        return self._dims
 
     @property
     def coords(self):
@@ -104,8 +106,12 @@ class GumbelDistribution:
 def fit_gumbel(sample, over=0, **kwargs):
     """Gumbel distribution with parameters fitted to a sample of values.
 
+    .. warning:: Experimental API. This function may change or be removed without notice.
+
     Results derived from the fitted distribution will only be meaningful
     if it is representative of the sample statistics.
+
+    Fitting over axes other than 0 is only possible if scipy is installed.
 
     Parameters
     ----------
@@ -115,6 +121,12 @@ def fit_gumbel(sample, over=0, **kwargs):
         The axis along which to compute the distribution parameters.
     **kwargs: dict[str,Any]
         Keyword arguments forwarded to the distribution constructor.
+
+    Returns
+    -------
+    GumbelDistribution
+        Fitting over a dimension of a multi-dimensional sample array, the
+        outcome is a collection of (scalar-valued) distributions.
     """
     xp = array_namespace(sample)
     lmom = lmoment(sample, axis=over, order=[1, 2])
@@ -125,6 +137,8 @@ def fit_gumbel(sample, over=0, **kwargs):
 
 def value_to_return_period(value, dist):
     """Return period of a value given a distribution of extremes.
+
+    .. warning:: Experimental API. This function may change or be removed without notice.
 
     Use, e.g., to compute expected return periods of extreme precipitation or
     flooding events based on a timeseries of past observations.
@@ -139,8 +153,7 @@ def value_to_return_period(value, dist):
     Returns
     -------
     array_like
-        The return period of the input value, scaled with the frequency
-        information of the distribution if attached.
+        The return period of the input value.
     """
     xp = array_namespace(value)
     return 1.0 / dist.cdf(xp.asarray(value))
@@ -149,13 +162,14 @@ def value_to_return_period(value, dist):
 def return_period_to_value(return_period, dist):
     """Value for a given return period of a distribution of extremes.
 
+    .. warning:: Experimental API. This function may change or be removed without notice.
+
     Parameters
     ----------
     dist: GumbelDistribution
         Probability distribution.
     return_period: array_like
-        Input return period. Must be compatible with the frequency information
-        of the distribution if attached.
+        Input return period.
 
     Returns
     -------
