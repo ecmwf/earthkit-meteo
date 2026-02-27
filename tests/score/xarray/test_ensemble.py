@@ -6,9 +6,10 @@ import xarray as xr
 
 from earthkit.meteo.score import crps_from_cdf
 from earthkit.meteo.score import crps_from_ensemble
-from earthkit.meteo.score import crps_from_gaussian as crps_gaussian
+from earthkit.meteo.score import crps_from_gaussian
 from earthkit.meteo.score import quantile_score
 from earthkit.meteo.score import spread
+from earthkit.meteo.utils.testing import NO_SCORES
 
 LATITUDES = [40.0, 41.0]
 LONGITUDES = [10.0, 11.0]
@@ -254,7 +255,7 @@ def test_quantile_score_invalid_tau(tau: float):
         quantile_score(fcst, obs, tau=tau, over="number")
 
 
-def test_crps_gaussian():
+def test_crps_from_gaussian():
     fcst_mean_values = np.array(
         [
             [[10.0, 20.0], [30.0, 40.0]],
@@ -285,11 +286,11 @@ def test_crps_gaussian():
     obs = make_deterministic_dataset(obs_values)["2t"]
     crps_expected = make_deterministic_dataset(expected_crps_values)["2t"]
 
-    crps_computed = crps_gaussian(fcst, obs)
+    crps_computed = crps_from_gaussian(fcst, obs)
     xr.testing.assert_allclose(crps_computed, crps_expected)
 
 
-def test_crps_gaussian_invalid_input():
+def test_crps_from_gaussian_invalid_input():
     fcst_mean_values = np.array(
         [
             [[10.0, 20.0], [30.0, 40.0]],
@@ -316,16 +317,16 @@ def test_crps_gaussian_invalid_input():
     obs = make_deterministic_dataset(obs_values)["2t"]
 
     with pytest.raises(ValueError, match="Expected fcst to have 'mean' and 'stdev' data variables"):
-        crps_gaussian(fcst, obs)
+        crps_from_gaussian(fcst, obs)
 
     with pytest.raises(TypeError, match="Expected fcst to be an xarray.Dataset object"):
-        crps_gaussian(
+        crps_from_gaussian(
             make_gaussian_ensemble_dataset(fcst_mean_values, fcst_mean_values)["mean"],
             make_deterministic_dataset(obs_values),
         )
 
     with pytest.raises(TypeError, match="Expected obs to be an xarray.DataArray object"):
-        crps_gaussian(
+        crps_from_gaussian(
             make_gaussian_ensemble_dataset(fcst_mean_values, fcst_mean_values),
             make_deterministic_dataset(obs_values),
         )
@@ -342,6 +343,7 @@ def test_crps_from_ensemble_invalid_method():
         crps_from_ensemble(fcst, obs, over="number", method="invalid_method")
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 @pytest.mark.parametrize(
     "method,expected_total,expected_spread",
     [
@@ -612,6 +614,7 @@ def test_crps_from_ensemble_hersbach(method: str, expected_total: np.ndarray):
         assert_component_allclose(crps_components, component, values)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 @pytest.mark.filterwarnings("ignore:numba is not available")
 def test_crps_from_cdf():
     threshold_values = np.array([5.0, 8.333333333333334, 11.666666666666668, 15.0], dtype=float)
@@ -677,6 +680,7 @@ def test_crps_from_cdf():
     xr.testing.assert_allclose(total_only, expected_total_da)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 @pytest.mark.filterwarnings("ignore:numba is not available")
 def test_crps_from_cdf_weighted_thresholds():
     threshold_values = np.array([5.0, 8.333333333333334, 11.666666666666668, 15.0], dtype=float)
@@ -716,6 +720,7 @@ def test_crps_from_cdf_weighted_thresholds():
     xr.testing.assert_allclose(result, expected_total_da)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 @pytest.mark.filterwarnings("ignore:numba is not available")
 def test_crps_from_cdf_invalid_cdf_values():
     threshold_values = np.array([5.0, 10.0, 15.0], dtype=float)
