@@ -58,6 +58,8 @@ def test_return_period_to_value(da_2d):
     assert result.dims == ("baz", "bar")
     np.testing.assert_array_equal(result.coords["bar"], da_2d.coords["bar"])
     np.testing.assert_array_equal(result.coords["baz"], rps.coords["baz"])
+    result_arr = stats.array.return_period_to_value(rps.values, gumbel)
+    np.testing.assert_array_equal(result, result_arr)
 
 
 def test_fit_gumbel_over_bar_dim(da_2d):
@@ -80,3 +82,5 @@ def test_value_to_return_period(da_2d):
     assert result.dims == ("baz", "foo")
     np.testing.assert_array_equal(result.coords["foo"], da_2d.coords["foo"])
     np.testing.assert_array_equal(result.coords["baz"], vals.coords["baz"])
+    result_arr = stats.array.value_to_return_period(vals.values, gumbel)
+    np.testing.assert_array_equal(result, result_arr)
