@@ -38,7 +38,7 @@ def da_2d():
     return xr.DataArray(data, coords, dims)
 
 
-def test_fit_gumbel_over_foo_dim(da_2d):
+def test_fit_gumbel_over_foo_dim_detects_metadata(da_2d):
     gumbel = stats.fit_gumbel(da_2d, over="foo")
     assert gumbel.ndim == 1
     assert gumbel.shape == (3,)
@@ -46,6 +46,11 @@ def test_fit_gumbel_over_foo_dim(da_2d):
     assert len(gumbel.coords) == 1
     assert "bar" in gumbel.coords
     np.testing.assert_array_equal(gumbel.coords["bar"], da_2d.coords["bar"])
+
+
+def test_fit_gumbel_fails_if_over_dimension_missing(da_2d):
+    with pytest.raises(ValueError):
+        stats.fit_gumbel(da_2d, over="baz")
 
 
 def test_return_period_to_value(da_2d):
@@ -62,7 +67,16 @@ def test_return_period_to_value(da_2d):
     np.testing.assert_array_equal(result, result_arr)
 
 
-def test_fit_gumbel_over_bar_dim(da_2d):
+def test_return_period_to_value_fails_on_shared_dimension(da_2d):
+    import xarray as xr
+
+    gumbel = stats.fit_gumbel(da_2d, over="foo")
+    rps = xr.DataArray([3, 5], coords={"bar": [-1, -2]}, dims=["bar"])
+    with pytest.raises(ValueError):
+        stats.return_period_to_value(rps, gumbel)
+
+
+def test_fit_gumbel_over_bar_dim_detects_metadata(da_2d):
     gumbel = stats.fit_gumbel(da_2d, over="bar")
     assert gumbel.ndim == 1
     assert gumbel.shape == (7,)
@@ -84,3 +98,12 @@ def test_value_to_return_period(da_2d):
     np.testing.assert_array_equal(result.coords["baz"], vals.coords["baz"])
     result_arr = stats.array.value_to_return_period(vals.values, gumbel)
     np.testing.assert_array_equal(result, result_arr)
+
+
+def test_value_to_return_period_fails_on_shared_dimension(da_2d):
+    import xarray as xr
+
+    gumbel = stats.fit_gumbel(da_2d, over="foo")
+    vals = xr.DataArray([1.0, 2.0, 3.0], coords={"bar": [4.0, 2.0, 0.0]}, dims=["bar"])
+    with pytest.raises(ValueError):
+        stats.value_to_return_period(vals, gumbel)
