@@ -11,6 +11,8 @@ def _import_scores_or_prompt_install():
     try:
         import scores
     except ImportError as e:
+        # from python 3.11+ can be written as:
+        # raise e.add_note("...")
         raise RuntimeError(
             "The 'earthkit-meteo[score]' extra is required to use scoring functions. "
             "Please install it using 'pip install earthkit-meteo[score]'"
