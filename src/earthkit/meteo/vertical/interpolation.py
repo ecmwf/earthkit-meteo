@@ -4,7 +4,11 @@ from typing import Literal
 from typing import Sequence
 
 import numpy as np
-import xarray as xr
+
+try:
+    import xarray as xr
+except ImportError as e:
+    raise RuntimeError("vertical.interpolation requires xarray") from e
 
 __all__ = [
     "TargetCoordinates",

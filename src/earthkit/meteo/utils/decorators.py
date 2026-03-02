@@ -10,9 +10,11 @@ from abc import ABCMeta
 from abc import abstractmethod
 from functools import wraps
 from importlib import import_module
+from typing import TYPE_CHECKING
 from typing import Any
 
-import xarray as xr
+if TYPE_CHECKING:
+    import xarray as xr
 
 
 def _is_xarray(obj: Any) -> bool:
@@ -195,6 +197,11 @@ def xarray_ufunc_deprecated(**xarray_ufunc_kwargs):
 
 
 def xarray_ufunc(func, *args, **kwargs):
+    try:
+        import xarray as xr
+    except ImportError as e:
+        raise RuntimeError("xarray dependency is required") from e
+
     xarray_ufunc_kwargs = kwargs.pop("xarray_ufunc_kwargs", None) or {}
     merged = {
         "dask": "parallelized",
