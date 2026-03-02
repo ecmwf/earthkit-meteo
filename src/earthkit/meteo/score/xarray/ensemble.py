@@ -10,11 +10,11 @@ T = TypeVar("T", xr.DataArray, xr.Dataset)
 def _import_scores_or_prompt_install():
     try:
         import scores
-    except ImportError:
-        raise ImportError(
+    except ImportError as e:
+        raise RuntimeError(
             "The 'earthkit-meteo[score]' extra is required to use scoring functions. "
             "Please install it using 'pip install earthkit-meteo[score]'"
-        )
+        ) from e
     return scores
 
 
