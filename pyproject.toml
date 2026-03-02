@@ -55,7 +55,9 @@ optional-dependencies.samples = [
   "requests",
 ]
 optional-dependencies.scores = [
+  "scipy",
   "scores",
+  "xarray",
 ]
 optional-dependencies.test = [
   "earthkit-data",
