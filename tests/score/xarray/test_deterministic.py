@@ -2,7 +2,8 @@ import datetime
 
 import numpy as np
 import pytest
-import xarray as xr
+
+xr = pytest.importorskip("xarray")
 
 from earthkit.meteo.score import abs_error
 from earthkit.meteo.score import cosine_similarity
