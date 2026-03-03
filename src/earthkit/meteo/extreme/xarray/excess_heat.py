@@ -231,6 +231,50 @@ def heatwave_severity(exhf, threshold=("quantile", 0.85)):
 
 # https://codes.ecmwf.int/grib/param-db/261025
 @_with_metadata("excf", long_name="Excess cold factor")
-def excess_cold_factor(ehi_sig, ehi_accl, nonnegative=True):
-    """Excess cold factor"""
-    return NotImplementedError  # TODO
+def excess_cold_factor(ehi_sig, ehi_accl, nonpositive=True):
+    """Excess cold factor.
+
+    Parameters
+    ----------
+    ehi_sig : xarray.DataArray
+        Significance index.
+    ehi_accl : xarray.DataArray
+        Acclimatisation index.
+    nonpositive : bool, optional
+        Whether to clip the upper value range at zero. Enabled by default.
+
+    Returns
+    -------
+    xarray.DataArray
+        Excess cold factor.
+
+
+    Notes
+    -----
+
+    .. math::
+
+        EXCF = -EHI_{sig} \\times \\min(-1, EHI_{accl})
+
+    with
+
+    - :math:`EHI_{sig}`: excess heat index of significance
+    - :math:`EHI_{accl}`: excess heat index of acclimatisation
+
+    Example
+    -------
+    To compute the excess cold factor, :ref:`Nairn and Fawcett (2013) <Nairn2013>`
+    compute :math:`EHI_{sig}` relative to the 5th percentile of a 1971 to 2000
+    climatology of daily mean temperature and :math:`EHI_{accl}` relative to the
+    30 days directly preceeding the valid time. The authors use an evaluation
+    time window of 3 days starting from the valid day for both indices.
+
+    See also
+    --------
+    :py:func:`significance_index`
+    :py:func:`acclimatisation_index`
+    :py:func:`excess_heat_factor`
+    """
+    if nonpositive:
+        ehi_sig = np.minimum(0, ehi_sig)
+    return -ehi_sig * np.minimum(-1.0, ehi_accl)
