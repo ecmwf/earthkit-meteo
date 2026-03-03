@@ -14,7 +14,7 @@ import xarray as xr
 from earthkit.meteo.extreme.xarray import excess_heat
 
 
-class TestDailyMeanTemeratureArgDayStart:
+class TestDailyMeanTemperatureArgDayStart:
 
     @pytest.fixture
     def t2m(self):
@@ -75,7 +75,7 @@ class TestDailyMeanTemperatureArgTimeShift:
             t2m, day_start=0, time_shift=np.timedelta64(shift, "h")
         )
         dmt_number = excess_heat.daily_mean_temperature(t2m, day_start=0, time_shift=shift)
-        np.testing.assert_allclose(dmt_tdelta, dmt_number)
+        xr.testing.assert_allclose(dmt_tdelta, dmt_number)
 
     def test_field_access_with_str_value(self, t2m):
         tz = xr.DataArray(
@@ -167,6 +167,9 @@ def test_daily_mean_temperature_combined_day_start_and_time_shift_args():
     )
 
 
+# TODO
+
+
 def test_heatwave_severity_with_given_threshold():
     da = xr.DataArray([[0.0, 1.0, 3.0, 4.0], [1.0, 2.0, 1.0, 0.0]], dims=["foo", "time"])
     tr = xr.DataArray([2.5, 2.0], dims=["foo"])
@@ -176,24 +179,15 @@ def test_heatwave_severity_with_given_threshold():
     )
 
 
-def test_heatwave_severity_with_automatic_threshold():
-    da = xr.DataArray([[0.0, 1.0, 4.0, 5.0, 2.0], [1.0, 2.0, 1.0, 0.0, 3.0]], dims=["foo", "time"])
-    hsi = excess_heat.heatwave_severity(da, threshold=("quantile", 0.75))
-    xr.testing.assert_allclose(
-        hsi, xr.DataArray([[0.0, 0.25, 1.0, 1.25, 0.5], [0.5, 1.0, 0.5, 0.0, 1.5]], dims=["foo", "time"])
-    )
-
-
-class TestMetadataWithLongHeatwaveSyntheticDMT:
+class TestMetadataWithSyntheticDMT:
 
     @pytest.fixture
     def dmt(self):
         day = np.linspace(0, 150, 151)
+        # Approximate recreation of doi:10.3390/ijerph120100227, Fig. 4
         dmt = 25 + 10 * np.exp(-((day - 60) ** 2) / 5)
         time = np.datetime64("2025-01-01") + np.timedelta64(24, "h") * day
-        return xr.DataArray(
-            dmt, coords={"valid_time": time}, dims=["valid_time"], attrs={"units": "degree_C"}
-        )
+        return xr.DataArray(dmt, coords={"valid_time": time}, dims=["valid_time"], attrs={"units": "degC"})
 
     @pytest.fixture
     def ehi_sig(self, dmt):
@@ -208,25 +202,34 @@ class TestMetadataWithLongHeatwaveSyntheticDMT:
         return excess_heat.excess_heat_factor(ehi_sig, ehi_accl)
 
     @pytest.fixture
+    def excf(self, ehi_sig, ehi_accl):
+        return excess_heat.excess_cold_factor(ehi_sig, ehi_accl)
+
+    @pytest.fixture
     def hsev(self, exhf):
         return excess_heat.heatwave_severity(exhf, threshold=900.0)
 
     def test_significance_index_output_metadata(self, ehi_sig):
         assert ehi_sig.name == "ehi_sig"
         assert ehi_sig.attrs["long_name"] == "Significance index"
-        # assert ehi_sig.attrs["units"] == "degree_C"
+        # assert ehi_sig.attrs["units"] == "degC"
 
     def test_acclimatisation_index_output_metadata(self, ehi_accl):
         assert ehi_accl.name == "ehi_accl"
         assert ehi_accl.attrs["long_name"] == "Acclimatisation index"
-        # assert ehi_accl.attrs["units"] == "degree_C"
+        # assert ehi_accl.attrs["units"] == "degC"
 
     def test_excess_heat_factor_output_metadata(self, exhf):
         assert exhf.name == "exhf"
         assert exhf.attrs["long_name"] == "Excess heat factor"
-        # assert exhf.attrs["units"] == "degree_C2"
+        # assert exhf.attrs["units"] in {"degC ** 2", "degC^2", "degC²"}
 
     def test_excess_heatwave_severity_metadata(self, hsev):
         assert hsev.name == "hsev"
         assert hsev.attrs["long_name"] == "Heatwave severity"
         assert "units" not in hsev.attrs or hsev.attrs["units"] == "1"
+
+    def test_excess_cold_factor_metadata(self, excf):
+        assert excf.name == "excf"
+        assert excf.attrs["long_name"] == "Excess cold factor"
+        # assert excf.attrs["units"] in {"degC ** 2", "degC^2", "degC²"}

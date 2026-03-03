@@ -54,7 +54,16 @@ IFS Documentation CY47R3 - Part III: Dynamics and numerical procedures, (2021). 
 
 .. [Nairn2013]
 
-Nairn, J. and Fawcett, R., (2013). Defining heatwaves: heatwave defined as a heat-impact event servicing all community and business sectors in Australia. CAWCR Technical Report. URL: https://www.cawcr.gov.au/technical-reports/CTR_060.pdf
+Nairn, J. and Fawcett, R. (2013). Defining heatwaves: heatwave defined as a heat-impact event servicing all community and business sectors in Australia. CAWCR Technical Report. URL: https://www.cawcr.gov.au/technical-reports/CTR_060.pdf
+
+
+.. [Nairn2014]
+
+Nairn, J. R. and Fawcett, R. J. B., (2015). The Excess Heat Factor: A Metric for Heatwave Intensity and Its Use in Classifying Heatwave Severity. International Journal of Environmental Research and Public Health, 12(1), 227-253. https://doi.org/10.3390/ijerph120100227
+
+.. [Nairn2018]
+
+Nairn, J., Ostendorf, B. and Bi, P., (2018). Performance of Excess Heat Factor Severity as a Global Heatwave Health Impact Index. International Journal of Environmental Research and Public Health, 15(11), 2494. https://doi.org/10.3390/ijerph15112494
 
 
 .. [Stipanuk1973]

@@ -6,6 +6,11 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+"""
+Tools for computing the excess heat and cold factors following the definitions
+of [Nairn2013], [Nairn2014] and [Nairn2018].
+"""
+
 import functools
 import numbers
 
@@ -19,7 +24,7 @@ class _with_metadata:
     """Decorator to attach metadata to an output DataArray"""
 
     # TODO just a quick solution until something better is in place
-    # TODO input-dependent unit handling (take input unit and transform)
+    # TODO input-dependent unit handling (take input unit(s), check compatibility, transform into output unit)
 
     def __init__(self, name, **attrs):
         self.name = name
@@ -39,10 +44,8 @@ def _rolling_mean(da, n, shift_days=0):
     )
 
 
-def _compute_threshold_from_spec(da, spec):
-    if spec[0] == "quantile":
-        return earthkit.transforms.temporal.reduce(da, how="quantile", q=spec[1]).drop_vars("quantile")
-    raise NotImplementedError
+def _compute_threshold_as_quantile(da, q):
+    return earthkit.transforms.temporal.reduce(da, how="quantile", q=q).drop_vars("quantile")
 
 
 __DMT_TIME_SHIFT_COORD = "__daily_mean_temperature_time_shift"
@@ -52,16 +55,55 @@ __DMT_TIME_SHIFT_COORD = "__daily_mean_temperature_time_shift"
 def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
     """Daily mean temperature, computed from min and max.
 
-    It is recommended to install flox for efficient aggregations.
+    Supports custom definitions of "day" (parameter `day_start`) and accounts
+    for local time zones when time zone offsets with respect to the time
+    coordinate of the input data as given a function of the spatial coordinates.
 
-    Supports custom definitions of "day". E.g., by defining a later start of
-    the day (positive `day_start`), the usual early morning temperature minimum
-    can be attributed to the previous day, so that the mean value is derived
-    from the daytime maximum and the minimum of the following night (rather
-    than the previous night). At the same time, local time zones can be
-    accounted with the `time_shift` parameter by specifying the time zone
-    offsets with respect to the time coordinate of the input data as a function
-    of the spatial coordinates.
+    Parameters
+    ----------
+    t2m : xarray.DataArray
+        2-metre temperature.
+    day_start : number | numpy.timedelta64
+        Constant offset for the start of the day in the aggregations. By
+        default, the day is defined from 09:00 to 09:00. Positive offsets
+        indicate a late start of the day, negative an early start. A numeric
+        value is interpreted as hours.
+    time_shift : xarray.DataArray | numpy.timedelta64 | number | str
+        Offset relative to time coordinate of input. Can vary in space to
+        specify timezones. A numeric value is interpreted as hours. Provide a
+        string value to take a correspondingly named coordinate from the input
+        DataArray.
+    **kwargs
+        Keyword arguments for the daily_min and daily_max functions of
+        earthkit.transforms.temporal.
+
+    Returns
+    -------
+    xarray.DataArray
+        Daily mean temperature.
+
+    Notes
+    -----
+    The daily mean temperature is defined as
+
+    .. math::
+
+        T({t_i}) = \\frac{T_\\mathrm{min}(t_i) + T_\\mathrm{max}(t_i)}{2},
+
+    where
+
+    - :math:`T_\\mathrm{min}(t_i)` is the daily minimum temperature and
+    - :math:`T_\\mathrm{max}(t_i)` is the daily maximum temperature,
+
+    over a local definition of "day". E.g., [Nairn2014]_ define the day from
+    9 am to 9 am local time, so that the daily maximum typically preceeds the
+    daily minimum to account for the greater significance of the human
+    physiological response to a hot night following a hot day compared to the
+    other way around. The default value of `day_start` reflects this definition.
+
+    .. tip::
+        It is recommended to install flox to improve the computational effiency
+        when working with chunked data in dask.
 
     Example
     -------
@@ -70,7 +112,7 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
     define the day from 10:00 to 10:00 Atlantic Standard Time (UTC -4 hours),
     then we need to call::
 
-        daily_mean_temperature(..., day_start=10, time_shift=-4)
+    >>> daily_mean_temperature(..., day_start=10, time_shift=-4)
 
     Note that while both offest parameters lead to a "later" start of the day
     relative to the reference time coordinate of the data, the sign of their
@@ -79,25 +121,7 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
     you prefer to specify only a single offset for both settings. The above
     call is equivalent to::
 
-        daily_mean_temperature(..., day_start=0, time_shift=-14)
-
-    Parameters
-    ----------
-    t2m : xr.DataArray
-        2-metre temperature.
-    day_start : number | np.timedelta64
-        Constant offset for the start of the day in the aggregations. By
-        default, the day is defined from 09:00 to 09:00. Positive offsets
-        indicate a late start of the day (see default), negative an early
-        start. A numeric value is interpreted as hours.
-    time_shift : np.timedelta64 | number | str | xr.DataArray
-        Offset relative to time coordinate of input. Can be a function of
-        space to specify timezones. A numeric value is interpreted as hours.
-        Provide a string value to take a correspondingly named coordinate
-        from the input DataArray.
-    **kwargs
-        Keyword arguments for the daily_min and daily_max functions of
-        earthkit.transforms.temporal.
+    >>> daily_mean_temperature(..., day_start=0, time_shift=-14)
     """
     assert isinstance(t2m, xr.DataArray)
 
@@ -143,28 +167,54 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
 
 
 @_with_metadata("ehi_sig", long_name="Significance index")
-def significance_index(dmt, threshold=("quantile", 0.95), ndays=3, time_dim=None):
-    """Significance index
+def significance_index(dmt, ndays=3, threshold=None):
+    """Significance index.
+
+    Supports both fixed thresholds to identify heat and cold waves and
+    day-of-year climatologies to identify warm and cold spells.
 
     Parameters
     ----------
-    dmt : xr.DataArray
+    dmt : xarray.DataArray
         Daily mean temperature.
-    threshold : number | TODO
-        Significance threshold.
-    ndays : number
-        Length of evaluation time window.
-    time_dim : None | str
-        Name of time dimension in dmt DataArray.
+    ndays : int, optional
+        Length of evaluation time window. 3 days by default.
+    threshold : xarray.DataArray | number | None, optional
+        Significance threshold. By default, the gridpoint-wise 95th percentile
+        of the input daily mean temperature timeseries is computed and used.
 
     Returns
     -------
-    xr.DataArray
+    xarray.DataArray
         Significance index.
+
+    Notes
+    -----
+    The significance index is defined as
+
+    .. math::
+
+        EHI_{sig} = \\frac{T(t_{i}) + \\ldots + T(t_{i+n-1})}{n} - T_{95},
+
+    where
+
+    - :math:`T` is daily mean temperature,
+    - :math:`t_i` denotes timestep :math:`i`,
+    - :math:`n` is the number of timesteps in the evaluation window (`ndays`), and
+    - :math:`T_{95}` is the threshold of significance for the daily mean
+      temperature.
+
+    The 95th percentile as the default threshold follows [Nairn2014]_, except
+    that they use a fixed reference period to compute the percentile over rather
+    than the full timeseries.
+
+    See also
+    --------
+    :py:func:`daily_mean_temperature`
+    :py:func:`acclimatisation_index`
     """
-    # Compute threshold as quantile
-    if isinstance(threshold, tuple):
-        threshold = _compute_threshold_from_spec(dmt, threshold)
+    if threshold is None:
+        threshold = _compute_threshold_as_quantile(dmt, 0.95)
     current = _rolling_mean(dmt, ndays, shift_days=(1 - ndays))
     # TODO: earthkit-transforms also supports weekly and monthly climatologies,
     #       make them work too, ideally without hardcoding coordinate names
@@ -176,20 +226,46 @@ def significance_index(dmt, threshold=("quantile", 0.95), ndays=3, time_dim=None
 
 @_with_metadata("ehi_accl", long_name="Acclimatisation index")
 def acclimatisation_index(dmt, ndays=3, ndays_ref=30):
-    """Acclimatisation index
+    """Acclimatisation index.
 
     Parameters
     ----------
-    dmt : xr.DataArray
+    dmt : xarray.DataArray
         Daily mean temperature.
-    ndays : number
-        Length of evaluation time window.
-    ndays_ref : number
-        Length of reference time window (recent past).
+    ndays : int, optional
+        Length of evaluation time window. 3 days by default.
+    ndays_ref : int, optional
+        Length of reference time window (recent past). 30 days by default.
+
+    Returns
+    -------
+    xarray.DataArray
+        Acclimatisation index.
+
+    Notes
+    -----
+    The acclimatisation index is defined as
+
+    .. math::
+
+        EHI_{accl}(t_i) = \\frac{T(t_{i}) + \\ldots + T(t_{i+n-1})}{n} - \\frac{T(t_{i-m}) + \\ldots + T(t_{i-1})}{m}
+
+    where
+
+    - :math:`T` is daily mean temperature,
+    - :math:`t_i` denotes timestep :math:`i`,
+    - :math:`n` is the number of timesteps in the evaluation window (`ndays`), and
+    - :math:`m` is the number of timesteps in the reference time window (`ndays_ref`).
+
+    The default time window lengths reflect the configuration of [Nairn2014]_.
+
+    See also
+    --------
+    :py:func:`daily_mean_temperature`
+    :py:func:`significance_index`
     """
-    current = _rolling_mean(
-        dmt, ndays, shift_days=(1 - ndays)
-    )  # TODO: shared with significance index, would be nice to not compute it twice
+    # TODO: this computation is shared with the significance index, any way to avoid computing it twice?
+    current = _rolling_mean(dmt, ndays, shift_days=(1 - ndays))
     reference = _rolling_mean(dmt, ndays_ref, shift_days=1)
     return current - reference
 
@@ -197,16 +273,49 @@ def acclimatisation_index(dmt, ndays=3, ndays_ref=30):
 # https://codes.ecmwf.int/grib/param-db/261024
 @_with_metadata("exhf", long_name="Excess heat factor")
 def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=True):
-    """Excess heat factor
+    """Excess heat factor.
 
     Parameters
     ----------
-    ehi_sig : xr.DataArray | array_like
+    ehi_sig : xarray.DataArray
         Significance index.
-    ehi_accl : xr.DataArray | array_like
+    ehi_accl : xarray.DataArray
         Acclimatisation index.
-    nonnegative : bool
-        Whether to clip the lower value range by zero.
+    nonnegative : bool, optional
+        Whether to clip the lower value range at zero. Enabled by default.
+
+    Returns
+    -------
+    xarray.DataArray
+        Excess heat factor.
+
+    Notes
+    -----
+    The excess heat factor is defined as
+
+    .. math::
+
+        EXHF = EHI_{sig} \\times \\max(1, EHI_{accl}),
+
+    where
+
+    - :math:`EHI_{sig}` is the excess heat index of significance and
+    - :math:`EHI_{accl}` is the excess heat index of acclimatisation.
+
+    Example
+    -------
+    :ref:`Nairn and Fawcett (2014) <Nairn2014>` compute the excess heat factor
+    with :math:`EHI_{sig}` relative to the 95th percentile of a 30-year
+    climatology of daily mean temperature and :math:`EHI_{accl}` relative to the
+    30 days directly preceeding the valid time. The authors use an evaluation
+    time window of 3 days starting from the valid day for both indices.
+
+    See also
+    --------
+    :py:func:`significance_index`
+    :py:func:`acclimatisation_index`
+    :py:func:`heatwave_severity`
+    :py:func:`excess_cold_factor`
     """
     if nonnegative:
         ehi_sig = np.maximum(0, ehi_sig)
@@ -214,18 +323,46 @@ def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=True):
 
 
 @_with_metadata("hsev", long_name="Heatwave severity", units="1")
-def heatwave_severity(exhf, threshold=("quantile", 0.85)):
-    """Heatwave severity index
+def heatwave_severity(exhf, threshold=None):
+    """Heatwave severity index.
 
     Parameters
     ----------
     exhf : xarray.DataArray
         Excess heat factor.
-    threshold : number | xarray.DataArray | TODO
-        Excess heat factor threshold.
+    threshold : xarray.DataArray | number | None, optional
+        Excess heat factor threshold. By default, the gridpoint-wise 85th
+        percentile of the input excess heat factor timeseries is computed and
+        used.
+
+    Returns
+    -------
+    xarray.DataArray
+        Heatwave severity index.
+
+    Notes
+    -----
+    The heatwave severity index is defined as
+
+    .. math::
+
+        HSEV = \\frac{EXHF}{EXHF_{85}},
+
+    where
+
+    - :math:`EXHF` is the excess heat factor and
+    - :math:`EXHF_{85}` is a threshold of the excess heat factor.
+
+    The 85th percentile as the default threshold follows [Nairn2018]_, except
+    that they use a fixed reference period to compute the percentile over rather
+    than the full timeseries.
+
+    See also
+    --------
+    :py:func:`excess_heat_factor`
     """
-    if isinstance(threshold, tuple):
-        threshold = _compute_threshold_from_spec(exhf, threshold)
+    if threshold is None:
+        threshold = _compute_threshold_as_quantile(exhf, 0.85)
     return exhf / threshold
 
 
@@ -248,26 +385,26 @@ def excess_cold_factor(ehi_sig, ehi_accl, nonpositive=True):
     xarray.DataArray
         Excess cold factor.
 
-
     Notes
     -----
+    The excess cold factor is defined as
 
     .. math::
 
-        EXCF = -EHI_{sig} \\times \\min(-1, EHI_{accl})
+        EXCF = -EHI_{sig} \\times \\min(-1, EHI_{accl}),
 
-    with
+    where
 
-    - :math:`EHI_{sig}`: excess heat index of significance
-    - :math:`EHI_{accl}`: excess heat index of acclimatisation
+    - :math:`EHI_{sig}` is the excess heat index of significance,
+    - :math:`EHI_{accl}` is the excess heat index of acclimatisation.
 
     Example
     -------
-    To compute the excess cold factor, :ref:`Nairn and Fawcett (2013) <Nairn2013>`
-    compute :math:`EHI_{sig}` relative to the 5th percentile of a 1971 to 2000
-    climatology of daily mean temperature and :math:`EHI_{accl}` relative to the
-    30 days directly preceeding the valid time. The authors use an evaluation
-    time window of 3 days starting from the valid day for both indices.
+    [Nairn2013]_ compute the excess cold factor with :math:`EHI_{sig}` relative
+    to the 5th percentile of a 30-year climatology of daily mean temperature
+    and :math:`EHI_{accl}` relative to the 30 days directly preceeding the valid
+    time. The authors use an evaluation time window of 3 days starting from the
+    valid day for both indices.
 
     See also
     --------
