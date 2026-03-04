@@ -7,9 +7,5 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Verification functions operating on numpy arrays.
-"""
-
-from .correlation import *  # noqa
-from .crps import *  # noqa
+from .deterministic import *  # noqa
+from .ensemble import *  # noqa

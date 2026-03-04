@@ -157,10 +157,13 @@ def test_quantiles_core(xp, device, data, which, kwargs, v_ref, method):
 def test_quantiles_nans(xp, device, arr):
     arr = xp.asarray(arr, device=device)
     qs = xp.asarray([0.0, 0.25, 0.5, 0.75, 1.0], device=device)
-    r1 = [quantile for quantile in stats.iter_quantiles(arr, qs, method="sort")]
-    r2 = [quantile for quantile in stats.iter_quantiles(arr, qs, method="numpy")]
-    for i, (d1, d2) in enumerate(zip(r1, r2)):
-        assert xp.allclose(d1, d2, equal_nan=True), f"quantile={qs[i]}"
+    bulk = xp.asarray([quantile for quantile in stats.iter_quantiles(arr, qs, method="numpy_bulk")])
+    r1 = xp.asarray([quantile for quantile in stats.iter_quantiles(arr, qs, method="sort")])
+    assert bulk.shape == r1.shape
+    assert xp.allclose(bulk, r1, equal_nan=True)
+    r2 = xp.asarray([quantile for quantile in stats.iter_quantiles(arr, qs, method="numpy")])
+    assert bulk.shape == r2.shape
+    assert xp.allclose(bulk, r2, equal_nan=True)
 
 
 def test_GumbelDistribution():

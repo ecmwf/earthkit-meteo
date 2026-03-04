@@ -1,0 +1,132 @@
+# (C) Copyright 2021 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation
+# nor does it submit to any jurisdiction.
+#
+
+import os
+
+_CONF = {"vertical_hybrid_data": "json"}
+
+
+class SampleInputData:
+    """Helper class to load sample input data."""
+
+    def __init__(self, d, xp=None, device=None):
+        self._d = d
+        if xp is None:
+            from earthkit.utils.array import array_namespace
+
+            xp = array_namespace("numpy")
+
+        for k, v in d.items():
+            if xp is not None:
+                v = xp.asarray(v, device=device)
+            setattr(self, k, v)
+
+    @classmethod
+    def from_json(cls, file_name):
+        import json
+
+        with open(file_name, "r") as f:
+            data = json.load(f)
+        return cls(data)
+
+    def to_dict(self):
+        return self._d
+
+
+class TmpFile:
+    """The TmpFile objects are designed to be used for temporary files.
+    It ensures that the file is unlinked when the object is
+    out-of-scope (with __del__).
+
+    Parameters
+    ----------
+    path : str
+        Actual path of the file.
+    """
+
+    def __init__(self, path: str):
+        self.path = path
+
+    def __del__(self):
+        self.cleanup()
+
+    def __enter__(self):
+        return self.path
+
+    def __exit__(self, *args, **kwargs):
+        self.cleanup()
+
+    def cleanup(self):
+        if self.path is not None and os is not None:
+            os.unlink(self.path)
+        self.path = None
+
+
+def temp_file(extension=".tmp") -> TmpFile:
+    """Create a temporary file with the given extension .
+
+    Parameters
+    ----------
+    extension : str, optional
+        By default ".tmp"
+
+    Returns
+    -------
+    TmpFile
+    """
+    import tempfile
+
+    fd, path = tempfile.mkstemp(suffix=extension)
+    os.close(fd)
+    return TmpFile(path)
+
+
+# TODO: add thread safety if needed
+class Samples:
+    _CACHE = {}
+
+    def __contains__(self, name):
+        return name in self._CACHE
+
+    def get(self, name):
+        if name in self._CACHE:
+            return self._CACHE[name]
+
+        import os
+
+        from earthkit.meteo.utils.download import simple_download
+        from earthkit.meteo.utils.testing import earthkit_remote_path
+
+        if name in _CONF:
+            file_name = f"{name}.{_CONF[name]}"
+        elif not name.endswith(".json"):
+            file_name = f"{name}.json"
+        else:
+            file_name = name
+
+        url = earthkit_remote_path(os.path.join("samples", file_name))
+
+        d = None
+        with temp_file() as target:
+            simple_download(url=url, target=target)
+
+            d = SampleInputData.from_json(target)
+            self._CACHE[name] = d
+
+        return d
+
+
+SAMPLES = Samples()
+
+
+def get_sample(name):
+    try:
+        return SAMPLES.get(name)
+    except Exception as e:
+        raise Exception(f"Sample data '{name}' not found or could not be loaded.") from e
