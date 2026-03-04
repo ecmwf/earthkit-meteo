@@ -11,10 +11,16 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from earthkit.meteo.extreme.xarray import excess_heat
+from earthkit.meteo.thermo import excess_heat
+from earthkit.meteo.utils.testing import NO_TRANSFORMS
+from earthkit.meteo.utils.testing import NO_XARRAY
+
+pytestmark = pytest.mark.skipif(NO_XARRAY, reason="requires xarray")
+pytestmark = pytest.mark.skipif(NO_TRANSFORMS, reason="requires earthkit.transforms")
 
 
 class TestDailyMeanTemperatureArgDayStart:
+    """Validate support for custom definition of day"""
 
     @pytest.fixture
     def t2m(self):
@@ -54,6 +60,7 @@ class TestDailyMeanTemperatureArgDayStart:
 
 
 class TestDailyMeanTemperatureArgTimeShift:
+    """Validate support for local timezones"""
 
     @pytest.fixture
     def t2m(self):
@@ -124,15 +131,13 @@ class TestDailyMeanTemperatureArgTimeShift:
             {"timezone": ("x", [np.timedelta64(-2, "h"), np.timedelta64(0, "h"), np.timedelta64(10, "h")])}
         )
         dmt = excess_heat.daily_mean_temperature(t2m, day_start=0, time_shift="timezone")
-        np.testing.assert_allclose(
-            dmt,
-            [
-                [13.5, 115.0, np.nan],
-                [37.5, 355.0, 2550.0],
-                [61.5, 595.0, 4950.0],
-                [np.nan, 835.0, 7350.0],
-            ],
-        )
+        dmt_expected = [
+            [13.5, 115.0, np.nan],
+            [37.5, 355.0, 2550.0],
+            [61.5, 595.0, 4950.0],
+            [np.nan, 835.0, 7350.0],
+        ]
+        np.testing.assert_allclose(dmt, dmt_expected)
 
 
 def test_daily_mean_temperature_combined_day_start_and_time_shift_args():
@@ -156,15 +161,13 @@ def test_daily_mean_temperature_combined_day_start_and_time_shift_args():
         name="t2m",
     )
     dmt = excess_heat.daily_mean_temperature(t2m, day_start=3, time_shift="timezone")
-    np.testing.assert_allclose(
-        dmt,
-        [
-            [19.5, 13.5, 11.5, np.nan],
-            [43.5, 37.5, 35.5, 26.5],
-            [67.5, 61.5, 59.5, 50.5],
-            [np.nan, np.nan, 83.5, 74.5],
-        ],
-    )
+    dmt_expected = [
+        [19.5, 13.5, 11.5, np.nan],
+        [43.5, 37.5, 35.5, 26.5],
+        [67.5, 61.5, 59.5, 50.5],
+        [np.nan, np.nan, 83.5, 74.5],
+    ]
+    np.testing.assert_allclose(dmt, dmt_expected)
 
 
 # TODO

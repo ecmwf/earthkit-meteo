@@ -17,5 +17,4 @@ planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets
 
 from .cpf import *  # noqa
 from .efi import *  # noqa
-from .excess_heat import *  # noqa
 from .sot import *  # noqa

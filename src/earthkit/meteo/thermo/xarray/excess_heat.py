@@ -6,11 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-"""
-Tools for computing the excess heat and cold factors following the definitions
-of [Nairn2013], [Nairn2014] and [Nairn2018].
-"""
-
 import functools
 import numbers
 
@@ -168,7 +163,7 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
 
 @_with_metadata("ehi_sig", long_name="Significance index")
 def significance_index(dmt, ndays=3, threshold=None):
-    """Significance index.
+    """Excess heat significance index.
 
     Supports both fixed thresholds to identify heat and cold waves and
     day-of-year climatologies to identify warm and cold spells.
@@ -226,7 +221,7 @@ def significance_index(dmt, ndays=3, threshold=None):
 
 @_with_metadata("ehi_accl", long_name="Acclimatisation index")
 def acclimatisation_index(dmt, ndays=3, ndays_ref=30):
-    """Acclimatisation index.
+    """Excess heat acclimatisation index.
 
     Parameters
     ----------
@@ -264,7 +259,6 @@ def acclimatisation_index(dmt, ndays=3, ndays_ref=30):
     :py:func:`daily_mean_temperature`
     :py:func:`significance_index`
     """
-    # TODO: this computation is shared with the significance index, any way to avoid computing it twice?
     current = _rolling_mean(dmt, ndays, shift_days=(1 - ndays))
     reference = _rolling_mean(dmt, ndays_ref, shift_days=1)
     return current - reference

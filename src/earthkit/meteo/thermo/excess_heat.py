@@ -6,6 +6,12 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+"""
+Tools for computing the excess heat and cold factors following the definitions
+of [Nairn2013], [Nairn2014] and [Nairn2018].
+"""
+
+
 from .xarray.excess_heat import acclimatisation_index  # noqa
 from .xarray.excess_heat import daily_mean_temperature  # noqa
 from .xarray.excess_heat import excess_cold_factor  # noqa
