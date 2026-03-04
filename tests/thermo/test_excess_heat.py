@@ -225,7 +225,7 @@ class TestMetadataWithSyntheticDMT:
     def test_excess_heat_factor_output_metadata(self, exhf):
         assert exhf.name == "exhf"
         assert exhf.attrs["long_name"] == "Excess heat factor"
-        # assert exhf.attrs["units"] in {"degC ** 2", "degC^2", "degC²"}
+        assert exhf.attrs["units"] in {"K ** 2", "K^2", "K²"}
 
     def test_excess_heatwave_severity_metadata(self, hsev):
         assert hsev.name == "hsev"
@@ -235,4 +235,4 @@ class TestMetadataWithSyntheticDMT:
     def test_excess_cold_factor_metadata(self, excf):
         assert excf.name == "excf"
         assert excf.attrs["long_name"] == "Excess cold factor"
-        # assert excf.attrs["units"] in {"degC ** 2", "degC^2", "degC²"}
+        assert excf.attrs["units"] in {"K ** 2", "K^2", "K²"}

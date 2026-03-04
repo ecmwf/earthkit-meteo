@@ -46,7 +46,7 @@ def _compute_threshold_as_quantile(da, q):
 __DMT_TIME_SHIFT_COORD = "__daily_mean_temperature_time_shift"
 
 
-@_with_metadata("dmt", long_name="Daily mean temperature")
+@_with_metadata("dmt", long_name="Daily mean temperature")  # TODO units
 def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
     """Daily mean temperature, computed from min and max.
 
@@ -161,7 +161,7 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
     return 0.5 * (tmin + tmax)
 
 
-@_with_metadata("ehi_sig", long_name="Significance index")
+@_with_metadata("ehi_sig", long_name="Significance index")  # TODO units
 def significance_index(dmt, ndays=3, threshold=None):
     """Excess heat significance index.
 
@@ -219,7 +219,7 @@ def significance_index(dmt, ndays=3, threshold=None):
     return current - threshold
 
 
-@_with_metadata("ehi_accl", long_name="Acclimatisation index")
+@_with_metadata("ehi_accl", long_name="Acclimatisation index")  # TODO units
 def acclimatisation_index(dmt, ndays=3, ndays_ref=30):
     """Excess heat acclimatisation index.
 
@@ -265,7 +265,8 @@ def acclimatisation_index(dmt, ndays=3, ndays_ref=30):
 
 
 # https://codes.ecmwf.int/grib/param-db/261024
-@_with_metadata("exhf", long_name="Excess heat factor")
+# TODO: input unit checks
+@_with_metadata("exhf", long_name="Excess heat factor", units="K²")
 def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=True):
     """Excess heat factor.
 
@@ -308,7 +309,6 @@ def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=True):
     --------
     :py:func:`significance_index`
     :py:func:`acclimatisation_index`
-    :py:func:`heatwave_severity`
     :py:func:`excess_cold_factor`
     """
     if nonnegative:
@@ -361,7 +361,8 @@ def heatwave_severity(exhf, threshold=None):
 
 
 # https://codes.ecmwf.int/grib/param-db/261025
-@_with_metadata("excf", long_name="Excess cold factor")
+# TODO: input unit checks
+@_with_metadata("excf", long_name="Excess cold factor", units="K²")
 def excess_cold_factor(ehi_sig, ehi_accl, nonpositive=True):
     """Excess cold factor.
 
