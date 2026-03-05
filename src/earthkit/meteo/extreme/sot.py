@@ -7,15 +7,26 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, TypeAlias
 from typing import overload
 
 from earthkit.meteo.utils.decorators import dispatch
 
-from . import array  # noqa
+ArrayLike: TypeAlias = Any
 
 if TYPE_CHECKING:
     import xarray  # type: ignore[import]
+
+
+@overload
+def sot(
+    clim: "ArrayLike",
+    ens: "ArrayLike",
+    perc: int,
+    eps: float = -1e4,
+    clim_dim: int | None = 0,
+    ens_dim: int | None = 0,
+) -> "ArrayLike": ...
 
 
 @overload
@@ -34,8 +45,8 @@ def sot(
     ens,
     perc: int,
     eps: float = -1e4,
-    clim_dim: str | None = None,
-    ens_dim: str | None = None,
+    clim_dim: str | int | None = None,
+    ens_dim: str | int | None = None,
 ):
     r"""Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
@@ -51,10 +62,10 @@ def sot(
         Percentile value (typically 10 or 90)
     eps: (float)
         Epsilon factor for zero values
-    clim_dim: str, optional
-        Name of the climatology/quantile dimension in ``clim``.
-    ens_dim: str, optional
-        Name of the ensemble/member dimension in ``ens``.
+    clim_dim: str or int, optional
+        Name (or dimension index for array-like) of the climatology/quantile dimension in ``clim``.
+    ens_dim: str or int, optional
+        Name (or dimension index for array-like) of the ensemble/member dimension in ``ens``.
 
     Returns
     -------
@@ -68,8 +79,21 @@ def sot(
 
     - :py:meth:`earthkit.meteo.extreme.xarray.sot` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.sot` for array-like
+
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(sot)(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
+    return dispatch(sot, array=True)(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
+
+
+@overload
+def sot_unsorted(
+    clim: "ArrayLike",
+    ens: "ArrayLike",
+    perc: int,
+    eps: float = -1e4,
+    clim_dim: int | None = 0,
+    ens_dim: int | None = 0,
+) -> "ArrayLike": ...
 
 
 @overload
@@ -88,8 +112,8 @@ def sot_unsorted(
     ens,
     perc: int,
     eps: float = -1e4,
-    clim_dim: str | None = None,
-    ens_dim: str | None = None,
+    clim_dim: str | int | None = None,
+    ens_dim: str | int | None = None,
 ):
     r"""Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
@@ -105,10 +129,10 @@ def sot_unsorted(
         Percentile value (typically 10 or 90)
     eps: (float)
         Epsilon factor for zero values
-    clim_dim: str, optional
-        Name of the climatology/quantile dimension in ``clim``.
-    ens_dim: str, optional
-        Name of the ensemble/member dimension in ``ens``.
+    clim_dim: str or int, optional
+        Name (or dimension index for array-like) of the climatology/quantile dimension in ``clim``.
+    ens_dim: str or int, optional
+        Name (or dimension index for array-like) of the ensemble/member dimension in ``ens``.
 
     Returns
     -------
@@ -123,5 +147,7 @@ def sot_unsorted(
 
     - :py:meth:`earthkit.meteo.extreme.xarray.sot_unsorted` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.sot_unsorted` for array-like
+
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(sot_unsorted)(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
+    return dispatch(sot_unsorted, array=True)(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
