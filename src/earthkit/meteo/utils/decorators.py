@@ -132,10 +132,23 @@ def dispatch(func, match=0, xarray=True, fieldlist=True, array=False):
 
     sig = signature(func)
 
+    params = list(sig.parameters)
     if isinstance(match, int):
-        param_name = list(sig.parameters)[match]
+        try:
+            param_name = params[match]
+        except IndexError as e:
+            raise ValueError(
+                f"'match' index {match} is invalid for function {func.__name__} with  {len(params)} arguments"
+            ) from e
+    elif isinstance(match, str):
+        if match in params:
+            param_name = match
+        else:
+            raise ValueError(
+                f"'match' parameter name {match} is not in the function signature of {func.__name__}"
+            )
     else:
-        param_name = match
+        raise TypeError(f"'match' must be an integer index or a string parameter name, got {type(match)}")
 
     @wraps(func)
     def wrapper(*args, **kwargs):
