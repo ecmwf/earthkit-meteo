@@ -7,7 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import TypeAlias
 from typing import overload
 
 from earthkit.meteo.utils.decorators import dispatch
@@ -27,6 +29,7 @@ def efi(
     ens_dim: int | None = 0,
 ) -> "ArrayLike": ...
 
+
 @overload
 def efi(
     clim: "xarray.DataArray",
@@ -35,6 +38,7 @@ def efi(
     clim_dim: str | None = None,
     ens_dim: str | None = None,
 ) -> "xarray.DataArray": ...
+
 
 def efi(
     clim,

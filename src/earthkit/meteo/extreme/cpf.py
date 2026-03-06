@@ -7,7 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import TypeAlias
 from typing import overload
 
 from earthkit.meteo.utils.decorators import dispatch
