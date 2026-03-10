@@ -29,7 +29,7 @@ def julian_day(date: xr.DataArray) -> xr.DataArray:
     xarray.DataArray
         Day of year as a fractional number. January 1st at 00:00 is 0.0.
     """
-    return xarray_ufunc(array.julian_day, date, xarray_ufunc_kwargs={"vectorize": True})
+    return xarray_ufunc(array.julian_day, date)
 
 
 def solar_declination_angle(date: xr.DataArray) -> tuple[xr.DataArray, xr.DataArray]:
@@ -55,10 +55,6 @@ def solar_declination_angle(date: xr.DataArray) -> tuple[xr.DataArray, xr.DataAr
     return xarray_ufunc(
         array.solar_declination_angle,
         date,
-        xarray_ufunc_kwargs={
-            "vectorize": True,
-            "output_dtypes": [float, float],
-        },
     )
 
 
@@ -148,7 +144,7 @@ def incoming_solar_radiation(date: xr.DataArray) -> xr.DataArray:
     xarray.DataArray
         Incoming solar radiation at TOA.
     """
-    return xarray_ufunc(array.incoming_solar_radiation, date, xarray_ufunc_kwargs={"vectorize": True})
+    return xarray_ufunc(array.incoming_solar_radiation, date)
 
 
 def toa_incident_solar_radiation(
