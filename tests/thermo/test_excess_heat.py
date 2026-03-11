@@ -19,67 +19,6 @@ pytestmark = pytest.mark.skipif(NO_XARRAY, reason="requires xarray")
 pytestmark = pytest.mark.skipif(NO_TRANSFORMS, reason="requires earthkit.transforms")
 
 
-class ProcessingChainMixin:
-
-    @pytest.fixture
-    def ehi_sig(self, dmt):
-        return excess_heat.significance_index(dmt)
-
-    @pytest.fixture
-    def ehi_accl(self, dmt):
-        return excess_heat.acclimatisation_index(dmt)
-
-    @pytest.fixture
-    def exhf(self, ehi_sig, ehi_accl):
-        return excess_heat.excess_heat_factor(ehi_sig, ehi_accl)
-
-    @pytest.fixture
-    def excf(self, ehi_sig, ehi_accl):
-        return excess_heat.excess_cold_factor(ehi_sig, ehi_accl)
-
-    @pytest.fixture
-    def hsev(self, exhf):
-        return excess_heat.heatwave_severity(exhf)
-
-
-class TestMetadata(ProcessingChainMixin):
-    """Validate metadata generation for outputs"""
-
-    @pytest.fixture
-    def dmt(self):
-        return xr.DataArray(
-            [300.0, 290.0],
-            coords={"valid_time": [np.datetime64("2025-01-01"), np.datetime64("2025-01-02")]},
-            dims=["valid_time"],
-            attrs={"units": "degC"},
-        )
-
-    def test_significance_index_output_metadata(self, ehi_sig):
-        assert ehi_sig.name == "ehi_sig"
-        assert ehi_sig.attrs["long_name"] == "Significance index"
-        # assert ehi_sig.attrs["units"] == "degC"
-
-    def test_acclimatisation_index_output_metadata(self, ehi_accl):
-        assert ehi_accl.name == "ehi_accl"
-        assert ehi_accl.attrs["long_name"] == "Acclimatisation index"
-        # assert ehi_accl.attrs["units"] == "degC"
-
-    def test_excess_heat_factor_output_metadata(self, exhf):
-        assert exhf.name == "exhf"
-        assert exhf.attrs["long_name"] == "Excess heat factor"
-        assert exhf.attrs["units"] in {"K ** 2", "K^2", "K²"}
-
-    def test_excess_heatwave_severity_metadata(self, hsev):
-        assert hsev.name == "hsev"
-        assert hsev.attrs["long_name"] == "Heatwave severity"
-        assert "units" not in hsev.attrs or hsev.attrs["units"] == "1"
-
-    def test_excess_cold_factor_metadata(self, excf):
-        assert excf.name == "excf"
-        assert excf.attrs["long_name"] == "Excess cold factor"
-        assert excf.attrs["units"] in {"K ** 2", "K^2", "K²"}
-
-
 class TestDailyMeanTemperatureArgDayStart:
     """Validate support for custom definition of day"""
 
@@ -239,7 +178,136 @@ class TestDailyMeanTemperatureCombinedDayStartAndTimeShiftArgs:
         np.testing.assert_allclose(dmt, dmt_expected)
 
 
-class TestWithShortHeatwaveSyntheticData(ProcessingChainMixin):
+class TestSignificanceIndex:
+
+    @pytest.fixture
+    def dmt(self):
+        values = [0.0, 0.0, 0.0, 0.0, 0.0, 9.0, 9.0, 9.0, 9.0, 9.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        time = pd.date_range("2025-01-01", periods=len(values), freq="1d")
+        return xr.DataArray(values, dims=["time"], coords={"time": time})
+
+    def test_metadata(self, dmt):
+        ehi_sig = excess_heat.significance_index(dmt)
+        assert ehi_sig.name == "ehi_sig"
+        assert ehi_sig.attrs["long_name"] == "Significance index"
+        # assert ehi_sig.attrs["units"] == "degC"
+
+    def test_identity_edge_case(self, dmt):
+        ehi_sig = excess_heat.significance_index(dmt, ndays=1, threshold=0.0)
+        xr.testing.assert_allclose(ehi_sig, dmt)
+
+    def test_ndays_3(self, dmt):
+        ehi_sig = excess_heat.significance_index(dmt, ndays=3, threshold=5.0)
+        ref = dmt.isel({"time": slice(None, -2)}).copy(
+            data=[-5.0, -5.0, -5.0, -2.0, 1.0, 4.0, 4.0, 4.0, 1.0, -2.0, -5.0, -5.0, -5.0]
+        )
+        xr.testing.assert_allclose(ehi_sig, ref)
+
+    def test_ndays_5(self, dmt):
+        ehi_sig = excess_heat.significance_index(dmt, ndays=5, threshold=4.0)
+        ref = dmt.isel({"time": slice(None, -4)}).copy(
+            data=[-4.0, -2.2, -0.4, 1.4, 3.2, 5.0, 3.2, 1.4, -0.4, -2.2, -4.0]
+        )
+        xr.testing.assert_allclose(ehi_sig, ref)
+
+
+class TestAcclimatisationIndex:
+
+    @pytest.fixture
+    def dmt(self):
+        values = [0.0, 0.0, 0.0, 0.0, 0.0, 9.0, 9.0, 9.0, 9.0, 9.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        time = pd.date_range("2025-01-01", periods=len(values), freq="1d")
+        return xr.DataArray(values, dims=["time"], coords={"time": time})
+
+    def test_metadata(self, dmt):
+        ehi_accl = excess_heat.acclimatisation_index(dmt)
+        assert ehi_accl.name == "ehi_accl"
+        assert ehi_accl.attrs["long_name"] == "Acclimatisation index"
+        # assert ehi_accl.attrs["units"] == "degC"
+
+    def test_nday_ref_1_ndays_1(self, dmt):
+        ehi_accl = excess_heat.acclimatisation_index(dmt, ndays_ref=1, ndays=1)
+        ref = dmt.isel({"time": slice(1, None)}).copy(
+            data=[0.0, 0.0, 0.0, 0.0, 9.0, 0.0, 0.0, 0.0, 0.0, -9.0, 0.0, 0.0, 0.0, 0.0]
+        )
+        xr.testing.assert_allclose(ehi_accl, ref)
+
+    def test_nday_ref_5_ndays_3(self, dmt):
+        ehi_accl = excess_heat.acclimatisation_index(dmt, ndays_ref=5, ndays=3)
+        ref = dmt.isel({"time": slice(5, -2)}).copy(data=[9.0, 7.2, 5.4, 0.6, -4.2, -9.0, -7.2, -5.4])
+        xr.testing.assert_allclose(ehi_accl, ref)
+
+
+class TestExcessHeatFactor:
+
+    @pytest.fixture
+    def ehi_sig(self):
+        return xr.DataArray([5.0, 5.0, 5.0, 0.0, 0.0, 0.0, -2.0, -2.0, -2.0])
+
+    @pytest.fixture
+    def ehi_accl(self):
+        return xr.DataArray([3.0, 0.0, -4.0, 3.0, 0.0, -4.0, 3.0, 0.0, -4.0])
+
+    def test_metadata(self, ehi_sig, ehi_accl):
+        exhf = excess_heat.excess_heat_factor(ehi_sig, ehi_accl)
+        assert exhf.name == "exhf"
+        assert exhf.attrs["long_name"] == "Excess heat factor"
+        assert exhf.attrs["units"] in {"K ** 2", "K^2", "K²"}
+
+    def test_with_nonnegative_false(self, ehi_sig, ehi_accl):
+        exhf = excess_heat.excess_heat_factor(ehi_sig, ehi_accl, nonnegative=False)
+        np.testing.assert_allclose(exhf, [15.0, 5.0, 5.0, 0.0, 0.0, 0.0, -6.0, -2.0, -2.0])
+
+    def test_with_nonnegative_true(self, ehi_sig, ehi_accl):
+        exhf = excess_heat.excess_heat_factor(ehi_sig, ehi_accl, nonnegative=True)
+        np.testing.assert_allclose(exhf, [15.0, 5.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+
+class TestHeatwaveSeverity:
+
+    @pytest.fixture
+    def exhf(self):
+        return xr.DataArray([[0.0, 1.0, 3.0, 4.0], [1.0, 2.0, 1.0, 0.0]], dims=["foo", "time"])
+
+    def test_defaults_and_metadata(self, exhf):
+        hsev = excess_heat.heatwave_severity(exhf)
+        assert hsev.name == "hsev"
+        assert hsev.attrs["long_name"] == "Heatwave severity"
+        assert "units" not in hsev.attrs or hsev.attrs["units"] == "1"
+
+    def test_heatwave_severity_with_fixed_threshold(self, exhf):
+        tr = xr.DataArray([2.5, 2.0], dims=["foo"])
+        hsev = excess_heat.heatwave_severity(exhf, threshold=tr)
+        ref = xr.DataArray([[0.0, 0.4, 1.2, 1.6], [0.5, 1.0, 0.5, 0.0]], dims=["foo", "time"])
+        xr.testing.assert_allclose(hsev, ref)
+
+
+class TestExcessColdFactor:
+
+    @pytest.fixture
+    def ehi_sig(self):
+        return xr.DataArray([5.0, 5.0, 5.0, 0.0, 0.0, 0.0, -2.0, -2.0, -2.0])
+
+    @pytest.fixture
+    def ehi_accl(self):
+        return xr.DataArray([3.0, 0.0, -4.0, 3.0, 0.0, -4.0, 3.0, 0.0, -4.0])
+
+    def test_excess_cold_factor_metadata(self, ehi_sig, ehi_accl):
+        excf = excess_heat.excess_cold_factor(ehi_sig, ehi_accl)
+        assert excf.name == "excf"
+        assert excf.attrs["long_name"] == "Excess cold factor"
+        assert excf.attrs["units"] in {"K ** 2", "K^2", "K²"}
+
+    def test_with_nonpositive_false(self, ehi_sig, ehi_accl):
+        exhf = excess_heat.excess_cold_factor(ehi_sig, ehi_accl, nonpositive=False)
+        np.testing.assert_allclose(exhf, [5.0, 5.0, 20.0, 0.0, 0.0, 0.0, -2.0, -2.0, -8.0])
+
+    def test_with_nonpositive_true(self, ehi_sig, ehi_accl):
+        exhf = excess_heat.excess_cold_factor(ehi_sig, ehi_accl, nonpositive=True)
+        np.testing.assert_allclose(exhf, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -2.0, -2.0, -8.0])
+
+
+class TestWithShortHeatwaveSyntheticData:
     """Validation with the short heatwave case of Nairn (2015), Fig. 2"""
 
     @pytest.fixture
@@ -256,6 +324,10 @@ class TestWithShortHeatwaveSyntheticData(ProcessingChainMixin):
     @pytest.fixture
     def ehi_accl(self, dmt):
         return excess_heat.acclimatisation_index(dmt, ndays_ref=30, ndays=3).compute()
+
+    @pytest.fixture
+    def exhf(self, ehi_sig, ehi_accl):
+        return excess_heat.excess_heat_factor(ehi_sig, ehi_accl)
 
     def test_dmt_expectations(self, dmt):
         assert dmt.idxmax() == np.datetime64("2025-03-10")
@@ -279,44 +351,3 @@ class TestWithShortHeatwaveSyntheticData(ProcessingChainMixin):
         assert exhf.idxmin() == np.datetime64("2025-03-06")
         assert 30 < exhf.max().item() < 35
         assert exhf.sel(valid_time="2025-03-08") > exhf.sel({"valid_time": "2025-03-10"})
-
-
-def test_significance_index_default_threshold():
-    raise NotImplementedError
-
-
-def test_significance_index_ndays():
-    raise NotImplementedError
-
-
-def test_acclimatisation_index_ndays():
-    raise NotImplementedError
-
-
-def test_acclimatisation_index_ndays_ref():
-    raise NotImplementedError
-
-
-def test_excess_heat_factor():
-    raise NotImplementedError
-
-
-def test_excess_heat_factor_nonnegative():
-    raise NotImplementedError
-
-
-def test_excess_cold_factor():
-    raise NotImplementedError
-
-
-def test_excess_cold_factor_nonnegative():
-    raise NotImplementedError
-
-
-def test_heatwave_severity_with_fixed_threshold():
-    da = xr.DataArray([[0.0, 1.0, 3.0, 4.0], [1.0, 2.0, 1.0, 0.0]], dims=["foo", "time"])
-    tr = xr.DataArray([2.5, 2.0], dims=["foo"])
-    hsev = excess_heat.heatwave_severity(da, threshold=tr)
-    xr.testing.assert_allclose(
-        hsev, xr.DataArray([[0.0, 0.4, 1.2, 1.6], [0.5, 1.0, 0.5, 0.0]], dims=["foo", "time"])
-    )
