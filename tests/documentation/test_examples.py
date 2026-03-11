@@ -20,6 +20,7 @@ SKIP = [
     "xml2rst.py",
     "xref.py",
     "skip_api_rules.py",
+    "venv",
 ]
 
 EXAMPLES = earthkit_path("docs")

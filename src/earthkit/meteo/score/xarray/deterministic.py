@@ -1,15 +1,23 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
 
-from ..utils.decorators import dispatch
+import numpy as np
+import xarray as xr
 
-if TYPE_CHECKING:
-    import xarray as xr
+T = TypeVar("T", xr.DataArray, xr.Dataset)
 
-    T = TypeVar("T")
+
+def _import_scores_or_prompt_install():
+    try:
+        import scores
+    except ImportError as e:
+        # from python 3.11+ can be written as:
+        # raise e.add_note("...")
+        raise RuntimeError(
+            "The 'earthkit-meteo[score]' extra is required to use scoring functions. "
+            "Please install it using 'pip install earthkit-meteo[score]'"
+        ) from e
+    return scores
 
 
 def error(
@@ -58,7 +66,20 @@ def error(
     xarray object
         The error between the forecast and observations, possibly aggregated.
     """
-    return dispatch(error, fcst, obs, agg_method, agg_dim, agg_weights)
+    assert agg_method in (None, "mean")
+    scores = _import_scores_or_prompt_install()
+
+    # TODO: support is_angular in the future
+
+    # TODO: Add comment explaining behavior here in scores
+    reduce_dim = agg_dim or []
+
+    return scores.continuous.additive_bias(
+        fcst,
+        obs,
+        reduce_dims=reduce_dim,
+        weights=agg_weights,
+    )
 
 
 def mean_error(
@@ -105,7 +126,13 @@ def mean_error(
     xarray object
         The mean error between the forecast and observations.
     """
-    return dispatch(mean_error, fcst, obs, over, weights)
+    return error(
+        fcst,
+        obs,
+        agg_method="mean",
+        agg_dim=over,
+        agg_weights=weights,
+    )
 
 
 def abs_error(
@@ -157,7 +184,16 @@ def abs_error(
     xarray object
         The error between the forecast and observations, possibly aggregated.
     """
-    return dispatch(abs_error, fcst, obs, agg_method, agg_dim, agg_weights, is_angular)
+    assert agg_method in (None, "mean")
+    scores = _import_scores_or_prompt_install()
+    reduce_dim = agg_dim or []
+    return scores.continuous.mae(
+        fcst,
+        obs,
+        reduce_dims=reduce_dim,
+        weights=agg_weights,
+        is_angular=is_angular,
+    )
 
 
 def mean_abs_error(
@@ -207,7 +243,7 @@ def mean_abs_error(
     xarray object
         The mean absolute error between the forecast and observations.
     """
-    return dispatch(mean_abs_error, fcst, obs, over, weights, is_angular)
+    return abs_error(fcst, obs, agg_method="mean", agg_dim=over, agg_weights=weights, is_angular=is_angular)
 
 
 def squared_error(
@@ -259,7 +295,16 @@ def squared_error(
     xarray object
         The squared error between the forecast and observations, possibly aggregated.
     """
-    return dispatch(squared_error, fcst, obs, agg_method, agg_dim, agg_weights, is_angular)
+    assert agg_method in (None, "mean")
+    scores = _import_scores_or_prompt_install()
+    reduce_dim = agg_dim or []
+    return scores.continuous.mse(
+        fcst,
+        obs,
+        reduce_dims=reduce_dim,
+        weights=agg_weights,
+        is_angular=is_angular,
+    )
 
 
 def mean_squared_error(
@@ -309,7 +354,14 @@ def mean_squared_error(
     xarray object
         The mean squared error between the forecast and observations.
     """
-    return dispatch(mean_squared_error, fcst, obs, over, weights, is_angular)
+    return squared_error(
+        fcst,
+        obs,
+        agg_method="mean",
+        agg_dim=over,
+        agg_weights=weights,
+        is_angular=is_angular,
+    )
 
 
 def root_mean_squared_error(
@@ -359,7 +411,7 @@ def root_mean_squared_error(
     xarray object
         The root mean squared error between the forecast and observations.
     """
-    return dispatch(root_mean_squared_error, fcst, obs, over, weights, is_angular)
+    return mean_squared_error(fcst, obs, over, weights=weights, is_angular=is_angular) ** 0.5
 
 
 def standard_deviation_of_error(
@@ -408,7 +460,17 @@ def standard_deviation_of_error(
     xarray object
         The standard deviation of error between the forecast and observations.
     """
-    return dispatch(standard_deviation_of_error, fcst, obs, over, weights)
+    # TODO: support angular inputs in the future (is_angular)
+    # Minimal implementation using xarray operations; supports weights
+    error = fcst - obs
+
+    if weights is None:
+        mean = error.mean(dim=over)
+        var = ((error - mean) ** 2).mean(dim=over)
+    else:
+        mean = error.weighted(weights).mean(dim=over)
+        var = ((error - mean) ** 2).weighted(weights).mean(dim=over)
+    return var**0.5
 
 
 def cosine_similarity(
@@ -455,7 +517,33 @@ def cosine_similarity(
     xarray object
         The cosine similarity between the forecast and observations.
     """
-    return dispatch(cosine_similarity, fcst, obs, over, weights)
+
+    def _weighted_mean(array, weights, dim):
+        if weights is None:
+            return array.mean(dim)
+        return array.weighted(weights=weights).mean(dim=dim)
+
+    def _common_valid_mask(*arrays):
+        # return a np bool array of occurrences of all values valid across dim
+        # return xr.concat(arrays, dim=dim).notnull().all(dim=dim)
+        mask = None
+        for array in arrays:
+            nmask = array.notnull()
+            if mask is None:
+                mask = nmask
+            else:
+                mask = mask & nmask
+        return mask
+
+    # TODO: simplify logic
+    valid_mask = _common_valid_mask(obs, fcst)
+    fcs = fcst.where(valid_mask)
+    obs = obs.where(valid_mask)
+    fs_var2 = _weighted_mean(fcs**2, weights, over)
+    ob_var2 = _weighted_mean(obs**2, weights, over)
+    covar = _weighted_mean(fcs * obs, weights, over)
+    result = covar / np.sqrt(fs_var2 * ob_var2)
+    return result.where(np.isfinite(result))
 
 
 def pearson_correlation(
@@ -509,4 +597,38 @@ def pearson_correlation(
     xarray object
         The correlation between the forecast and observations.
     """
-    return dispatch(pearson_correlation, fcst, obs, over, weights)
+
+    def _weighted_mean(array, weights, dim):
+        if weights is None:
+            return array.mean(dim)
+        return array.weighted(weights=weights).mean(dim=dim)
+
+    def _common_valid_mask(*arrays):
+        # return a np bool array of occurrences of all values valid across dim
+        # return xr.concat(arrays, dim=dim).notnull().all(dim=dim)
+        mask = None
+        for array in arrays:
+            nmask = array.notnull()
+            if mask is None:
+                mask = nmask
+            else:
+                mask = mask & nmask
+        return mask
+
+    # TODO: use scores implementation?
+    # TODO: call the cosine similarity function?
+    # with fcst - mean(fcst) and obs - mean(obs)
+    # (mathematically equivalent to correlation)
+    valid_mask = _common_valid_mask(obs, fcst)
+    fcs = fcst.where(valid_mask)
+    obs = obs.where(valid_mask)
+    fs_var2 = _weighted_mean(fcs**2, weights, over)
+    ob_var2 = _weighted_mean(obs**2, weights, over)
+    covar = _weighted_mean(fcs * obs, weights, over)
+    fc_mean = _weighted_mean(fcs, weights, over)
+    ob_mean = _weighted_mean(obs, weights, over)
+    fs_var2 = fs_var2 - fc_mean**2
+    ob_var2 = ob_var2 - ob_mean**2
+    covar = covar - fc_mean * ob_mean
+    result = covar / np.sqrt(fs_var2 * ob_var2)
+    return result.where(np.isfinite(result))

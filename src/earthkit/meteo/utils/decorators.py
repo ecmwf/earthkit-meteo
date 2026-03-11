@@ -6,15 +6,20 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+from __future__ import annotations
+
 from abc import ABCMeta
 from abc import abstractmethod
 from functools import wraps
 from importlib import import_module
 from inspect import signature
+from typing import TYPE_CHECKING
 from typing import Any
 
-import xarray as xr
 from earthkit.utils.array import array_namespace
+
+if TYPE_CHECKING:
+    import xarray as xr
 
 
 def _is_xarray(obj: Any) -> bool:
@@ -257,6 +262,11 @@ def xarray_ufunc_deprecated(**xarray_ufunc_kwargs):
 
 
 def xarray_ufunc(func, *args, **kwargs):
+    try:
+        import xarray as xr
+    except ImportError as e:
+        raise RuntimeError("xarray dependency is required") from e
+
     xarray_ufunc_kwargs = kwargs.pop("xarray_ufunc_kwargs", None) or {}
     merged = {
         "dask": "parallelized",
