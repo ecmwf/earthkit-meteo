@@ -102,7 +102,6 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
 
     Example
     -------
-
     Assume that the time coordinate of the data is given in UTC and we want to
     define the day from 10:00 to 10:00 Atlantic Standard Time (UTC -4 hours),
     then we need to call::
@@ -267,7 +266,7 @@ def acclimatisation_index(dmt, ndays=3, ndays_ref=30):
 # https://codes.ecmwf.int/grib/param-db/261024
 # TODO: input unit checks
 @_with_metadata("exhf", long_name="Excess heat factor", units="K²")
-def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=True):
+def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=False):
     """Excess heat factor.
 
     Parameters
@@ -277,7 +276,7 @@ def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=True):
     ehi_accl : xarray.DataArray
         Acclimatisation index.
     nonnegative : bool, optional
-        Whether to clip the lower value range at zero. Enabled by default.
+        Whether to clip the lower value range at zero. Disabled by default.
 
     Returns
     -------
@@ -364,7 +363,7 @@ def heatwave_severity(exhf, threshold=None):
 # https://codes.ecmwf.int/grib/param-db/261025
 # TODO: input unit checks
 @_with_metadata("excf", long_name="Excess cold factor", units="K²")
-def excess_cold_factor(ehi_sig, ehi_accl, nonpositive=True):
+def excess_cold_factor(ehi_sig, ehi_accl, nonpositive=False):
     """Excess cold factor.
 
     Parameters
@@ -374,7 +373,7 @@ def excess_cold_factor(ehi_sig, ehi_accl, nonpositive=True):
     ehi_accl : xarray.DataArray
         Acclimatisation index.
     nonpositive : bool, optional
-        Whether to clip the upper value range at zero. Enabled by default.
+        Whether to clip the upper value range at zero. Disabled by default.
 
     Returns
     -------
