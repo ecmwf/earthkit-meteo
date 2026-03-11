@@ -19,7 +19,7 @@ pytestmark = pytest.mark.skipif(NO_XARRAY, reason="requires xarray")
 pytestmark = pytest.mark.skipif(NO_TRANSFORMS, reason="requires earthkit.transforms")
 
 
-class ProcessingPipelineMixin:
+class ProcessingChainMixin:
 
     @pytest.fixture
     def ehi_sig(self, dmt):
@@ -42,7 +42,7 @@ class ProcessingPipelineMixin:
         return excess_heat.heatwave_severity(exhf)
 
 
-class TestMetadata(ProcessingPipelineMixin):
+class TestMetadata(ProcessingChainMixin):
     """Validate metadata generation for outputs"""
 
     @pytest.fixture
@@ -228,7 +228,7 @@ class TestDailyMeanTemperatureCombinedDayStartAndTimeShiftArgs:
             name="t2m",
         )
 
-    def test_applied_net_shifts(self, t2m):
+    def test_net_shifts_by_result_values(self, t2m):
         dmt = excess_heat.daily_mean_temperature(t2m, day_start=3, time_shift="timezone")
         dmt_expected = [
             [19.5, 13.5, 11.5, np.nan],
@@ -239,15 +239,81 @@ class TestDailyMeanTemperatureCombinedDayStartAndTimeShiftArgs:
         np.testing.assert_allclose(dmt, dmt_expected)
 
 
-# TODO
-# day = np.linspace(0, 150, 151)
-# # Approximate recreation of doi:10.3390/ijerph120100227, Fig. 4
-# dmt = 25 + 10 * np.exp(-((day - 60) ** 2) / 5)
-# time = np.datetime64("2025-01-01") + np.timedelta64(24, "h") * day
-# return xr.DataArray(dmt, coords={"valid_time": time}, dims=["valid_time"], attrs={"units": "degC"})
+class TestWithShortHeatwaveSyntheticData(ProcessingChainMixin):
+    """Validation with the short heatwave case of Nairn (2015), Fig. 2"""
+
+    @pytest.fixture
+    def dmt(self):
+        day = np.linspace(0, 150, 151)
+        dmt = 25 + 10 * np.exp(-((day - 68) ** 2) / 5)
+        time = np.datetime64("2025-01-01") + np.timedelta64(24, "h") * day
+        return xr.DataArray(dmt, coords={"valid_time": time}, dims=["valid_time"], attrs={"units": "degC"})
+
+    @pytest.fixture
+    def ehi_sig(self, dmt):
+        return excess_heat.significance_index(dmt, threshold=30.0, ndays=3).compute()
+
+    @pytest.fixture
+    def ehi_accl(self, dmt):
+        return excess_heat.acclimatisation_index(dmt, ndays_ref=30, ndays=3).compute()
+
+    def test_dmt_expectations(self, dmt):
+        assert dmt.idxmax() == np.datetime64("2025-03-10")
+        imax = np.argmax(dmt.values)
+        np.testing.assert_equal(np.where(dmt > 30)[0], [imax - 1, imax, imax + 1])
+
+    def test_significance_index_properties(self, ehi_sig):
+        assert ehi_sig.idxmax() == np.datetime64("2025-03-09")
+        np.testing.assert_equal(
+            ehi_sig["valid_time"][ehi_sig > 0].values,
+            [np.datetime64("2025-03-08"), np.datetime64("2025-03-09"), np.datetime64("2025-03-10")],
+        )
+
+    def test_acclimatisation_index_properties(self, ehi_accl):
+        assert ehi_accl.idxmax() == np.datetime64("2025-03-09")
+        np.testing.assert_array_less(ehi_accl.sel({"valid_time": slice("2025-03-13", None)}), 0.001)
+        assert ehi_accl["valid_time"].min() == np.datetime64("2025-01-31")
+
+    def test_excess_heat_factor_properties(self, exhf):
+        assert exhf.idxmax() == np.datetime64("2025-03-09")
+        assert exhf.idxmin() == np.datetime64("2025-03-06")
+        assert 30 < exhf.max().item() < 35
+        assert exhf.sel(valid_time="2025-03-08") > exhf.sel({"valid_time": "2025-03-10"})
 
 
-def test_heatwave_severity_with_given_threshold():
+def test_significance_index_default_threshold():
+    raise NotImplementedError
+
+
+def test_significance_index_ndays():
+    raise NotImplementedError
+
+
+def test_acclimatisation_index_ndays():
+    raise NotImplementedError
+
+
+def test_acclimatisation_index_ndays_ref():
+    raise NotImplementedError
+
+
+def test_excess_heat_factor():
+    raise NotImplementedError
+
+
+def test_excess_heat_factor_nonnegative():
+    raise NotImplementedError
+
+
+def test_excess_cold_factor():
+    raise NotImplementedError
+
+
+def test_excess_cold_factor_nonnegative():
+    raise NotImplementedError
+
+
+def test_heatwave_severity_with_fixed_threshold():
     da = xr.DataArray([[0.0, 1.0, 3.0, 4.0], [1.0, 2.0, 1.0, 0.0]], dims=["foo", "time"])
     tr = xr.DataArray([2.5, 2.0], dims=["foo"])
     hsev = excess_heat.heatwave_severity(da, threshold=tr)
