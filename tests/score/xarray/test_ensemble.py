@@ -2,7 +2,8 @@ import datetime
 
 import numpy as np
 import pytest
-import xarray as xr
+
+xr = pytest.importorskip("xarray")
 
 from earthkit.meteo.score import crps_from_cdf
 from earthkit.meteo.score import crps_from_ensemble

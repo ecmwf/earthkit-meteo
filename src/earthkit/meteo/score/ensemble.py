@@ -1,23 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
 
-import numpy as np
-import xarray as xr
+from ..utils.decorators import dispatch
 
-T = TypeVar("T", xr.DataArray, xr.Dataset)
+if TYPE_CHECKING:
+    import xarray as xr
 
-
-def _import_scores_or_prompt_install():
-    try:
-        import scores
-    except ImportError as e:
-        # from python 3.11+ can be written as:
-        # raise e.add_note("...")
-        raise RuntimeError(
-            "The 'earthkit-meteo[score]' extra is required to use scoring functions. "
-            "Please install it using 'pip install earthkit-meteo[score]'"
-        ) from e
-    return scores
+    T = TypeVar("T")
 
 
 def spread(fcst: T, over: str | list[str], reference: T | None = None) -> T:
@@ -52,14 +44,7 @@ def spread(fcst: T, over: str | list[str], reference: T | None = None) -> T:
     xarray object
         The spread of the forecast compared to the reference.
     """
-
-    # TODO: this could call the rmse function
-    if reference is None:
-        reference = fcst.mean(dim=over)
-    else:
-        if over in reference.dims:
-            reference = reference.squeeze(over)
-    return ((fcst - reference) ** 2).mean(dim=over) ** 0.5
+    return dispatch(spread, fcst, over, reference)
 
 
 def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
@@ -101,13 +86,7 @@ def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
     xarray object
         The quantile score of the forecast compared to the observations.
     """
-    if not (0.0 < tau < 1.0):
-        raise ValueError("tau must be in the range (0, 1)")
-
-    qf = fcst.quantile(tau, dim=over)
-    qf = qf.drop_vars("quantile")
-    qscore = abs(obs - qf) + (2.0 * tau - 1.0) * (obs - qf)
-    return qscore
+    return dispatch(quantile_score, fcst, obs, tau, over)
 
 
 # TODO: try to unify returns with crps_from_cdf and crps_from_ensemble
@@ -148,25 +127,7 @@ def crps_from_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
     xarray.DataArray
         The CRPS of the Gaussian forecast compared to the observations.
     """
-    if not isinstance(fcst, xr.Dataset):
-        raise TypeError(f"Expected fcst to be an xarray.Dataset object, got {type(fcst)}")
-    if not {"mean", "stdev"}.issubset(fcst.data_vars):
-        raise ValueError(
-            f"Expected fcst to have 'mean' and 'stdev' data variables, got {list(fcst.data_vars)}"
-        )
-    if not isinstance(obs, xr.DataArray):
-        raise TypeError(f"Expected obs to be an xarray.DataArray object, got {type(obs)}")
-
-    # TODO: support cupy
-    import scipy
-
-    c2 = np.sqrt(2.0 / np.pi)
-    za = (obs - fcst["mean"]) / fcst["stdev"]
-    return fcst["stdev"] * (
-        (2.0 * scipy.stats.norm().cdf(za.values) - 1.0) * za
-        + c2 * np.exp(-(za**2) / 2.0)
-        - 1.0 / np.sqrt(np.pi)
-    )
+    return dispatch(crps_from_gaussian, fcst, obs)
 
 
 def crps_from_ensemble(
@@ -300,115 +261,7 @@ def crps_from_ensemble(
     xarray.DataArray or xarray.Dataset
         The CRPS of the ensemble forecast compared to the observations.
     """
-    if decomposition_method not in ["underover", "hersbach"]:
-        raise ValueError("decomposition_method must be one of 'underover' or 'hersbach'")
-    if method not in ["fair", "ecdf"]:
-        raise ValueError("method must be one of 'fair' or 'ecdf'")
-    if not isinstance(fcst, xr.DataArray) or not isinstance(obs, xr.DataArray):
-        raise TypeError("fcst and obs must be xarray DataArray objects")
-    if decomposition_method == "underover":
-        scores = _import_scores_or_prompt_install()
-        # TODO: revisit component ordering here and in tests
-        reduce_dim = []
-        scores_xr = scores.probability.crps_for_ensemble(
-            fcst,
-            obs,
-            over,
-            method=method,
-            reduce_dims=reduce_dim,
-            preserve_dims=None,
-            weights=None,
-            include_components=return_components,
-        )
-        if return_components:
-            return scores_xr.to_dataset(dim="component").rename(
-                {"total": "crps" if method == "ecdf" else "fcrps"}
-            )
-        else:
-            return scores_xr
-    else:
-        valid_mask, alpha, beta, crps, fcrps = _crps_from_ensemble_hersbach(fcst, obs, over)
-        if return_components:
-            if method == "fair":
-                return xr.Dataset(
-                    {
-                        "alpha": alpha.where(valid_mask),
-                        "beta": beta.where(valid_mask),
-                        "crps": crps.where(valid_mask),
-                        "fcrps": fcrps.where(valid_mask),
-                    }
-                )
-            else:
-                return xr.Dataset(
-                    {
-                        "alpha": alpha.where(valid_mask),
-                        "beta": beta.where(valid_mask),
-                        "crps": crps.where(valid_mask),
-                    }
-                )
-
-        else:
-            return fcrps.where(valid_mask) if method == "fair" else crps.where(valid_mask)
-
-
-# TODO: does this work when over is a list of dimensions?
-# TODO: decide on the nan distribution strategy and make sure it's consistent with other functions (e.g. crps_from_ensemble)
-def _crps_from_ensemble_hersbach(
-    fcst: T,
-    obs: T,
-    over: str | list[str],
-    components_coords: np.ndarray | list | None = None,
-) -> T:
-    ens_size = fcst.sizes[over]
-    if components_coords is None:
-        components_coords = np.arange(1, ens_size + 2)
-    else:
-        assert (
-            len(components_coords) == ens_size + 1
-        ), "component_coords must have the length of ensemble size + 1"
-    # sort forecast values along the ensemble dimension
-    fcst_sorted = _sorted_ensemble(fcst, over)
-    alpha = xr.concat([xr.zeros_like(fcst_sorted[{over: 0}])] * (ens_size + 1), dim=over)
-    beta = alpha.copy(deep=True)
-    # note the order in operations between forecasts and observations matters
-    # for the broadcasting to work correctly
-    obs_below_ens = fcst_sorted[{over: 0}] > obs
-    alpha[{over: 0}] = alpha[{over: 0}].where(~obs_below_ens, 1.0)
-    beta[{over: 0}] = (fcst_sorted[{over: 0}] - obs).where(obs_below_ens, 0.0)
-
-    rhs = (
-        fcst_sorted.diff(dim=over)
-        .where(
-            fcst_sorted[{over: slice(1, None)}] <= obs,
-            -fcst_sorted[{over: slice(None, -1)}] + obs,
-        )
-        .where(fcst_sorted[{over: slice(None, -1)}] <= obs, 0.0)
-    )
-    rhs = rhs.transpose(*alpha.dims)
-    alpha[{over: slice(1, -1)}] = rhs
-
-    rhs = (
-        fcst_sorted.diff(dim=over)
-        .where(
-            fcst_sorted[{over: slice(None, -1)}] > obs,
-            fcst_sorted[{over: slice(1, None)}] - obs,
-        )
-        .where(fcst_sorted[{over: slice(1, None)}] > obs, 0.0)
-    )
-    rhs = rhs.transpose(*beta.dims)
-    beta[{over: slice(1, -1)}] = rhs
-
-    obs_above_ens = fcst_sorted[{over: -1}] < obs
-    alpha[{over: -1}] = (-fcst_sorted[{over: -1}] + obs).where(obs_above_ens, 0.0)
-    beta[{over: -1}] = beta[{over: -1}].where(~obs_above_ens, 1.0)
-    alpha = alpha.assign_coords({over: components_coords})
-    beta = beta.assign_coords({over: components_coords})
-    weight = xr.DataArray(np.arange(ens_size + 1), dims=over) / float(ens_size)
-    crps = (alpha * weight**2 + beta * (1.0 - weight) ** 2).sum(over)
-    fcrps = crps - _ginis_mean_diff(fcst_sorted, over) / (2.0 * ens_size)
-    # get the mask of valid values across observations and ensemble members
-    valid_mask = _common_valid_mask(obs, fcst_sorted, dim=over)
-    return valid_mask, alpha, beta, crps, fcrps
+    return dispatch(crps_from_ensemble, fcst, obs, over, method, return_components, decomposition_method)
 
 
 def crps_from_cdf(
@@ -417,7 +270,7 @@ def crps_from_cdf(
     over: str,
     weight: xr.DataArray | None = None,
     return_components: bool = False,
-) -> T:
+) -> xr.DataArray:
     r"""
     Calculates the continuous ranked probability score (CRPS) for forecasts provided as CDFs.
 
@@ -484,80 +337,4 @@ def crps_from_cdf(
     xarray.DataArray or xarray.Dataset
         The CRPS of the CDF compared to the observations.
     """
-
-    scores = _import_scores_or_prompt_install()
-    reduce_dim = [over]
-    if return_components:
-        return scores.probability.crps_cdf(
-            fcst,
-            obs,
-            threshold_dim=over,
-            threshold_weight=weight,
-            additional_thresholds=None,
-            propagate_nans=True,
-            fcst_fill_method="linear",
-            threshold_weight_fill_method="forward",
-            integration_method="exact",
-            reduce_dims=reduce_dim,
-            preserve_dims=None,
-            weights=None,
-            include_components=return_components,
-        ).rename({"total": "crps"})
-    else:
-        return scores.probability.crps_cdf(
-            fcst,
-            obs,
-            threshold_dim=over,
-            threshold_weight=weight,
-            additional_thresholds=None,
-            propagate_nans=True,
-            fcst_fill_method="linear",
-            threshold_weight_fill_method="forward",
-            integration_method="exact",
-            reduce_dims=reduce_dim,
-            preserve_dims=None,
-            weights=None,
-            include_components=return_components,
-        )["total"]
-
-
-# TODO: is it really dask-safe?
-def _sorted_ensemble(forecasts, dim):
-    # sort forecast values along the ensemble dimension
-    return xr.apply_ufunc(
-        np.sort,
-        forecasts,
-        input_core_dims=[[dim]],
-        output_core_dims=[[dim]],
-        exclude_dims=set((dim,)),
-        kwargs={"axis": -1},
-        dask="parallelized",
-        dask_gufunc_kwargs={"output_sizes": {dim: forecasts.sizes[dim]}},
-    )
-
-
-def _common_valid_mask(*arrays, dim=None):
-    # return a numpy bool array of occurrences of all values valid across dim
-    mask = None
-    for array in arrays:
-        if dim is not None and dim in array.dims:
-            nmask = array.notnull().all(dim=dim)
-        else:
-            nmask = array.notnull()
-        if mask is None:
-            mask = nmask
-        else:
-            mask = mask & nmask
-    return mask
-
-
-def _ginis_mean_diff(fcst_sorted, over):
-    # ( sum_i sum_j abs(x_i-x_j) )/(n*(n-1)) along dimension over
-    # NB: the algorithm assumes fcst_sorted has been sorted along dimension over
-    # pretty much copied from scores.probability.crps_for_ensemble()
-    ens_size = fcst_sorted.sizes[over]
-    npairs = ens_size * (ens_size - 1)
-    i = xr.DataArray(np.arange(ens_size), dims=[over])
-    coeffs = 2 * i - fcst_sorted.count(over) + 1
-    gmd = 2 * (fcst_sorted * coeffs).sum(dim=over, skipna=True)
-    return gmd / npairs
+    return dispatch(crps_from_cdf, fcst, obs, over, weight, return_components)

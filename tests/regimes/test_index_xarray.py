@@ -9,10 +9,10 @@
 import numpy as np
 import pytest
 
+xr = pytest.importorskip("xarray")
+
 from earthkit.meteo.regimes.xarray import project
 from earthkit.meteo.regimes.xarray import regime_index
-
-xr = pytest.importorskip("xarray")
 
 
 @pytest.fixture

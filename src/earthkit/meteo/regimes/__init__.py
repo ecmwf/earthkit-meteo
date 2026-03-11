@@ -27,10 +27,9 @@ Weather regimes based on projections onto spatial patterns.
 """
 
 from . import array
+
+# Offer xarray implementations at high-level (TODO: support fieldlist)
+from .index import *
 from .patterns import ConstantPatterns
 from .patterns import ModulatedPatterns
 from .patterns import Patterns
-
-# Offer xarray implementations at high-level (TODO: support fieldlist)
-from .xarray import project
-from .xarray import regime_index

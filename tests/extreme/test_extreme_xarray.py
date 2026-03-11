@@ -14,21 +14,18 @@ import time
 import numpy as np
 import pytest
 
+xr = pytest.importorskip("xarray")
+
 from earthkit.meteo import extreme
 from earthkit.meteo.extreme import xarray as extreme_xr
-from earthkit.meteo.utils.testing import NO_XARRAY
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 import _cpf  # noqa
 import _data  # noqa
 
-pytestmark = pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
-
 
 def _da(values, dims):
-    import xarray as xr
-
     data = np.asarray(values)
     return xr.DataArray(data, dims=dims)
 
@@ -46,7 +43,6 @@ def _da_move_dim(values, dims, axis, axis_orig=0):
 # ---------------------------------
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_efi():
     clim = _da(_data.clim, dims=["quantiles", "values", "x", "y"])
     ens = _da(_data.ens, dims=["number", "values", "x", "y"])
@@ -55,7 +51,6 @@ def test_xr_efi():
     assert np.isclose(efi.values.flat[0], v_ref)
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize("axis", [0, 1, 2, 3])
 def test_xr_efi_dims(axis):
     clim = _da_move_dim(_data.clim, dims=["quantiles", "values", "x", "y"], axis=axis)
@@ -65,7 +60,6 @@ def test_xr_efi_dims(axis):
     assert np.isclose(efi.values.flat[0], v_ref)
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_efi_mixed_dims():
     clim = _da(_data.clim, dims=["quantiles", "values", "x", "y"])
     ens = _da_move_dim(_data.ens, dims=["number", "values", "x", "y"], axis=-1)
@@ -74,7 +68,6 @@ def test_xr_efi_mixed_dims():
     assert np.isclose(efi.values.flat[0], v_ref)
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_efi_mixed_dims_even_more():
     clim = _da(_data.clim, dims=["quantiles", "values", "x", "y"])
     ens = _da_move_dim(_data.ens, dims=["number", "values", "x", "y"], axis=-1, axis_orig=1)
@@ -83,7 +76,6 @@ def test_xr_efi_mixed_dims_even_more():
     assert np.isclose(efi.values.flat[0], v_ref)
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_efi_highlevel():
     clim = _da(_data.clim, dims=["quantiles", "values", "x", "y"])
     ens = _da(_data.ens, dims=["number", "values", "x", "y"])
@@ -92,7 +84,6 @@ def test_xr_efi_highlevel():
     assert np.isclose(efi.values.flat[0], v_ref)
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_efi_perf():
     clim = _data.clim
     ens = _data.ens
@@ -139,7 +130,6 @@ def test_xr_efi_perf():
 # ---------------------------------
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_sot():
     clim = _da(_data.clim, dims=("quantiles", "values", "x", "y"))
     ens = _da(_data.ens, dims=("number", "values", "x", "y"))
@@ -150,7 +140,6 @@ def test_xr_sot():
     assert np.allclose(sot_lower.values.flat[0], v_ref[1])
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize("axis", [0, 1, 2, 3])
 def test_xr_sot_dims(axis):
     clim = _da_move_dim(_data.clim, dims=("quantiles", "values", "x", "y"), axis=axis)
@@ -162,7 +151,6 @@ def test_xr_sot_dims(axis):
     assert np.allclose(sot_lower.values.flat[0], v_ref[1])
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_sot_mixed_dims():
     clim = _da(_data.clim, dims=("quantiles", "values", "x", "y"))
     ens = _da_move_dim(_data.ens, dims=("number", "values", "x", "y"), axis=-1)
@@ -173,7 +161,6 @@ def test_xr_sot_mixed_dims():
     assert np.allclose(sot_lower.values.flat[0], v_ref[1])
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_sot_highlevel():
     clim = _da(_data.clim, dims=("quantiles", "values", "x", "y"))
     ens = _da(_data.ens, dims=("number", "values", "x", "y"))
@@ -189,7 +176,6 @@ def test_xr_sot_highlevel():
 # ---------------------------------
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_cpf():
     clim = _da(_cpf.cpf_clim, dims=("quantiles", "values", "x", "y"))
     ens = _da(_cpf.cpf_ens, dims=("number", "values", "x", "y"))
@@ -198,7 +184,6 @@ def test_xr_cpf():
     assert np.allclose(cpf.values.flat, np.asarray(v_ref))
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.parametrize("axis", [0, 1, 2, 3])
 def test_xr_cpf_dims(axis):
     clim = _da_move_dim(_cpf.cpf_clim, dims=("quantiles", "values", "x", "y"), axis=axis)
@@ -208,7 +193,6 @@ def test_xr_cpf_dims(axis):
     assert np.allclose(cpf.values.flat, np.asarray(v_ref))
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_cpf_mixed_dims():
     clim = _da(_cpf.cpf_clim, dims=("quantiles", "values", "x", "y"))
     ens = _da_move_dim(_cpf.cpf_ens, dims=("number", "values", "x", "y"), axis=-1)
@@ -217,7 +201,6 @@ def test_xr_cpf_mixed_dims():
     assert np.allclose(cpf.values.flat, np.asarray(v_ref))
 
 
-@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 def test_xr_cpf_highlevel():
     clim = _da(_cpf.cpf_clim, dims=("quantiles", "values", "x", "y"))
     ens = _da(_cpf.cpf_ens, dims=("number", "values", "x", "y"))
