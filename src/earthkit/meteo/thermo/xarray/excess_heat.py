@@ -138,8 +138,8 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
             assert __DMT_TIME_SHIFT_COORD not in t2m.coords
             # Merging of groups where different partial days were removed
             # fails after map when the time coordinate is of pandas period
-            # dtype. The period dtype works as long as the same partial days
-            # are in all groups removed.
+            # dtype. The period dtype only works when the same partial days
+            # were removed in all groups.
             return (
                 t2m
                 # Groups don't know their time shift unless we attach it here.
@@ -316,6 +316,7 @@ def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=True):
     return ehi_sig * np.maximum(1.0, ehi_accl)
 
 
+# TODO: record threshold in provenance
 @_with_metadata("hsev", long_name="Heatwave severity", units="1")
 def heatwave_severity(exhf, threshold=None):
     """Heatwave severity index.
