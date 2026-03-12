@@ -10,9 +10,13 @@
 """
 Vertical computation functions.
 
-The API is split into two levels. The low level functions are in the ``array`` submodule and they
-can be used to operate on numpy arrays. The high level functions are still to be developed and
-planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets*.
+The API is organised in layers:
+
+- Core numerical routines live in the ``array`` submodule.
+- Functions exposed from this module provide the high-level entry points for the
+  vertical API.
+
+For xarray interpolation workflows, see :mod:`earthkit.meteo.vertical.interpolation`.
 """
 
 

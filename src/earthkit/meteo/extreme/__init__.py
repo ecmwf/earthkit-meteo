@@ -10,9 +10,11 @@
 """
 Extreme index functions.
 
-The API is split into two levels. The low level functions are in the ``array`` submodule and they
-can be used to operate on numpy arrays. The high level functions are still to be developed and
-planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets*.
+The API is split into two layers:
+
+- Low-level implementations are in the ``array`` and ``xarray`` submodules.
+- High-level functions are in this module and dispatch to backend implementations
+  based on input type.
 """
 
 from .cpf import cpf  # noqa
