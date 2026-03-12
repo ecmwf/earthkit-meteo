@@ -23,7 +23,7 @@ np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
 
 def data_file(name):
-    return os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", name)
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", name)
 
 
 def read_data_file(path):

@@ -10,6 +10,7 @@
 import os
 import sys
 import time
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -20,7 +21,7 @@ from earthkit.meteo import extreme
 from earthkit.meteo.extreme import xarray as extreme_xr
 
 here = os.path.dirname(__file__)
-sys.path.insert(0, here)
+sys.path.insert(0, str(Path(here).parent))
 import _cpf  # noqa
 import _data  # noqa
 

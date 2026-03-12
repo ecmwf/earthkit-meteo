@@ -9,6 +9,7 @@
 
 import os
 import sys
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -19,7 +20,7 @@ from earthkit.meteo.extreme.array.utils import flatten_extreme_input
 from earthkit.meteo.extreme.array.utils import validate_extreme_shapes
 
 here = os.path.dirname(__file__)
-sys.path.insert(0, here)
+sys.path.insert(0, str(Path(here).parent))
 import _cpf  # noqa
 import _data  # noqa
 

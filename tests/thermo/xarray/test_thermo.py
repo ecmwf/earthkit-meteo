@@ -42,7 +42,7 @@ def _xr_da_1d(x, dim="point"):
 
 
 def _data_file(name):
-    return os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", name)
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", name)
 
 
 def _read_data_file(path):
