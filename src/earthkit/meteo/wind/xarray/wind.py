@@ -273,7 +273,7 @@ def windrose(
 
     res_da = xr.DataArray(
         res,
-        dims={"speed_bin": res.shape[0], "direction_bin": res.shape[1]},
+        dims=("speed_bin", "direction_bin"),
         coords={
             "speed_bin": speed_bins[:-1],
             "direction_bin": dir_bins[:-1],
