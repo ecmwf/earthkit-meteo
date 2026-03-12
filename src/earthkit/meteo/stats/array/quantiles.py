@@ -53,9 +53,9 @@ def iter_quantiles(
 
     if isinstance(which, int):
         n = which
-        qs = xp.linspace(0.0, 1.0, n + 1, device=device)
+        qs = xp.linspace(0.0, 1.0, n + 1, device=device, dtype=arr.dtype)
     else:
-        qs = xp.asarray(which, device=device)
+        qs = xp.asarray(which, device=device, dtype=arr.dtype)
 
     if method == "numpy_bulk":
         quantiles = xp.quantile(arr, qs, axis=axis)

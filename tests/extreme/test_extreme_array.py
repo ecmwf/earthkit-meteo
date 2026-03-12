@@ -91,7 +91,7 @@ def test_xp_efi_sorted(xp, device, clim, ens, v_ref):
 
     efi = extreme.array.efi(clim, ens_perc)
 
-    assert xp.isclose(efi.flat[0], v_ref)
+    assert xp.isclose(xp.reshape(efi, shape=(-1,))[0], v_ref)
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
@@ -298,7 +298,7 @@ def test_np_cpf(xp, device, clim, ens, v_ref, kwargs):
     v_ref = xp.asarray(v_ref, device=device)
 
     cpf = extreme.array.cpf(clim, ens, **kwargs)
-    assert xp.allclose(cpf.flat, v_ref)
+    assert xp.allclose(xp.reshape(cpf, shape=(-1,)), v_ref)
 
 
 @pytest.mark.parametrize("axis", [0, 1, 2, 3])
