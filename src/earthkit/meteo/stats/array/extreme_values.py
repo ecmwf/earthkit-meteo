@@ -145,10 +145,10 @@ def value_to_return_period(value, dist):
 
     Parameters
     ----------
-    dist: GumbelDistribution
-        Probability distribution.
     value: array_like
         Input value(s).
+    dist: GumbelDistribution
+        Probability distribution.
 
     Returns
     -------
@@ -166,10 +166,10 @@ def return_period_to_value(return_period, dist):
 
     Parameters
     ----------
-    dist: GumbelDistribution
-        Probability distribution.
     return_period: array_like
         Input return period.
+    dist: GumbelDistribution
+        Probability distribution.
 
     Returns
     -------

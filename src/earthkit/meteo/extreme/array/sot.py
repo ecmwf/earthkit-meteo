@@ -51,7 +51,7 @@ def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
     return sot
 
 
-def sot(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
+def sot(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
     """Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
     and ensemble forecast (not sorted)
@@ -62,23 +62,28 @@ def sot(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     Parameters
     ----------
     clim: array-like
-        Model climatology (percentiles). The reduction axis is set by ``clim_axis``.
+        Model climatology (percentiles). The reduction axis is set by ``clim_dim``.
     ens: array-like
-        Ensemble forecast. The reduction axis is set by ``ens_axis``.
+        Ensemble forecast. The reduction axis is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
     eps: (float)
         Epsilon factor for zero values
-    clim_axis: int
-        Axis index of the climatology/quantile dimension in ``clim``. Default is 0.
-    ens_axis: int
-        Axis index of the ensemble/member dimension in ``ens``. Default is 0.
+    clim_dim: int
+        Dimension index of the climatology/quantile dimension in ``clim``. Default is 0.
+    ens_dim: int
+        Dimension index of the ensemble/member dimension in ``ens``. Default is 0.
 
     Returns
     -------
     array-like
         SOT values.
     """
+    if clim_dim is None:
+        clim_dim = 0
+    if ens_dim is None:
+        ens_dim = 0
+
     xp = array_namespace(clim, ens, perc)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
@@ -86,11 +91,11 @@ def sot(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
         func="sot",
         clim_shape=clim.shape,
         ens_shape=ens.shape,
-        clim_axis=clim_axis,
-        ens_axis=ens_axis,
+        clim_dim=clim_dim,
+        ens_dim=ens_dim,
     )
-    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
-    ens, _ = flatten_extreme_input(xp, ens, ens_axis)
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_dim)
+    ens, _ = flatten_extreme_input(xp, ens, ens_dim)
     # perc = xp.asarray(perc)
 
     signed_int_dtypes = xp.__array_namespace_info__().dtypes(kind="signed integer")
@@ -128,7 +133,7 @@ def sot(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     return xp.reshape(sot, out_shape)
 
 
-def sot_unsorted(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
+def sot_unsorted(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
     """Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
     and ensemble forecast (not sorted)
@@ -139,23 +144,28 @@ def sot_unsorted(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
     Parameters
     ----------
     clim: array-like
-        Model climatology (percentiles). The reduction axis is set by ``clim_axis``.
+        Model climatology (percentiles). The reduction axis is set by ``clim_dim``.
     ens: array-like
-        Ensemble forecast. The reduction axis is set by ``ens_axis``.
+        Ensemble forecast. The reduction axis is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
     eps: (float)
         Epsilon factor for zero values
-    clim_axis: int
-        Axis index of the climatology/quantile dimension in ``clim``. Default is 0.
-    ens_axis: int
-        Axis index of the ensemble/member dimension in ``ens``. Default is 0.
+    clim_dim: int
+        Dimension index of the climatology/quantile dimension in ``clim``. Default is 0.
+    ens_dim: int
+        Dimension index of the ensemble/member dimension in ``ens``. Default is 0.
 
     Returns
     -------
     array-like
         SOT values.
     """
+    if clim_dim is None:
+        clim_dim = 0
+    if ens_dim is None:
+        ens_dim = 0
+
     xp = array_namespace(clim, ens, perc)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
@@ -164,11 +174,11 @@ def sot_unsorted(clim, ens, perc, eps=-1e4, clim_axis=0, ens_axis=0):
         func="sot_unsorted",
         clim_shape=clim.shape,
         ens_shape=ens.shape,
-        clim_axis=clim_axis,
-        ens_axis=ens_axis,
+        clim_dim=clim_dim,
+        ens_dim=ens_dim,
     )
-    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
-    ens, _ = flatten_extreme_input(xp, ens, ens_axis)
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_dim)
+    ens, _ = flatten_extreme_input(xp, ens, ens_dim)
 
     signed_int_dtypes = xp.__array_namespace_info__().dtypes(kind="signed integer")
     signed_int_dtypes = set(signed_int_dtypes.values())

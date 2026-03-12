@@ -313,7 +313,7 @@ def coriolis(data: FieldList) -> FieldList:
     result = []
     for field in data:
         lat = field.to_latlon()["lat"]
-        c = array.coriolis(lat.values)
+        c = array.coriolis(lat)
         md = field.metadata().override(paramId=500235)
         result.append(field.clone(values=c, metadata=md))
 

@@ -63,10 +63,10 @@ def value_to_return_period(value, dist):
 
     Parameters
     ----------
-    dist: GumbelDistribution
-        Probability distribution.
     value: number | xarray.DataArray
         Input value(s).
+    dist: GumbelDistribution
+        Probability distribution.
 
     Returns
     -------
@@ -95,10 +95,10 @@ def return_period_to_value(return_period, dist):
 
     Parameters
     ----------
-    dist: GumbelDistribution
-        Probability distribution.
     return_period: number | xarray.DataArray
         Input return period.
+    dist: GumbelDistribution
+        Probability distribution.
 
     Returns
     -------

@@ -7,7 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-
 from ..utils.decorators import dispatch
 
 
@@ -33,7 +32,8 @@ def fit_gumbel(sample, over):
         outcome is a collection of (scalar-valued) distributions.
 
     """
-    return dispatch(fit_gumbel, sample, over)
+    dispatched = dispatch(fit_gumbel, xarray=True, array=True)
+    return dispatched(sample, over)
 
 
 def value_to_return_period(value, dist):
@@ -46,10 +46,10 @@ def value_to_return_period(value, dist):
 
     Parameters
     ----------
-    dist: GumbelDistribution
-        Probability distribution.
     value: xarray.DataArray
         Input value(s).
+    dist: GumbelDistribution
+        Probability distribution.
 
     Returns
     -------
@@ -57,7 +57,8 @@ def value_to_return_period(value, dist):
         The return period of the input value. Distribution dimensions are added
         at the end.
     """
-    return dispatch(value_to_return_period, value, dist)
+    dispatched = dispatch(value_to_return_period, xarray=True, array=True)
+    return dispatched(value, dist)
 
 
 def return_period_to_value(return_period, dist):
@@ -67,10 +68,10 @@ def return_period_to_value(return_period, dist):
 
     Parameters
     ----------
-    dist: GumbelDistribution
-        Probability distribution.
     return_period: xarray.DataArray
         Input return period.
+    dist: GumbelDistribution
+        Probability distribution.
 
     Returns
     -------
@@ -78,4 +79,5 @@ def return_period_to_value(return_period, dist):
         Value with return period equal to the input return period. Distribution
         dimensions are added at the end.
     """
-    return dispatch(return_period_to_value, return_period, dist)
+    dispatched = dispatch(return_period_to_value, xarray=True, array=True)
+    return dispatched(return_period, dist)

@@ -9,16 +9,12 @@
 
 from __future__ import annotations
 
-from importlib import import_module
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeAlias
 from typing import overload
 
-from earthkit.meteo.utils.decorators import _is_xarray
 from earthkit.meteo.utils.decorators import dispatch
-
-from . import array
 
 if TYPE_CHECKING:
     import datetime
@@ -29,17 +25,6 @@ if TYPE_CHECKING:
 DateLike: TypeAlias = "datetime.datetime | np.datetime64"
 
 ArrayLike: TypeAlias = Any
-
-
-def _dispatch_if_xarray(func_name: str, *args: Any, **kwargs: Any) -> Any | None:
-    # Solar functions often take `date` as a scalar and lat/lon as xarray objects.
-    # The default dispatch() only checks the first argument, so it would incorrectly
-    # select the array backend and drop xarray metadata. This ensures we use the
-    # xarray implementation whenever any argument is xarray.
-    if any(_is_xarray(a) for a in args):
-        module = import_module(__name__.rsplit(".", 1)[0] + ".xarray")
-        return getattr(module, func_name)(*args, **kwargs)
-    return None
 
 
 @overload
@@ -67,8 +52,7 @@ def julian_day(date):
     - :py:meth:`earthkit.meteo.solar.array.julian_day` for scalar/array inputs
 
     """
-    r = dispatch(julian_day, date)
-    return r if r is not None else array.julian_day(date)
+    return dispatch(julian_day, array=True)(date)
 
 
 @overload
@@ -99,8 +83,7 @@ def solar_declination_angle(date):
     - :py:meth:`earthkit.meteo.solar.array.solar_declination_angle` for scalar/array inputs
 
     """
-    r = dispatch(solar_declination_angle, date)
-    return r if r is not None else array.solar_declination_angle(date)
+    return dispatch(solar_declination_angle, array=True)(date)
 
 
 @overload
@@ -138,8 +121,7 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
     - :py:meth:`earthkit.meteo.solar.array.cos_solar_zenith_angle` otherwise
 
     """
-    r = _dispatch_if_xarray("cos_solar_zenith_angle", date, latitudes, longitudes)
-    return r if r is not None else array.cos_solar_zenith_angle(date, latitudes, longitudes)
+    return dispatch(cos_solar_zenith_angle, match="latitudes", array=True)(date, latitudes, longitudes)
 
 
 @overload
@@ -202,26 +184,13 @@ def cos_solar_zenith_angle_integrated(
     - :py:meth:`earthkit.meteo.solar.array.cos_solar_zenith_angle_integrated` otherwise
 
     """
-    r = _dispatch_if_xarray(
-        "cos_solar_zenith_angle_integrated",
+    return dispatch(cos_solar_zenith_angle_integrated, match="latitudes", array=True)(
         begin_date,
         end_date,
         latitudes,
         longitudes,
         intervals_per_hour=intervals_per_hour,
         integration_order=integration_order,
-    )
-    return (
-        r
-        if r is not None
-        else array.cos_solar_zenith_angle_integrated(
-            begin_date,
-            end_date,
-            latitudes,
-            longitudes,
-            intervals_per_hour=intervals_per_hour,
-            integration_order=integration_order,
-        )
     )
 
 
@@ -251,7 +220,7 @@ def incoming_solar_radiation(date):
       (including ``numpy.datetime64``)
 
     """
-    return dispatch(incoming_solar_radiation, date)
+    return dispatch(incoming_solar_radiation, array=True)(date)
 
 
 @overload
@@ -314,24 +283,11 @@ def toa_incident_solar_radiation(
     - :py:meth:`earthkit.meteo.solar.array.toa_incident_solar_radiation` otherwise
 
     """
-    r = _dispatch_if_xarray(
-        "toa_incident_solar_radiation",
+    return dispatch(toa_incident_solar_radiation, match="latitudes", array=True)(
         begin_date,
         end_date,
         latitudes,
         longitudes,
         intervals_per_hour=intervals_per_hour,
         integration_order=integration_order,
-    )
-    return (
-        r
-        if r is not None
-        else array.toa_incident_solar_radiation(
-            begin_date,
-            end_date,
-            latitudes,
-            longitudes,
-            intervals_per_hour=intervals_per_hour,
-            integration_order=integration_order,
-        )
     )

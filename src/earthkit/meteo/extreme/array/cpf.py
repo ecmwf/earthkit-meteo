@@ -102,8 +102,8 @@ def cpf(
     epsilon=None,
     symmetric=False,
     from_zero=False,
-    clim_axis=0,
-    ens_axis=0,
+    clim_dim=0,
+    ens_dim=0,
 ):
     """Compute Crossing Point Forecast (CPF).
 
@@ -115,9 +115,9 @@ def cpf(
     Parameters
     ----------
     clim: array-like
-        Per-point climatology. The reduction axis (quantiles) is set by ``clim_axis``.
+        Per-point climatology. The reduction axis (quantiles) is set by ``clim_dim``.
     ens: array-like
-        Ensemble forecast. The reduction axis (ensemble members) is set by ``ens_axis``.
+        Ensemble forecast. The reduction axis (ensemble members) is set by ``ens_dim``.
     sort_clim: bool
         If True, sort the climatology first
     sort_ens: bool
@@ -131,16 +131,21 @@ def cpf(
     from_zero: bool
         If True, start looking for a crossing from the minimum, rather than the
         median
-    clim_axis: int
-        Axis index of the climatology/quantile dimension in ``clim``. Default is 0.
-    ens_axis: int
-        Axis index of the ensemble/member dimension in ``ens``. Default is 0.
+    clim_dim: int
+        Dimension index of the climatology/quantile dimension in ``clim``. Default is 0.
+    ens_dim: int
+        Dimension index of the ensemble/member dimension in ``ens``. Default is 0.
 
     Returns
     -------
     array-like
         CPF values.
     """
+    if clim_dim is None:
+        clim_dim = 0
+    if ens_dim is None:
+        ens_dim = 0
+
     xp = array_namespace(clim, ens)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
@@ -148,11 +153,11 @@ def cpf(
         func="cpf",
         clim_shape=clim.shape,
         ens_shape=ens.shape,
-        clim_axis=clim_axis,
-        ens_axis=ens_axis,
+        clim_dim=clim_dim,
+        ens_dim=ens_dim,
     )
-    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
-    ens, _ = flatten_extreme_input(xp, ens, ens_axis)
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_dim)
+    ens, _ = flatten_extreme_input(xp, ens, ens_dim)
 
     if sort_clim:
         clim = xp.sort(clim, axis=0)
