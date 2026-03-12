@@ -31,6 +31,7 @@ def fit_gumbel(sample, over):
         Fitting over a dimension of a multi-dimensional sample array, the
         outcome is a collection of (scalar-valued) distributions.
 
+    The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(fit_gumbel, xarray=True, array=True)
     return dispatched(sample, over)
@@ -56,6 +57,8 @@ def value_to_return_period(value, dist):
     xarray.DataArray
         The return period of the input value. Distribution dimensions are added
         at the end.
+
+    The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(value_to_return_period, xarray=True, array=True)
     return dispatched(value, dist)
@@ -78,6 +81,8 @@ def return_period_to_value(return_period, dist):
     xarray.DataArray
         Value with return period equal to the input return period. Distribution
         dimensions are added at the end.
+
+    The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(return_period_to_value, xarray=True, array=True)
     return dispatched(return_period, dist)

@@ -7,5 +7,15 @@
 # nor does it submit to any jurisdiction.
 #
 
+"""
+Forecast scoring functions.
+
+The API is split into two layers:
+
+- Low-level interfaces are in the ``array`` and ``xarray`` submodules.
+- High-level functions are in this module and dispatch to the ``array`` and
+  ``xarray`` implementations based on input type.
+"""
+
 from .deterministic import *
 from .ensemble import *
