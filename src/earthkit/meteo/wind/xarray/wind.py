@@ -247,7 +247,7 @@ def windrose(
 
     Notes
     -----
-    The ``sectors`` parameter defines the number of direction bins the 360 degreesThe sectors do not start at 0 degrees (North) but are shifted by half a sector size.
+    The ``sectors`` parameter defines the number of direction bins the 360 degrees. The sectors do not start at 0 degrees (North) but are shifted by half a sector size.
     E.g. if ``sectors`` is 4 the sectors are defined as:
 
     .. image:: /_static/wind_sector.png
