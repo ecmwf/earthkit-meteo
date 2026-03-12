@@ -21,18 +21,18 @@ def da_2d():
 
     data = np.asarray(
         [
-            [0.3, 3.0, 30.0],
-            [0.5, 5.0, 50.0],
-            [0.7, 7.0, 70.0],
-            [0.3, 3.0, 30.0],
-            [0.4, 4.0, 40.0],
-            [0.6, 6.0, 60.0],
-            [0.7, 7.0, 70.0],
+            [0.3, 3.0, 30.0, 300.0],
+            [0.5, 5.0, 50.0, 500.0],
+            [0.7, 7.0, 70.0, 700.0],
+            [0.3, 3.0, 30.0, 300.0],
+            [0.4, 4.0, 40.0, 400.0],
+            [0.6, 6.0, 60.0, 600.0],
+            [0.7, 7.0, 70.0, 700.0],
         ]
     )
     coords = {
         "foo": [2, 3, 4, 5, 6, 7, 8],
-        "bar": [1, 5, 10],
+        "bar": [1, 5, 10, 20],
     }
     dims = ("foo", "bar")
     return xr.DataArray(data, coords, dims)
@@ -41,7 +41,7 @@ def da_2d():
 def test_fit_gumbel_over_foo_dim_detects_metadata(da_2d):
     gumbel = stats.fit_gumbel(da_2d, dim="foo")
     assert gumbel.ndim == 1
-    assert gumbel.shape == (3,)
+    assert gumbel.shape == (4,)
     assert gumbel.dims == ("bar",)
     assert len(gumbel.coords) == 1
     assert "bar" in gumbel.coords
@@ -59,7 +59,7 @@ def test_return_period_to_value(da_2d):
     gumbel = stats.fit_gumbel(da_2d, dim="foo")
     rps = xr.DataArray([3, 5], coords={"baz": [-1, -2]}, dims=["baz"])
     result = stats.return_period_to_value(rps, gumbel)
-    assert result.shape == (2, 3)
+    assert result.shape == (2, 4)
     assert result.dims == ("baz", "bar")
     np.testing.assert_array_equal(result.coords["bar"], da_2d.coords["bar"])
     np.testing.assert_array_equal(result.coords["baz"], rps.coords["baz"])
@@ -78,23 +78,19 @@ def test_return_period_to_value_fails_on_shared_dimension(da_2d):
 
 
 def test_fit_gumbel_over_bar_dim_detects_metadata(da_2d):
-    import xarray as xr
-
-    da_bar = xr.concat([da_2d, da_2d.isel(bar=-1).assign_coords(bar=20)], dim="bar")
-    gumbel = stats.fit_gumbel(da_bar, dim="bar")
+    gumbel = stats.fit_gumbel(da_2d, dim="bar")
     assert gumbel.ndim == 1
     assert gumbel.shape == (7,)
     assert gumbel.dims == ("foo",)
     assert len(gumbel.coords) == 1
     assert "foo" in gumbel.coords
-    np.testing.assert_allclose(gumbel.coords["foo"], da_bar.coords["foo"])
+    np.testing.assert_allclose(gumbel.coords["foo"], da_2d.coords["foo"])
 
 
 def test_value_to_return_period(da_2d):
     import xarray as xr
 
-    da_bar = xr.concat([da_2d, da_2d.isel(bar=-1).assign_coords(bar=20)], dim="bar")
-    gumbel = stats.fit_gumbel(da_bar, dim="bar")
+    gumbel = stats.fit_gumbel(da_2d, dim="bar")
     vals = xr.DataArray([1.0, 2.0, 3.0], coords={"baz": [4.0, 2.0, 0.0]}, dims=["baz"])
     result = stats.value_to_return_period(vals, gumbel)
     assert result.shape == (3, 7)
