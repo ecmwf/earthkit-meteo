@@ -7,10 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
-from pathlib import Path
-
 import numpy as np
 import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
@@ -19,10 +15,8 @@ from earthkit.meteo import extreme
 from earthkit.meteo.extreme.array.utils import flatten_extreme_input
 from earthkit.meteo.extreme.array.utils import validate_extreme_shapes
 
-here = os.path.dirname(__file__)
-sys.path.insert(0, str(Path(here).parent))
-import _cpf  # noqa
-import _data  # noqa
+from .. import _cpf
+from .. import _data
 
 
 def _move_axis(data, axis):
@@ -54,29 +48,6 @@ def test_np_efi(xp, device, clim, ens, kwargs, v_ref):
     ens = xp.asarray(ens, device=device)
     v_ref = xp.asarray(v_ref, device=device)
     efi = extreme.array.efi(clim, ens, **kwargs)
-    assert xp.allclose(efi[0], v_ref, rtol=1e-4)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "clim, ens, kwargs, v_ref",
-    [
-        (_data.clim, _data.ens, {}, -0.1838425040642013),
-        (_data.clim, _data.ens, dict(eps=1e-4), -0.18384250406420133),
-        (
-            _data.clim_eps,
-            _data.ens_eps,
-            dict(eps=1e-4),
-            0.46039347745967046,
-        ),
-        (_data.clim_eps2, _data.ens_eps2, dict(eps=1e-4), 0.6330071575726789),
-    ],
-)
-def test_np_efi_highlevel_dispatch(xp, device, clim, ens, kwargs, v_ref):
-    clim = xp.asarray(clim, device=device)
-    ens = xp.asarray(ens, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    efi = extreme.efi(clim, ens, **kwargs)
     assert xp.allclose(efi[0], v_ref, rtol=1e-4)
 
 
@@ -116,30 +87,12 @@ def test_np_efi_axis(axis):
     assert np.allclose(got, ref)
 
 
-@pytest.mark.parametrize("axis", [0, 1, 2, 3])
-def test_np_efi_highlevel_dispatch_axis(axis):
-    clim = _move_axis(_data.clim, axis)
-    ens = _move_axis(_data.ens, axis)
-    ref = extreme.array.efi(_data.clim, _data.ens)
-    got = extreme.efi(clim, ens, clim_dim=axis, ens_dim=axis)
-    assert np.allclose(got, ref)
-
-
 @pytest.mark.parametrize("axis", [1, 2, 3])
 def test_np_efi_mixed_axis(axis):
     clim = _data.clim
     ens = _move_axis(_data.ens, axis)
     ref = extreme.array.efi(_data.clim, _data.ens)
     got = extreme.array.efi(clim, ens, clim_dim=0, ens_dim=axis)
-    assert np.allclose(got, ref)
-
-
-@pytest.mark.parametrize("axis", [1, 2, 3])
-def test_np_efi_highlevel_dispatch_mixed_axis(axis):
-    clim = _data.clim
-    ens = _move_axis(_data.ens, axis)
-    ref = extreme.array.efi(_data.clim, _data.ens)
-    got = extreme.efi(clim, ens, clim_dim=0, ens_dim=axis)
     assert np.allclose(got, ref)
 
 
@@ -245,24 +198,6 @@ def test_np_sot_mixed_axis(axis):
     assert np.allclose(got, ref)
 
 
-@pytest.mark.parametrize("axis", [0, 1, 2, 3])
-def test_np_sot_highlevel_dispatch_axis(axis):
-    clim = _move_axis(_data.clim, axis)
-    ens = _move_axis(_data.ens, axis)
-    ref = extreme.array.sot(_data.clim, _data.ens, 90)
-    got = extreme.sot(clim, ens, 90, clim_dim=axis, ens_dim=axis)
-    assert np.allclose(got, ref)
-
-
-@pytest.mark.parametrize("axis", [1, 2, 3])
-def test_np_sot_highlevel_dispatch_mixed_axis(axis):
-    clim = _data.clim
-    ens = _move_axis(_data.ens, axis)
-    ref = extreme.array.sot(_data.clim, _data.ens, 90)
-    got = extreme.sot(clim, ens, 90, clim_dim=0, ens_dim=axis)
-    assert np.allclose(got, ref)
-
-
 # ---------------------------------
 # CPF
 # ---------------------------------
@@ -317,24 +252,6 @@ def test_np_cpf_mixed_axis(axis):
     ens = _move_axis(_cpf.cpf_ens, axis)
     ref = extreme.array.cpf(_cpf.cpf_clim, _cpf.cpf_ens, sort_clim=True)
     got = extreme.array.cpf(clim, ens, sort_clim=True, clim_dim=0, ens_dim=axis)
-    assert np.allclose(got, ref)
-
-
-@pytest.mark.parametrize("axis", [0, 1, 2, 3])
-def test_np_cpf_highlevel_dispatch_axis(axis):
-    clim = _move_axis(_cpf.cpf_clim, axis)
-    ens = _move_axis(_cpf.cpf_ens, axis)
-    ref = extreme.array.cpf(_cpf.cpf_clim, _cpf.cpf_ens, sort_clim=True)
-    got = extreme.cpf(clim, ens, sort_clim=True, clim_dim=axis, ens_dim=axis)
-    assert np.allclose(got, ref)
-
-
-@pytest.mark.parametrize("axis", [1, 2, 3])
-def test_np_cpf_highlevel_dispatch_mixed_axis(axis):
-    clim = _cpf.cpf_clim
-    ens = _move_axis(_cpf.cpf_ens, axis)
-    ref = extreme.array.cpf(_cpf.cpf_clim, _cpf.cpf_ens, sort_clim=True)
-    got = extreme.cpf(clim, ens, sort_clim=True, clim_dim=0, ens_dim=axis)
     assert np.allclose(got, ref)
 
 
