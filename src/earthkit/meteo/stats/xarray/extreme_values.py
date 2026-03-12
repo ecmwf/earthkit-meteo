@@ -8,8 +8,6 @@
 
 import numbers
 
-from earthkit.utils.array import array_namespace
-
 from ...utils.decorators import xarray_ufunc
 from .. import array
 
@@ -52,14 +50,10 @@ def fit_gumbel(sample, dim):
     """
     if dim not in sample.dims:
         raise ValueError(f"cannot fit over dimension '{dim}' with sample dimensions {sample.dims}")
-    over_axis = sample.dims.index(dim)
+    axis = sample.dims.index(dim)
     parameter_dims = [d for d in sample.dims if d != dim]
     parameter_coords = {dim: values for dim, values in sample.coords.items() if dim in parameter_dims}
-    sample_data = sample.data
-    if over_axis != 0:
-        xp = array_namespace(sample_data)
-        sample_data = xp.moveaxis(sample_data, over_axis, 0)
-    return array.fit_gumbel(sample_data, dim=0, dims=parameter_dims, coords=parameter_coords)
+    return array.fit_gumbel(sample.data, dim=axis, dims=parameter_dims, coords=parameter_coords)
 
 
 def value_to_return_period(value, dist):

@@ -8,11 +8,7 @@
 #
 
 from earthkit.utils.array import array_namespace
-
-try:
-    from scipy.stats import lmoment
-except ImportError:
-    from ._polyfill import lmoment
+from scipy.stats import lmoment
 
 
 def _expand_dims_after(arr, ndim, xp=None):

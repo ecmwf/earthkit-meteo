@@ -34,7 +34,7 @@ dependencies = [
   "numpy",
 ]
 optional-dependencies.all = [
-  "earthkit-meteo[samples,scores]",
+  "earthkit-meteo[samples,scores,stats]",
 ]
 optional-dependencies.dev = [
   "earthkit-meteo[all,docs,test]",
@@ -64,6 +64,9 @@ optional-dependencies.scores = [
   "scipy",
   "scores",
   "xarray",
+]
+optional-dependencies.stats = [
+  "scipy>=1.15",
 ]
 optional-dependencies.test = [
   "earthkit-data",
