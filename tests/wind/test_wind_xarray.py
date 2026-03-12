@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 
 import earthkit.meteo.wind.array as array_wind
-from earthkit.meteo import wind
+import earthkit.meteo.wind.xarray as wind
 from earthkit.meteo.utils.testing import NO_EKD
 from earthkit.meteo.utils.testing import NO_XARRAY
 
@@ -310,3 +310,4 @@ def test_xr_coriolis(lat, v_ref):
 # def test_xr_windrose_invalid(sp, d, sectors, sp_bins):
 #     with pytest.raises(ValueError):
 #         wind.windrose(_da(sp), _da(d), sectors=sectors, speed_bins=sp_bins, percent=False)
+

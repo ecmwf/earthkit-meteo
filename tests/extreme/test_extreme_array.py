@@ -57,6 +57,29 @@ def test_np_efi(xp, device, clim, ens, kwargs, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize(
+    "clim, ens, kwargs, v_ref",
+    [
+        (_data.clim, _data.ens, {}, -0.1838425040642013),
+        (_data.clim, _data.ens, dict(eps=1e-4), -0.18384250406420133),
+        (
+            _data.clim_eps,
+            _data.ens_eps,
+            dict(eps=1e-4),
+            0.46039347745967046,
+        ),
+        (_data.clim_eps2, _data.ens_eps2, dict(eps=1e-4), 0.6330071575726789),
+    ],
+)
+def test_np_efi_highlevel_dispatch(xp, device, clim, ens, kwargs, v_ref):
+    clim = xp.asarray(clim, device=device)
+    ens = xp.asarray(ens, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
+    efi = extreme.efi(clim, ens, **kwargs)
+    assert xp.allclose(efi[0], v_ref, rtol=1e-4)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("clim, ens, v_ref", [(_data.clim, _data.ens, -0.18384250406420133)])
 def test_xp_efi_sorted(xp, device, clim, ens, v_ref):
     clim = xp.asarray(clim, device=device)
@@ -88,7 +111,16 @@ def test_np_efi_axis(axis):
     clim = _move_axis(_data.clim, axis)
     ens = _move_axis(_data.ens, axis)
     ref = extreme.array.efi(_data.clim, _data.ens)
-    got = extreme.array.efi(clim, ens, clim_axis=axis, ens_axis=axis)
+    got = extreme.array.efi(clim, ens, clim_dim=axis, ens_dim=axis)
+    assert np.allclose(got, ref)
+
+
+@pytest.mark.parametrize("axis", [0, 1, 2, 3])
+def test_np_efi_highlevel_dispatch_axis(axis):
+    clim = _move_axis(_data.clim, axis)
+    ens = _move_axis(_data.ens, axis)
+    ref = extreme.array.efi(_data.clim, _data.ens)
+    got = extreme.efi(clim, ens, clim_dim=axis, ens_dim=axis)
     assert np.allclose(got, ref)
 
 
@@ -97,7 +129,16 @@ def test_np_efi_mixed_axis(axis):
     clim = _data.clim
     ens = _move_axis(_data.ens, axis)
     ref = extreme.array.efi(_data.clim, _data.ens)
-    got = extreme.array.efi(clim, ens, clim_axis=0, ens_axis=axis)
+    got = extreme.array.efi(clim, ens, clim_dim=0, ens_dim=axis)
+    assert np.allclose(got, ref)
+
+
+@pytest.mark.parametrize("axis", [1, 2, 3])
+def test_np_efi_highlevel_dispatch_mixed_axis(axis):
+    clim = _data.clim
+    ens = _move_axis(_data.ens, axis)
+    ref = extreme.array.efi(_data.clim, _data.ens)
+    got = extreme.efi(clim, ens, clim_dim=0, ens_dim=axis)
     assert np.allclose(got, ref)
 
 
@@ -190,7 +231,7 @@ def test_np_sot_axis(axis):
     clim = _move_axis(_data.clim, axis)
     ens = _move_axis(_data.ens, axis)
     ref = extreme.array.sot(_data.clim, _data.ens, 90)
-    got = extreme.array.sot(clim, ens, 90, clim_axis=axis, ens_axis=axis)
+    got = extreme.array.sot(clim, ens, 90, clim_dim=axis, ens_dim=axis)
     assert np.allclose(got, ref)
 
 
@@ -199,7 +240,25 @@ def test_np_sot_mixed_axis(axis):
     clim = _data.clim
     ens = _move_axis(_data.ens, axis)
     ref = extreme.array.sot(_data.clim, _data.ens, 90)
-    got = extreme.array.sot(clim, ens, 90, clim_axis=0, ens_axis=axis)
+    got = extreme.array.sot(clim, ens, 90, clim_dim=0, ens_dim=axis)
+    assert np.allclose(got, ref)
+
+
+@pytest.mark.parametrize("axis", [0, 1, 2, 3])
+def test_np_sot_highlevel_dispatch_axis(axis):
+    clim = _move_axis(_data.clim, axis)
+    ens = _move_axis(_data.ens, axis)
+    ref = extreme.array.sot(_data.clim, _data.ens, 90)
+    got = extreme.sot(clim, ens, 90, clim_dim=axis, ens_dim=axis)
+    assert np.allclose(got, ref)
+
+
+@pytest.mark.parametrize("axis", [1, 2, 3])
+def test_np_sot_highlevel_dispatch_mixed_axis(axis):
+    clim = _data.clim
+    ens = _move_axis(_data.ens, axis)
+    ref = extreme.array.sot(_data.clim, _data.ens, 90)
+    got = extreme.sot(clim, ens, 90, clim_dim=0, ens_dim=axis)
     assert np.allclose(got, ref)
 
 
@@ -247,7 +306,7 @@ def test_np_cpf_axis(axis):
     clim = _move_axis(_cpf.cpf_clim, axis)
     ens = _move_axis(_cpf.cpf_ens, axis)
     ref = extreme.array.cpf(_cpf.cpf_clim, _cpf.cpf_ens, sort_clim=True)
-    got = extreme.array.cpf(clim, ens, sort_clim=True, clim_axis=axis, ens_axis=axis)
+    got = extreme.array.cpf(clim, ens, sort_clim=True, clim_dim=axis, ens_dim=axis)
     assert np.allclose(got, ref)
 
 
@@ -256,7 +315,25 @@ def test_np_cpf_mixed_axis(axis):
     clim = _cpf.cpf_clim
     ens = _move_axis(_cpf.cpf_ens, axis)
     ref = extreme.array.cpf(_cpf.cpf_clim, _cpf.cpf_ens, sort_clim=True)
-    got = extreme.array.cpf(clim, ens, sort_clim=True, clim_axis=0, ens_axis=axis)
+    got = extreme.array.cpf(clim, ens, sort_clim=True, clim_dim=0, ens_dim=axis)
+    assert np.allclose(got, ref)
+
+
+@pytest.mark.parametrize("axis", [0, 1, 2, 3])
+def test_np_cpf_highlevel_dispatch_axis(axis):
+    clim = _move_axis(_cpf.cpf_clim, axis)
+    ens = _move_axis(_cpf.cpf_ens, axis)
+    ref = extreme.array.cpf(_cpf.cpf_clim, _cpf.cpf_ens, sort_clim=True)
+    got = extreme.cpf(clim, ens, sort_clim=True, clim_dim=axis, ens_dim=axis)
+    assert np.allclose(got, ref)
+
+
+@pytest.mark.parametrize("axis", [1, 2, 3])
+def test_np_cpf_highlevel_dispatch_mixed_axis(axis):
+    clim = _cpf.cpf_clim
+    ens = _move_axis(_cpf.cpf_ens, axis)
+    ref = extreme.array.cpf(_cpf.cpf_clim, _cpf.cpf_ens, sort_clim=True)
+    got = extreme.cpf(clim, ens, sort_clim=True, clim_dim=0, ens_dim=axis)
     assert np.allclose(got, ref)
 
 
@@ -267,43 +344,43 @@ def test_np_cpf_mixed_axis(axis):
 
 def test_flatten_extreme_input_axis():
     data = np.arange(2 * 3 * 4).reshape(2, 3, 4)
-    flattened, out_shape = flatten_extreme_input(np, data, axis=1)
+    flattened, out_shape = flatten_extreme_input(np, data, dim=1)
     expected = np.moveaxis(data, 1, 0).reshape(3, 8)
     assert out_shape == (2, 4)
     assert np.array_equal(flattened, expected)
 
 
 @pytest.mark.parametrize(
-    "clim_shape, ens_shape, clim_axis, ens_axis",
+    "clim_shape, ens_shape, clim_dim, ens_dim",
     [
         ((2, 4), (2, 4), 0, 0),
         ((2, 4), (2, 4), 1, 1),
     ],
 )
-def test_validate_extreme_shapes(clim_shape, ens_shape, clim_axis, ens_axis):
+def test_validate_extreme_shapes(clim_shape, ens_shape, clim_dim, ens_dim):
     validate_extreme_shapes(
         func="test",
         clim_shape=clim_shape,
         ens_shape=ens_shape,
-        clim_axis=clim_axis,
-        ens_axis=ens_axis,
+        clim_dim=clim_dim,
+        ens_dim=ens_dim,
     )
 
 
 @pytest.mark.parametrize(
-    "clim_shape, ens_shape, clim_axis, ens_axis",
+    "clim_shape, ens_shape, clim_dim, ens_dim",
     [
         ((2, 4), (2, 5), 0, 0),
         ((2, 4, 3), (2, 3, 4), 0, 0),
         ((2, 4, 3), (3, 4, 2), 1, 1),
     ],
 )
-def test_validate_extreme_shapes_raise(clim_shape, ens_shape, clim_axis, ens_axis):
+def test_validate_extreme_shapes_raise(clim_shape, ens_shape, clim_dim, ens_dim):
     with pytest.raises(ValueError, match="clim and ens must match in shape"):
         validate_extreme_shapes(
             func="test",
             clim_shape=clim_shape,
             ens_shape=ens_shape,
-            clim_axis=clim_axis,
-            ens_axis=ens_axis,
+            clim_dim=clim_dim,
+            ens_dim=ens_dim,
         )

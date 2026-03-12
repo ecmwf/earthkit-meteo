@@ -7,8 +7,18 @@
 # nor does it submit to any jurisdiction.
 #
 
-from . import array
+from ..utils.decorators import dispatch
 
 
-def iter_quantiles(*args, **kwargs):
-    return array.iter_quantiles(*args, **kwargs)
+def iter_quantiles(arr, which=100, axis=0, method="sort"):
+    """Iterate over the quantiles of a large array
+
+
+    .. admonition:: Implementations
+
+        Depending on the type of argument `arr`, this function calls:
+
+        - :py:func:`earthkit.meteo.stats.array.iter_quantiles` for ``array_like``
+    """
+    dispatched = dispatch(iter_quantiles, array=True)
+    return dispatched(arr, which, axis, method)

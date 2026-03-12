@@ -16,7 +16,7 @@ from .utils import flatten_extreme_input
 from .utils import validate_extreme_shapes
 
 
-def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
+def efi(clim, ens, eps=-0.1, clim_dim=0, ens_dim=0):
     """Compute Extreme Forecast Index (EFI).
 
     The reduction axis (ensemble and quantiles) is configurable by the user,
@@ -25,14 +25,14 @@ def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
     Parameters
     ----------
     clim: array-like
-        Sorted per-point climatology. The reduction axis (quantiles) is set by ``clim_axis``.
+        Sorted per-point climatology. The reduction axis (quantiles) is set by ``clim_dim``.
     ens: array-like
-        Ensemble forecast. The reduction axis (ensemble members) is set by ``ens_axis``.
+        Ensemble forecast. The reduction axis (ensemble members) is set by ``ens_dim``.
     eps: (float)
         Epsilon factor for zero values
-    clim_axis: int
+    clim_dim: int
         Axis index of the climatology/quantile dimension in ``clim``. Default is 0.
-    ens_axis: int
+    ens_dim: int
         Axis index of the ensemble/member dimension in ``ens``. Default is 0.
 
     Returns
@@ -40,6 +40,11 @@ def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
     array-like
         EFI values.
     """
+
+    if clim_dim is None:
+        clim_dim = 0
+    if ens_dim is None:
+        ens_dim = 0
 
     xp = array_namespace(clim, ens)
     clim = xp.asarray(clim)
@@ -49,12 +54,12 @@ def efi(clim, ens, eps=-0.1, clim_axis=0, ens_axis=0):
         func="efi",
         clim_shape=clim.shape,
         ens_shape=ens.shape,
-        clim_axis=clim_axis,
-        ens_axis=ens_axis,
+        clim_dim=clim_dim,
+        ens_dim=ens_dim,
     )
     # Compute fraction of the forecast below climatology
-    clim, out_shape = flatten_extreme_input(xp, clim, clim_axis)
-    ens, _ = flatten_extreme_input(xp, ens, ens_axis)
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_dim)
+    ens, _ = flatten_extreme_input(xp, ens, ens_dim)
 
     nclim = clim.shape[0]
     nens = ens.shape[0]
