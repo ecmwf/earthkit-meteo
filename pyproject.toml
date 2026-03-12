@@ -11,7 +11,6 @@ authors = [
   { name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int" },
 ]
 requires-python = ">=3.10"
-
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
@@ -23,6 +22,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "Topic :: Scientific/Engineering",
@@ -78,9 +78,9 @@ urls.Homepage = "https://github.com/ecmwf/earthkit-meteo/"
 urls.Issues = "https://github.com/ecmwf/earthkit-meteo.issues"
 urls.Repository = "https://github.com/ecmwf/earthkit-meteo/"
 
-[tool.setuptools.packages.find]
-include = [ "earthkit.meteo" ]
-where = [ "src/" ]
+[tool.setuptools]
+packages.find.include = [ "earthkit.meteo" ]
+packages.find.where = [ "src/" ]
 
 [tool.setuptools_scm]
 version_file = "src/earthkit/meteo/_version.py"
@@ -91,8 +91,8 @@ lint.per-file-ignores."tests/**.py" = [ "E402" ]
 [tool.isort]
 profile = "black"
 
-[tool.coverage.run]
-branch = "true"
+[tool.coverage]
+run.branch = "true"
 
 [tool.pydocstyle]
 add_ignore = [ "D1", "D200", "D205", "D400", "D401" ]
