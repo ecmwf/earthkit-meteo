@@ -9,19 +9,17 @@
 import numpy as np
 import pytest
 
-from earthkit.meteo.stats.array import fit_gumbel
-from earthkit.meteo.stats.array import return_period_to_value
-from earthkit.meteo.stats.array import value_to_return_period
+import earthkit.meteo.stats.array as stats
 
 
 @pytest.fixture
 def gumbel_0d():
-    return fit_gumbel([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
+    return stats.fit_gumbel([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
 
 
 @pytest.fixture
 def gumbel_1d():
-    return fit_gumbel(
+    return stats.fit_gumbel(
         [
             [0.3, 3.0, 30.0],
             [0.5, 5.0, 50.0],
@@ -61,17 +59,17 @@ def test_GumbelDistribution_from_fit_gumbel_1d(gumbel_1d):
 def test_return_period_identity(gumbel_0d):
     values = np.linspace(4.0, 10.0, 21)
     np.testing.assert_allclose(
-        values, return_period_to_value(value_to_return_period(values, gumbel_0d), gumbel_0d)
+        values, stats.return_period_to_value(stats.value_to_return_period(values, gumbel_0d), gumbel_0d)
     )
 
 
 def test_value_to_return_period_adds_dist_dims_at_end(gumbel_0d, gumbel_1d):
     values = 2.0 * np.ones((2, 1))
-    assert value_to_return_period(values, gumbel_0d).shape == (2, 1)
-    assert value_to_return_period(values, gumbel_1d).shape == (2, 1, 3)
+    assert stats.value_to_return_period(values, gumbel_0d).shape == (2, 1)
+    assert stats.value_to_return_period(values, gumbel_1d).shape == (2, 1, 3)
 
 
 def test_return_period_to_value_adds_dist_dims_at_end(gumbel_0d, gumbel_1d):
     rps = 3.0 * np.ones((2, 1))
-    assert return_period_to_value(rps, gumbel_0d).shape == (2, 1)
-    assert return_period_to_value(rps, gumbel_1d).shape == (2, 1, 3)
+    assert stats.return_period_to_value(rps, gumbel_0d).shape == (2, 1)
+    assert stats.return_period_to_value(rps, gumbel_1d).shape == (2, 1, 3)
