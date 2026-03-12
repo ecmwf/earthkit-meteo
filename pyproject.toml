@@ -38,8 +38,13 @@ optional-dependencies.dev = [
   "earthkit-meteo[all,docs,test]",
 ]
 optional-dependencies.docs = [
+  "docutils",
+  "ipykernel",
   "nbsphinx",
+  "pygments>=2.6.1",
+  # check if these two are required (were not in the readthedocs config)
   "requests",
+  "setuptools",
   "sphinx>=7.3.7",
   "sphinx-autoapi",
   "sphinx-copybutton",
