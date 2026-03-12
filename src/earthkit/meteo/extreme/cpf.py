@@ -29,8 +29,8 @@ def cpf(
     epsilon: float | None = None,
     symmetric: bool = False,
     from_zero: bool = False,
-    clim_dim: int | None = 0,
-    ens_dim: int | None = 0,
+    clim_dim: int | None = None,
+    ens_dim: int | None = None,
 ) -> "ArrayLike": ...
 
 
@@ -43,8 +43,8 @@ def cpf(
     epsilon: float | None = None,
     symmetric: bool = False,
     from_zero: bool = False,
-    clim_dim: str | int | None = None,
-    ens_dim: str | int | None = None,
+    clim_dim: str | None = None,
+    ens_dim: str | None = None,
 ) -> "xarray.DataArray": ...
 
 
@@ -56,8 +56,8 @@ def cpf(
     epsilon: float | None = None,
     symmetric: bool = False,
     from_zero: bool = False,
-    clim_dim: str | None = None,
-    ens_dim: str | None = None,
+    clim_dim: str | int | None = None,
+    ens_dim: str | int | None = None,
 ):
     r"""Compute Crossing Point Forecast (CPF).
 

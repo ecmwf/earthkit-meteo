@@ -7,7 +7,37 @@
 # nor does it submit to any jurisdiction.
 #
 
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import TypeAlias
+from typing import overload
+
 from ..utils.decorators import dispatch
+
+ArrayLike: TypeAlias = Any
+
+if TYPE_CHECKING:
+    import xarray  # type: ignore[import]
+
+
+@overload
+def nanaverage(data: "ArrayLike", weights: "ArrayLike" | None = None, **kwargs) -> "ArrayLike": ...
+
+
+@overload
+def nanaverage(
+    data: "xarray.DataArray",
+    weights: "xarray.DataArray" | None = None,
+    **kwargs,
+) -> "xarray.DataArray": ...
+
+
+@overload
+def nanaverage(
+    data: "xarray.Dataset",
+    weights: "xarray.Dataset" | None = None,
+    **kwargs,
+) -> "xarray.Dataset": ...
 
 
 def nanaverage(data, weights=None, **kwargs):

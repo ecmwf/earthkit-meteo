@@ -18,7 +18,7 @@ from earthkit.utils.array import array_namespace
 def iter_quantiles(
     arr: np.ndarray,
     which: Union[int, List[float]] = 100,
-    axis: int = 0,
+    dim: int = 0,
     method: str = "sort",
 ) -> Iterable[np.ndarray]:
     """Iterate over the quantiles of a large array
@@ -30,8 +30,8 @@ def iter_quantiles(
     which: int or list of floats
         List of quantiles to compute, e.g. `[0., 0.25, 0.5, 0.75, 1.]`, or
         number of evenly-spaced intervals (e.g. 100 for percentiles).
-    axis: int
-        Axis along which to compute the quantiles
+    dim: int
+        Dimension index along which to compute the quantiles.
     method: 'sort', 'numpy_bulk', 'numpy'
         Method of computing the quantiles:
         * sort: sort `arr` in place, then interpolates the quantiles one by one
@@ -58,27 +58,27 @@ def iter_quantiles(
         qs = xp.asarray(which, device=device, dtype=arr.dtype)
 
     if method == "numpy_bulk":
-        quantiles = xp.quantile(arr, qs, axis=axis)
+        quantiles = xp.quantile(arr, qs, axis=dim)
         yield from quantiles
         return
 
     if method == "sort":
         arr = xp.asarray(arr)
-        arr = xp.sort(arr, axis=axis)
-        missing = xp.any(xp.isnan(arr), axis=axis)
+        arr = xp.sort(arr, axis=dim)
+        missing = xp.any(xp.isnan(arr), axis=dim)
 
     for q in qs:
         if method == "numpy":
             q = xp.asarray(q, dtype=arr.dtype)
-            yield xp.quantile(arr, q, axis=axis)
+            yield xp.quantile(arr, q, axis=dim)
 
         elif method == "sort":
-            m = arr.shape[axis]
+            m = arr.shape[dim]
             f = (m - 1) * q
             j = int(f)
             x = f - j
-            quantile = xp.take(arr, xp.asarray(j, device=device), axis=axis) * (1 - x)
-            tmp = xp.take(arr, xp.asarray(min(j + 1, m - 1), device=device), axis=axis) * x
+            quantile = xp.take(arr, xp.asarray(j, device=device), axis=dim) * (1 - x)
+            tmp = xp.take(arr, xp.asarray(min(j + 1, m - 1), device=device), axis=dim) * x
             quantile += tmp
             quantile = xp.where(missing, xp.nan, quantile)
             yield quantile
