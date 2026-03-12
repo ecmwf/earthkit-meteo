@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -15,20 +15,98 @@ from earthkit.utils.array import array_namespace
 DAYS_PER_YEAR = 365.25
 
 
-def julian_day(date):
-    if date.tzinfo is not None and date.tzinfo.utcoffset(date) is not None:
-        year_start = datetime.datetime(date.year, 1, 1, tzinfo=date.tzinfo)
+def _julian_day_scalar(d: datetime.datetime) -> float:
+    """Compute fractional day-of-year for a single datetime.
+
+    Parameters
+    ----------
+    d: datetime.datetime
+        Input datetime.
+
+    Returns
+    -------
+    float
+        Day-of-year as a fractional value, where January 1st 00:00 is 0.0.
+    """
+    if d.tzinfo is not None and d.tzinfo.utcoffset(d) is not None:
+        year_start = datetime.datetime(d.year, 1, 1, tzinfo=d.tzinfo)
     else:
-        year_start = datetime.datetime(date.year, 1, 1)
-    delta = date - year_start
+        year_start = datetime.datetime(d.year, 1, 1)
+    delta = d - year_start
     return delta.days + delta.seconds / 86400.0
 
 
-def solar_declination_angle(date):
+def julian_day(date) -> float:
+    """Compute fractional day-of-year.
+
+    Parameters
+    ----------
+    date: datetime.datetime, numpy.datetime64, or numpy.ndarray
+        Input date(s). May be a scalar or array of numpy.datetime64 or
+        datetime.datetime objects.
+
+    Returns
+    -------
+    float or numpy.ndarray
+        Fractional day-of-year value(s), where January 1st 00:00 is 0.0.
+
+    Notes
+    -----
+    This function supports:
+
+    - Python ``datetime.datetime`` scalars
+    - ``numpy.datetime64`` scalars
+    - numpy arrays of dtype ``datetime64``
+
+    This enables compatibility with xarray, which internally represents
+    time coordinates using numpy.datetime64.
+    """
+    # numpy.datetime64 scalar
+    if isinstance(date, np.datetime64):
+        d_obj = date.astype("datetime64[us]").astype(object)
+        return _julian_day_scalar(d_obj)
+
+    # numpy datetime64 array
+    if isinstance(date, np.ndarray) and np.issubdtype(date.dtype, np.datetime64):
+        obj = date.astype("datetime64[us]").astype(object)
+        return np.vectorize(_julian_day_scalar, otypes=[float])(obj)
+
+    # python datetime.datetime
+    return _julian_day_scalar(date)
+
+
+def solar_declination_angle(date) -> tuple[float, float]:
+    """Compute solar declination angle and time correction.
+
+    Parameters
+    ----------
+    date: datetime.datetime, numpy.datetime64, or numpy.ndarray
+        Input date(s). May be scalar or array.
+
+    Returns
+    -------
+    tuple of float or numpy.ndarray
+        Tuple containing:
+
+        declination : float or numpy.ndarray
+            Solar declination angle in degrees.
+
+        time_correction : float or numpy.ndarray
+            Time correction factor in hour-degrees.
+
+    Notes
+    -----
+    Uses a trigonometric approximation based on the fractional year angle.
+
+    This function supports numpy.datetime64 inputs, allowing use with xarray
+    and other numpy-based datetime containers.
+
+    Scalar inputs return floats, array inputs return numpy arrays.
+    """
     angle = julian_day(date) / DAYS_PER_YEAR * np.pi * 2
 
     # declination in [degrees]
-    declination = float(
+    declination = (
         0.396372
         - 22.91327 * np.cos(angle)
         + 4.025430 * np.sin(angle)
@@ -38,32 +116,40 @@ def solar_declination_angle(date):
         + 0.084798 * np.sin(3 * angle)
     )
     # time correction in [ h.degrees ]
-    time_correction = float(
+    time_correction = (
         0.004297
         + 0.107029 * np.cos(angle)
         - 1.837877 * np.sin(angle)
         - 0.837378 * np.cos(2 * angle)
         - 2.340475 * np.sin(2 * angle)
     )
+
+    if np.ndim(declination) == 0:
+        return float(declination), float(time_correction)
+
     return declination, time_correction
 
 
-def cos_solar_zenith_angle(date, latitudes, longitudes):
-    """Cosine of solar zenith angle.
+def cos_solar_zenith_angle(
+    date: datetime.datetime,
+    latitudes,
+    longitudes,
+):
+    """Compute cosine of the solar zenith angle.
 
     Parameters
     ----------
     date: datetime.datetime
-        Date
+        Date.
     latitudes: array-like
-        Latitude [degrees]
+        Latitude values in degrees.
     longitudes: array-like
-        Longitude [degrees]
+        Longitude values in degrees.
 
     Returns
     -------
-    float array
-        Cosine of the solar zenith angle (all values, including negatives)
+    array-like
+        Cosine of the solar zenith angle. Negative values are clipped to 0.
         [Hogan_and_Hirahara2015]_. See also:
         http://answers.google.com/answers/threadview/id/782886.html
 
