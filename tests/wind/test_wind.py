@@ -13,7 +13,6 @@ from earthkit.utils.array import array_namespace
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import wind
-from earthkit.meteo.utils.testing import NO_EKD
 from earthkit.meteo.utils.testing import NO_XARRAY
 
 

@@ -165,7 +165,9 @@ def direction(
     The function returns an object of the same type as the input arguments.
 
     """
-    return dispatch(direction, fieldlist=False, array=True)(u, v, convention=convention, to_positive=to_positive)
+    return dispatch(direction, fieldlist=False, array=True)(
+        u, v, convention=convention, to_positive=to_positive
+    )
 
 
 @overload
@@ -175,7 +177,9 @@ def xy_to_polar(
 
 
 @overload
-def xy_to_polar(x: "ArrayLike", y: "ArrayLike", convention: str = "meteo") -> tuple["ArrayLike", "ArrayLike"]: ...
+def xy_to_polar(
+    x: "ArrayLike", y: "ArrayLike", convention: str = "meteo"
+) -> tuple["ArrayLike", "ArrayLike"]: ...
 
 
 def xy_to_polar(
