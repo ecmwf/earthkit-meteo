@@ -44,7 +44,7 @@ def spread(fcst: T, over: str | list[str], reference: T | None = None) -> T:
     xarray object
         The spread of the forecast compared to the reference.
     """
-    return dispatch(spread, fcst, over, reference)
+    return dispatch(spread)(fcst, over, reference)
 
 
 def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
@@ -86,7 +86,7 @@ def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
     xarray object
         The quantile score of the forecast compared to the observations.
     """
-    return dispatch(quantile_score, fcst, obs, tau, over)
+    return dispatch(quantile_score)(fcst, obs, tau, over)
 
 
 # TODO: try to unify returns with crps_from_cdf and crps_from_ensemble
@@ -127,7 +127,7 @@ def crps_from_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
     xarray.DataArray
         The CRPS of the Gaussian forecast compared to the observations.
     """
-    return dispatch(crps_from_gaussian, fcst, obs)
+    return dispatch(crps_from_gaussian)(fcst, obs)
 
 
 def crps_from_ensemble(
@@ -261,7 +261,7 @@ def crps_from_ensemble(
     xarray.DataArray or xarray.Dataset
         The CRPS of the ensemble forecast compared to the observations.
     """
-    return dispatch(crps_from_ensemble, fcst, obs, over, method, return_components, decomposition_method)
+    return dispatch(crps_from_ensemble)(fcst, obs, over, method, return_components, decomposition_method)
 
 
 def crps_from_cdf(
@@ -337,4 +337,4 @@ def crps_from_cdf(
     xarray.DataArray or xarray.Dataset
         The CRPS of the CDF compared to the observations.
     """
-    return dispatch(crps_from_cdf, fcst, obs, over, weight, return_components)
+    return dispatch(crps_from_cdf)(fcst, obs, over, weight, return_components)
