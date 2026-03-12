@@ -84,7 +84,8 @@ def sot(
 
     The function returns an object of the same type as the input arguments.
     """
-    return dispatch(sot, array=True)(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
+    dispatched = dispatch(sot, array=True)
+    return dispatched(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
 
 
 @overload
@@ -152,4 +153,5 @@ def sot_unsorted(
 
     The function returns an object of the same type as the input arguments.
     """
-    return dispatch(sot_unsorted, array=True)(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
+    dispatched = dispatch(sot_unsorted, array=True)
+    return dispatched(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)

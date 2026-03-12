@@ -43,8 +43,10 @@ def spread(fcst: T, over: str | list[str], reference: T | None = None) -> T:
     -------
     xarray object
         The spread of the forecast compared to the reference.
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(spread)(fcst, over, reference)
+    dispatched = dispatch(spread)
+    return dispatched(fcst, over, reference)
 
 
 def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
@@ -85,8 +87,10 @@ def quantile_score(fcst: T, obs: T, tau: float, over: str | list[str]) -> T:
     -------
     xarray object
         The quantile score of the forecast compared to the observations.
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(quantile_score)(fcst, obs, tau, over)
+    dispatched = dispatch(quantile_score)
+    return dispatched(fcst, obs, tau, over)
 
 
 # TODO: try to unify returns with crps_from_cdf and crps_from_ensemble
@@ -126,8 +130,10 @@ def crps_from_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
     -------
     xarray.DataArray
         The CRPS of the Gaussian forecast compared to the observations.
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(crps_from_gaussian)(fcst, obs)
+    dispatched = dispatch(crps_from_gaussian)
+    return dispatched(fcst, obs)
 
 
 def crps_from_ensemble(
@@ -260,8 +266,10 @@ def crps_from_ensemble(
     -------
     xarray.DataArray or xarray.Dataset
         The CRPS of the ensemble forecast compared to the observations.
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(crps_from_ensemble)(fcst, obs, over, method, return_components, decomposition_method)
+    dispatched = dispatch(crps_from_ensemble)
+    return dispatched(fcst, obs, over, method, return_components, decomposition_method)
 
 
 def crps_from_cdf(
@@ -336,5 +344,7 @@ def crps_from_cdf(
     -------
     xarray.DataArray or xarray.Dataset
         The CRPS of the CDF compared to the observations.
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(crps_from_cdf)(fcst, obs, over, weight, return_components)
+    dispatched = dispatch(crps_from_cdf)
+    return dispatched(fcst, obs, over, weight, return_components)

@@ -19,6 +19,7 @@ def iter_quantiles(arr, which=100, axis=0, method="sort"):
         Depending on the type of argument `arr`, this function calls:
 
         - :py:func:`earthkit.meteo.stats.array.iter_quantiles` for ``array_like``
+    The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(iter_quantiles, array=True)
     return dispatched(arr, which, axis, method)

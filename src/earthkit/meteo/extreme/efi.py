@@ -77,4 +77,5 @@ def efi(
 
     The function returns an object of the same type as the input arguments.
     """
-    return dispatch(efi, array=True)(clim, ens, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
+    dispatched = dispatch(efi, array=True)
+    return dispatched(clim, ens, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)

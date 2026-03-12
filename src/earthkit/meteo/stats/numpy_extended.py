@@ -20,6 +20,7 @@ def nanaverage(data, weights=None, **kwargs):
 
         - :py:func:`earthkit.meteo.stats.xarray.nanaverage` for ``xarray.DataArray``
         - :py:func:`earthkit.meteo.stats.array.nanaverage` for ``array_like``
+    The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(nanaverage, xarray=True, array=True)
     return dispatched(data, weights, **kwargs)

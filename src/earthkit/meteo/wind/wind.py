@@ -92,7 +92,8 @@ def speed(
     The function returns an object of the same type as the input arguments.
 
     """
-    return dispatch(speed, fieldlist=False, array=True)(u, v)
+    dispatched = dispatch(speed, fieldlist=False, array=True)
+    return dispatched(u, v)
 
 
 @overload
@@ -166,9 +167,8 @@ def direction(
     The function returns an object of the same type as the input arguments.
 
     """
-    return dispatch(direction, fieldlist=False, array=True)(
-        u, v, convention=convention, to_positive=to_positive
-    )
+    dispatched = dispatch(direction, fieldlist=False, array=True)
+    return dispatched(u, v, convention=convention, to_positive=to_positive)
 
 
 @overload
@@ -230,7 +230,8 @@ def xy_to_polar(
 
 
     """
-    return dispatch(xy_to_polar, fieldlist=False, array=True)(x, y, convention=convention)
+    dispatched = dispatch(xy_to_polar, fieldlist=False, array=True)
+    return dispatched(x, y, convention=convention)
 
 
 @overload
@@ -296,7 +297,8 @@ def polar_to_xy(
     The function returns an object of the same type as the input arguments.
 
     """
-    return dispatch(polar_to_xy, fieldlist=False, array=True)(magnitude, direction, convention=convention)
+    dispatched = dispatch(polar_to_xy, fieldlist=False, array=True)
+    return dispatched(magnitude, direction, convention=convention)
 
 
 @overload
@@ -360,7 +362,8 @@ def w_from_omega(
     The function returns an object of the same type as the input arguments.
 
     """
-    return dispatch(w_from_omega, fieldlist=False, array=True)(omega, t, p)
+    dispatched = dispatch(w_from_omega, fieldlist=False, array=True)
+    return dispatched(omega, t, p)
 
 
 @overload
@@ -405,7 +408,8 @@ def coriolis(lat: "xarray.DataArray" | "ArrayLike") -> "xarray.DataArray" | "Arr
     The function returns an object of the same type as the input arguments.
 
     """
-    return dispatch(coriolis, fieldlist=False, array=True)(lat)
+    dispatched = dispatch(coriolis, fieldlist=False, array=True)
+    return dispatched(lat)
 
 
 @overload
@@ -470,10 +474,5 @@ def windrose(
     The function returns an object of the same type as the input arguments.
 
     """
-    return dispatch(windrose, fieldlist=False, array=True)(
-        speed,
-        direction,
-        sectors=sectors,
-        speed_bins=speed_bins,
-        percent=percent,
-    )
+    dispatched = dispatch(windrose, fieldlist=False, array=True)
+    return dispatched(speed, direction, sectors=sectors, speed_bins=speed_bins, percent=percent)

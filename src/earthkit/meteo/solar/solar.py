@@ -51,8 +51,10 @@ def julian_day(date):
     - :py:meth:`earthkit.meteo.solar.xarray.julian_day` for xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.julian_day` for scalar/array inputs
 
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(julian_day, array=True)(date)
+    dispatched = dispatch(julian_day, array=True)
+    return dispatched(date)
 
 
 @overload
@@ -82,8 +84,10 @@ def solar_declination_angle(date):
     - :py:meth:`earthkit.meteo.solar.xarray.solar_declination_angle` for xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.solar_declination_angle` for scalar/array inputs
 
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(solar_declination_angle, array=True)(date)
+    dispatched = dispatch(solar_declination_angle, array=True)
+    return dispatched(date)
 
 
 @overload
@@ -120,8 +124,10 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
     - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle` when any input is xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.cos_solar_zenith_angle` otherwise
 
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(cos_solar_zenith_angle, match="latitudes", array=True)(date, latitudes, longitudes)
+    dispatched = dispatch(cos_solar_zenith_angle, match="latitudes", array=True)
+    return dispatched(date, latitudes, longitudes)
 
 
 @overload
@@ -183,15 +189,10 @@ def cos_solar_zenith_angle_integrated(
     - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle_integrated` when any input is xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.cos_solar_zenith_angle_integrated` otherwise
 
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(cos_solar_zenith_angle_integrated, match="latitudes", array=True)(
-        begin_date,
-        end_date,
-        latitudes,
-        longitudes,
-        intervals_per_hour=intervals_per_hour,
-        integration_order=integration_order,
-    )
+    dispatched = dispatch(cos_solar_zenith_angle_integrated, match="latitudes", array=True)
+    return dispatched(begin_date, end_date, latitudes, longitudes, intervals_per_hour=intervals_per_hour, integration_order=integration_order)
 
 
 @overload
@@ -219,8 +220,10 @@ def incoming_solar_radiation(date):
     - :py:meth:`earthkit.meteo.solar.array.incoming_solar_radiation` for scalar/array inputs
       (including ``numpy.datetime64``)
 
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(incoming_solar_radiation, array=True)(date)
+    dispatched = dispatch(incoming_solar_radiation, array=True)
+    return dispatched(date)
 
 
 @overload
@@ -282,12 +285,7 @@ def toa_incident_solar_radiation(
     - :py:meth:`earthkit.meteo.solar.xarray.toa_incident_solar_radiation` when any input is xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.toa_incident_solar_radiation` otherwise
 
+    The function returns an object of the same type as the input arguments.
     """
-    return dispatch(toa_incident_solar_radiation, match="latitudes", array=True)(
-        begin_date,
-        end_date,
-        latitudes,
-        longitudes,
-        intervals_per_hour=intervals_per_hour,
-        integration_order=integration_order,
-    )
+    dispatched = dispatch(toa_incident_solar_radiation, match="latitudes", array=True)
+    return dispatched(begin_date, end_date, latitudes, longitudes, intervals_per_hour=intervals_per_hour, integration_order=integration_order)
