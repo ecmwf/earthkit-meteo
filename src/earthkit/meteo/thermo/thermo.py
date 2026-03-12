@@ -42,6 +42,8 @@ def celsius_to_kelvin(t: "xarray.DataArray") -> "xarray.DataArray":
 
     - :py:meth:`earthkit.meteo.thermo.xarray.celsius_to_kelvin` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(celsius_to_kelvin)(t)
 
@@ -70,6 +72,8 @@ def kelvin_to_celsius(t: "xarray.DataArray") -> "xarray.DataArray":
 
     - :py:meth:`earthkit.meteo.thermo.xarray.kelvin_to_celsius` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(kelvin_to_celsius)(t)
 
@@ -106,6 +110,8 @@ def specific_humidity_from_mixing_ratio(w: "xarray.DataArray") -> "xarray.DataAr
 
     - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_mixing_ratio` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(specific_humidity_from_mixing_ratio)(w)
 
@@ -142,6 +148,8 @@ def mixing_ratio_from_specific_humidity(q: "xarray.DataArray") -> "xarray.DataAr
 
     - :py:meth:`earthkit.meteo.thermo.xarray.mixing_ratio_from_specific_humidity` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(mixing_ratio_from_specific_humidity)(q)
 
@@ -187,6 +195,8 @@ def vapour_pressure_from_specific_humidity(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.vapour_pressure_from_specific_humidity` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(vapour_pressure_from_specific_humidity)(q, p)
 
@@ -232,6 +242,8 @@ def vapour_pressure_from_mixing_ratio(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.vapour_pressure_from_mixing_ratio` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(vapour_pressure_from_mixing_ratio)(w, p)
 
@@ -281,6 +293,8 @@ def specific_humidity_from_vapour_pressure(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_vapour_pressure` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(specific_humidity_from_vapour_pressure)(e, p, eps=eps)
 
@@ -330,6 +344,8 @@ def mixing_ratio_from_vapour_pressure(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.mixing_ratio_from_vapour_pressure` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(mixing_ratio_from_vapour_pressure)(e, p, eps=eps)
 
@@ -389,6 +405,8 @@ def saturation_vapour_pressure(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.saturation_vapour_pressure` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(saturation_vapour_pressure)(t, phase=phase)
 
@@ -438,6 +456,8 @@ def saturation_mixing_ratio(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.saturation_mixing_ratio` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(saturation_mixing_ratio)(t, p, phase=phase)
 
@@ -487,6 +507,8 @@ def saturation_specific_humidity(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.saturation_specific_humidity` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(saturation_specific_humidity)(t, p, phase=phase)
 
@@ -525,6 +547,8 @@ def saturation_vapour_pressure_slope(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.saturation_vapour_pressure_slope` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(saturation_vapour_pressure_slope)(t, phase=phase)
 
@@ -591,6 +615,8 @@ def saturation_mixing_ratio_slope(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.saturation_mixing_ratio_slope` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(saturation_mixing_ratio_slope)(
         t,
@@ -665,6 +691,8 @@ def saturation_specific_humidity_slope(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.saturation_specific_humidity_slope` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(saturation_specific_humidity_slope)(
         t,
@@ -709,6 +737,8 @@ def temperature_from_saturation_vapour_pressure(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.temperature_from_saturation_vapour_pressure` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(temperature_from_saturation_vapour_pressure)(es)
 
@@ -754,6 +784,8 @@ def relative_humidity_from_dewpoint(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.relative_humidity_from_dewpoint` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(relative_humidity_from_dewpoint)(t, td)
 
@@ -806,6 +838,8 @@ def relative_humidity_from_specific_humidity(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.relative_humidity_from_specific_humidity` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(relative_humidity_from_specific_humidity)(t, q, p)
 
@@ -857,6 +891,8 @@ def specific_humidity_from_dewpoint(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_dewpoint` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(specific_humidity_from_dewpoint)(td, p)
 
@@ -908,6 +944,8 @@ def mixing_ratio_from_dewpoint(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.mixing_ratio_from_dewpoint` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(mixing_ratio_from_dewpoint)(td, p)
 
@@ -963,6 +1001,8 @@ def specific_humidity_from_relative_humidity(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_relative_humidity` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(specific_humidity_from_relative_humidity)(t, r, p)
 
@@ -1015,6 +1055,8 @@ def dewpoint_from_relative_humidity(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.dewpoint_from_relative_humidity` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(dewpoint_from_relative_humidity)(t, r)
 
@@ -1068,6 +1110,8 @@ def dewpoint_from_specific_humidity(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.dewpoint_from_specific_humidity` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(dewpoint_from_specific_humidity)(q, p)
 
@@ -1113,6 +1157,8 @@ def virtual_temperature(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.virtual_temperature` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(virtual_temperature)(t, q)
 
@@ -1165,6 +1211,8 @@ def virtual_potential_temperature(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.virtual_potential_temperature` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(virtual_potential_temperature)(t, q, p)
 
@@ -1210,6 +1258,8 @@ def potential_temperature(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.potential_temperature` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(potential_temperature)(t, p)
 
@@ -1255,6 +1305,8 @@ def temperature_from_potential_temperature(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.temperature_from_potential_temperature` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(temperature_from_potential_temperature)(th, p)
 
@@ -1304,6 +1356,8 @@ def pressure_on_dry_adiabat(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.pressure_on_dry_adiabat` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(pressure_on_dry_adiabat)(t, t_def, p_def)
 
@@ -1353,6 +1407,8 @@ def temperature_on_dry_adiabat(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.temperature_on_dry_adiabat` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(temperature_on_dry_adiabat)(p, t_def, p_def)
 
@@ -1411,6 +1467,8 @@ def lcl_temperature(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.lcl_temperature` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(lcl_temperature)(t, td, method=method)
 
@@ -1462,6 +1520,8 @@ def lcl(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.lcl` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(lcl)(t, td, p, method=method)
 
@@ -1546,6 +1606,8 @@ def ept_from_dewpoint(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.ept_from_dewpoint` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(ept_from_dewpoint)(t, td, p, method=method)
 
@@ -1595,6 +1657,8 @@ def ept_from_specific_humidity(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.ept_from_specific_humidity` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(ept_from_specific_humidity)(t, q, p, method=method)
 
@@ -1668,6 +1732,8 @@ def saturation_ept(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.saturation_ept` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(saturation_ept)(t, p, method=method)
 
@@ -1723,6 +1789,8 @@ def temperature_on_moist_adiabat(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.temperature_on_moist_adiabat` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(temperature_on_moist_adiabat)(ept, p, ept_method=ept_method, t_method=t_method)
 
@@ -1785,6 +1853,8 @@ def wet_bulb_temperature_from_dewpoint(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_temperature_from_dewpoint` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(wet_bulb_temperature_from_dewpoint)(t, td, p, ept_method=ept_method, t_method=t_method)
 
@@ -1848,6 +1918,8 @@ def wet_bulb_temperature_from_specific_humidity(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_temperature_from_specific_humidity` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(wet_bulb_temperature_from_specific_humidity)(
         t,
@@ -1917,6 +1989,8 @@ def wet_bulb_potential_temperature_from_dewpoint(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_potential_temperature_from_dewpoint` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(wet_bulb_potential_temperature_from_dewpoint)(
         t,
@@ -1983,6 +2057,8 @@ def wet_bulb_potential_temperature_from_specific_humidity(
 
     - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_potential_temperature_from_specific_humidity` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(wet_bulb_potential_temperature_from_specific_humidity)(
         t,
@@ -2031,5 +2107,7 @@ def specific_gas_constant(q: "xarray.DataArray") -> "xarray.DataArray":
 
     - :py:meth:`earthkit.meteo.thermo.xarray.specific_gas_constant` for xarray.DataArray
 
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(specific_gas_constant)(q)
