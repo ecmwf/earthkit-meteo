@@ -192,7 +192,14 @@ def cos_solar_zenith_angle_integrated(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(cos_solar_zenith_angle_integrated, match="latitudes", array=True)
-    return dispatched(begin_date, end_date, latitudes, longitudes, intervals_per_hour=intervals_per_hour, integration_order=integration_order)
+    return dispatched(
+        begin_date,
+        end_date,
+        latitudes,
+        longitudes,
+        intervals_per_hour=intervals_per_hour,
+        integration_order=integration_order,
+    )
 
 
 @overload
@@ -288,4 +295,11 @@ def toa_incident_solar_radiation(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(toa_incident_solar_radiation, match="latitudes", array=True)
-    return dispatched(begin_date, end_date, latitudes, longitudes, intervals_per_hour=intervals_per_hour, integration_order=integration_order)
+    return dispatched(
+        begin_date,
+        end_date,
+        latitudes,
+        longitudes,
+        intervals_per_hour=intervals_per_hour,
+        integration_order=integration_order,
+    )

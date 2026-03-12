@@ -9,9 +9,9 @@
 
 from __future__ import annotations
 
-from typing import Iterable
 from typing import TYPE_CHECKING
 from typing import Any  # noqa: F401
+from typing import Iterable
 from typing import TypeAlias
 from typing import overload
 

@@ -103,4 +103,14 @@ def cpf(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(cpf, array=True)
-    return dispatched(clim, ens, sort_clim=sort_clim, sort_ens=sort_ens, epsilon=epsilon, symmetric=symmetric, from_zero=from_zero, clim_dim=clim_dim, ens_dim=ens_dim)
+    return dispatched(
+        clim,
+        ens,
+        sort_clim=sort_clim,
+        sort_ens=sort_ens,
+        epsilon=epsilon,
+        symmetric=symmetric,
+        from_zero=from_zero,
+        clim_dim=clim_dim,
+        ens_dim=ens_dim,
+    )
