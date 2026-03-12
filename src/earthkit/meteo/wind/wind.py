@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+from typing import Iterable
 from typing import TYPE_CHECKING
 from typing import Any  # noqa: F401
 from typing import TypeAlias
@@ -405,3 +406,74 @@ def coriolis(lat: "xarray.DataArray" | "ArrayLike") -> "xarray.DataArray" | "Arr
 
     """
     return dispatch(coriolis, fieldlist=False, array=True)(lat)
+
+
+@overload
+def windrose(
+    speed: "xarray.DataArray",
+    direction: "xarray.DataArray",
+    sectors: int = 16,
+    speed_bins: Iterable[float] | None = None,
+    percent: bool = True,
+) -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
+
+
+@overload
+def windrose(
+    speed: "ArrayLike",
+    direction: "ArrayLike",
+    sectors: int = 16,
+    speed_bins: Iterable[float] | None = None,
+    percent: bool = True,
+) -> tuple["ArrayLike", "ArrayLike"]: ...
+
+
+def windrose(
+    speed: "xarray.DataArray" | "ArrayLike",
+    direction: "xarray.DataArray" | "ArrayLike",
+    sectors: int = 16,
+    speed_bins: Iterable[float] | None = None,
+    percent: bool = True,
+) -> tuple[
+    "xarray.DataArray" | "ArrayLike",
+    "xarray.DataArray" | "ArrayLike",
+]:
+    """Generate windrose data.
+
+    Parameters
+    ----------
+    speed : xarray.DataArray | array-like
+        Speed.
+    direction : xarray.DataArray | array-like
+        Meteorological wind direction (degrees). Values must be in [0, 360].
+    sectors : int, optional
+        Number of sectors the 360 degree range is split into.
+    speed_bins : Iterable[float] | None, optional
+        Speed bins. Must contain at least two values.
+    percent : bool, optional
+        If True, return percentages. If False, return counts.
+
+    Returns
+    -------
+    xarray.DataArray | array-like
+        2D histogram over speed and direction bins.
+    xarray.DataArray | array-like
+        Direction bin edges (degrees).
+
+    Implementations
+    ------------------------
+    :func:`windrose` calls one of the following implementations depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.wind.xarray.windrose` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.wind.array.windrose` for array-like
+
+    The function returns an object of the same type as the input arguments.
+
+    """
+    return dispatch(windrose, fieldlist=False, array=True)(
+        speed,
+        direction,
+        sectors=sectors,
+        speed_bins=speed_bins,
+        percent=percent,
+    )

@@ -106,7 +106,7 @@ def direction(u: FieldList, v: FieldList, convention="meteo", to_positive=True) 
 
     result = []
     for ui, vi in zip(u, v):
-        v = array.direction(ui.values, vi.values)
+        v = array.direction(ui.values, vi.values, convention=convention, to_positive=to_positive)
 
         param_id_u = ui.metadata("paramId", default=None)
         keys = {}

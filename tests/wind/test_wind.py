@@ -44,10 +44,12 @@ def _case_array(xp, device):
     v = xp.asarray([1, 1, -1, 1], device=device)
     speed = xp.asarray([1.0, 2.0, np.nan], device=device)
     direction = xp.asarray([180.0, 90.0, 1.0], device=device)
+    direction_wr = xp.asarray([180.0, 90.0, 45.0], device=device)
     omega = xp.asarray([1.2, 21.3], device=device)
     temp = xp.asarray([285.6, 261.1], device=device)
     pressure = xp.asarray([1000, 850], device=device) * 100.0
     lat = xp.asarray([-20, 0, 50], device=device)
+    speed_bins = xp.asarray([0.0, 1.0, 2.0, 4.0], device=device)
 
     return {
         "impl": impl,
@@ -58,6 +60,7 @@ def _case_array(xp, device):
             "polar_to_xy": ((speed, direction), {}),
             "w_from_omega": ((omega, temp, pressure), {}),
             "coriolis": ((lat,), {}),
+            "windrose": ((speed, direction_wr), {"sectors": 4, "speed_bins": speed_bins, "percent": False}),
         },
     }
 
@@ -69,10 +72,12 @@ def _case_xarray():
     v = _da([1, 1, -1, 1])
     speed = _da([1.0, 2.0, np.nan])
     direction = _da([180.0, 90.0, 1.0])
+    direction_wr = _da([180.0, 90.0, 45.0])
     omega = _da([1.2, 21.3])
     temp = _da([285.6, 261.1])
     pressure = _da([1000, 850]) * 100.0
     lat = _da([-20, 0, 50])
+    speed_bins = [0.0, 1.0, 2.0, 4.0]
 
     return {
         "impl": impl,
@@ -83,6 +88,7 @@ def _case_xarray():
             "polar_to_xy": ((speed, direction), {}),
             "w_from_omega": ((omega, temp, pressure), {}),
             "coriolis": ((lat,), {}),
+            "windrose": ((speed, direction_wr), {"sectors": 4, "speed_bins": speed_bins, "percent": False}),
         },
     }
 
@@ -105,7 +111,7 @@ def backend_case(request):
 
 @pytest.mark.parametrize(
     "op_name",
-    ["speed", "direction", "xy_to_polar", "polar_to_xy", "w_from_omega", "coriolis"],
+    ["speed", "direction", "xy_to_polar", "polar_to_xy", "w_from_omega", "coriolis", "windrose"],
 )
 def test_highlevel_compatible_with_backend_api(backend_case, op_name):
     impl = backend_case["impl"]
