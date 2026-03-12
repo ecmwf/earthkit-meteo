@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -17,3 +17,12 @@ planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets
 """
 
 from .solar import *  # noqa
+
+__all__ = [
+    "julian_day",
+    "solar_declination_angle",
+    "cos_solar_zenith_angle",
+    "cos_solar_zenith_angle_integrated",
+    "incoming_solar_radiation",
+    "toa_incident_solar_radiation",
+]

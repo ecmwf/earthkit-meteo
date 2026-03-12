@@ -63,10 +63,10 @@ def regime_index(projections, mean, std):
 
     Parameters
     ----------
-    projections : dict[str, array_like]
+    projections : dict[str,array_like]
         Projections onto regime patterns.
-    mean : dict[str, array_like]
-    std : dict[str, array_like]
+    mean : dict[str,array_like]
+    std : dict[str,array_like]
 
     Returns
     -------

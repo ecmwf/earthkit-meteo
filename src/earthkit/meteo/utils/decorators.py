@@ -6,13 +6,20 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+from __future__ import annotations
+
 from abc import ABCMeta
 from abc import abstractmethod
 from functools import wraps
 from importlib import import_module
+from inspect import signature
+from typing import TYPE_CHECKING
 from typing import Any
 
-import xarray as xr
+from earthkit.utils.array import array_namespace
+
+if TYPE_CHECKING:
+    import xarray as xr
 
 
 def _is_xarray(obj: Any) -> bool:
@@ -78,30 +85,90 @@ class FieldListDispatcher(DataDispatcher):
         return getattr(module, func)(*args, **kwargs)
 
 
-_DISPATCHERS = [XArrayDispatcher(), FieldListDispatcher()]
+class ArrayDispatcher(DataDispatcher):
+    @staticmethod
+    def match(obj: Any) -> bool:
+        xp = array_namespace(obj)
+        try:
+            xp.asarray(obj)
+            return True
+        except Exception:
+            return False
+
+    def dispatch(self, func, module, *args, **kwargs):
+        module = import_module(module + ".array")
+        return getattr(module, func)(*args, **kwargs)
 
 
-def dispatch(func, *args, **kwargs):
-    _module = ".".join(func.__module__.split(".")[:-1])
-    # print(_module)
-    for dispatcher in _DISPATCHERS:
-        if dispatcher.match(args[0]):
-            # TODO: check if the function exists in the module
-            return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
+_DISPATCHERS = [XArrayDispatcher(), FieldListDispatcher(), ArrayDispatcher()]
 
 
-# def dispatch(func):
-#     _module = ".".join(func.__module__.split(".")[:-1])
-#     # print(_module)
+def dispatch(func, match=0, xarray=True, fieldlist=True, array=False):
+    """
+    Decorator to dispatch function calls based on input data types.
+    The dispatch will attempt to route the call to the appropriate implementation based on the type of the specified argument.
+    The implementations are assumed to live in submodules named after the data type (e.g., .xarray, .fieldlist, .array) with the same function name as the toplevel function.
 
-#     @wraps(func)
-#     def inner(*args, **kwargs):
-#         for dispatcher in _DISPATCHERS:
-#             if dispatcher.match(args[0]):
-#                 # TODO: check if the function exists in the module
-#                 return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
+    Parameters
+    ----------
+    func: function
+        The toplevel function to be decorated.
+    match: int or str
+        The index or name of the argument to check for dispatching. Default is 0 (the first argument).
+    xarray: bool
+        Whether to include the xarray dispatcher. Default is True.
+    fieldlist: bool
+        Whether to include the FieldList dispatcher. Default is True.
+    array: bool
+        Whether to include the array dispatcher. Default is False.
 
-#     return inner
+    Returns
+    -------
+    function
+        The decorated function with dispatching capability.
+    """
+    DISPATCHERS = []
+    if xarray:
+        DISPATCHERS.append(_DISPATCHERS[0])
+    if fieldlist:
+        DISPATCHERS.append(_DISPATCHERS[1])
+    if array:
+        DISPATCHERS.append(_DISPATCHERS[2])
+
+    sig = signature(func)
+
+    params = list(sig.parameters)
+    if isinstance(match, int):
+        try:
+            param_name = params[match]
+        except IndexError as e:
+            raise ValueError(
+                f"'match' index {match} is invalid for function {func.__name__} with  {len(params)} arguments"
+            ) from e
+    elif isinstance(match, str):
+        if match in params:
+            param_name = match
+        else:
+            raise ValueError(
+                f"'match' parameter name {match} is not in the function signature of {func.__name__}"
+            )
+    else:
+        raise TypeError(f"'match' must be an integer index or a string parameter name, got {type(match)}")
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        bound_args = sig.bind(*args, **kwargs)
+        bound_args.apply_defaults()
+
+        obj_to_check = bound_args.arguments[param_name]
+
+        _module = ".".join(func.__module__.split(".")[:-1])
+        for dispatcher in DISPATCHERS:
+            if dispatcher.match(obj_to_check):
+                return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
+        raise TypeError(f"No matching dispatcher found for the input type: {type(obj_to_check)}")
+
+    return wrapper
 
 
 def _infer_output_count(func) -> int:
@@ -195,6 +262,11 @@ def xarray_ufunc_deprecated(**xarray_ufunc_kwargs):
 
 
 def xarray_ufunc(func, *args, **kwargs):
+    try:
+        import xarray as xr
+    except ImportError as e:
+        raise RuntimeError("xarray dependency is required") from e
+
     xarray_ufunc_kwargs = kwargs.pop("xarray_ufunc_kwargs", None) or {}
     merged = {
         "dask": "parallelized",

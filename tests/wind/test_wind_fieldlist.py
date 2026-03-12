@@ -11,7 +11,6 @@ import numpy as np
 import pytest
 
 import earthkit.meteo.wind.array as array_wind
-from earthkit.meteo import wind
 from earthkit.meteo.utils.testing import NO_EKD
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
@@ -20,6 +19,7 @@ np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 @pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
 def test_fieldlist_wind_speed():
     import earthkit.data as ekd
+    import earthkit.meteo.wind.fieldlist as wind
 
     ds = ekd.from_source("sample", "tuv_pl.grib")
 
@@ -39,6 +39,7 @@ def test_fieldlist_wind_speed():
 @pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
 def test_fieldlist_wind_direction():
     import earthkit.data as ekd
+    import earthkit.meteo.wind.fieldlist as wind
 
     ds = ekd.from_source("sample", "tuv_pl.grib")
 
@@ -58,6 +59,7 @@ def test_fieldlist_wind_direction():
 @pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
 def test_fieldlist_w_from_omega():
     import earthkit.data as ekd
+    import earthkit.meteo.wind.fieldlist as wind
 
     ds = ekd.from_source("sample", "omega_pl.grib")
 
@@ -72,3 +74,4 @@ def test_fieldlist_w_from_omega():
 
     ref = array_wind.w_from_omega(omega[0].values, t[0].values, omega[0].metadata("level") * 100.0)
     assert np.allclose(res[0].values, ref, equal_nan=True)
+

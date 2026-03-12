@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,10 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Statistical functions.
-"""
+"""Solar computation functions operating on xarray objects."""
 
-from .extreme_values import *  # noqa
-from .numpy_extended import *  # noqa
-from .quantiles import *  # noqa
+from .solar import *  # noqa

@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
-from earthkit.meteo import solar
+from earthkit.meteo.solar.array import solar
 
 
 @pytest.mark.parametrize(

@@ -53,8 +53,8 @@ def efi(
         clim,
         ens,
         eps=eps,
-        clim_axis=-1,
-        ens_axis=-1,
+        clim_dim=-1,
+        ens_dim=-1,
         xarray_ufunc_kwargs={
             "input_core_dims": core_dims,
             "output_core_dims": [[]],

@@ -7,8 +7,19 @@
 # nor does it submit to any jurisdiction.
 #
 
-from . import array
+from ..utils.decorators import dispatch
 
 
-def nanaverage(*args, **kwargs):
-    return array.nanaverage(*args, **kwargs)
+def nanaverage(data, weights=None, **kwargs):
+    """A merge of the functionality of np.nanmean and np.average.
+
+
+    .. admonition:: Implementations
+
+        Depending on the type of argument `data`, this function calls:
+
+        - :py:func:`earthkit.meteo.stats.xarray.nanaverage` for ``xarray.DataArray``
+        - :py:func:`earthkit.meteo.stats.array.nanaverage` for ``array_like``
+    """
+    dispatched = dispatch(nanaverage, xarray=True, array=True)
+    return dispatched(data, weights, **kwargs)

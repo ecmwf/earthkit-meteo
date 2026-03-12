@@ -7,5 +7,5 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .xarray.deterministic import *
-from .xarray.ensemble import *
+from .deterministic import *
+from .ensemble import *

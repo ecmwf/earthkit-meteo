@@ -8,14 +8,30 @@
 #
 
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import TypeAlias
 from typing import overload
 
 from earthkit.meteo.utils.decorators import dispatch
 
-from . import array  # noqa
+ArrayLike: TypeAlias = Any
 
 if TYPE_CHECKING:
     import xarray  # type: ignore[import]
+
+
+@overload
+def cpf(
+    clim: "ArrayLike",
+    ens: "ArrayLike",
+    sort_clim: bool = True,
+    sort_ens: bool = True,
+    epsilon: float | None = None,
+    symmetric: bool = False,
+    from_zero: bool = False,
+    clim_dim: int | None = 0,
+    ens_dim: int | None = 0,
+) -> "ArrayLike": ...
 
 
 @overload
@@ -27,8 +43,8 @@ def cpf(
     epsilon: float | None = None,
     symmetric: bool = False,
     from_zero: bool = False,
-    clim_dim: str | None = None,
-    ens_dim: str | None = None,
+    clim_dim: str | int | None = None,
+    ens_dim: str | int | None = None,
 ) -> "xarray.DataArray": ...
 
 
@@ -66,10 +82,10 @@ def cpf(
     from_zero: bool
         If True, start looking for a crossing from the minimum, rather than the
         median
-    clim_dim: str, optional
-        Name of the climatology/quantile dimension in ``clim``.
-    ens_dim: str, optional
-        Name of the ensemble/member dimension in ``ens``.
+    clim_dim: str or int, optional
+        Name (or dimension index for array-like) of the climatology/quantile dimension in ``clim``.
+    ens_dim: str or int, optional
+        Name (or dimension index for array-like) of the ensemble/member dimension in ``ens``.
 
     Returns
     -------
@@ -83,9 +99,10 @@ def cpf(
 
     - :py:meth:`earthkit.meteo.extreme.xarray.cpf` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.cpf` for array-like
+
+    The function returns an object of the same type as the input arguments.
     """
-    res = dispatch(
-        cpf,
+    return dispatch(cpf, array=True)(
         clim,
         ens,
         sort_clim=sort_clim,
@@ -96,4 +113,3 @@ def cpf(
         clim_dim=clim_dim,
         ens_dim=ens_dim,
     )
-    return res

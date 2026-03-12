@@ -28,7 +28,7 @@ classifiers = [
 dynamic = [ "version" ]
 dependencies = [
   "deprecation",
-  "earthkit-utils>=0.2",
+  "earthkit-utils @ git+https://github.com/ecmwf/earthkit-utils@release/1.0.0rc0",
   "numpy",
 ]
 optional-dependencies.all = [
@@ -55,10 +55,12 @@ optional-dependencies.samples = [
   "requests",
 ]
 optional-dependencies.scores = [
+  "scipy",
   "scores",
+  "xarray",
 ]
 optional-dependencies.test = [
-  "earthkit-data",
+  "earthkit-data @ git+https://github.com/ecmwf/earthkit-data@release/1.0.0rc0",
   "netcdf4",
   "pytest",
   "pytest-cov",
@@ -76,6 +78,9 @@ where = [ "src/" ]
 
 [tool.setuptools_scm]
 version_file = "src/earthkit/meteo/_version.py"
+
+[tool.ruff]
+lint.per-file-ignores."tests/**.py" = [ "E402" ]
 
 [tool.isort]
 profile = "black"
