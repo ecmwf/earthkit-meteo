@@ -42,15 +42,14 @@ optional-dependencies.docs = [
   "ipykernel",
   "nbsphinx",
   "pygments>=2.6.1",
-  # check if these two are required (were not in the readthedocs config)
-  "requests",
+  "requests",          # is this needed?
   "setuptools",
   "sphinx>=7.3.7",
   "sphinx-autoapi",
   "sphinx-copybutton",
   "sphinx-issues",
   "sphinx-rtd-theme",
-  "sphinx-tabs",
+  "sphinx-tabs",       # is this needed?
 ]
 optional-dependencies.gpu = [
   "cupy",
