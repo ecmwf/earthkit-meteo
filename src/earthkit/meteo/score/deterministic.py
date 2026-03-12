@@ -59,7 +59,7 @@ def error(
         The error between the forecast and observations, possibly aggregated.
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(error)
+    dispatched = dispatch(error, fieldlist=False)
     return dispatched(fcst, obs, agg_method, agg_dim, agg_weights)
 
 
@@ -108,7 +108,7 @@ def mean_error(
         The mean error between the forecast and observations.
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(mean_error)
+    dispatched = dispatch(mean_error, fieldlist=False)
     return dispatched(fcst, obs, over, weights)
 
 
@@ -162,7 +162,7 @@ def abs_error(
         The error between the forecast and observations, possibly aggregated.
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(abs_error)
+    dispatched = dispatch(abs_error, fieldlist=False)
     return dispatched(fcst, obs, agg_method, agg_dim, agg_weights, is_angular)
 
 
@@ -214,7 +214,7 @@ def mean_abs_error(
         The mean absolute error between the forecast and observations.
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(mean_abs_error)
+    dispatched = dispatch(mean_abs_error, fieldlist=False)
     return dispatched(fcst, obs, over, weights, is_angular)
 
 
@@ -268,7 +268,7 @@ def squared_error(
         The squared error between the forecast and observations, possibly aggregated.
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(squared_error)
+    dispatched = dispatch(squared_error, fieldlist=False)
     return dispatched(fcst, obs, agg_method, agg_dim, agg_weights, is_angular)
 
 
@@ -320,7 +320,7 @@ def mean_squared_error(
         The mean squared error between the forecast and observations.
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(mean_squared_error)
+    dispatched = dispatch(mean_squared_error, fieldlist=False)
     return dispatched(fcst, obs, over, weights, is_angular)
 
 
@@ -372,7 +372,7 @@ def root_mean_squared_error(
         The root mean squared error between the forecast and observations.
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(root_mean_squared_error)
+    dispatched = dispatch(root_mean_squared_error, fieldlist=False)
     return dispatched(fcst, obs, over, weights, is_angular)
 
 
@@ -423,7 +423,7 @@ def standard_deviation_of_error(
         The standard deviation of error between the forecast and observations.
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(standard_deviation_of_error)
+    dispatched = dispatch(standard_deviation_of_error, fieldlist=False)
     return dispatched(fcst, obs, over, weights)
 
 
@@ -472,7 +472,7 @@ def cosine_similarity(
         The cosine similarity between the forecast and observations.
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(cosine_similarity)
+    dispatched = dispatch(cosine_similarity, fieldlist=False)
     return dispatched(fcst, obs, over, weights)
 
 
@@ -528,5 +528,5 @@ def pearson_correlation(
         The correlation between the forecast and observations.
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(pearson_correlation)
+    dispatched = dispatch(pearson_correlation, fieldlist=False)
     return dispatched(fcst, obs, over, weights)
