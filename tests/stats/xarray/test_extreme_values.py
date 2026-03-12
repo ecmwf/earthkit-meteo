@@ -10,6 +10,9 @@ import numpy as np
 import pytest
 
 import earthkit.meteo.stats.xarray as stats
+from earthkit.meteo.utils.testing import NO_SCIPY
+
+pytestmark = pytest.mark.skipif(NO_SCIPY, reason="scipy required to fit distributions")
 
 xr = pytest.importorskip("xarray")
 
