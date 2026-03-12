@@ -39,24 +39,34 @@ def speed(u: FieldList, v: FieldList) -> FieldList:
 
     # Mapping u-wind component GRIB parameter IDs to wind speed parameter IDs
     param_ids = {
-        131: 10,  # atmospheric wind
-        165: 207,  # 10m wind
-        228246: 228249,  # 100m wind
-        228239: 228241,  # 200m wind
+        131: "ws",  # atmospheric wind, paramId=10
+        165: "10ws",  # 10m wind, paramId=207
+        228246: "100si",  # 100m wind, paramId=228249
+        228239: "200si",  # 200m wind, paramId=228241
+    }
+
+    variables = {
+        "u": "ws",  # atmospheric wind
+        "10u": "10ws",  # 10m wind
+        "100ua": "100si",  # 100m wind
+        "200ua": "200si",  # 200m wind
     }
 
     result = []
     for ui, vi in zip(u, v):
         v = array.speed(ui.values, vi.values)
 
-        param_id_u = ui.metadata("paramId", default=None)
-        param_id_sp = param_ids.get(param_id_u, 10)
-        keys = {}
-        if param_id_sp is not None:
-            keys["paramId"] = param_id_sp
+        param_id_u = ui.get("metadata.paramId", default=None)
+        if param_id_u is not None:
+            sp_name = param_ids.get(param_id_u, "ws")
+        else:
+            var_u = ui.get("parameter.variable", default=None)
+            sp_name = variables.get(var_u, "ws")
 
-        md = ui.metadata().override(**keys)
-        result.append(ui.clone(values=v, metadata=md))
+        # keys = {"parameter": {"type": "derived", "derivedFrom": [ui, vi]}}
+
+        result.append(ui.set({"values": v, "parameter.variable": sp_name}))
+
     return u.from_fields(result)
 
 
