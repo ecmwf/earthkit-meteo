@@ -254,12 +254,12 @@ class TestExcessHeatFactor:
         assert exhf.attrs["long_name"] == "Excess heat factor"
         assert exhf.attrs["units"] in {"K ** 2", "K^2", "K²"}
 
-    def test_with_nonnegative_false(self, ehi_sig, ehi_accl):
-        exhf = excess_heat.excess_heat_factor(ehi_sig, ehi_accl, nonnegative=False)
+    def test_with_clip_false(self, ehi_sig, ehi_accl):
+        exhf = excess_heat.excess_heat_factor(ehi_sig, ehi_accl, clip=False)
         np.testing.assert_allclose(exhf, [15.0, 5.0, 5.0, 0.0, 0.0, 0.0, -6.0, -2.0, -2.0])
 
-    def test_with_nonnegative_true(self, ehi_sig, ehi_accl):
-        exhf = excess_heat.excess_heat_factor(ehi_sig, ehi_accl, nonnegative=True)
+    def test_with_clip_true(self, ehi_sig, ehi_accl):
+        exhf = excess_heat.excess_heat_factor(ehi_sig, ehi_accl, clip=True)
         np.testing.assert_allclose(exhf, [15.0, 5.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
 
@@ -298,12 +298,12 @@ class TestExcessColdFactor:
         assert excf.attrs["long_name"] == "Excess cold factor"
         assert excf.attrs["units"] in {"K ** 2", "K^2", "K²"}
 
-    def test_with_nonpositive_false(self, ehi_sig, ehi_accl):
-        exhf = excess_heat.excess_cold_factor(ehi_sig, ehi_accl, nonpositive=False)
+    def test_with_clip_false(self, ehi_sig, ehi_accl):
+        exhf = excess_heat.excess_cold_factor(ehi_sig, ehi_accl, clip=False)
         np.testing.assert_allclose(exhf, [5.0, 5.0, 20.0, 0.0, 0.0, 0.0, -2.0, -2.0, -8.0])
 
-    def test_with_nonpositive_true(self, ehi_sig, ehi_accl):
-        exhf = excess_heat.excess_cold_factor(ehi_sig, ehi_accl, nonpositive=True)
+    def test_with_clip_true(self, ehi_sig, ehi_accl):
+        exhf = excess_heat.excess_cold_factor(ehi_sig, ehi_accl, clip=True)
         np.testing.assert_allclose(exhf, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -2.0, -2.0, -8.0])
 
 

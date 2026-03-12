@@ -266,7 +266,7 @@ def acclimatisation_index(dmt, ndays=3, ndays_ref=30):
 # https://codes.ecmwf.int/grib/param-db/261024
 # TODO: input unit checks
 @_with_metadata("exhf", long_name="Excess heat factor", units="K²")
-def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=False):
+def excess_heat_factor(ehi_sig, ehi_accl, clip=False):
     """Excess heat factor.
 
     Parameters
@@ -275,7 +275,7 @@ def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=False):
         Significance index.
     ehi_accl : xarray.DataArray
         Acclimatisation index.
-    nonnegative : bool, optional
+    clip : bool, optional
         Whether to clip the lower value range at zero. Disabled by default.
 
     Returns
@@ -310,7 +310,7 @@ def excess_heat_factor(ehi_sig, ehi_accl, nonnegative=False):
     :py:func:`acclimatisation_index`
     :py:func:`excess_cold_factor`
     """
-    if nonnegative:
+    if clip:
         ehi_sig = np.maximum(0, ehi_sig)
     return ehi_sig * np.maximum(1.0, ehi_accl)
 
@@ -363,7 +363,7 @@ def heatwave_severity(exhf, threshold=None):
 # https://codes.ecmwf.int/grib/param-db/261025
 # TODO: input unit checks
 @_with_metadata("excf", long_name="Excess cold factor", units="K²")
-def excess_cold_factor(ehi_sig, ehi_accl, nonpositive=False):
+def excess_cold_factor(ehi_sig, ehi_accl, clip=False):
     """Excess cold factor.
 
     Parameters
@@ -372,7 +372,7 @@ def excess_cold_factor(ehi_sig, ehi_accl, nonpositive=False):
         Significance index.
     ehi_accl : xarray.DataArray
         Acclimatisation index.
-    nonpositive : bool, optional
+    clip : bool, optional
         Whether to clip the upper value range at zero. Disabled by default.
 
     Returns
@@ -407,6 +407,6 @@ def excess_cold_factor(ehi_sig, ehi_accl, nonpositive=False):
     :py:func:`acclimatisation_index`
     :py:func:`excess_heat_factor`
     """
-    if nonpositive:
+    if clip:
         ehi_sig = np.minimum(0, ehi_sig)
     return -ehi_sig * np.minimum(-1.0, ehi_accl)
