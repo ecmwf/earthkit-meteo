@@ -8,6 +8,8 @@
 
 import numbers
 
+from earthkit.utils.array import array_namespace
+
 from ...utils.decorators import xarray_ufunc
 from .. import array
 
@@ -27,7 +29,7 @@ def _ensure_compat(x, forbidden_dims=None):
     return x
 
 
-def fit_gumbel(sample, over):
+def fit_gumbel(sample, dim):
     """Gumbel distribution with parameters fitted to a sample of values.
 
     .. warning:: Experimental API. This function may change or be removed without notice.
@@ -39,8 +41,8 @@ def fit_gumbel(sample, over):
     ----------
     sample: xarray.DataArray
         Sample values.
-    over: str
-        The dimension over which to compute the parameters.
+    dim: str
+        Dimension name over which to compute the parameters.
 
     Returns
     -------
@@ -48,12 +50,16 @@ def fit_gumbel(sample, over):
         Fitting over a dimension of a multi-dimensional sample array, the
         outcome is a collection of (scalar-valued) distributions.
     """
-    if over not in sample.dims:
-        raise ValueError(f"cannot fit over dimension '{over}' with sample dimensions {sample.dims}")
-    over_axis = sample.dims.index(over)
-    parameter_dims = [dim for dim in sample.dims if dim != over]
+    if dim not in sample.dims:
+        raise ValueError(f"cannot fit over dimension '{dim}' with sample dimensions {sample.dims}")
+    over_axis = sample.dims.index(dim)
+    parameter_dims = [d for d in sample.dims if d != dim]
     parameter_coords = {dim: values for dim, values in sample.coords.items() if dim in parameter_dims}
-    return array.fit_gumbel(sample.data, over=over_axis, dims=parameter_dims, coords=parameter_coords)
+    sample_data = sample.data
+    if over_axis != 0:
+        xp = array_namespace(sample_data)
+        sample_data = xp.moveaxis(sample_data, over_axis, 0)
+    return array.fit_gumbel(sample_data, dim=0, dims=parameter_dims, coords=parameter_coords)
 
 
 def value_to_return_period(value, dist):

@@ -81,7 +81,7 @@ def test_nanaverage(xp, device, data, weights, v_ref, kwargs):
                 [5, 19, 8.3, 2, 6, 1, 0, 1, 0],
             ],
             4,
-            dict(axis=1),
+            dict(dim=1),
             [
                 [0, 1, 0.5, 0],
                 [0, 2.5, 3, 1],
@@ -164,3 +164,11 @@ def test_quantiles_nans(xp, device, arr):
     r2 = xp.asarray([quantile for quantile in stats.iter_quantiles(arr, qs, method="numpy")])
     assert bulk.shape == r2.shape
     assert xp.allclose(bulk, r2, equal_nan=True)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+def test_quantiles_dim_argument(xp, device):
+    arr = xp.asarray([[1.0, 2.0, 3.0], [2.0, 4.0, 6.0]], device=device)
+    got = xp.asarray([q for q in stats.iter_quantiles(arr, which=[0.5], dim=1, method="numpy")])[0]
+    ref = xp.asarray([2.0, 4.0], device=device)
+    assert xp.allclose(got, ref)

@@ -26,8 +26,8 @@ def sot(
     ens: "ArrayLike",
     perc: int,
     eps: float = -1e4,
-    clim_dim: int | None = 0,
-    ens_dim: int | None = 0,
+    clim_dim: int | None = None,
+    ens_dim: int | None = None,
 ) -> "ArrayLike": ...
 
 
@@ -94,8 +94,8 @@ def sot_unsorted(
     ens: "ArrayLike",
     perc: int,
     eps: float = -1e4,
-    clim_dim: int | None = 0,
-    ens_dim: int | None = 0,
+    clim_dim: int | None = None,
+    ens_dim: int | None = None,
 ) -> "ArrayLike": ...
 
 

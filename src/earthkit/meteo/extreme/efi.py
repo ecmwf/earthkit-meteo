@@ -25,8 +25,8 @@ def efi(
     clim: "ArrayLike",
     ens: "ArrayLike",
     eps: float = -0.1,
-    clim_dim: int | None = 0,
-    ens_dim: int | None = 0,
+    clim_dim: int | None = None,
+    ens_dim: int | None = None,
 ) -> "ArrayLike": ...
 
 
@@ -44,8 +44,8 @@ def efi(
     clim,
     ens,
     eps: float = -0.1,
-    clim_dim: str | None = None,
-    ens_dim: str | None = None,
+    clim_dim: str | int | None = None,
+    ens_dim: str | int | None = None,
 ):
     r"""Compute Extreme Forecast Index (EFI).
 
@@ -58,9 +58,9 @@ def efi(
     eps: (float)
         Epsilon factor for zero values
     clim_dim: str or int, optional
-        Name (or axis for array-like) of the climatology/quantile dimension in ``clim``.
+        Name (or dimension index for array-like) of the climatology/quantile dimension in ``clim``.
     ens_dim: str or int, optional
-        Name (or axis for array-like) of the ensemble/member dimension in ``ens``.
+        Name (or dimension index for array-like) of the ensemble/member dimension in ``ens``.
 
     Returns
     -------
