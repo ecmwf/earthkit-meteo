@@ -4,7 +4,7 @@ requires = [ "setuptools>=61", "setuptools-scm>=8", "wheel" ]
 
 [project]
 name = "earthkit-meteo"
-description = "Meteorological computations"
+description = "A Python library for meteorological computations"
 readme = "README.md"
 license = { text = "Apache License Version 2.0" }
 authors = [
@@ -13,8 +13,9 @@ authors = [
 requires-python = ">=3.10"
 
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
   "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
@@ -24,6 +25,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Scientific/Engineering",
 ]
 dynamic = [ "version" ]
 dependencies = [
