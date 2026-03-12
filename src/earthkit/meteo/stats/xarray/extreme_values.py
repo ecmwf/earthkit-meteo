@@ -65,7 +65,7 @@ def value_to_return_period(value, dist):
     ----------
     value: number | xarray.DataArray
         Input value(s).
-    dist: GumbelDistribution
+    dist: earthkit.meteo.stats.array.GumbelDistribution
         Probability distribution.
 
     Returns
@@ -97,7 +97,7 @@ def return_period_to_value(return_period, dist):
     ----------
     return_period: number | xarray.DataArray
         Input return period.
-    dist: GumbelDistribution
+    dist: earthkit.meteo.stats.array.GumbelDistribution
         Probability distribution.
 
     Returns

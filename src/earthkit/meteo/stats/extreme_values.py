@@ -48,11 +48,19 @@ def fit_gumbel(sample, dim):
 
     Returns
     -------
-    GumbelDistribution
+    earthkit.meteo.stats.array.GumbelDistribution
         Fitting over a dimension of a multi-dimensional sample array, the
         outcome is a collection of (scalar-valued) distributions.
 
-    The function returns an object of the same type as the input arguments.
+
+    .. admonition:: Implementations
+
+        Depending on the type of argument `sample`, this function calls:
+
+        - :py:func:`earthkit.meteo.stats.xarray.fit_gumbel` for ``xarray.DataArray``
+        - :py:func:`earthkit.meteo.stats.array.fit_gumbel` for ``array_like``
+
+        The function returns an object of the same type as the input argument.
     """
     dispatched = dispatch(fit_gumbel, xarray=True, array=True)
     return dispatched(sample, dim=dim)
@@ -78,7 +86,7 @@ def value_to_return_period(value, dist):
     ----------
     value: xarray.DataArray
         Input value(s).
-    dist: GumbelDistribution
+    dist: earthkit.meteo.stats.array.GumbelDistribution
         Probability distribution.
 
     Returns
@@ -86,7 +94,16 @@ def value_to_return_period(value, dist):
     xarray.DataArray
         The return period of the input value. Distribution dimensions are added
         at the end.
-    The function returns an object of the same type as the input arguments.
+
+
+    .. admonition:: Implementations
+
+        Depending on the type of argument `sample`, this function calls:
+
+        - :py:func:`earthkit.meteo.stats.xarray.value_to_return_period` for ``xarray.DataArray``
+        - :py:func:`earthkit.meteo.stats.array.value_to_return_period` for ``array_like``
+
+        The function returns an object of the same type as the input argument.
     """
     dispatched = dispatch(value_to_return_period, xarray=True, array=True)
     return dispatched(value, dist)
@@ -112,7 +129,7 @@ def return_period_to_value(return_period, dist):
     ----------
     return_period: xarray.DataArray
         Input return period.
-    dist: GumbelDistribution
+    dist: earthkit.meteo.stats.array.GumbelDistribution
         Probability distribution.
 
     Returns
@@ -120,7 +137,16 @@ def return_period_to_value(return_period, dist):
     xarray.DataArray
         Value with return period equal to the input return period. Distribution
         dimensions are added at the end.
-    The function returns an object of the same type as the input arguments.
+
+
+    .. admonition:: Implementations
+
+        Depending on the type of argument `sample`, this function calls:
+
+        - :py:func:`earthkit.meteo.stats.xarray.return_period_to_value` for ``xarray.DataArray``
+        - :py:func:`earthkit.meteo.stats.array.return_period_to_value` for ``array_like``
+
+        The function returns an object of the same type as the input argument.
     """
     dispatched = dispatch(return_period_to_value, xarray=True, array=True)
     return dispatched(return_period, dist)

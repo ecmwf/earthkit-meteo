@@ -107,8 +107,6 @@ def fit_gumbel(sample, dim=0, **kwargs):
     Results derived from the fitted distribution will only be meaningful
     if it is representative of the sample statistics.
 
-    Fitting over axes other than 0 is only possible if scipy is installed.
-
     Parameters
     ----------
     sample: numpy.ndarray
