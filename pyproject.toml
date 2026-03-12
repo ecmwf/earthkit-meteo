@@ -28,7 +28,7 @@ classifiers = [
 dynamic = [ "version" ]
 dependencies = [
   "deprecation",
-  "earthkit-utils>=0.2",
+  "earthkit-utils @ git+https://github.com/ecmwf/earthkit-utils@release/1.0.0rc0",
   "numpy",
 ]
 optional-dependencies.all = [
@@ -58,7 +58,7 @@ optional-dependencies.scores = [
   "scores",
 ]
 optional-dependencies.test = [
-  "earthkit-data",
+  "earthkit-data @ git+https://github.com/ecmwf/earthkit-data@release/1.0.0rc0",
   "netcdf4",
   "pytest",
   "pytest-cov",
