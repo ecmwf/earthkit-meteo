@@ -72,8 +72,8 @@ def efi(
     ------------------------
     :func:`efi` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.extreme.xarray.efi` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.efi` for array-like
+    - :py:meth:`earthkit.meteo.extreme.xarray.efi` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """

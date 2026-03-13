@@ -65,9 +65,9 @@ def cpf(
 
     Parameters
     ----------
-    clim: xarray.DataArray
+    clim: array-like or xarray.DataArray
         Per-point climatology. The reduction dimension (quantiles) is set by ``clim_dim``.
-    ens: xarray.DataArray
+    ens: array-like or xarray.DataArray
         Ensemble forecast. The reduction dimension (ensemble members) is set by ``ens_dim``.
     sort_clim: bool
         If True, sort the climatology first
@@ -89,7 +89,7 @@ def cpf(
 
     Returns
     -------
-    xarray.DataArray
+    array-like or xarray.DataArray
         CPF values.
 
 
@@ -97,8 +97,8 @@ def cpf(
     ------------------------
     :func:`cpf` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.extreme.xarray.cpf` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.cpf` for array-like
+    - :py:meth:`earthkit.meteo.extreme.xarray.cpf` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """

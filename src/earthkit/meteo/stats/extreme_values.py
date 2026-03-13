@@ -40,7 +40,7 @@ def fit_gumbel(sample, dim):
 
     Parameters
     ----------
-    sample: xarray.DataArray
+    sample: array-like or xarray.DataArray
         Sample values.
     dim: str or int
         Dimension name (for xarray) or axis index (for array-like) over which to
@@ -52,7 +52,6 @@ def fit_gumbel(sample, dim):
         Fitting over a dimension of a multi-dimensional sample array, the
         outcome is a collection of (scalar-valued) distributions.
 
-
     .. admonition:: Implementations
 
         Depending on the type of argument `sample`, this function calls:
@@ -60,7 +59,7 @@ def fit_gumbel(sample, dim):
         - :py:func:`earthkit.meteo.stats.xarray.fit_gumbel` for ``xarray.DataArray``
         - :py:func:`earthkit.meteo.stats.array.fit_gumbel` for ``array_like``
 
-        The function returns an object of the same type as the input argument.
+         The returned distribution is parameterised from the input sample values.
     """
     dispatched = dispatch(fit_gumbel, xarray=True, array=True)
     return dispatched(sample, dim=dim)
@@ -84,17 +83,16 @@ def value_to_return_period(value, dist):
 
     Parameters
     ----------
-    value: xarray.DataArray
+    value: array-like or xarray.DataArray
         Input value(s).
     dist: earthkit.meteo.stats.array.GumbelDistribution
         Probability distribution.
 
     Returns
     -------
-    xarray.DataArray
+    array-like or xarray.DataArray
         The return period of the input value. Distribution dimensions are added
         at the end.
-
 
     .. admonition:: Implementations
 
@@ -127,17 +125,16 @@ def return_period_to_value(return_period, dist):
 
     Parameters
     ----------
-    return_period: xarray.DataArray
+    return_period: array-like or xarray.DataArray
         Input return period.
     dist: earthkit.meteo.stats.array.GumbelDistribution
         Probability distribution.
 
     Returns
     -------
-    xarray.DataArray
+    array-like or xarray.DataArray
         Value with return period equal to the input return period. Distribution
         dimensions are added at the end.
-
 
     .. admonition:: Implementations
 

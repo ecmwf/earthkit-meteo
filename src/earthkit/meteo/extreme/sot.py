@@ -56,9 +56,9 @@ def sot(
 
     Parameters
     ----------
-    clim: xarray.DataArray
+    clim: array-like or xarray.DataArray
         Model climatology (percentiles). The reduction dimension is set by ``clim_dim``.
-    ens: xarray.DataArrays
+    ens: array-like or xarray.DataArray
         Ensemble forecast. The reduction dimension is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
@@ -71,7 +71,7 @@ def sot(
 
     Returns
     -------
-    xarray.DataArray
+    array-like or xarray.DataArray
         SOT values.
 
 
@@ -79,8 +79,8 @@ def sot(
     ------------------------
     :func:`sot` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.extreme.xarray.sot` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.sot` for array-like
+    - :py:meth:`earthkit.meteo.extreme.xarray.sot` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -124,9 +124,9 @@ def sot_unsorted(
 
     Parameters
     ----------
-    clim: xarray.DataArray
+    clim: array-like or xarray.DataArray
         Model climatology (percentiles). The reduction dimension is set by ``clim_dim``.
-    ens: xarray.DataArray
+    ens: array-like or xarray.DataArray
         Ensemble forecast. The reduction dimension is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
@@ -139,7 +139,7 @@ def sot_unsorted(
 
     Returns
     -------
-    xarray.DataArray
+    array-like or xarray.DataArray
         SOT values.
 
 
@@ -148,8 +148,8 @@ def sot_unsorted(
     :func:`sot_unsorted` calls one of the following implementations depending on
     the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.extreme.xarray.sot_unsorted` for xarray.DataArray
     - :py:meth:`earthkit.meteo.extreme.array.sot_unsorted` for array-like
+    - :py:meth:`earthkit.meteo.extreme.xarray.sot_unsorted` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
