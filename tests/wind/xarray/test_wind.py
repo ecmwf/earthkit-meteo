@@ -171,6 +171,8 @@ def test_xr_wind_xy_to_polar(u, v, sp_ref, d_ref):
     ],
 )
 def test_xr_wind_polar_to_xy(sp, d, u_ref, v_ref):
+    print(_da(sp))
+    print(_da(d))
     u, v = wind.polar_to_xy(_da(sp), _da(d))
     assert np.allclose(u.values, np.asarray(u_ref), equal_nan=True, atol=1e-7)
     assert np.allclose(v.values, np.asarray(v_ref), equal_nan=True, atol=1e-7)

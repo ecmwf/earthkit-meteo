@@ -152,6 +152,8 @@ def _polar_to_xy_meteo(magnitude: ArrayLike, direction: ArrayLike) -> tuple[Arra
     direction = xp.asarray(direction)
 
     a = (270.0 - direction) * constants.radian
+    print(magnitude * xp.cos(a))
+    print(magnitude * xp.sin(a))
     return magnitude * xp.cos(a), magnitude * xp.sin(a)
 
 

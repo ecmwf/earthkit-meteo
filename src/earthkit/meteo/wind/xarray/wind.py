@@ -112,7 +112,15 @@ def xy_to_polar(
     In the target xy representation the x axis points East while the y axis points North.
 
     """
-    return xarray_ufunc(array.xy_to_polar, x, y, convention=convention)
+    return xarray_ufunc(
+        array.xy_to_polar,
+        x,
+        y,
+        convention=convention,
+        xarray_ufunc_kwargs={
+            "output_dtypes": [float, float],
+        },
+    )
 
 
 def polar_to_xy(
@@ -146,7 +154,15 @@ def polar_to_xy(
     In the target xy representation the x axis points East while the y axis points North.
 
     """
-    return xarray_ufunc(array.polar_to_xy, magnitude, direction, convention=convention)
+    return xarray_ufunc(
+        array.polar_to_xy,
+        magnitude,
+        direction,
+        convention=convention,
+        xarray_ufunc_kwargs={
+            "output_dtypes": [float, float],
+        },
+    )
 
 
 def w_from_omega(omega: xr.DataArray, t: xr.DataArray, p: xr.DataArray) -> xr.DataArray:

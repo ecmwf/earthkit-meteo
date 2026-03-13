@@ -8,7 +8,6 @@ xr = pytest.importorskip("xarray")
 from earthkit.meteo.score import abs_error
 from earthkit.meteo.score import cosine_similarity
 from earthkit.meteo.score import error
-from earthkit.meteo.score import kge
 from earthkit.meteo.score import mean_abs_error
 from earthkit.meteo.score import mean_error
 from earthkit.meteo.score import mean_squared_error
@@ -16,6 +15,7 @@ from earthkit.meteo.score import pearson_correlation
 from earthkit.meteo.score import root_mean_squared_error
 from earthkit.meteo.score import squared_error
 from earthkit.meteo.score import standard_deviation_of_error
+from earthkit.meteo.score.xarray import kge
 from earthkit.meteo.utils.testing import NO_SCORES
 
 LATITUDES = [40.0, 41.0, 42.0]
