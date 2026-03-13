@@ -24,7 +24,7 @@ ArrayLike: TypeAlias = Any
 
 
 @overload
-def speed(u: "ArrayLike", v: "ArrayLike") -> "ArrayLike":...
+def speed(u: "ArrayLike", v: "ArrayLike") -> "ArrayLike": ...
 
 
 @overload

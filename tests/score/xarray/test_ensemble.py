@@ -10,8 +10,8 @@ from earthkit.meteo.score import crps_from_ensemble
 from earthkit.meteo.score import crps_from_gaussian as crps_gaussian
 from earthkit.meteo.score import quantile_score
 from earthkit.meteo.score import spread
-from earthkit.meteo.utils.testing import NO_SCORES
 from earthkit.meteo.utils.testing import NO_SCIPY
+from earthkit.meteo.utils.testing import NO_SCORES
 
 LATITUDES = [40.0, 41.0]
 LONGITUDES = [10.0, 11.0]
