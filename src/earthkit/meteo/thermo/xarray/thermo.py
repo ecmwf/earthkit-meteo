@@ -1111,7 +1111,16 @@ def lcl(
     and the pressure is computed with :math:`t_{LCL}` using :func:`pressure_on_dry_adiabat`.
 
     """
-    return xarray_ufunc(array.lcl, t, td, p, method=method)
+    return xarray_ufunc(
+        array.lcl,
+        t,
+        td,
+        p,
+        method=method,
+        xarray_ufunc_kwargs={
+            "output_dtypes": [float, float],
+        },
+    )
 
 
 def ept_from_dewpoint(
