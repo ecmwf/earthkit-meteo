@@ -1,0 +1,64 @@
+# (C) Copyright 2026- ECMWF and individual contributors.
+
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
+
+import numpy as np
+import pytest
+
+from earthkit.meteo import stats
+from earthkit.meteo.utils.testing import NO_SCIPY
+
+pytestmark = pytest.mark.skipif(NO_SCIPY, reason="scipy required to fit distributions")
+
+xr = pytest.importorskip("xarray")
+
+
+@pytest.fixture
+def da_2d():
+    data = np.asarray(
+        [
+            [0.3, 3.0, 30.0, 300.0],
+            [0.5, 5.0, 50.0, 500.0],
+            [0.7, 7.0, 70.0, 700.0],
+            [0.3, 3.0, 30.0, 300.0],
+            [0.4, 4.0, 40.0, 400.0],
+            [0.6, 6.0, 60.0, 600.0],
+            [0.7, 7.0, 70.0, 700.0],
+        ]
+    )
+    coords = {
+        "foo": [2, 3, 4, 5, 6, 7, 8],
+        "bar": [1, 5, 10, 20],
+    }
+    dims = ("foo", "bar")
+    return xr.DataArray(data, coords, dims)
+
+
+def test_return_period_to_value(da_2d):
+    gumbel = stats.fit_gumbel(da_2d, dim="foo")
+    rps = xr.DataArray([3, 5], coords={"baz": [-1, -2]}, dims=["baz"])
+    result = stats.return_period_to_value(rps, gumbel)
+    assert result.shape == (2, 4)
+    assert result.dims == ("baz", "bar")
+    np.testing.assert_array_equal(result.coords["bar"], da_2d.coords["bar"])
+    np.testing.assert_array_equal(result.coords["baz"], rps.coords["baz"])
+    # Ensure consistency between array and xarray implementations
+    result_arr = stats.return_period_to_value(rps.values, gumbel)
+    np.testing.assert_array_equal(result, result_arr)
+
+
+def test_value_to_return_period(da_2d):
+    gumbel = stats.fit_gumbel(da_2d, dim="bar")
+    vals = xr.DataArray([1.0, 2.0, 3.0], coords={"baz": [4.0, 2.0, 0.0]}, dims=["baz"])
+    result = stats.value_to_return_period(vals, gumbel)
+    assert result.shape == (3, 7)
+    assert result.dims == ("baz", "foo")
+    np.testing.assert_array_equal(result.coords["foo"], da_2d.coords["foo"])
+    np.testing.assert_array_equal(result.coords["baz"], vals.coords["baz"])
+    # Ensure consistency between array and xarray implementations
+    result_arr = stats.value_to_return_period(vals.values, gumbel)
+    np.testing.assert_array_equal(result, result_arr)

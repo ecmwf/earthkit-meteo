@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Literal
 from typing import TypeVar
 
@@ -10,11 +12,13 @@ T = TypeVar("T", xr.DataArray, xr.Dataset)
 def _import_scores_or_prompt_install():
     try:
         import scores
-    except ImportError:
-        raise ImportError(
+    except ImportError as e:
+        # from python 3.11+ can be written as:
+        # raise e.add_note("...")
+        raise RuntimeError(
             "The 'earthkit-meteo[score]' extra is required to use scoring functions. "
             "Please install it using 'pip install earthkit-meteo[score]'"
-        )
+        ) from e
     return scores
 
 
@@ -44,7 +48,9 @@ def error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.additive_bias <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.additive_bias>`_ function.
+        This function leverages the
+        `scores.continuous.additive_bias <https://scores.readthedocs.io/en/latest/api.html>`_
+        function.
 
     Parameters
     ----------
@@ -106,7 +112,9 @@ def mean_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.additive_bias <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.additive_bias>`_ function.
+        This function leverages the
+        `scores.continuous.additive_bias <https://scores.readthedocs.io/en/latest/api.html>`_
+        function.
 
     Parameters
     ----------
@@ -160,7 +168,9 @@ def abs_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.mae <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mae>`_ function.
+        This function leverages the
+        `scores.continuous.mae <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mae>`_
+        function.
 
     Parameters
     ----------
@@ -221,7 +231,9 @@ def mean_abs_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.mae <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mae>`_ function.
+        This function leverages the
+        `scores.continuous.mae <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mae>`_
+        function.
 
     Parameters
     ----------
@@ -241,7 +253,14 @@ def mean_abs_error(
     xarray object
         The mean absolute error between the forecast and observations.
     """
-    return abs_error(fcst, obs, agg_method="mean", agg_dim=over, agg_weights=weights, is_angular=is_angular)
+    return abs_error(
+        fcst,
+        obs,
+        agg_method="mean",
+        agg_dim=over,
+        agg_weights=weights,
+        is_angular=is_angular,
+    )
 
 
 def squared_error(
@@ -271,7 +290,9 @@ def squared_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_ function.
+        This function leverages the
+        `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_
+        function.
 
     Parameters
     ----------
@@ -332,7 +353,9 @@ def mean_squared_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_ function.
+        This function leverages the
+        `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_
+        function.
 
     Parameters
     ----------
@@ -389,7 +412,9 @@ def root_mean_squared_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_ function.
+        This function leverages the
+        `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_
+        function.
 
     Parameters
     ----------
@@ -668,13 +693,18 @@ def kge(
 
     where:
         - :math:`\rho`  = Pearson's correlation coefficient between observed and forecast values.
-        - :math:`f` and :math:`o` are forecast and observed values, respectively
-        - :math:`\mu_f` and :math:`\mu_o` are the means of forecast and observed values, respectively
-        - :math:`\sigma_f` and :math:`\sigma_o` are the standard deviations of forecast and observed values, respectively
+        - :math:`f` and :math:`o` are forecast and observed values,
+          respectively
+        - :math:`\mu_f` and :math:`\mu_o` are the means of forecast and
+          observed values, respectively
+        - :math:`\sigma_f` and :math:`\sigma_o` are the standard deviations of
+          forecast and observed values, respectively
 
     .. seealso::
 
-        This function leverages the `scores.continuous.kge <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.kge>`_ function.
+        This function leverages the
+        `scores.continuous.kge <https://scores.readthedocs.io/en/latest/api.html>`_
+        function.
 
     Parameters
     ----------
@@ -685,9 +715,12 @@ def kge(
     over : str or list of str
         The dimension(s) over which to compute the kge.
     method : str, optional
-        The method to compute the variability term :math:`\alpha`. Can be either "original" or "modified". Default is "modified".
+        The method to compute the variability term :math:`\alpha`. Can be
+        either "original" or "modified". Default is "modified".
     return_components : bool, optional
-        Whether to return the individual components (:math:`\rho`, :math:`\alpha` (or :math:`\gamma`), :math:`\beta`) along with the KGE value. Default is False.
+        Whether to return the individual components (:math:`\rho`,
+        :math:`\alpha` (or :math:`\gamma`), :math:`\beta`) along with the KGE
+        value. Default is False.
 
     Returns
     -------

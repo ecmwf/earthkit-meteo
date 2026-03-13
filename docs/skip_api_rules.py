@@ -18,11 +18,19 @@ def _skip_api_items(app, what, name, obj, skip, options):
     #     and name not in ["earthkit.meteo.solar", "earthkit.meteo.solar.array"]
     # ):
     #     skip = True
-    if name in ["earthkit.meteo.version", "earthkit.meteo.utils", "earthkit.meteo.vertical.array.monotonic"]:
+    if name in [
+        "earthkit.meteo.version",
+        "earthkit.meteo.utils",
+        "earthkit.meteo.vertical.array.monotonic",
+    ]:
         skip = True
     elif what == "module" and ".array." in name:
         skip = True
     elif what == "module" and len(name.split(".")) > 3:
+        skip = True
+    elif what == "function" and name.endswith("dispatch"):
+        skip = True
+    elif name.endswith("ArrayLike"):
         skip = True
 
     # if not skip:

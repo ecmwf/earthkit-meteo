@@ -28,47 +28,6 @@ def _get_quantile_data():
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "data,weights,kwargs,v_ref",
-    [
-        (
-            [[[4, 2], [4, np.nan]], [[4, 4], [np.nan, 2]]],
-            None,
-            dict(axis=-1),
-            [[3.0, 4.0], [4.0, 2.0]],
-        ),
-        (
-            [[[4, 2], [4, np.nan]], [[4, 4], [np.nan, 2]]],
-            [1, 0.25],
-            dict(axis=-1),
-            [[3.6, 4.0], [4.0, 2.0]],
-        ),
-    ],
-)
-def test_nanaverage(xp, device, data, weights, v_ref, kwargs):
-    data, v_ref = xp.asarray(data, device=device), xp.asarray(v_ref, device=device)
-
-    if weights is not None:
-        weights = xp.asarray(weights, device=device)
-
-    r = stats.nanaverage(data, weights=weights, **kwargs)
-    assert xp.allclose(r, v_ref)
-
-    # NOTE: we used the following numpy code to compute the reference values!
-    # when weight is None:
-    #    v_ref = np.nanmean(data, axis=-1)
-    # when weight is not None:
-    #   v_ref = np.average(data, axis=-1, weights=weights)
-    #   v_ref[:, 1] = np.nansum(data, axis=-1)[:, 1]
-
-    # v_ref = np.nanmean(data, axis=-1)
-
-    # v_ref = np.average(data, axis=-1, weights=weights)
-    # # replace nan values
-    # v_ref[:, 1] = np.nansum(data, axis=-1)[:, 1]
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("method", ["sort", "numpy_bulk", "numpy"])
 @pytest.mark.parametrize(
     "data,which,kwargs,v_ref",
@@ -81,7 +40,7 @@ def test_nanaverage(xp, device, data, weights, v_ref, kwargs):
                 [5, 19, 8.3, 2, 6, 1, 0, 1, 0],
             ],
             4,
-            dict(axis=1),
+            dict(dim=1),
             [
                 [0, 1, 0.5, 0],
                 [0, 2.5, 3, 1],
@@ -151,7 +110,8 @@ def test_quantiles_core(xp, device, data, which, kwargs, v_ref, method):
 # TODO: this! test fails with cupy. The reason is that cupy.quantile works differently
 #       than np.quantile when nans are present
 @pytest.mark.parametrize(
-    "xp, device", list(filter(lambda x: x[0]._earthkit_array_namespace_name != "cupy", NAMESPACE_DEVICES))
+    "xp, device",
+    list(filter(lambda x: x[0]._earthkit_array_namespace_name != "cupy", NAMESPACE_DEVICES)),
 )
 @pytest.mark.parametrize("arr", [_get_quantile_data()])
 def test_quantiles_nans(xp, device, arr):
@@ -166,47 +126,9 @@ def test_quantiles_nans(xp, device, arr):
     assert xp.allclose(bulk, r2, equal_nan=True)
 
 
-def test_GumbelDistribution():
-    dist = stats.GumbelDistribution.fit([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
-    # Extreme ends of distribution
-    np.testing.assert_allclose(dist.cdf(0.0), 1.0)
-    np.testing.assert_allclose(dist.cdf(100.0), 0.0)
-    # Test identity when calling method followed by inverse method
-    values = np.linspace(4.0, 10.0, 21)
-    np.testing.assert_allclose(dist.ppf(dist.cdf(values)), values)
-    probs = np.linspace(0.01, 0.99, 21)
-    np.testing.assert_allclose(dist.cdf(dist.ppf(probs)), probs)
-
-
-def test_GumbelDistribution_along_axis():
-    sample = [
-        [0.3, 3.0, 30.0],
-        [0.5, 5.0, 50.0],
-        [0.7, 7.0, 70.0],
-        [0.3, 3.0, 30.0],
-        [0.4, 4.0, 40.0],
-        [0.6, 6.0, 60.0],
-        [0.7, 7.0, 70.0],
-    ]
-    dist = stats.GumbelDistribution.fit(sample, axis=0)
-    values = dist.ppf([0.01, 0.3, 0.5, 0.6, 0.99])
-    assert values.shape == (5, 3)
-    # Results should scale with values
-    np.testing.assert_allclose(values[:, 0] * 10.0, values[:, 1])
-    np.testing.assert_allclose(values[:, 1] * 10.0, values[:, 2])
-
-
-def test_return_period_identity():
-    dist = stats.GumbelDistribution.fit([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
-    values = np.linspace(4.0, 10.0, 21)
-    np.testing.assert_allclose(
-        stats.return_period_to_value(dist, stats.value_to_return_period(dist, values)), values
-    )
-
-
-def test_return_period_with_frequency():
-    freq = np.timedelta64(24 * 60 * 60, "s")
-    sample = [4.0, 3.0, 5.5, 6.0, 7.0, 5.3, 2.1]
-    dist = stats.GumbelDistribution.fit(sample, freq=freq)
-    # Return periods should be scaled by the given frequency
-    assert stats.value_to_return_period(dist, 6.0).dtype == freq.dtype
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+def test_quantiles_dim_argument(xp, device):
+    arr = xp.asarray([[1.0, 2.0, 3.0], [2.0, 4.0, 6.0]], device=device)
+    got = xp.asarray([q for q in stats.iter_quantiles(arr, which=[0.5], dim=1, method="numpy")])[0]
+    ref = xp.asarray([2.0, 4.0], device=device)
+    assert xp.allclose(got, ref)

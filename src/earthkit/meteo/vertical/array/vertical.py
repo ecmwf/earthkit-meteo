@@ -22,7 +22,10 @@ from earthkit.meteo import constants
 
 @deprecation.deprecated(deprecated_in="0.7", details="Use pressure_on_hybrid_levels instead.")
 def pressure_at_model_levels(
-    A: NDArray[Any], B: NDArray[Any], sp: Union[float, NDArray[Any]], alpha_top: str = "ifs"
+    A: NDArray[Any],
+    B: NDArray[Any],
+    sp: Union[float, NDArray[Any]],
+    alpha_top: str = "ifs",
 ) -> Tuple[NDArray[Any], NDArray[Any], NDArray[Any], NDArray[Any]]:
     r"""Compute pressure at model full- and half-levels.
 
@@ -40,7 +43,8 @@ def pressure_at_model_levels(
     sp : number or ndarray
         Surface pressure (Pa)
     alpha_top : str, optional
-        Option to initialise alpha on the top of the model atmosphere (first half-level in vertical coordinate system). The possible values are:
+        Option to initialise alpha on the top of the model atmosphere (first
+        half-level in vertical coordinate system). The possible values are:
 
         - "ifs": alpha is set to log(2). See [IFS-CY47R3-Dynamics]_ (page 7) for details.
         - "arpege": alpha is set to 1.0
@@ -148,7 +152,8 @@ def pressure_at_model_levels(
 
 
 @deprecation.deprecated(
-    deprecated_in="0.7", details="Use relative_geopotential_thickness_on_hybrid_levels instead."
+    deprecated_in="0.7",
+    details="Use relative_geopotential_thickness_on_hybrid_levels instead.",
 )
 def relative_geopotential_thickness(
     alpha: ArrayLike, delta: ArrayLike, t: ArrayLike, q: ArrayLike
@@ -192,7 +197,7 @@ def relative_geopotential_thickness(
     pressure_at_model_levels
 
     """
-    from earthkit.meteo.thermo import specific_gas_constant
+    from earthkit.meteo.thermo.array import specific_gas_constant
 
     xp = array_namespace(alpha, delta, q, t)
 
@@ -317,7 +322,9 @@ def pressure_at_height_levels(
     dphi_below = dphi[below]
 
     # print(
-    #     f"tdphi: {tdphi} above: {above} below: {below} dphi_above: {dphi_above} dphi_below  {dphi_below} p_full[above]: {p_full[above]} p_full[below]: {p_full[below]}"
+    #     f"tdphi: {tdphi} above: {above} below: {below} "
+    #     f"dphi_above: {dphi_above} dphi_below  {dphi_below} "
+    #     f"p_full[above]: {p_full[above]} p_full[below]: {p_full[below]}"
     # )
 
     # calculate the interpolation factor
@@ -354,13 +361,13 @@ def geopotential_height_from_geopotential(z):
     return h
 
 
-def geopotential_from_geopotential_height(h):
+def geopotential_from_geopotential_height(gh):
     r"""Compute geopotential height from geopotential.
 
     Parameters
     ----------
-    z : array-like
-        Geopotential (m2/s2)
+    gh : array-like
+        Geopotential height (m)
 
     Returns
     -------
@@ -377,7 +384,7 @@ def geopotential_from_geopotential_height(h):
     where :math:`g` is the gravitational acceleration on the surface of
     the Earth (see :py:attr:`meteo.constants.g`)
     """
-    z = h * constants.g
+    z = gh * constants.g
     return z
 
 
@@ -781,7 +788,7 @@ def _compute_relative_geopotential_thickness_on_hybrid_levels(
 
     Notes
     -----
-    ``alpha`` and ``delta``can be calculated using :func:`pressure_on_hybrid_levels`.
+    ``alpha`` and ``delta`` can be calculated using :func:`pressure_on_hybrid_levels`.
 
     The computations are described in [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1.
 
@@ -795,7 +802,7 @@ def _compute_relative_geopotential_thickness_on_hybrid_levels(
     pressure_on_hybrid_levels
 
     """
-    from earthkit.meteo.thermo import specific_gas_constant
+    from earthkit.meteo.thermo.array import specific_gas_constant
 
     R = specific_gas_constant(q)
     d = R * t

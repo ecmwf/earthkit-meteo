@@ -136,4 +136,6 @@ class Tolerance:
 
 
 NO_XARRAY = not modules_installed("xarray")
+NO_EKD = not modules_installed("earthkit.data")
 NO_SCORES = not modules_installed("scores")
+NO_SCIPY = not modules_installed("scipy")

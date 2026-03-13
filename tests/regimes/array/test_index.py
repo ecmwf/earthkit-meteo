@@ -21,13 +21,16 @@ def patterns():
         _dipole = np.cos(np.deg2rad(_lon[None, :])) * np.cos(np.deg2rad(_lat[:, None]) * 2)
         _monopole = np.cos(np.deg2rad(_lon[None, :])) * np.sin(np.deg2rad(_lat[:, None]) * 2)
         shape = (91, 121)
-        grid = {"grid": [1.0, 1.0], "area": [max(_lat), min(_lon), min(_lat), max(_lon)]}
+        grid = {
+            "grid": [1.0, 1.0],
+            "area": [max(_lat), min(_lon), min(_lat), max(_lon)],
+        }
 
         def patterns(self, single=True):
             return {
-                "dipole": self._dipole if single else np.stack([self._dipole, 2 * self._dipole]),
-                "monopole": self._monopole if single else np.stack([self._monopole, 2 * self._monopole]),
-                "dipole_inv": -self._dipole if single else np.stack([-self._dipole, -2 * self._dipole]),
+                "dipole": (self._dipole if single else np.stack([self._dipole, 2 * self._dipole])),
+                "monopole": (self._monopole if single else np.stack([self._monopole, 2 * self._monopole])),
+                "dipole_inv": (-self._dipole if single else np.stack([-self._dipole, -2 * self._dipole])),
             }
 
     return MockPatterns()
@@ -91,7 +94,10 @@ def test_project_generates_weights_by_default(patterns):
 
 def test_project_with_single_pattern_return(patterns):
     proj = array.project(
-        np.ones((2, *patterns.shape)), patterns, weights=np.ones(patterns.shape), single=True
+        np.ones((2, *patterns.shape)),
+        patterns,
+        weights=np.ones(patterns.shape),
+        single=True,
     )
     # All patterns are the same; monopole has nonzero projection
     assert proj["monopole"].shape == (2,)
@@ -100,7 +106,10 @@ def test_project_with_single_pattern_return(patterns):
 
 def test_project_with_multiple_pattern_return(patterns):
     proj = array.project(
-        np.ones((2, *patterns.shape)), patterns, weights=np.ones(patterns.shape), single=False
+        np.ones((2, *patterns.shape)),
+        patterns,
+        weights=np.ones(patterns.shape),
+        single=False,
     )
     # Second pattern has twice the amplitude; monopole has nonzero projection
     assert proj["monopole"].shape == (2,)

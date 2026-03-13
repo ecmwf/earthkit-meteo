@@ -37,7 +37,11 @@ DATA_HYBRID_H = _get_data("_hybrid_height_data")
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "z,expected_value",
-    [(0.0, 0.0), (1000.0, 101.97162129779284), ([1000.0, 10000.0], [101.9716212978, 1019.7162129779])],
+    [
+        (0.0, 0.0),
+        (1000.0, 101.97162129779284),
+        ([1000.0, 10000.0], [101.9716212978, 1019.7162129779]),
+    ],
 )
 def test_geopotential_height_from_geopotential(z, expected_value, xp, device):
     z = xp.asarray(z, device=device)
@@ -50,7 +54,11 @@ def test_geopotential_height_from_geopotential(z, expected_value, xp, device):
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "h,expected_value",
-    [(0.0, 0.0), (101.97162129779284, 1000.0), ([101.9716212978, 1019.7162129779], [1000.0, 10000.0])],
+    [
+        (0.0, 0.0),
+        (101.97162129779284, 1000.0),
+        ([101.9716212978, 1019.7162129779], [1000.0, 10000.0]),
+    ],
 )
 def test_geopotential_from_geopotential_height(h, expected_value, xp, device):
     h = xp.asarray(h, device=device)
@@ -66,7 +74,10 @@ def test_geopotential_from_geopotential_height(h, expected_value, xp, device):
     [
         (0.0, 0.0),
         (5102.664476187331, 50000.0),
-        ([1019.8794448450, 5102.6644761873, 7146.0195417809], [10000.0, 50000.0, 70000.0]),
+        (
+            [1019.8794448450, 5102.6644761873, 7146.0195417809],
+            [10000.0, 50000.0, 70000.0],
+        ),
     ],
 )
 def test_geopotential_from_geometric_height(h, expected_value, xp, device):
@@ -101,7 +112,10 @@ def test_geopotential_height_from_geometric_height(h, expected_value, xp, device
     [
         (0.0, 0.0),
         (50000.0, 5102.664476187331),
-        ([10000.0, 50000.0, 70000.0], [1019.8794448450, 5102.6644761873, 7146.0195417809]),
+        (
+            [10000.0, 50000.0, 70000.0],
+            [1019.8794448450, 5102.6644761873, 7146.0195417809],
+        ),
     ],
 )
 def test_geometric_height_from_geopotential(z, expected_value, xp, device):
@@ -204,7 +218,10 @@ def test_pressure_on_hybrid_levels_core(index, xp, device):
     assert xp.allclose(p_half, ref_p_half, atol=atol, rtol=rtol)
 
     # for i in range(delta.shape[0]):
-    #     print(f"delta level {i}: computed={delta[i]}, reference={ref_delta[i]} diff={delta[i]-ref_delta[i]}")
+    #     print(
+    #         f"delta level {i}: computed={delta[i]}, "
+    #         f"reference={ref_delta[i]} diff={delta[i]-ref_delta[i]}"
+    #     )
 
     atol, rtol = tolerance.get(key="delta", dtype=sp.dtype)
     assert xp.allclose(delta, ref_delta, atol=atol, rtol=rtol)
@@ -241,7 +258,12 @@ def test_pressure_on_hybrid_levels_axis(index, xp, device):
     ref_alpha = ref_alpha[index]
 
     p_full, p_half, delta, alpha = vertical.pressure_on_hybrid_levels(
-        A, B, sp, alpha_top="ifs", output=["full", "half", "delta", "alpha"], vertical_axis=vertical_axis
+        A,
+        B,
+        sp,
+        alpha_top="ifs",
+        output=["full", "half", "delta", "alpha"],
+        vertical_axis=vertical_axis,
     )
 
     input_shape = sp.shape
@@ -282,7 +304,8 @@ def test_pressure_on_hybrid_levels_axis(index, xp, device):
 # @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
 @pytest.mark.parametrize(
-    "levels", [None, list(range(90, 138)), list(range(137, 90, -1)), [1, 2], [2, 1], [1]]
+    "levels",
+    [None, list(range(90, 138)), list(range(137, 90, -1)), [1, 2], [2, 1], [1]],
 )
 @pytest.mark.parametrize(
     "output",
@@ -307,7 +330,12 @@ def test_pressure_on_hybrid_levels_output(index, levels, output, xp, device):
     ref_delta = DATA_HYBRID_CORE.delta
     ref_alpha = DATA_HYBRID_CORE.alpha
 
-    # ref_def = {"full": DATA.p_full, "half": DATA.p_half, "delta": DATA_HYBRID_CORE.delta, "alpha": DATA_HYBRID_CORE.alpha}
+    # ref_def = {
+    #     "full": DATA.p_full,
+    #     "half": DATA.p_half,
+    #     "delta": DATA_HYBRID_CORE.delta,
+    #     "alpha": DATA_HYBRID_CORE.alpha,
+    # }
     # ref = {
     #     key: val
     #     for key, val in ref_def.items()

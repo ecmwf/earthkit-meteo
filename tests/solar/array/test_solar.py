@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
-from earthkit.meteo import solar
+from earthkit.meteo.solar.array import solar
 
 
 @pytest.mark.parametrize(
@@ -22,7 +22,10 @@ from earthkit.meteo import solar
     [
         (datetime.datetime(2024, 4, 22), 112.0),
         (datetime.datetime(2024, 4, 22, 12, 0, 0), 112.5),
-        (datetime.datetime(2024, 4, 22, 12, tzinfo=datetime.timezone(datetime.timedelta(hours=1))), 112.5),
+        (
+            datetime.datetime(2024, 4, 22, 12, tzinfo=datetime.timezone(datetime.timedelta(hours=1))),
+            112.5,
+        ),
     ],
 )
 def test_julian_day(date, expected_value):
@@ -65,10 +68,38 @@ def test_cos_solar_zenith_angle_1(xp, device, date, lat, lon, v_ref):
 @pytest.mark.parametrize(
     "begin_date,end_date,lat,lon,integration_order,v_ref",
     [
-        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 1, 0.3110738757),
-        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 2, 0.3110738757),
-        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 3, 0.3110738757),
-        (datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 4, 0.3110738757),
+        (
+            datetime.datetime(2024, 4, 22),
+            datetime.datetime(2024, 4, 23),
+            40.0,
+            18.0,
+            1,
+            0.3110738757,
+        ),
+        (
+            datetime.datetime(2024, 4, 22),
+            datetime.datetime(2024, 4, 23),
+            40.0,
+            18.0,
+            2,
+            0.3110738757,
+        ),
+        (
+            datetime.datetime(2024, 4, 22),
+            datetime.datetime(2024, 4, 23),
+            40.0,
+            18.0,
+            3,
+            0.3110738757,
+        ),
+        (
+            datetime.datetime(2024, 4, 22),
+            datetime.datetime(2024, 4, 23),
+            40.0,
+            18.0,
+            4,
+            0.3110738757,
+        ),
     ],
 )
 def test_cos_solar_zenith_angle_integrated(
@@ -93,7 +124,15 @@ def test_incoming_solar_radiation():
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "begin_date,end_date,lat,lon,v_ref",
-    [(datetime.datetime(2024, 4, 22), datetime.datetime(2024, 4, 23), 40.0, 18.0, 1503617.8237746414)],
+    [
+        (
+            datetime.datetime(2024, 4, 22),
+            datetime.datetime(2024, 4, 23),
+            40.0,
+            18.0,
+            1503617.8237746414,
+        )
+    ],
 )
 def test_toa_incident_solar_radiation(xp, device, begin_date, end_date, lat, lon, v_ref):
     lat = xp.asarray(lat, device=device)

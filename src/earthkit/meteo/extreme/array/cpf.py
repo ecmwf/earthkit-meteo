@@ -9,6 +9,9 @@
 
 from earthkit.utils.array import array_namespace
 
+from .utils import flatten_extreme_input
+from .utils import validate_extreme_shapes
+
 
 def _cpf(clim, ens, epsilon=None, from_zero=False):
     xp = array_namespace(clim, ens)
@@ -99,17 +102,22 @@ def cpf(
     epsilon=None,
     symmetric=False,
     from_zero=False,
+    clim_dim=0,
+    ens_dim=0,
 ):
-    """Compute Crossing Point Forecast (CPF)
+    """Compute Crossing Point Forecast (CPF).
+
+    The reduction axis (ensemble and quantiles) is configurable by the user,
+    but the other dimensions of clim and ens must be aligned and match.
 
     WARNING: this code is experimental, use at your own risk!
 
     Parameters
     ----------
-    clim: array-like (nclim, npoints)
-        Per-point climatology
-    ens: array-like (nens, npoints)
-        Ensemble forecast
+    clim: array-like
+        Per-point climatology. The reduction axis (quantiles) is set by ``clim_dim``.
+    ens: array-like
+        Ensemble forecast. The reduction axis (ensemble members) is set by ``ens_dim``.
     sort_clim: bool
         If True, sort the climatology first
     sort_ens: bool
@@ -123,19 +131,33 @@ def cpf(
     from_zero: bool
         If True, start looking for a crossing from the minimum, rather than the
         median
+    clim_dim: int
+        Dimension index of the climatology/quantile dimension in ``clim``. Default is 0.
+    ens_dim: int
+        Dimension index of the ensemble/member dimension in ``ens``. Default is 0.
 
     Returns
     -------
-    array-like (npoints)
-        CPF values
+    array-like
+        CPF values.
     """
+    if clim_dim is None:
+        clim_dim = 0
+    if ens_dim is None:
+        ens_dim = 0
+
     xp = array_namespace(clim, ens)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
-
-    _, npoints = clim.shape
-    _, npoints_ens = ens.shape
-    assert npoints == npoints_ens
+    validate_extreme_shapes(
+        func="cpf",
+        clim_shape=clim.shape,
+        ens_shape=ens.shape,
+        clim_dim=clim_dim,
+        ens_dim=ens_dim,
+    )
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_dim)
+    ens, _ = flatten_extreme_input(xp, ens, ens_dim)
 
     if sort_clim:
         clim = xp.sort(clim, axis=0)
@@ -152,4 +174,4 @@ def cpf(
         mask = cpf_direct < 0.5
         cpf_direct[mask] = 1 - cpf_reverse[mask]
 
-    return cpf_direct
+    return xp.reshape(cpf_direct, out_shape)
