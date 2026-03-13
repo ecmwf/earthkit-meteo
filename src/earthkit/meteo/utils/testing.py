@@ -137,3 +137,4 @@ class Tolerance:
 
 NO_XARRAY = not modules_installed("xarray")
 NO_SCORES = not modules_installed("scores")
+NO_TRANSFORMS = not modules_installed("earthkit.transforms")

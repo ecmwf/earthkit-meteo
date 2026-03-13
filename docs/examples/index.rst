@@ -25,6 +25,15 @@ Regimes
     seven_weather_regimes.ipynb
 
 
+Thermo
+++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+
+    excess_heat_factor.ipynb
+
+
 Vertical
 ++++++++++++++
 
