@@ -27,9 +27,16 @@ Weather regimes based on projections onto spatial patterns.
 """
 
 from . import array
-
-# Offer xarray implementations at high-level (TODO: support fieldlist)
-from .index import *
+from .index import project
+from .index import regime_index
 from .patterns import ConstantPatterns
 from .patterns import ModulatedPatterns
 from .patterns import Patterns
+
+__all__ = [
+    "ConstantPatterns",
+    "ModulatedPatterns",
+    "Patterns",
+    "project",
+    "regime_index",
+]

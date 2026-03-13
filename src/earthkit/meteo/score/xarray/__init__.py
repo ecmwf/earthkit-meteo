@@ -10,6 +10,7 @@
 from .deterministic import abs_error
 from .deterministic import cosine_similarity
 from .deterministic import error
+from .deterministic import kge
 from .deterministic import mean_abs_error
 from .deterministic import mean_error
 from .deterministic import mean_squared_error
@@ -39,4 +40,5 @@ __all__ = [
     "spread",
     "squared_error",
     "standard_deviation_of_error",
+    "kge",
 ]
