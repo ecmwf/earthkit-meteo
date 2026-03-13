@@ -10,6 +10,8 @@ from earthkit.meteo.score import crps_from_ensemble
 from earthkit.meteo.score import crps_from_gaussian as crps_gaussian
 from earthkit.meteo.score import quantile_score
 from earthkit.meteo.score import spread
+from earthkit.meteo.utils.testing import NO_SCORES
+from earthkit.meteo.utils.testing import NO_SCIPY
 
 LATITUDES = [40.0, 41.0]
 LONGITUDES = [10.0, 11.0]
@@ -255,6 +257,7 @@ def test_quantile_score_invalid_tau(tau: float):
         quantile_score(fcst, obs, tau=tau, over="number")
 
 
+@pytest.mark.skipif(NO_SCIPY, reason="scipy required for Gaussian CRPS tests")
 def test_crps_gaussian():
     fcst_mean_values = np.array(
         [
@@ -332,6 +335,7 @@ def test_crps_gaussian_invalid_input():
         )
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_crps_from_ensemble_invalid_method():
     fcst_values = np.random.rand(2, 2, 2, 10)
     obs_values = np.random.rand(2, 2, 2)
@@ -343,6 +347,7 @@ def test_crps_from_ensemble_invalid_method():
         crps_from_ensemble(fcst, obs, over="number", method="invalid_method")
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 @pytest.mark.parametrize(
     "method,expected_total,expected_spread",
     [
@@ -479,6 +484,7 @@ def test_crps_from_ensemble_underover(method: str, expected_total: np.ndarray, e
         assert_component_allclose(crps_components, component, values)
 
 
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 @pytest.mark.parametrize(
     "method,expected_total",
     [
@@ -614,6 +620,7 @@ def test_crps_from_ensemble_hersbach(method: str, expected_total: np.ndarray):
 
 
 @pytest.mark.filterwarnings("ignore:numba is not available")
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_crps_from_cdf():
     threshold_values = np.array([5.0, 8.333333333333334, 11.666666666666668, 15.0], dtype=float)
     cdf_values = np.array(
@@ -679,6 +686,7 @@ def test_crps_from_cdf():
 
 
 @pytest.mark.filterwarnings("ignore:numba is not available")
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_crps_from_cdf_weighted_thresholds():
     threshold_values = np.array([5.0, 8.333333333333334, 11.666666666666668, 15.0], dtype=float)
     cdf_values = np.array(
@@ -718,6 +726,7 @@ def test_crps_from_cdf_weighted_thresholds():
 
 
 @pytest.mark.filterwarnings("ignore:numba is not available")
+@pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_crps_from_cdf_invalid_cdf_values():
     threshold_values = np.array([5.0, 10.0, 15.0], dtype=float)
     cdf_values = np.zeros(

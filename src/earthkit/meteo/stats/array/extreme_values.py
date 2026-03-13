@@ -8,7 +8,6 @@
 #
 
 from earthkit.utils.array import array_namespace
-from scipy.stats import lmoment
 
 
 def _expand_dims_after(arr, ndim, xp=None):
@@ -122,6 +121,9 @@ def fit_gumbel(sample, dim=0, **kwargs):
         Fitting over a dimension of a multi-dimensional sample array, the
         outcome is a collection of (scalar-valued) distributions.
     """
+    # Import lazily so tests can be collected and skipped when scipy is absent.
+    from scipy.stats import lmoment
+
     xp = array_namespace(sample)
     lmom = lmoment(sample, axis=dim, order=[1, 2])
     sigma = lmom[1] / xp.log(2)

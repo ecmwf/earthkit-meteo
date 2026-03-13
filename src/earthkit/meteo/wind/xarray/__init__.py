@@ -11,4 +11,20 @@
 Wind related functions operating on xarray objects.
 """
 
-from .wind import *  # noqa
+from .wind import coriolis
+from .wind import direction
+from .wind import polar_to_xy
+from .wind import speed
+from .wind import w_from_omega
+from .wind import windrose
+from .wind import xy_to_polar
+
+__all__ = [
+    "coriolis",
+    "direction",
+    "polar_to_xy",
+    "speed",
+    "w_from_omega",
+    "windrose",
+    "xy_to_polar",
+]
