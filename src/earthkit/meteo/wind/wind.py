@@ -369,9 +369,11 @@ def coriolis(lat: "xarray.DataArray" | "ArrayLike") -> "xarray.DataArray" | "Arr
     where :math:`\Omega` is the rotation rate of Earth
     (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
 
+
     Implementations
     ------------------------
-    :func:`coriolis` calls one of the following implementations depending on the type of the input arguments:
+    :func:`coriolis` calls one of the following implementations depending on
+    the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.wind.array.coriolis` for array-like
     - :py:meth:`earthkit.meteo.wind.xarray.coriolis` for xarray.DataArray
@@ -435,9 +437,11 @@ def windrose(
     array-like | xarray.DataArray
         Direction bin edges (degrees).
 
+
     Implementations
     ------------------------
-    :func:`windrose` calls one of the following implementations depending on the type of the input arguments:
+    :func:`windrose` calls one of the following implementations depending on
+    the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.wind.array.windrose` for array-like
     - :py:meth:`earthkit.meteo.wind.xarray.windrose` for xarray.DataArray
