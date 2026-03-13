@@ -41,7 +41,9 @@ optional-dependencies.dev = [
 ]
 optional-dependencies.docs = [
   "docutils",
+  "furo",
   "ipykernel",
+  "nbconvert",
   "nbsphinx",
   "pygments>=2.6.1",
   "requests",          # is this needed?
@@ -50,7 +52,6 @@ optional-dependencies.docs = [
   "sphinx-autoapi",
   "sphinx-copybutton",
   "sphinx-issues",
-  "sphinx-rtd-theme",
   "sphinx-tabs",       # is this needed?
 ]
 optional-dependencies.gpu = [
