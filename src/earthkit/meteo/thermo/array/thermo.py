@@ -7,8 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-
-# import numpy as np
+from __future__ import annotations
 
 from typing import Any
 from typing import TypeAlias
@@ -16,6 +15,9 @@ from typing import TypeAlias
 from earthkit.utils.array import array_namespace
 
 from earthkit.meteo import constants
+
+# import numpy as np
+
 
 ArrayLike: TypeAlias = Any
 

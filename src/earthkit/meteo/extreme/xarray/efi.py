@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+from __future__ import annotations
+
 import xarray as xr
 
 from earthkit.meteo.utils.decorators import get_dim_from_defaults

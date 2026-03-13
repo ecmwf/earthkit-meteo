@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+from __future__ import annotations
+
 from earthkit.utils.array import array_namespace
 
 
