@@ -24,61 +24,29 @@ ArrayLike: TypeAlias = Any
 
 
 @overload
-def speed(u: "xarray.DataArray", v: "xarray.DataArray") -> "xarray.DataArray":
-    r"""Compute the wind speed/vector magnitude.
-
-    Parameters
-    ----------
-    u: xarray.DataArray
-        u wind/x vector component
-    v: xarray.DataArray
-        v wind/y vector component (same units as ``u``)
-
-    Returns
-    -------
-    xarray.DataArray
-        Wind speed/magnitude (same units as ``u`` and ``v``)
-
-    """
-    ...
+def speed(u: "ArrayLike", v: "ArrayLike") -> "ArrayLike":...
 
 
 @overload
-def speed(u: "ArrayLike", v: "ArrayLike") -> "ArrayLike":
-    r"""Compute the wind speed/vector magnitude.
-
-    Parameters
-    ----------
-    u: array-like
-        u wind/x vector component
-    v: array-like
-        v wind/y vector component (same units as ``u``)
-
-    Returns
-    -------
-    array-like
-        Wind speed/magnitude (same units as ``u`` and ``v``)
-
-    """
-    ...
+def speed(u: "xarray.DataArray", v: "xarray.DataArray") -> "xarray.DataArray": ...
 
 
 def speed(
-    u: "xarray.DataArray" | "ArrayLike",
-    v: "xarray.DataArray" | "ArrayLike",
-) -> "xarray.DataArray" | "ArrayLike":
+    u: "ArrayLike" | "xarray.DataArray",
+    v: "ArrayLike" | "xarray.DataArray",
+) -> "ArrayLike" | "xarray.DataArray":
     r"""Compute the wind speed/vector magnitude.
 
     Parameters
     ----------
-    u: xarray.DataArray, array-like
+    u: array-like | xarray.DataArray
         u wind/x vector component
-    v: xarray.DataArray, array-like
+    v: array-like | xarray.DataArray
         v wind/y vector component (same units as ``u``)
 
     Returns
     -------
-    xarray.DataArray, array-like
+    array-like | xarray.DataArray
         Wind speed/magnitude (same units as ``u`` and ``v``)
 
 
@@ -86,23 +54,14 @@ def speed(
     ------------------------
     :func:`speed` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.wind.xarray.speed` for xarray.DataArray
     - :py:meth:`earthkit.meteo.wind.array.speed` for array-like
+    - :py:meth:`earthkit.meteo.wind.xarray.speed` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
 
     """
     dispatched = dispatch(speed, fieldlist=False, array=True)
     return dispatched(u, v)
-
-
-@overload
-def direction(
-    u: "xarray.DataArray",
-    v: "xarray.DataArray",
-    convention: str = "meteo",
-    to_positive: bool = True,
-) -> "xarray.DataArray": ...
 
 
 @overload
@@ -114,19 +73,28 @@ def direction(
 ) -> "ArrayLike": ...
 
 
+@overload
 def direction(
-    u: "xarray.DataArray" | "ArrayLike",
-    v: "xarray.DataArray" | "ArrayLike",
+    u: "xarray.DataArray",
+    v: "xarray.DataArray",
     convention: str = "meteo",
     to_positive: bool = True,
-) -> "xarray.DataArray" | "ArrayLike":
+) -> "xarray.DataArray": ...
+
+
+def direction(
+    u: "ArrayLike" | "xarray.DataArray",
+    v: "ArrayLike" | "xarray.DataArray",
+    convention: str = "meteo",
+    to_positive: bool = True,
+) -> "ArrayLike" | "xarray.DataArray":
     r"""Compute the direction/angle of a vector quantity.
 
     Parameters
     ----------
-    u: xarray.DataArray | array-like
+    u: array-like | xarray.DataArray
         u wind/x vector component
-    v: xarray.DataArray | array-like
+    v: array-like | xarray.DataArray
         v wind/y vector component (same units as ``u``)
     convention: str, optional
         Specify how the direction/angle is interpreted. The possible values are as follows:
@@ -141,7 +109,7 @@ def direction(
 
     Returns
     -------
-    xarray.DataArray | array-like
+    array-like | xarray.DataArray
         Direction/angle (degrees)
 
 
@@ -161,8 +129,8 @@ def direction(
     ------------------------
     :func:`direction` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.wind.xarray.direction` for xarray.DataArray
     - :py:meth:`earthkit.meteo.wind.array.direction` for array-like
+    - :py:meth:`earthkit.meteo.wind.xarray.direction` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
 
@@ -173,31 +141,31 @@ def direction(
 
 @overload
 def xy_to_polar(
-    x: "xarray.DataArray", y: "xarray.DataArray", convention: str = "meteo"
-) -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
-
-
-@overload
-def xy_to_polar(
     x: "ArrayLike", y: "ArrayLike", convention: str = "meteo"
 ) -> tuple["ArrayLike", "ArrayLike"]: ...
 
 
+@overload
 def xy_to_polar(
-    x: "xarray.DataArray" | "ArrayLike",
-    y: "xarray.DataArray" | "ArrayLike",
+    x: "xarray.DataArray", y: "xarray.DataArray", convention: str = "meteo"
+) -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
+
+
+def xy_to_polar(
+    x: "ArrayLike" | "xarray.DataArray",
+    y: "ArrayLike" | "xarray.DataArray",
     convention: str = "meteo",
 ) -> tuple[
-    "xarray.DataArray" | "ArrayLike",
-    "xarray.DataArray" | "ArrayLike",
+    "ArrayLike" | "xarray.DataArray",
+    "ArrayLike" | "xarray.DataArray",
 ]:
     r"""Convert wind/vector data from xy representation to polar representation.
 
     Parameters
     ----------
-    x: "xarray.DataArray" | array-like
+    x: array-like | xarray.DataArray
         u wind/x vector component
-    y: "xarray.DataArray" | array-like
+    y: array-like | xarray.DataArray
         v wind/y vector component (same units as ``u``)
     convention: str
         Specify how the direction/angle component of the target polar coordinate
@@ -209,9 +177,9 @@ def xy_to_polar(
 
     Returns
     -------
-    "xarray.DataArray" | array-like
+    array-like | xarray.DataArray
         Magnitude (same units as ``u``)
-    "xarray.DataArray" | array-like
+    array-like | xarray.DataArray
         Direction (degrees)
 
     Notes
@@ -223,8 +191,8 @@ def xy_to_polar(
     ------------------------
     :func:`xy_to_polar` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.wind.xarray.xy_to_polar` for xarray.DataArray
     - :py:meth:`earthkit.meteo.wind.array.xy_to_polar` for array-like
+    - :py:meth:`earthkit.meteo.wind.xarray.xy_to_polar` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
 
@@ -236,35 +204,35 @@ def xy_to_polar(
 
 @overload
 def polar_to_xy(
-    magnitude: "xarray.DataArray",
-    direction: "xarray.DataArray",
-    convention: str = "meteo",
-) -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
-
-
-@overload
-def polar_to_xy(
     magnitude: "ArrayLike",
     direction: "ArrayLike",
     convention: str = "meteo",
 ) -> tuple["ArrayLike", "ArrayLike"]: ...
 
 
+@overload
 def polar_to_xy(
-    magnitude: "xarray.DataArray" | "ArrayLike",
-    direction: "xarray.DataArray" | "ArrayLike",
+    magnitude: "xarray.DataArray",
+    direction: "xarray.DataArray",
+    convention: str = "meteo",
+) -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
+
+
+def polar_to_xy(
+    magnitude: "ArrayLike" | "xarray.DataArray",
+    direction: "ArrayLike" | "xarray.DataArray",
     convention: str = "meteo",
 ) -> tuple[
-    "xarray.DataArray" | "ArrayLike",
-    "xarray.DataArray" | "ArrayLike",
+    "ArrayLike" | "xarray.DataArray",
+    "ArrayLike" | "xarray.DataArray",
 ]:
     r"""Convert wind/vector data from polar representation to xy representation.
 
     Parameters
     ----------
-    magnitude: "xarray.DataArray" | array-like
+    magnitude: array-like | xarray.DataArray
         Speed/magnitude of the vector
-    direction: "xarray.DataArray" | array-like
+    direction: array-like | xarray.DataArray
         Direction of the vector (degrees)
     convention: str
         Specify how ``direction`` is interpreted. The possible values are as follows:
@@ -276,9 +244,9 @@ def polar_to_xy(
 
     Returns
     -------
-    "xarray.DataArray" | array-like
+    array-like | xarray.DataArray
         X vector component (same units as ``magnitude``)
-    "xarray.DataArray" | array-like
+    array-like | xarray.DataArray
         Y vector component (same units as ``magnitude``)
 
 
@@ -291,8 +259,8 @@ def polar_to_xy(
     ------------------------
     :func:`polar_to_xy` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.wind.xarray.polar_to_xy` for xarray.DataArray
     - :py:meth:`earthkit.meteo.wind.array.polar_to_xy` for array-like
+    - :py:meth:`earthkit.meteo.wind.xarray.polar_to_xy` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
 
@@ -318,10 +286,10 @@ def w_from_omega(
 
 
 def w_from_omega(
-    omega: "xarray.DataArray" | "ArrayLike",
-    t: "xarray.DataArray" | "ArrayLike",
-    p: "xarray.DataArray" | "ArrayLike",
-) -> "xarray.DataArray" | "ArrayLike":
+    omega: "ArrayLike" | "xarray.DataArray",
+    t: "ArrayLike" | "xarray.DataArray",
+    p: "ArrayLike" | "xarray.DataArray",
+) -> "ArrayLike" | "xarray.DataArray":
     r"""Compute the hydrostatic vertical velocity from pressure velocity
 
     Parameters
@@ -330,12 +298,12 @@ def w_from_omega(
         Hydrostatic pressure velocity (Pa/s)
     t : array-like
         Temperature (K)
-    p : "xarray.DataArray" | ArrayLike
+    p : array-like | xarray.DataArray
         Pressure (Pa)
 
     Returns
     -------
-    "xarray.DataArray" | array-like
+    array-like | xarray.DataArray
         Hydrostatic vertical velocity (m/s)
 
     Notes
@@ -356,8 +324,8 @@ def w_from_omega(
     ------------------------
     :func:`w_from_omega` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.wind.xarray.w_from_omega` for xarray.DataArray
     - :py:meth:`earthkit.meteo.wind.array.w_from_omega` for array-like
+    - :py:meth:`earthkit.meteo.wind.xarray.w_from_omega` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
 
@@ -367,11 +335,11 @@ def w_from_omega(
 
 
 @overload
-def coriolis(lat: "xarray.DataArray") -> "xarray.DataArray": ...
+def coriolis(lat: "ArrayLike") -> "ArrayLike": ...
 
 
 @overload
-def coriolis(lat: "ArrayLike") -> "ArrayLike": ...
+def coriolis(lat: "xarray.DataArray") -> "xarray.DataArray": ...
 
 
 def coriolis(lat: "xarray.DataArray" | "ArrayLike") -> "xarray.DataArray" | "ArrayLike":
@@ -379,12 +347,12 @@ def coriolis(lat: "xarray.DataArray" | "ArrayLike") -> "xarray.DataArray" | "Arr
 
     Parameters
     ----------
-    lat : Xarray.DataArray | array-like
+    lat : array-like | xarray.DataArray
         Latitude (degrees)
 
     Returns
     -------
-    Xarray.DataArray | array-like
+    array-like | xarray.DataArray
         The Coriolis parameter (:math:`s^{-1}`)
 
     Notes
@@ -402,24 +370,14 @@ def coriolis(lat: "xarray.DataArray" | "ArrayLike") -> "xarray.DataArray" | "Arr
     ------------------------
     :func:`coriolis` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.wind.xarray.coriolis` for xarray.DataArray
     - :py:meth:`earthkit.meteo.wind.array.coriolis` for array-like
+    - :py:meth:`earthkit.meteo.wind.xarray.coriolis` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
 
     """
     dispatched = dispatch(coriolis, fieldlist=False, array=True)
     return dispatched(lat)
-
-
-@overload
-def windrose(
-    speed: "xarray.DataArray",
-    direction: "xarray.DataArray",
-    sectors: int = 16,
-    speed_bins: Iterable[float] | None = None,
-    percent: bool = True,
-) -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
 
 
 @overload
@@ -432,23 +390,33 @@ def windrose(
 ) -> tuple["ArrayLike", "ArrayLike"]: ...
 
 
+@overload
 def windrose(
-    speed: "xarray.DataArray" | "ArrayLike",
-    direction: "xarray.DataArray" | "ArrayLike",
+    speed: "xarray.DataArray",
+    direction: "xarray.DataArray",
+    sectors: int = 16,
+    speed_bins: Iterable[float] | None = None,
+    percent: bool = True,
+) -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
+
+
+def windrose(
+    speed: "ArrayLike" | "xarray.DataArray",
+    direction: "ArrayLike" | "xarray.DataArray",
     sectors: int = 16,
     speed_bins: Iterable[float] | None = None,
     percent: bool = True,
 ) -> tuple[
-    "xarray.DataArray" | "ArrayLike",
-    "xarray.DataArray" | "ArrayLike",
+    "ArrayLike" | "xarray.DataArray",
+    "ArrayLike" | "xarray.DataArray",
 ]:
     """Generate windrose data.
 
     Parameters
     ----------
-    speed : xarray.DataArray | array-like
+    speed : array-like | xarray.DataArray
         Speed.
-    direction : xarray.DataArray | array-like
+    direction : array-like | xarray.DataArray
         Meteorological wind direction (degrees). Values must be in [0, 360].
     sectors : int, optional
         Number of sectors the 360 degree range is split into.
@@ -459,17 +427,17 @@ def windrose(
 
     Returns
     -------
-    xarray.DataArray | array-like
+    array-like | xarray.DataArray
         2D histogram over speed and direction bins.
-    xarray.DataArray | array-like
+    array-like | xarray.DataArray
         Direction bin edges (degrees).
 
     Implementations
     ------------------------
     :func:`windrose` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.wind.xarray.windrose` for xarray.DataArray
     - :py:meth:`earthkit.meteo.wind.array.windrose` for array-like
+    - :py:meth:`earthkit.meteo.wind.xarray.windrose` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
 

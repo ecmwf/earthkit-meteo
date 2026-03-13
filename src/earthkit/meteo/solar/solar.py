@@ -28,16 +28,17 @@ ArrayLike: TypeAlias = Any
 
 
 @overload
-def julian_day(date: "xarray.DataArray") -> "xarray.DataArray": ...
-@overload
 def julian_day(date: DateLike) -> float: ...
+@overload
+def julian_day(date: "xarray.DataArray") -> "xarray.DataArray": ...
 def julian_day(date):
     r"""Compute the Julian day (day of year as a fractional number).
 
     Parameters
     ----------
     date: datetime.datetime | numpy.datetime64 | xarray.DataArray
-        Date/time. When ``date`` is an xarray.DataArray it is processed element-wise.
+        Date/time. Scalar date inputs return a scalar value; ``xarray.DataArray``
+        inputs are processed element-wise.
 
     Returns
     -------
@@ -48,8 +49,8 @@ def julian_day(date):
     ------------------------
     :func:`julian_day` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.solar.xarray.julian_day` for xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.julian_day` for scalar/array inputs
+    - :py:meth:`earthkit.meteo.solar.xarray.julian_day` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -58,9 +59,9 @@ def julian_day(date):
 
 
 @overload
-def solar_declination_angle(date: "xarray.DataArray") -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
-@overload
 def solar_declination_angle(date: DateLike) -> tuple[float, float]: ...
+@overload
+def solar_declination_angle(date: "xarray.DataArray") -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
 def solar_declination_angle(date):
     r"""Compute the solar declination angle and time correction.
 
@@ -81,8 +82,8 @@ def solar_declination_angle(date):
     ------------------------
     :func:`solar_declination_angle` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.solar.xarray.solar_declination_angle` for xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.solar_declination_angle` for scalar/array inputs
+    - :py:meth:`earthkit.meteo.solar.xarray.solar_declination_angle` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -91,11 +92,11 @@ def solar_declination_angle(date):
 
 
 @overload
+def cos_solar_zenith_angle(date: DateLike, latitudes: ArrayLike, longitudes: ArrayLike): ...
+@overload
 def cos_solar_zenith_angle(
     date: DateLike, latitudes: "xarray.DataArray", longitudes: "xarray.DataArray"
 ) -> "xarray.DataArray": ...
-@overload
-def cos_solar_zenith_angle(date: DateLike, latitudes: ArrayLike, longitudes: ArrayLike): ...
 def cos_solar_zenith_angle(date, latitudes, longitudes):
     r"""Compute the cosine of the solar zenith angle.
 
@@ -121,8 +122,8 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
     ------------------------
     :func:`cos_solar_zenith_angle` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle` when any input is xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.cos_solar_zenith_angle` otherwise
+    - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle` when any input is xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -134,22 +135,22 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
 def cos_solar_zenith_angle_integrated(
     begin_date: DateLike,
     end_date: DateLike,
-    latitudes: "xarray.DataArray",
-    longitudes: "xarray.DataArray",
-    *,
-    intervals_per_hour: int = 1,
-    integration_order: int = 3,
-) -> "xarray.DataArray": ...
-@overload
-def cos_solar_zenith_angle_integrated(
-    begin_date: DateLike,
-    end_date: DateLike,
     latitudes: ArrayLike,
     longitudes: ArrayLike,
     *,
     intervals_per_hour: int = 1,
     integration_order: int = 3,
 ): ...
+@overload
+def cos_solar_zenith_angle_integrated(
+    begin_date: DateLike,
+    end_date: DateLike,
+    latitudes: "xarray.DataArray",
+    longitudes: "xarray.DataArray",
+    *,
+    intervals_per_hour: int = 1,
+    integration_order: int = 3,
+) -> "xarray.DataArray": ...
 def cos_solar_zenith_angle_integrated(
     begin_date,
     end_date,
@@ -186,8 +187,8 @@ def cos_solar_zenith_angle_integrated(
     :func:`cos_solar_zenith_angle_integrated` calls one of the following implementations depending on the type
     of the input arguments:
 
-    - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle_integrated` when any input is xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.cos_solar_zenith_angle_integrated` otherwise
+    - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle_integrated` when any input is xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -203,9 +204,9 @@ def cos_solar_zenith_angle_integrated(
 
 
 @overload
-def incoming_solar_radiation(date: "xarray.DataArray") -> "xarray.DataArray": ...
-@overload
 def incoming_solar_radiation(date: DateLike) -> float: ...
+@overload
+def incoming_solar_radiation(date: "xarray.DataArray") -> "xarray.DataArray": ...
 def incoming_solar_radiation(date):
     r"""Compute the incoming solar radiation at the top of the atmosphere (TOA).
 
@@ -223,9 +224,9 @@ def incoming_solar_radiation(date):
     ------------------------
     :func:`incoming_solar_radiation` calls one of the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.solar.xarray.incoming_solar_radiation` for xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.incoming_solar_radiation` for scalar/array inputs
       (including ``numpy.datetime64``)
+    - :py:meth:`earthkit.meteo.solar.xarray.incoming_solar_radiation` for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -237,22 +238,22 @@ def incoming_solar_radiation(date):
 def toa_incident_solar_radiation(
     begin_date: DateLike,
     end_date: DateLike,
-    latitudes: "xarray.DataArray",
-    longitudes: "xarray.DataArray",
-    *,
-    intervals_per_hour: int = 1,
-    integration_order: int = 3,
-) -> "xarray.DataArray": ...
-@overload
-def toa_incident_solar_radiation(
-    begin_date: DateLike,
-    end_date: DateLike,
     latitudes: ArrayLike,
     longitudes: ArrayLike,
     *,
     intervals_per_hour: int = 1,
     integration_order: int = 3,
 ): ...
+@overload
+def toa_incident_solar_radiation(
+    begin_date: DateLike,
+    end_date: DateLike,
+    latitudes: "xarray.DataArray",
+    longitudes: "xarray.DataArray",
+    *,
+    intervals_per_hour: int = 1,
+    integration_order: int = 3,
+) -> "xarray.DataArray": ...
 def toa_incident_solar_radiation(
     begin_date,
     end_date,
@@ -289,8 +290,8 @@ def toa_incident_solar_radiation(
     :func:`toa_incident_solar_radiation` calls one of the following implementations depending on the type
     of the input arguments:
 
-    - :py:meth:`earthkit.meteo.solar.xarray.toa_incident_solar_radiation` when any input is xarray.DataArray
     - :py:meth:`earthkit.meteo.solar.array.toa_incident_solar_radiation` otherwise
+    - :py:meth:`earthkit.meteo.solar.xarray.toa_incident_solar_radiation` when any input is xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
