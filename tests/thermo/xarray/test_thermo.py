@@ -575,7 +575,11 @@ def test_xr_wet_bulb_temperature_from_specific_humidity_vectorized(t, q, p, ept_
     )
 
     ref = thermo.array.wet_bulb_temperature_from_specific_humidity(
-        np.asarray(t), np.asarray(q), np.asarray(p), ept_method=ept_method, t_method=t_method
+        np.asarray(t),
+        np.asarray(q),
+        np.asarray(p),
+        ept_method=ept_method,
+        t_method=t_method,
     )
 
     assert np.allclose(out.values, ref, equal_nan=True)

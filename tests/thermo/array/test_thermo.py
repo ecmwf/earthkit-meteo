@@ -107,7 +107,8 @@ def test_vapour_pressure_from_specific_humidity(xp, device, q, p, v_ref):
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
-    "mr, p, v_ref", [([0.0080645161, 0.0183299389], [700, 1000], [895.992614, 2862.662152])]
+    "mr, p, v_ref",
+    [([0.0080645161, 0.0183299389], [700, 1000], [895.992614, 2862.662152])],
 )
 def test_vapour_pressure_from_mixing_ratio(xp, device, mr, p, v_ref):
     mr = xp.asarray(mr, device=device)
@@ -142,7 +143,11 @@ def test_specific_humidity_from_vapour_pressure(xp, device, vp, p, v_ref):
 @pytest.mark.parametrize(
     "vp, p, v_ref",
     [
-        ([895.992614, 2862.662152, 10000], [700, 1000, 50], [0.0080645161, 0.0183299389, np.nan]),
+        (
+            [895.992614, 2862.662152, 10000],
+            [700, 1000, 50],
+            [0.0080645161, 0.0183299389, np.nan],
+        ),
         ([895.992614, 2862.662152, 100000], 700, [0.0080645161, 0.0265205849, np.nan]),
         (895.992614, 700, 0.0080645161),
         (100000.0, 700.0, np.nan),
@@ -288,7 +293,11 @@ def test_saturation_mixing_ratio_slope_1(phase, xp, device):
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "t,p,v_ref",
-    [(283.0, 1e5, 0.0005189819), (600.0, 1e5, np.nan), ([200 + 273.16], [100000.0], [np.nan])],
+    [
+        (283.0, 1e5, 0.0005189819),
+        (600.0, 1e5, np.nan),
+        ([200 + 273.16], [100000.0], [np.nan]),
+    ],
 )
 def test_saturation_mixing_ratio_slope_numbers(t, p, v_ref, xp, device):
     t = xp.asarray(t, device=device)
@@ -326,7 +335,11 @@ def test_saturation_specific_humidity_slope_1(phase, xp, device):
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "t,p,v_ref",
-    [(283.0, 1e5, 0.0005111349), (600.0, 1e5, np.nan), ([200 + 273.16], [100000.0], [np.nan])],
+    [
+        (283.0, 1e5, 0.0005111349),
+        (600.0, 1e5, np.nan),
+        ([200 + 273.16], [100000.0], [np.nan]),
+    ],
 )
 def test_saturation_specific_humidity_slope_number(t, p, v_ref, xp, device):
     t = xp.asarray(t, device=device)
@@ -408,7 +421,13 @@ def test_relative_humidity_from_dewpoint(t, td, v_ref, xp, device):
                 0.0076785187585422,
                 0.0114808182580539,
             ],
-            [99.8080506652, 100.3543440126, 97.2415646352, 71.4272979062, 73.4602316794],
+            [
+                99.8080506652,
+                100.3543440126,
+                97.2415646352,
+                71.4272979062,
+                73.4602316794,
+            ],
         ),
     ],
 )
@@ -431,7 +450,14 @@ def test_relative_humidity_from_specific_humidity(t, p, q, v_ref, xp, device):
         (
             [21.78907, 19.90885, 16.50236, 7.104064, -0.3548709, -16.37916],
             [967.5085, 936.3775, 872.248, 756.1647, 649.157, 422.4207],
-            [0.0169356947, 0.0155742615, 0.0134825872, 0.0083352286, 0.0057226735, 0.0025129738],
+            [
+                0.0169356947,
+                0.0155742615,
+                0.0134825872,
+                0.0083352286,
+                0.0057226735,
+                0.0025129738,
+            ],
         )
     ],
 )
@@ -516,7 +542,15 @@ def test_dewpoint_from_relative_humidity(t, r, v_ref, xp, device):
     "q,p,v_ref",
     [
         (
-            [0.0169461501, 0.0155840075, 0.0134912382, 0.0083409720, 0.0057268584, 0.0025150791, 0],
+            [
+                0.0169461501,
+                0.0155840075,
+                0.0134912382,
+                0.0083409720,
+                0.0057268584,
+                0.0025150791,
+                0,
+            ],
             [967.5085, 936.3775, 872.248, 756.1647, 649.157, 422.4207, 422.4207],
             [
                 21.7990700406,
@@ -558,7 +592,14 @@ def test_virtual_temperature(t, q, v_ref, xp, device):
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "t,q,p,v_ref",
-    [([286.4, 293.4], [0.0196078431, 0.0291262136], [100300.0, 95000.0], [289.5651110613, 303.0015650834])],
+    [
+        (
+            [286.4, 293.4],
+            [0.0196078431, 0.0291262136],
+            [100300.0, 95000.0],
+            [289.5651110613, 303.0015650834],
+        )
+    ],
 )
 def test_virtual_potential_temperature_temperature(t, q, p, v_ref, xp, device):
     t = xp.asarray(t, device=device)
@@ -624,7 +665,12 @@ def test_temperature_on_dry_adibat(t_def, p_def, p, v_ref, xp, device):
 @pytest.mark.parametrize(
     "t_def,p_def,t,v_ref",
     [
-        ([252.16, 298.16], [72350, 100500], [249.792414, 244.246863], [70000.0, 50000.0]),
+        (
+            [252.16, 298.16],
+            [72350, 100500],
+            [249.792414, 244.246863],
+            [70000.0, 50000.0],
+        ),
         (252.16, 72350, [249.792414, 244.246863], [70000, 64709.699161]),
     ],
 )

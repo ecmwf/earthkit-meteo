@@ -19,5 +19,4 @@ The API is organised in layers:
 For xarray interpolation workflows, see :mod:`earthkit.meteo.vertical.interpolation`.
 """
 
-
 from .vertical import *  # noqa

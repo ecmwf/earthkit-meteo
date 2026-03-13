@@ -24,9 +24,9 @@ class _ArrayPatterns:
 
     def patterns(self, single=True):
         return {
-            "dipole": self._dipole if single else np.stack([self._dipole, 2 * self._dipole]),
-            "monopole": self._monopole if single else np.stack([self._monopole, 2 * self._monopole]),
-            "dipole_inv": -self._dipole if single else np.stack([-self._dipole, -2 * self._dipole]),
+            "dipole": (self._dipole if single else np.stack([self._dipole, 2 * self._dipole])),
+            "monopole": (self._monopole if single else np.stack([self._monopole, 2 * self._monopole])),
+            "dipole_inv": (-self._dipole if single else np.stack([-self._dipole, -2 * self._dipole])),
         }
 
 
@@ -69,7 +69,11 @@ class _XarrayPatterns:
         foo = reference_da["foo"].values
         a = foo[:, None, None] * np.asarray([[1.0, 1.0, 1.0, 1.0], [1.0, 0.0, 0.0, 0.0]])
         b = foo[:, None, None] * np.asarray([[0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]])
-        coords = {"foo": reference_da["foo"], "lat": reference_da["lat"], "lon": reference_da["lon"]}
+        coords = {
+            "foo": reference_da["foo"],
+            "lat": reference_da["lat"],
+            "lon": reference_da["lon"],
+        }
         dims = ["foo", "lat", "lon"]
         yield "a", xr.DataArray(a, coords, dims)
         yield "b", xr.DataArray(b, coords, dims)
@@ -84,7 +88,10 @@ def xarray_patterns():
 def xarray_data3d():
     data2d = xr.DataArray(
         data=[[0.0, 1.0, 2.0, 3.0], [4.0, 5.0, 6.0, 7.0]],
-        coords={"lat": (["lat"], [60.0, 50.0]), "lon": (["lon"], [-10.0, 0.0, 10.0, 20.0])},
+        coords={
+            "lat": (["lat"], [60.0, 50.0]),
+            "lon": (["lon"], [-10.0, 0.0, 10.0, 20.0]),
+        },
         dims=["lat", "lon"],
     )
     return data2d.expand_dims({"foo": [1.0, 2.0, 4.0]})

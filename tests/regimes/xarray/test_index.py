@@ -24,7 +24,10 @@ def weights1d():
 def data3d():
     data2d = xr.DataArray(
         data=[[0.0, 1.0, 2.0, 3.0], [4.0, 5.0, 6.0, 7.0]],
-        coords={"lat": (["lat"], [60.0, 50.0]), "lon": (["lon"], [-10.0, 0.0, 10.0, 20.0])},
+        coords={
+            "lat": (["lat"], [60.0, 50.0]),
+            "lon": (["lon"], [-10.0, 0.0, 10.0, 20.0]),
+        },
         dims=["lat", "lon"],
     )
     return data2d.expand_dims({"foo": [1.0, 2.0, 4.0]})
@@ -43,7 +46,11 @@ def patterns():
             foo = reference_da["foo"].values
             a = foo[:, None, None] * np.asarray([[1.0, 1.0, 1.0, 1.0], [1.0, 0.0, 0.0, 0.0]])
             b = foo[:, None, None] * np.asarray([[0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]])
-            coords = {"foo": reference_da["foo"], "lat": reference_da["lat"], "lon": reference_da["lon"]}
+            coords = {
+                "foo": reference_da["foo"],
+                "lat": reference_da["lat"],
+                "lon": reference_da["lon"],
+            }
             dims = ["foo", "lat", "lon"]
             yield "a", xr.DataArray(a, coords, dims)
             yield "b", xr.DataArray(b, coords, dims)
@@ -71,7 +78,11 @@ def test_project_with_full_dimensional_weights(data3d, patterns):
     assert result.shape == (2, 3)
     assert result.coords["pattern"].values.tolist() == ["a", "b"]
     np.testing.assert_allclose(
-        result, [[30.0 / 28.0, 60.0 / 28.0, 120.0 / 28.0], [135.0 / 28.0, 270.0 / 28.0, 540.0 / 28.0]]
+        result,
+        [
+            [30.0 / 28.0, 60.0 / 28.0, 120.0 / 28.0],
+            [135.0 / 28.0, 270.0 / 28.0, 540.0 / 28.0],
+        ],
     )
 
 

@@ -110,7 +110,8 @@ def test_quantiles_core(xp, device, data, which, kwargs, v_ref, method):
 # TODO: this! test fails with cupy. The reason is that cupy.quantile works differently
 #       than np.quantile when nans are present
 @pytest.mark.parametrize(
-    "xp, device", list(filter(lambda x: x[0]._earthkit_array_namespace_name != "cupy", NAMESPACE_DEVICES))
+    "xp, device",
+    list(filter(lambda x: x[0]._earthkit_array_namespace_name != "cupy", NAMESPACE_DEVICES)),
 )
 @pytest.mark.parametrize("arr", [_get_quantile_data()])
 def test_quantiles_nans(xp, device, arr):

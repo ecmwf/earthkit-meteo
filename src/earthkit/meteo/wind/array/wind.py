@@ -307,7 +307,9 @@ def windrose(
 
     Notes
     -----
-    The ``sectors`` parameter defines the number of direction bins the 360 degreesThe sectors do not start at 0 degrees (North) but are shifted by half a sector size.
+    The ``sectors`` parameter defines the number of direction bins in 360
+    degrees. The sectors do not start at 0 degrees (North) but are shifted by
+    half a sector size.
     E.g. if ``sectors`` is 4 the sectors are defined as:
 
     .. image:: /_static/wind_sector.png
@@ -332,7 +334,11 @@ def windrose(
 
     dir_step = 360.0 / sectors
     dir_bins = xp.linspace(
-        int(-dir_step / 2), int(360 + dir_step / 2), int(360 / dir_step) + 2, dtype=speed.dtype, device=device
+        int(-dir_step / 2),
+        int(360 + dir_step / 2),
+        int(360 / dir_step) + 2,
+        dtype=speed.dtype,
+        device=device,
     )
     speed_bins = xp.asarray(speed_bins, dtype=speed.dtype, device=device)
 

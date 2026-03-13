@@ -273,7 +273,12 @@ def test_pressure_at_height_levels_all_migrated_1(h_target, p_ref, xp):
     )
 
     p = vertical.interpolate_monotonic(
-        p_ml, h_ml, h_target, aux_min_level_data=sp, aux_min_level_coord=0.0, interpolation="linear"
+        p_ml,
+        h_ml,
+        h_target,
+        aux_min_level_data=sp,
+        aux_min_level_coord=0.0,
+        interpolation="linear",
     )
 
     # print("p:", repr(p), "p_ref:", repr(p_ref), p - p_ref)
@@ -316,7 +321,12 @@ def test_pressure_at_height_levels_all_migrated_2(h_target, p_ref, xp):
     h = vertical.geopotential_height_from_geopotential(z)
 
     p = vertical.interpolate_monotonic(
-        p_full, h, h_target, aux_min_level_data=sp, aux_min_level_coord=0.0, interpolation="linear"
+        p_full,
+        h,
+        h_target,
+        aux_min_level_data=sp,
+        aux_min_level_coord=0.0,
+        interpolation="linear",
     )
 
     # print("p:", repr(p), "p_ref:", repr(p_ref), p - p_ref)

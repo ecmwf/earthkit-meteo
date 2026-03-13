@@ -189,7 +189,8 @@ def xy_to_polar(
 
     Implementations
     ------------------------
-    :func:`xy_to_polar` calls one of the following implementations depending on the type of the input arguments:
+    :func:`xy_to_polar` calls one of the following implementations depending on
+    the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.wind.array.xy_to_polar` for array-like
     - :py:meth:`earthkit.meteo.wind.xarray.xy_to_polar` for xarray.DataArray
@@ -257,7 +258,8 @@ def polar_to_xy(
 
     Implementations
     ------------------------
-    :func:`polar_to_xy` calls one of the following implementations depending on the type of the input arguments:
+    :func:`polar_to_xy` calls one of the following implementations depending on
+    the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.wind.array.polar_to_xy` for array-like
     - :py:meth:`earthkit.meteo.wind.xarray.polar_to_xy` for xarray.DataArray
@@ -322,7 +324,8 @@ def w_from_omega(
 
     Implementations
     ------------------------
-    :func:`w_from_omega` calls one of the following implementations depending on the type of the input arguments:
+    :func:`w_from_omega` calls one of the following implementations depending on
+    the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.wind.array.w_from_omega` for array-like
     - :py:meth:`earthkit.meteo.wind.xarray.w_from_omega` for xarray.DataArray

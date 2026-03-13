@@ -80,7 +80,10 @@ def value_to_return_period(value, dist):
             array.value_to_return_period,
             value,
             dist=dist,
-            xarray_ufunc_kwargs={"input_core_dims": [[]], "output_core_dims": [dist.dims]},
+            xarray_ufunc_kwargs={
+                "input_core_dims": [[]],
+                "output_core_dims": [dist.dims],
+            },
         )
         .assign_coords(dist.coords)
         .rename("return_period")

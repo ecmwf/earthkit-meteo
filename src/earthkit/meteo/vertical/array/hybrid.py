@@ -29,7 +29,10 @@ def _read_conf():
         data = json.load(f)
         d["ifs"] = dict()
         for n_levels, coeffs in data.items():
-            d["ifs"][n_levels] = {"A": np.array(coeffs["A"]), "B": np.array(coeffs["B"])}
+            d["ifs"][n_levels] = {
+                "A": np.array(coeffs["A"]),
+                "B": np.array(coeffs["B"]),
+            }
 
     return d
 

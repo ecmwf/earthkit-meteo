@@ -106,8 +106,11 @@ _DISPATCHERS = [XArrayDispatcher(), FieldListDispatcher(), ArrayDispatcher()]
 def dispatch(func, match=0, xarray=True, fieldlist=True, array=False):
     """
     Decorator to dispatch function calls based on input data types.
-    The dispatch will attempt to route the call to the appropriate implementation based on the type of the specified argument.
-    The implementations are assumed to live in submodules named after the data type (e.g., .xarray, .fieldlist, .array) with the same function name as the toplevel function.
+    The dispatch will attempt to route the call to the appropriate
+    implementation based on the type of the specified argument.
+    The implementations are assumed to live in submodules named after the data
+    type (e.g., .xarray, .fieldlist, .array) with the same function name as
+    the toplevel function.
 
     Parameters
     ----------

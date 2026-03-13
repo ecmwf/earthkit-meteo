@@ -38,7 +38,10 @@ def speed(u: xr.DataArray, v: xr.DataArray) -> xr.DataArray:
 
 
 def direction(
-    u: xr.DataArray, v: xr.DataArray, convention: str = "meteo", to_positive: bool = True
+    u: xr.DataArray,
+    v: xr.DataArray,
+    convention: str = "meteo",
+    to_positive: bool = True,
 ) -> xr.DataArray:
     r"""Compute the direction/angle of a vector quantity.
 
@@ -247,7 +250,9 @@ def windrose(
 
     Notes
     -----
-    The ``sectors`` parameter defines the number of direction bins the 360 degrees. The sectors do not start at 0 degrees (North) but are shifted by half a sector size.
+    The ``sectors`` parameter defines the number of direction bins in 360
+    degrees. The sectors do not start at 0 degrees (North) but are shifted by
+    half a sector size.
     E.g. if ``sectors`` is 4 the sectors are defined as:
 
     .. image:: /_static/wind_sector.png

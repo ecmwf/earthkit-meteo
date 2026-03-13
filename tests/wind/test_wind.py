@@ -60,7 +60,10 @@ def _case_array(xp, device):
             "polar_to_xy": ((speed, direction), {}),
             "w_from_omega": ((omega, temp, pressure), {}),
             "coriolis": ((lat,), {}),
-            "windrose": ((speed, direction_wr), {"sectors": 4, "speed_bins": speed_bins, "percent": False}),
+            "windrose": (
+                (speed, direction_wr),
+                {"sectors": 4, "speed_bins": speed_bins, "percent": False},
+            ),
         },
     }
 
@@ -88,7 +91,10 @@ def _case_xarray():
             "polar_to_xy": ((speed, direction), {}),
             "w_from_omega": ((omega, temp, pressure), {}),
             "coriolis": ((lat,), {}),
-            "windrose": ((speed, direction_wr), {"sectors": 4, "speed_bins": speed_bins, "percent": False}),
+            "windrose": (
+                (speed, direction_wr),
+                {"sectors": 4, "speed_bins": speed_bins, "percent": False},
+            ),
         },
     }
 
@@ -111,7 +117,15 @@ def backend_case(request):
 
 @pytest.mark.parametrize(
     "op_name",
-    ["speed", "direction", "xy_to_polar", "polar_to_xy", "w_from_omega", "coriolis", "windrose"],
+    [
+        "speed",
+        "direction",
+        "xy_to_polar",
+        "polar_to_xy",
+        "w_from_omega",
+        "coriolis",
+        "windrose",
+    ],
 )
 def test_highlevel_compatible_with_backend_api(backend_case, op_name):
     impl = backend_case["impl"]

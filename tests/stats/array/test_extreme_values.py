@@ -62,7 +62,8 @@ def test_GumbelDistribution_from_fit_gumbel_1d(gumbel_1d):
 def test_return_period_identity(gumbel_0d):
     values = np.linspace(4.0, 10.0, 21)
     np.testing.assert_allclose(
-        values, stats.return_period_to_value(stats.value_to_return_period(values, gumbel_0d), gumbel_0d)
+        values,
+        stats.return_period_to_value(stats.value_to_return_period(values, gumbel_0d), gumbel_0d),
     )
 
 

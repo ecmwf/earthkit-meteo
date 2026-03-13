@@ -109,7 +109,12 @@ def test_error_with_aggregation():
     # Aggregate over lat only -> should preserve lon dimension
     result_lat = error(fcst, obs, agg_method="mean", agg_dim="latitude")
     expected_lat = xr.Dataset(
-        {"2t": (["valid_datetime", "longitude"], np.array([[2.0, 2.0, 2.0], [3.0, 3.0, 3.0]]))},
+        {
+            "2t": (
+                ["valid_datetime", "longitude"],
+                np.array([[2.0, 2.0, 2.0], [3.0, 3.0, 3.0]]),
+            )
+        },
         coords={"valid_datetime": VALID_DATETIMES, "longitude": LONGITUDES},
     )
     xr.testing.assert_equal(result_lat, expected_lat)

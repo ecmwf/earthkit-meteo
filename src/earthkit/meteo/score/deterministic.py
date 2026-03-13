@@ -38,7 +38,9 @@ def error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.additive_bias <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.additive_bias>`_ function.
+        This function leverages the
+        `scores.continuous.additive_bias <https://scores.readthedocs.io/en/latest/api.html>`_
+        function.
 
     Parameters
     ----------
@@ -89,7 +91,9 @@ def mean_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.additive_bias <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.additive_bias>`_ function.
+        This function leverages the
+        `scores.continuous.additive_bias <https://scores.readthedocs.io/en/latest/api.html>`_
+        function.
 
     Parameters
     ----------
@@ -139,7 +143,9 @@ def abs_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.mae <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mae>`_ function.
+        This function leverages the
+        `scores.continuous.mae <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mae>`_
+        function.
 
     Parameters
     ----------
@@ -193,7 +199,9 @@ def mean_abs_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.mae <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mae>`_ function.
+        This function leverages the
+        `scores.continuous.mae <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mae>`_
+        function.
 
     Parameters
     ----------
@@ -245,7 +253,9 @@ def squared_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_ function.
+        This function leverages the
+        `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_
+        function.
 
     Parameters
     ----------
@@ -299,7 +309,9 @@ def mean_squared_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_ function.
+        This function leverages the
+        `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_
+        function.
 
     Parameters
     ----------
@@ -351,7 +363,9 @@ def root_mean_squared_error(
 
     .. seealso::
 
-        This function leverages the `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_ function.
+        This function leverages the
+        `scores.continuous.mse <https://scores.readthedocs.io/en/latest/api.html#scores.continuous.mse>`_
+        function.
 
     Parameters
     ----------

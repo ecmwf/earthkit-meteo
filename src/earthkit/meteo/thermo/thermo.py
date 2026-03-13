@@ -38,9 +38,11 @@ def celsius_to_kelvin(t: "xarray.DataArray") -> "xarray.DataArray":
 
     Implementations
     ------------------------
-    :func:`celsius_to_kelvin` calls one of the following implementations depending on the type of the input arguments:
+    :func:`celsius_to_kelvin` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.celsius_to_kelvin` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.celsius_to_kelvin`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -68,9 +70,11 @@ def kelvin_to_celsius(t: "xarray.DataArray") -> "xarray.DataArray":
 
     Implementations
     ------------------------
-    :func:`kelvin_to_celsius` calls one of the following implementations depending on the type of the input arguments:
+    :func:`kelvin_to_celsius` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.kelvin_to_celsius` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.kelvin_to_celsius`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -79,7 +83,9 @@ def kelvin_to_celsius(t: "xarray.DataArray") -> "xarray.DataArray":
 
 
 @overload
-def specific_humidity_from_mixing_ratio(w: "xarray.DataArray") -> "xarray.DataArray": ...
+def specific_humidity_from_mixing_ratio(
+    w: "xarray.DataArray",
+) -> "xarray.DataArray": ...
 
 
 def specific_humidity_from_mixing_ratio(w: "xarray.DataArray") -> "xarray.DataArray":
@@ -106,9 +112,11 @@ def specific_humidity_from_mixing_ratio(w: "xarray.DataArray") -> "xarray.DataAr
 
     Implementations
     ------------------------
-    :func:`specific_humidity_from_mixing_ratio` calls one of the following implementations depending on the type of the input arguments:
+    :func:`specific_humidity_from_mixing_ratio` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_mixing_ratio` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_mixing_ratio`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -117,7 +125,9 @@ def specific_humidity_from_mixing_ratio(w: "xarray.DataArray") -> "xarray.DataAr
 
 
 @overload
-def mixing_ratio_from_specific_humidity(q: "xarray.DataArray") -> "xarray.DataArray": ...
+def mixing_ratio_from_specific_humidity(
+    q: "xarray.DataArray",
+) -> "xarray.DataArray": ...
 
 
 def mixing_ratio_from_specific_humidity(q: "xarray.DataArray") -> "xarray.DataArray":
@@ -144,9 +154,11 @@ def mixing_ratio_from_specific_humidity(q: "xarray.DataArray") -> "xarray.DataAr
 
     Implementations
     ------------------------
-    :func:`mixing_ratio_from_specific_humidity` calls one of the following implementations depending on the type of the input arguments:
+    :func:`mixing_ratio_from_specific_humidity` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.mixing_ratio_from_specific_humidity` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.mixing_ratio_from_specific_humidity`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -191,9 +203,11 @@ def vapour_pressure_from_specific_humidity(
 
     Implementations
     ------------------------
-    :func:`vapour_pressure_from_specific_humidity` calls one of the following implementations depending on the type of the input arguments:
+    :func:`vapour_pressure_from_specific_humidity` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.vapour_pressure_from_specific_humidity` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.vapour_pressure_from_specific_humidity`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -238,9 +252,11 @@ def vapour_pressure_from_mixing_ratio(
 
     Implementations
     ------------------------
-    :func:`vapour_pressure_from_mixing_ratio` calls one of the following implementations depending on the type of the input arguments:
+    :func:`vapour_pressure_from_mixing_ratio` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.vapour_pressure_from_mixing_ratio` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.vapour_pressure_from_mixing_ratio`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -289,9 +305,11 @@ def specific_humidity_from_vapour_pressure(
 
     Implementations
     ------------------------
-    :func:`specific_humidity_from_vapour_pressure` calls one of the following implementations depending on the type of the input arguments:
+    :func:`specific_humidity_from_vapour_pressure` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_vapour_pressure` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_vapour_pressure`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -340,9 +358,11 @@ def mixing_ratio_from_vapour_pressure(
 
     Implementations
     ------------------------
-    :func:`mixing_ratio_from_vapour_pressure` calls one of the following implementations depending on the type of the input arguments:
+    :func:`mixing_ratio_from_vapour_pressure` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.mixing_ratio_from_vapour_pressure` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.mixing_ratio_from_vapour_pressure`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -390,7 +410,8 @@ def saturation_vapour_pressure(
 
     * if :math:`t <= t_{i}`: the formula for ``phase`` = \"ice\" is used (:math:`t_{i} = 250.16 K`)
     * if :math:`t >= t_{0}`: the formula for ``phase`` = \"water\" is used (:math:`t_{0} = 273.16 K`)
-    * for the range :math:`t_{i} < t < t_{0}` an interpolation is used between the \"ice\" and \"water\" phases:
+    * for the range :math:`t_{i} < t < t_{0}` an interpolation is used
+      between the \"ice\" and \"water\" phases:
 
     .. math::
 
@@ -401,9 +422,11 @@ def saturation_vapour_pressure(
 
     Implementations
     ------------------------
-    :func:`saturation_vapour_pressure` calls one of the following implementations depending on the type of the input arguments:
+    :func:`saturation_vapour_pressure` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_vapour_pressure` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_vapour_pressure`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -452,9 +475,11 @@ def saturation_mixing_ratio(
 
     Implementations
     ------------------------
-    :func:`saturation_mixing_ratio` calls one of the following implementations depending on the type of the input arguments:
+    :func:`saturation_mixing_ratio` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_mixing_ratio` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_mixing_ratio`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -503,9 +528,11 @@ def saturation_specific_humidity(
 
     Implementations
     ------------------------
-    :func:`saturation_specific_humidity` calls one of the following implementations depending on the type of the input arguments:
+    :func:`saturation_specific_humidity` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_specific_humidity` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_specific_humidity`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -543,9 +570,11 @@ def saturation_vapour_pressure_slope(
 
     Implementations
     ------------------------
-    :func:`saturation_vapour_pressure_slope` calls one of the following implementations depending on the type of the input arguments:
+    :func:`saturation_vapour_pressure_slope` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_vapour_pressure_slope` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_vapour_pressure_slope`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -611,9 +640,11 @@ def saturation_mixing_ratio_slope(
 
     Implementations
     ------------------------
-    :func:`saturation_mixing_ratio_slope` calls one of the following implementations depending on the type of the input arguments:
+    :func:`saturation_mixing_ratio_slope` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_mixing_ratio_slope` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_mixing_ratio_slope`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -680,9 +711,11 @@ def saturation_specific_humidity_slope(
 
     Implementations
     ------------------------
-    :func:`saturation_specific_humidity_slope` calls one of the following implementations depending on the type of the input arguments:
+    :func:`saturation_specific_humidity_slope` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_specific_humidity_slope` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_specific_humidity_slope`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -719,9 +752,11 @@ def temperature_from_saturation_vapour_pressure(
 
     Implementations
     ------------------------
-    :func:`temperature_from_saturation_vapour_pressure` calls one of the following implementations depending on the type of the input arguments:
+    :func:`temperature_from_saturation_vapour_pressure` calls one of the
+    following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.temperature_from_saturation_vapour_pressure` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.temperature_from_saturation_vapour_pressure`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -766,9 +801,11 @@ def relative_humidity_from_dewpoint(
 
     Implementations
     ------------------------
-    :func:`relative_humidity_from_dewpoint` calls one of the following implementations depending on the type of the input arguments:
+    :func:`relative_humidity_from_dewpoint` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.relative_humidity_from_dewpoint` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.relative_humidity_from_dewpoint`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -820,9 +857,11 @@ def relative_humidity_from_specific_humidity(
 
     Implementations
     ------------------------
-    :func:`relative_humidity_from_specific_humidity` calls one of the following implementations depending on the type of the input arguments:
+    :func:`relative_humidity_from_specific_humidity` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.relative_humidity_from_specific_humidity` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.relative_humidity_from_specific_humidity`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -873,9 +912,11 @@ def specific_humidity_from_dewpoint(
 
     Implementations
     ------------------------
-    :func:`specific_humidity_from_dewpoint` calls one of the following implementations depending on the type of the input arguments:
+    :func:`specific_humidity_from_dewpoint` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_dewpoint` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_dewpoint`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -926,9 +967,11 @@ def mixing_ratio_from_dewpoint(
 
     Implementations
     ------------------------
-    :func:`mixing_ratio_from_dewpoint` calls one of the following implementations depending on the type of the input arguments:
+    :func:`mixing_ratio_from_dewpoint` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.mixing_ratio_from_dewpoint` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.mixing_ratio_from_dewpoint`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -983,9 +1026,11 @@ def specific_humidity_from_relative_humidity(
 
     Implementations
     ------------------------
-    :func:`specific_humidity_from_relative_humidity` calls one of the following implementations depending on the type of the input arguments:
+    :func:`specific_humidity_from_relative_humidity` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_relative_humidity` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.specific_humidity_from_relative_humidity`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1037,9 +1082,11 @@ def dewpoint_from_relative_humidity(
 
     Implementations
     ------------------------
-    :func:`dewpoint_from_relative_humidity` calls one of the following implementations depending on the type of the input arguments:
+    :func:`dewpoint_from_relative_humidity` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.dewpoint_from_relative_humidity` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.dewpoint_from_relative_humidity`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1092,9 +1139,11 @@ def dewpoint_from_specific_humidity(
 
     Implementations
     ------------------------
-    :func:`dewpoint_from_specific_humidity` calls one of the following implementations depending on the type of the input arguments:
+    :func:`dewpoint_from_specific_humidity` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.dewpoint_from_specific_humidity` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.dewpoint_from_specific_humidity`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1139,9 +1188,11 @@ def virtual_temperature(
 
     Implementations
     ------------------------
-    :func:`virtual_temperature` calls one of the following implementations depending on the type of the input arguments:
+    :func:`virtual_temperature` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.virtual_temperature` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.virtual_temperature`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1193,9 +1244,11 @@ def virtual_potential_temperature(
 
     Implementations
     ------------------------
-    :func:`virtual_potential_temperature` calls one of the following implementations depending on the type of the input arguments:
+    :func:`virtual_potential_temperature` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.virtual_potential_temperature` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.virtual_potential_temperature`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1240,9 +1293,11 @@ def potential_temperature(
 
     Implementations
     ------------------------
-    :func:`potential_temperature` calls one of the following implementations depending on the type of the input arguments:
+    :func:`potential_temperature` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.potential_temperature` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.potential_temperature`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1287,9 +1342,11 @@ def temperature_from_potential_temperature(
 
     Implementations
     ------------------------
-    :func:`temperature_from_potential_temperature` calls one of the following implementations depending on the type of the input arguments:
+    :func:`temperature_from_potential_temperature` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.temperature_from_potential_temperature` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.temperature_from_potential_temperature`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1338,9 +1395,11 @@ def pressure_on_dry_adiabat(
 
     Implementations
     ------------------------
-    :func:`pressure_on_dry_adiabat` calls one of the following implementations depending on the type of the input arguments:
+    :func:`pressure_on_dry_adiabat` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.pressure_on_dry_adiabat` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.pressure_on_dry_adiabat`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1389,9 +1448,11 @@ def temperature_on_dry_adiabat(
 
     Implementations
     ------------------------
-    :func:`temperature_on_dry_adiabat` calls one of the following implementations depending on the type of the input arguments:
+    :func:`temperature_on_dry_adiabat` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.temperature_on_dry_adiabat` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.temperature_on_dry_adiabat`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1449,9 +1510,11 @@ def lcl_temperature(
 
     Implementations
     ------------------------
-    :func:`lcl_temperature` calls one of the following implementations depending on the type of the input arguments:
+    :func:`lcl_temperature` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.lcl_temperature` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.lcl_temperature`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1502,9 +1565,11 @@ def lcl(
 
     Implementations
     ------------------------
-    :func:`lcl` calls one of the following implementations depending on the type of the input arguments:
+    :func:`lcl` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.lcl` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.lcl`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1588,9 +1653,11 @@ def ept_from_dewpoint(
 
     Implementations
     ------------------------
-    :func:`ept_from_dewpoint` calls one of the following implementations depending on the type of the input arguments:
+    :func:`ept_from_dewpoint` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.ept_from_dewpoint` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.ept_from_dewpoint`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1639,9 +1706,11 @@ def ept_from_specific_humidity(
 
     Implementations
     ------------------------
-    :func:`ept_from_specific_humidity` calls one of the following implementations depending on the type of the input arguments:
+    :func:`ept_from_specific_humidity` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.ept_from_specific_humidity` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.ept_from_specific_humidity`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1692,7 +1761,8 @@ def saturation_ept(
 
         .. math::
 
-            \\Theta_{e} = \\Theta (\\frac{10^{5}}{p})^{\\kappa 0.28 w_{sat}}\\; exp(\\frac{2675\\; w_{sat}}{t})
+            \\Theta_{e} = \\Theta (\\frac{10^{5}}{p})^{\\kappa 0.28 w_{sat}}\\;
+            exp(\\frac{2675\\; w_{sat}}{t})
 
     * "bolton39": Eq (39) from [Bolton1980]_ is used:
 
@@ -1714,9 +1784,11 @@ def saturation_ept(
 
     Implementations
     ------------------------
-    :func:`saturation_ept` calls one of the following implementations depending on the type of the input arguments:
+    :func:`saturation_ept` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_ept` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.saturation_ept`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1771,9 +1843,11 @@ def temperature_on_moist_adiabat(
 
     Implementations
     ------------------------
-    :func:`temperature_on_moist_adiabat` calls one of the following implementations depending on the type of the input arguments:
+    :func:`temperature_on_moist_adiabat` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.temperature_on_moist_adiabat` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.temperature_on_moist_adiabat`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1835,9 +1909,11 @@ def wet_bulb_temperature_from_dewpoint(
 
     Implementations
     ------------------------
-    :func:`wet_bulb_temperature_from_dewpoint` calls one of the following implementations depending on the type of the input arguments:
+    :func:`wet_bulb_temperature_from_dewpoint` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_temperature_from_dewpoint` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_temperature_from_dewpoint`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1900,9 +1976,11 @@ def wet_bulb_temperature_from_specific_humidity(
 
     Implementations
     ------------------------
-    :func:`wet_bulb_temperature_from_specific_humidity` calls one of the following implementations depending on the type of the input arguments:
+    :func:`wet_bulb_temperature_from_specific_humidity` calls one of the
+    following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_temperature_from_specific_humidity` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_temperature_from_specific_humidity`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -1965,9 +2043,11 @@ def wet_bulb_potential_temperature_from_dewpoint(
 
     Implementations
     ------------------------
-    :func:`wet_bulb_potential_temperature_from_dewpoint` calls one of the following implementations depending on the type of the input arguments:
+    :func:`wet_bulb_potential_temperature_from_dewpoint` calls one of the
+    following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_potential_temperature_from_dewpoint` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_potential_temperature_from_dewpoint`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -2027,9 +2107,11 @@ def wet_bulb_potential_temperature_from_specific_humidity(
 
     Implementations
     ------------------------
-    :func:`wet_bulb_potential_temperature_from_specific_humidity` calls one of the following implementations depending on the type of the input arguments:
+    :func:`wet_bulb_potential_temperature_from_specific_humidity` calls one of
+    the following implementations depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_potential_temperature_from_specific_humidity` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.wet_bulb_potential_temperature_from_specific_humidity`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """
@@ -2071,9 +2153,11 @@ def specific_gas_constant(q: "xarray.DataArray") -> "xarray.DataArray":
 
     Implementations
     ------------------------
-    :func:`specific_gas_constant` calls one of the following implementations depending on the type of the input arguments:
+    :func:`specific_gas_constant` calls one of the following implementations depending on
+    the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.specific_gas_constant` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.xarray.specific_gas_constant`
+      for xarray.DataArray
 
     The function returns an object of the same type as the input arguments.
     """

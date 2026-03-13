@@ -210,7 +210,8 @@ def w_from_omega(omega: FieldList, t: FieldList, p: FieldList | ArrayLike | None
         Temperature (K). Must have the same number of fields as ``omega``.
     p : FieldList, array-like, None
         Pressure (Pa). If a FieldList is provided, it must have the same number of fields as ``omega``.
-        If an array-like is provided, it must have the same number of elements as the number of fields in ``omega``.
+        If an array-like is provided, it must have the same number of elements
+        as the number of fields in ``omega``.
         If None, the pressure is taken from the level information of each field in ``omega``. Only isobaric
         levels are supported in this case.
 
@@ -252,7 +253,8 @@ def w_from_omega(omega: FieldList, t: FieldList, p: FieldList | ArrayLike | None
             p = [p.item()] * len(omega)
         if len(omega) != len(p):
             raise ValueError(
-                f"When p is array-like, it must have the same number elements as the number of fields in omega({len(p)} != {len(omega)})"
+                "When p is array-like, it must have the same number elements "
+                f"as the number of fields in omega({len(p)} != {len(omega)})"
             )
 
     def _pressure(field, p_input=None):

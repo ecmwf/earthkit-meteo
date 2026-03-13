@@ -310,7 +310,7 @@ def cos_solar_zenith_angle_integrated(
 
 def incoming_solar_radiation(date):
     # To be replaced with improved formula
-    (a, b) = (165120.0, 4892416.0)
+    a, b = (165120.0, 4892416.0)
     angle = julian_day(date) / DAYS_PER_YEAR * np.pi * 2
     return np.cos(angle) * a + b
 
