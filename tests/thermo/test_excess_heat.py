@@ -9,14 +9,13 @@
 import numpy as np
 import pandas as pd
 import pytest
-import xarray as xr
 
 from earthkit.meteo.thermo import excess_heat
 from earthkit.meteo.utils.testing import NO_TRANSFORMS
-from earthkit.meteo.utils.testing import NO_XARRAY
 
-pytestmark = pytest.mark.skipif(NO_XARRAY, reason="requires xarray")
 pytestmark = pytest.mark.skipif(NO_TRANSFORMS, reason="requires earthkit.transforms")
+
+xr = pytest.importorskip("xarray")
 
 
 class TestDailyMeanTemperatureArgDayStart:
@@ -210,6 +209,24 @@ class TestSignificanceIndex:
         )
         xr.testing.assert_allclose(ehi_sig, ref)
 
+    @pytest.mark.parametrize("quantile", [0.05, 0.4, 0.7])
+    def test_threshold_quantile(self, dmt, quantile):
+        threshold = dmt.quantile(quantile).drop_vars("quantile")
+        xr.testing.assert_equal(
+            excess_heat.significance_index(dmt, threshold_quantile=quantile),
+            excess_heat.significance_index(dmt, threshold=threshold),
+        )
+
+    @pytest.mark.parametrize("start", ["2025-01-04", "2025-01-08", "2025-01-10"])
+    def test_threshold_period(self, dmt, start):
+        q = 0.5
+        period = slice(start, None)
+        threshold = dmt.sel(time=period).quantile(q).drop_vars("quantile")
+        xr.testing.assert_equal(
+            excess_heat.significance_index(dmt, threshold_period=period, threshold_quantile=q),
+            excess_heat.significance_index(dmt, threshold=threshold),
+        )
+
 
 class TestAcclimatisationIndex:
 
@@ -280,6 +297,14 @@ class TestHeatwaveSeverity:
         hsev = excess_heat.heatwave_severity(exhf, threshold=tr)
         ref = xr.DataArray([[0.0, 0.4, 1.2, 1.6], [0.5, 1.0, 0.5, 0.0]], dims=["foo", "time"])
         xr.testing.assert_allclose(hsev, ref)
+
+    @pytest.mark.parametrize("quantile", [0.05, 0.4, 0.7])
+    def test_threshold_quantile(self, exhf, quantile):
+        threshold = exhf.where(exhf > 0).quantile(quantile, dim="time").drop_vars("quantile")
+        xr.testing.assert_equal(
+            excess_heat.heatwave_severity(exhf, threshold_quantile=quantile),
+            excess_heat.heatwave_severity(exhf, threshold=threshold),
+        )
 
 
 class TestExcessColdFactor:

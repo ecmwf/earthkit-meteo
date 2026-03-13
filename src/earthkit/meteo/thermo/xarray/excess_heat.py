@@ -9,6 +9,7 @@
 import functools
 import numbers
 
+import earthkit.transforms._tools
 import earthkit.transforms.climatology
 import earthkit.transforms.temporal
 import numpy as np
@@ -39,8 +40,11 @@ def _rolling_mean(da, n, shift_days=0):
     )
 
 
-def _compute_threshold_as_quantile(da, q):
-    return earthkit.transforms.temporal.reduce(da, how="quantile", q=q).drop_vars("quantile")
+def _compute_threshold_as_quantile(da, quantile, period=None):
+    if period is not None:
+        time_dim = earthkit.transforms._tools.get_dim_key(da, "t")
+        da = da.sel({time_dim: period})
+    return earthkit.transforms.temporal.reduce(da, how="quantile", q=quantile).drop_vars("quantile")
 
 
 __DMT_TIME_SHIFT_COORD = "__daily_mean_temperature_time_shift"
@@ -161,7 +165,7 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
 
 
 @_with_metadata("ehi_sig", long_name="Significance index")  # TODO units
-def significance_index(dmt, ndays=3, threshold=None):
+def significance_index(dmt, ndays=3, threshold=None, threshold_period=None, threshold_quantile=0.95):
     """Excess heat significance index.
 
     Supports both fixed thresholds to identify heat and cold waves and
@@ -174,8 +178,15 @@ def significance_index(dmt, ndays=3, threshold=None):
     ndays : int, optional
         Length of evaluation time window. 3 days by default.
     threshold : xarray.DataArray | number | None, optional
-        Significance threshold. By default, the gridpoint-wise 95th percentile
-        of the input daily mean temperature timeseries is computed and used.
+        Significance threshold. If no threshold is given, a percentile of
+        the values of the input excess heat factor timeseries is computed and
+        used.
+    threshold_quantile : number, optional
+        The quantile used for the threshold if none is given.
+    threshold_period : optional
+        The period over which the quantile is computed if no threshold is given.
+        Accepts any valid selection for :py:meth:`xarray.DataArray.sel` and the
+        time dimension.
 
     Returns
     -------
@@ -198,9 +209,8 @@ def significance_index(dmt, ndays=3, threshold=None):
     - :math:`T_{95}` is the threshold of significance for the daily mean
       temperature.
 
-    The 95th percentile as the default threshold follows [Nairn2014]_, except
-    that they use a fixed reference period to compute the percentile over rather
-    than the full timeseries.
+    Using the 95th percentile of daily mean temperature over a reference period
+    as the default threshold follows [Nairn2014]_.
 
     See also
     --------
@@ -208,7 +218,7 @@ def significance_index(dmt, ndays=3, threshold=None):
     :py:func:`acclimatisation_index`
     """
     if threshold is None:
-        threshold = _compute_threshold_as_quantile(dmt, 0.95)
+        threshold = _compute_threshold_as_quantile(dmt, threshold_quantile, threshold_period)
     current = _rolling_mean(dmt, ndays, shift_days=(1 - ndays))
     # TODO: earthkit-transforms also supports weekly and monthly climatologies,
     #       make them work too, ideally without hardcoding coordinate names
@@ -317,7 +327,7 @@ def excess_heat_factor(ehi_sig, ehi_accl, clip=False):
 
 # TODO: record threshold in provenance
 @_with_metadata("hsev", long_name="Heatwave severity", units="1")
-def heatwave_severity(exhf, threshold=None):
+def heatwave_severity(exhf, threshold=None, threshold_quantile=0.85, threshold_period=None):
     """Heatwave severity index.
 
     Parameters
@@ -325,9 +335,15 @@ def heatwave_severity(exhf, threshold=None):
     exhf : xarray.DataArray
         Excess heat factor.
     threshold : xarray.DataArray | number | None, optional
-        Excess heat factor threshold. By default, the gridpoint-wise 85th
-        percentile of the input excess heat factor timeseries is computed and
-        used.
+        Excess heat factor threshold. If no threshold is given, a percentile of
+        the *positive* values of the input excess heat factor timeseries is
+        computed and used.
+    threshold_quantile : number, optional
+        The quantile used for the threshold if none is given.
+    threshold_period : optional
+        The period over which the quantile used as a threshold is computed if
+        none is given. Accepts any valid selection for the time dimension,
+        given to :py:meth:`xarray.DataArray.sel`.
 
     Returns
     -------
@@ -347,16 +363,15 @@ def heatwave_severity(exhf, threshold=None):
     - :math:`EXHF` is the excess heat factor and
     - :math:`EXHF_{85}` is a threshold of the excess heat factor.
 
-    The 85th percentile as the default threshold follows [Nairn2018]_, except
-    that they use a fixed reference period to compute the percentile over rather
-    than the full timeseries.
+    Using the 85th percentile of all positive values of the excess heat factor
+    over a reference period as the default threshold follows [Nairn2018]_.
 
     See also
     --------
     :py:func:`excess_heat_factor`
     """
     if threshold is None:
-        threshold = _compute_threshold_as_quantile(exhf, 0.85)
+        threshold = _compute_threshold_as_quantile(exhf.where(exhf > 0), threshold_quantile, threshold_period)
     return exhf / threshold
 
 
