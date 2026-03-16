@@ -96,13 +96,9 @@ class Patterns(abc.ABC):
         dims = [*extra_dims, *reference_da.dims[-self.ndim :]]
         coords = {dim: reference_da.coords[dim] for dim in dims}
         # Cartesian product of coordinates for patterns generator
-        extra_coords_arrs = dict(
-            zip(extra_dims, self.xp.meshgrid(*(coords[dim] for dim in extra_dims), indexing="ij"))
-        )
+        extra_coords_arrs = dict(zip(extra_dims, self.xp.meshgrid(*(coords[dim] for dim in extra_dims), indexing="ij")))
         # Rearrange to match provided kwarg-coord mapping
-        extra_coords = {
-            kwarg: extra_coords_arrs[patterns_extra_coords[kwarg]] for kwarg in patterns_extra_coords
-        }
+        extra_coords = {kwarg: extra_coords_arrs[patterns_extra_coords[kwarg]] for kwarg in patterns_extra_coords}
         # Delegate the pattern generation and package the patterns as DataArrays
         for name, patterns in self.patterns(**extra_coords).items():
             yield name, xr.DataArray(patterns, coords=coords, dims=dims)

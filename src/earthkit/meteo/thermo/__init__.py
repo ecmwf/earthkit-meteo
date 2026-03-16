@@ -15,5 +15,4 @@ can be used to operate on numpy arrays. The high level functions are still to be
 planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets*.
 """
 
-
 from .thermo import *  # noqa

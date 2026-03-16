@@ -299,9 +299,7 @@ def test_coriolis(lat, v_ref, xp, device):
     ],
 )
 def test_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref, xp, device):
-    sp, d, sp_bins, v_ref, dir_bin_ref = (
-        xp.asarray(x, device=device) for x in [sp, d, sp_bins, v_ref, dir_bin_ref]
-    )
+    sp, d, sp_bins, v_ref, dir_bin_ref = (xp.asarray(x, device=device) for x in [sp, d, sp_bins, v_ref, dir_bin_ref])
 
     dir_bin_ref = xp.astype(dir_bin_ref, sp.dtype)
 
@@ -315,9 +313,7 @@ def test_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref, xp, de
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "sp,d,sectors,sp_bins", [(3.4, 90.01, 0, [0, 1]), (3.4, 90.01, 6, [0]), (3.4, 90.01, 6, None)]
-)
+@pytest.mark.parametrize("sp,d,sectors,sp_bins", [(3.4, 90.01, 0, [0, 1]), (3.4, 90.01, 6, [0]), (3.4, 90.01, 6, None)])
 def test_windrose_invalid(sp, d, sectors, sp_bins, xp, device):
     if sp_bins is not None:
         sp_bins = xp.asarray(sp_bins)

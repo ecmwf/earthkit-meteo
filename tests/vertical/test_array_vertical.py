@@ -281,9 +281,7 @@ def test_pressure_on_hybrid_levels_axis(index, xp, device):
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 # @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
-@pytest.mark.parametrize(
-    "levels", [None, list(range(90, 138)), list(range(137, 90, -1)), [1, 2], [2, 1], [1]]
-)
+@pytest.mark.parametrize("levels", [None, list(range(90, 138)), list(range(137, 90, -1)), [1, 2], [2, 1], [1]])
 @pytest.mark.parametrize(
     "output",
     [
@@ -307,7 +305,8 @@ def test_pressure_on_hybrid_levels_output(index, levels, output, xp, device):
     ref_delta = DATA_HYBRID_CORE.delta
     ref_alpha = DATA_HYBRID_CORE.alpha
 
-    # ref_def = {"full": DATA.p_full, "half": DATA.p_half, "delta": DATA_HYBRID_CORE.delta, "alpha": DATA_HYBRID_CORE.alpha}
+    # ref_def = {"full": DATA.p_full, "half": DATA.p_half,
+    #             "delta": DATA_HYBRID_CORE.delta, "alpha": DATA_HYBRID_CORE.alpha}
     # ref = {
     #     key: val
     #     for key, val in ref_def.items()
@@ -366,17 +365,17 @@ def test_pressure_on_hybrid_levels_output(index, levels, output, xp, device):
         # print(f"{key=}, max abs diff={xp.max(xp.abs(res - ref[key]))}")
 
         atol, rtol = tolerance.get(key=key, dtype=sp.dtype)
-        assert xp.allclose(
-            res, ref[key], atol=atol, rtol=rtol
-        ), f"{key=}, max abs diff={xp.max(xp.abs(res - ref[key]))}"
+        assert xp.allclose(res, ref[key], atol=atol, rtol=rtol), (
+            f"{key=}, max abs diff={xp.max(xp.abs(res - ref[key]))}"
+        )
     else:
         assert isinstance(res, tuple)
         assert len(res) == len(output)
         for key, rd in zip(output, res):
             atol, rtol = tolerance.get(key=key, dtype=sp.dtype)
-            assert xp.allclose(
-                rd, ref[key], atol=atol, rtol=rtol
-            ), f"{key=}, max abs diff={xp.max(xp.abs(rd - ref[key]))}"
+            assert xp.allclose(rd, ref[key], atol=atol, rtol=rtol), (
+                f"{key=}, max abs diff={xp.max(xp.abs(rd - ref[key]))}"
+            )
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)

@@ -127,10 +127,15 @@ def crps_from_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
 
     - :math:`\mathcal{N}(\mu, \sigma^2)` is the probabilistic (Gaussian) forecast,
     - :math:`o` are the observations,
-    - :math:`\phi\left( (o - \mu)/\sigma \right)` denotes the probability density function of the normal distribution with mean 0 and variance 1 evaluated at the normalised prediction error, :math:`(o - \mu)/\sigma`,
-    - :math:`\Phi\left( (o - \mu)/\sigma \right)` denotes the cumulative distribution function of the normal distribution with mean 0 and variance 1 evaluated at the normalised prediction error, :math:`(o - \mu)/\sigma`.
+    - :math:`\phi\left( (o - \mu)/\sigma \right)` denotes the probability density function of the normal
+      distribution with mean 0 and variance 1 evaluated at the normalised prediction error,
+      :math:`(o - \mu)/\sigma`,
+    - :math:`\Phi\left( (o - \mu)/\sigma \right)` denotes the cumulative distribution function of the normal
+      distribution with mean 0 and variance 1 evaluated at the normalised prediction error,
+      :math:`(o - \mu)/\sigma`.
 
-    Reference: Gneiting, Tilmann, et al. "Calibrated probabilistic forecasting using ensemble model output statistics and minimum CRPS estimation." Monthly weather review 133.5 (2005): 1098-1118.
+    Reference: Gneiting, Tilmann, et al. "Calibrated probabilistic forecasting using ensemble model output
+    statistics and minimum CRPS estimation." Monthly weather review 133.5 (2005): 1098-1118.
 
     Parameters
     ----------
@@ -189,11 +194,13 @@ def crps_from_ensemble(
     - :math:`o` are the observations,
     - :math:`K=M^2` for the 'ecdf' method and :math:`M(M-1)` for the 'fair' method,
 
-    With `return_components=True`, this function returns an ``xr.Dataset`` with variables for the decompositions defined below.
+    With `return_components=True`, this function returns an ``xr.Dataset``
+    with variables for the decompositions defined below.
 
     If the `decomposition_method="underover"`, the ``xr.Dataset`` variables values are
-    ``underforecast_penalty``, ``overforecast_penalty``, ``spread`` and either ``fcrps`` if `method="fair"` or ``crps`` if `method="ecdf"` (ordering is not
-    guaranteed and might differ). The overall CRPS is given by
+    ``underforecast_penalty``, ``overforecast_penalty``, ``spread`` and either ``fcrps`` if
+    `method="fair"` or ``crps`` if `method="ecdf"` (ordering is not guaranteed and might differ).
+    The overall CRPS is given by
     ``underforecast_penalty + overforecast_penalty - spread``.
 
     .. math::
@@ -211,10 +218,13 @@ def crps_from_ensemble(
         S(f, f) &= \frac{1}{2K} \sum_{i=1}^{M} \sum_{j=1}^{M} |f_i - f_j| \quad& \text{(forecast spread term)}
         \end{align*}
 
-    If the decomposition method is `decomposition_method="hersbach"`, the ``xr.Dataset`` variables values are
-    ``alpha``, ``beta``, ``crps`` and additionally also ``fcrps`` if `method="fair"` (ordering is not guaranteed and might differ).
+    If the decomposition method is `decomposition_method="hersbach"`, the ``xr.Dataset``
+    variables values are ``alpha``, ``beta``, ``crps`` and additionally also ``fcrps``
+    if `method="fair"` (ordering is not guaranteed and might differ).
 
-    We denote by :math:`x_1 \le x_2 \le \dots \le x_M` the members of the ensemble forecast :math:`f` after sorting. The unfair CRPS decomposition for `decomposition_method="hersbach"` is then given by
+    We denote by :math:`x_1 \le x_2 \le \dots \le x_M` the members of the ensemble forecast
+    :math:`f` after sorting.
+    The unfair CRPS decomposition for `decomposition_method="hersbach"` is then given by
 
     .. math::
         :nowrap:
@@ -342,7 +352,8 @@ def crps_from_ensemble(
 
 
 # TODO: does this work when over is a list of dimensions?
-# TODO: decide on the nan distribution strategy and make sure it's consistent with other functions (e.g. crps_from_ensemble)
+# TODO: decide on the nan distribution strategy and make sure it's consistent with
+# other functions (e.g. crps_from_ensemble)
 def _crps_from_ensemble_hersbach(
     fcst: T,
     obs: T,

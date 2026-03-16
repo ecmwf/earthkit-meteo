@@ -15,7 +15,6 @@ from earthkit.meteo.regimes import array
 @pytest.fixture
 def patterns():
     class MockPatterns:
-
         _lat = np.linspace(90.0, 0.0, 91)
         _lon = np.linspace(60.0, -60.0, 121)
         _dipole = np.cos(np.deg2rad(_lon[None, :])) * np.cos(np.deg2rad(_lat[:, None]) * 2)
@@ -90,18 +89,14 @@ def test_project_generates_weights_by_default(patterns):
 
 
 def test_project_with_single_pattern_return(patterns):
-    proj = array.project(
-        np.ones((2, *patterns.shape)), patterns, weights=np.ones(patterns.shape), single=True
-    )
+    proj = array.project(np.ones((2, *patterns.shape)), patterns, weights=np.ones(patterns.shape), single=True)
     # All patterns are the same; monopole has nonzero projection
     assert proj["monopole"].shape == (2,)
     assert np.isclose(proj["monopole"][0], proj["monopole"][1])
 
 
 def test_project_with_multiple_pattern_return(patterns):
-    proj = array.project(
-        np.ones((2, *patterns.shape)), patterns, weights=np.ones(patterns.shape), single=False
-    )
+    proj = array.project(np.ones((2, *patterns.shape)), patterns, weights=np.ones(patterns.shape), single=False)
     # Second pattern has twice the amplitude; monopole has nonzero projection
     assert proj["monopole"].shape == (2,)
     assert np.isclose(proj["monopole"][0], 0.5 * proj["monopole"][1])

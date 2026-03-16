@@ -102,6 +102,9 @@ select = [
   "D"  # pydocstyle
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"src/earthkit/meteo/score/xarray/ensemble.py" = ["E501"]
+
 [tool.setuptools.packages.find]
 include = ["earthkit.meteo"]
 where = ["src/"]

@@ -199,9 +199,7 @@ def test_GumbelDistribution_along_axis():
 def test_return_period_identity():
     dist = stats.GumbelDistribution.fit([6.0, 5.0, 6.0, 7.0, 9.0, 5.0, 6.0, 7.0])
     values = np.linspace(4.0, 10.0, 21)
-    np.testing.assert_allclose(
-        stats.return_period_to_value(dist, stats.value_to_return_period(dist, values)), values
-    )
+    np.testing.assert_allclose(stats.return_period_to_value(dist, stats.value_to_return_period(dist, values)), values)
 
 
 def test_return_period_with_frequency():

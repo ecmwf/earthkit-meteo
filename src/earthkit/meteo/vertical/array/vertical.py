@@ -37,7 +37,8 @@ def pressure_at_model_levels(
     sp : number or ndarray
         Surface pressure (Pa)
     alpha_top : str, optional
-        Option to initialise alpha on the top of the model atmosphere (first half-level in vertical coordinate system). The possible values are:
+        Option to initialise alpha on the top of the model atmosphere
+        (first half-level in vertical coordinate system). The possible values are:
 
         - "ifs": alpha is set to log(2). See [IFS-CY47R3-Dynamics]_ (page 7) for details.
         - "arpege": alpha is set to 1.0
@@ -304,7 +305,8 @@ def pressure_at_height_levels(
     dphi_below = dphi[below]
 
     # print(
-    #     f"tdphi: {tdphi} above: {above} below: {below} dphi_above: {dphi_above} dphi_below  {dphi_below} p_full[above]: {p_full[above]} p_full[below]: {p_full[below]}"
+    #     f"tdphi: {tdphi} above: {above} below: {below} dphi_above: {dphi_above} "
+    #     f"dphi_below  {dphi_below} p_full[above]: {p_full[above]} p_full[below]: {p_full[below]}"
     # )
 
     # calculate the interpolation factor
