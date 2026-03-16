@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from earthkit.meteo.vertical.array import cape_cin as vertical
+from earthkit.meteo.thermo.array import cape_cin as thermo
 
 # Expected values are calculated based on current commit
 REFERENCE_CASES = {
@@ -334,7 +334,7 @@ def test_cape_cin_surface(case_data):
 
     cape_type = "surface"
     expected_values = case_data["expected"][cape_type]
-    cape, cin = vertical.cape_cin(p, zh, t, r, cape_type)
+    cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
     expected_cape = expected_values["cape"]
     expected_cin = expected_values["cin"]
     assert np.isclose(
@@ -355,7 +355,7 @@ def test_cape_cin_mixed(case_data):
 
     cape_type = "mixed"
     expected_values = case_data["expected"][cape_type]
-    cape, cin = vertical.cape_cin(p, zh, t, r, cape_type)
+    cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
     expected_cape = expected_values["cape"]
     expected_cin = expected_values["cin"]
     assert np.isclose(
@@ -376,7 +376,7 @@ def test_cape_cin_mu(case_data):
 
     cape_type = "mu"
     expected_values = case_data["expected"][cape_type]
-    cape, cin = vertical.cape_cin(p, zh, t, r, cape_type)
+    cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
     expected_cape = expected_values["cape"]
     expected_cin = expected_values["cin"]
     assert np.isclose(
@@ -411,7 +411,7 @@ def test_cape_cin_stacked(reference_cases_stacked):
     p, zh, t, r, expected_values = reference_cases_stacked
 
     for cape_type in ["surface", "mixed", "mu"]:
-        cape, cin = vertical.cape_cin(p, zh, t, r, cape_type)
+        cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
         expected_cape = expected_values["cape"][cape_type]
         expected_cin = expected_values["cin"][cape_type]
         assert (np.isclose(cape, expected_cape, atol=1)).all()
@@ -428,7 +428,7 @@ def test_cape_cin_vertical_axis_minus_1(reference_cases_stacked):
     zh = np.transpose(zh, (1, 0))
 
     for cape_type in ["surface", "mixed", "mu"]:
-        cape, cin = vertical.cape_cin(p, zh, t, r, cape_type, vertical_axis=-1)
+        cape, cin = thermo.cape_cin(p, zh, t, r, cape_type, vertical_axis=-1)
 
         expected_cape = expected_values["cape"][cape_type]
         expected_cin = expected_values["cin"][cape_type]
@@ -449,7 +449,7 @@ def test_cape_cin_arbitrary_nd_shape():
     zh = np.broadcast_to(np.array([100, 200, 300])[:, None, None, None], shape)
 
     for cape_type in ["surface", "mixed", "mu"]:
-        cape, cin = vertical.cape_cin(p, zh, t, r, cape_type)
+        cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
 
         assert cape.shape == horiz_shape
         assert cin.shape == horiz_shape
@@ -466,7 +466,7 @@ def test_cape_cin_lat_lon(reference_cases_stacked):
     zh = zh.reshape(nz, ny, nx)
 
     for cape_type in ["surface", "mixed", "mu"]:
-        cape, cin = vertical.cape_cin(p, zh, t, r, cape_type)
+        cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
 
         expected_cape = expected_values["cape"][cape_type].reshape(ny, nx)
         expected_cin = expected_values["cin"][cape_type].reshape(ny, nx)
@@ -483,7 +483,7 @@ def test_cape_cin_missing_values(reference_cases_stacked):
     r[3, 2] = np.nan
 
     for cape_type in ["surface", "mixed", "mu"]:
-        cape, cin = vertical.cape_cin(p, zh, t, r, cape_type)
+        cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
 
         assert np.isnan(cape[0])
         assert np.isnan(cin[0])
