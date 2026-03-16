@@ -9,8 +9,7 @@
 import numpy as np
 import pytest
 
-from earthkit.meteo.regimes.xarray import project
-from earthkit.meteo.regimes.xarray import regime_index
+from earthkit.meteo.regimes.xarray import project, regime_index
 
 xr = pytest.importorskip("xarray")
 
@@ -33,7 +32,6 @@ def data3d():
 @pytest.fixture
 def patterns():
     class MockPatterns:
-
         # Necessary properties to mock Patterns
         shape = (2, 4)
         size = 2 * 4

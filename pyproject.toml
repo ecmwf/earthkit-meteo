@@ -1,17 +1,11 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = [ "setuptools>=61", "setuptools-scm>=8", "wheel" ]
+requires = ["setuptools>=61", "setuptools-scm>=8", "wheel"]
 
 [project]
-name = "earthkit-meteo"
-description = "Meteorological computations"
-readme = "README.md"
-license = { text = "Apache License Version 2.0" }
 authors = [
-  { name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int" },
+  {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"}
 ]
-requires-python = ">=3.10"
-
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Developers",
@@ -23,20 +17,25 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
+  "Programming Language :: Python :: Implementation :: PyPy"
 ]
-dynamic = [ "version" ]
 dependencies = [
   "deprecation",
   "earthkit-utils>=0.2",
   "numpy",
-  "xarray",
+  "xarray"
 ]
+description = "Meteorological computations"
+dynamic = ["version"]
+license = {text = "Apache License Version 2.0"}
+name = "earthkit-meteo"
+readme = "README.md"
+requires-python = ">=3.10"
 optional-dependencies.all = [
-  "earthkit-meteo[samples,scores]",
+  "earthkit-meteo[samples,scores]"
 ]
 optional-dependencies.dev = [
-  "earthkit-meteo[all,docs,test]",
+  "earthkit-meteo[all,docs,test]"
 ]
 optional-dependencies.docs = [
   "nbsphinx",
@@ -46,36 +45,36 @@ optional-dependencies.docs = [
   "sphinx-copybutton",
   "sphinx-issues",
   "sphinx-rtd-theme",
-  "sphinx-tabs",
+  "sphinx-tabs"
 ]
 optional-dependencies.gpu = [
   "cupy",
-  "torch",
+  "torch"
 ]
 optional-dependencies.samples = [
-  "requests",
+  "requests"
 ]
 optional-dependencies.scores = [
-  "scores",
+  "scores"
 ]
 optional-dependencies.test = [
   "earthkit-meteo[samples,scores]",
   "netcdf4",
   "pytest",
   "pytest-cov",
-  "xarray",
+  "xarray"
 ]
 urls.Documentation = "https://earthkit-meteo.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-meteo/"
 urls.Issues = "https://github.com/ecmwf/earthkit-meteo.issues"
 urls.Repository = "https://github.com/ecmwf/earthkit-meteo/"
 
-[tool.setuptools.packages.find]
-include = [ "earthkit.meteo" ]
-where = [ "src/" ]
+[tool.coverage.run]
+branch = "true"
 
-[tool.setuptools_scm]
-version_file = "src/earthkit/meteo/_version.py"
+[tool.pydocstyle]
+add_ignore = ["D1", "D200", "D205", "D400", "D401"]
+convention = "numpy"
 
 [tool.ruff]
 line-length = 120
@@ -100,15 +99,12 @@ select = [
   "E",  # pycodestyle
   "W",  # pycodestyle warnings
   "I",  # isort
-  "D",  # pydocstyle
+  "D"  # pydocstyle
 ]
 
-[tool.ruff.lint.isort]
-force-single-line = true
+[tool.setuptools.packages.find]
+include = ["earthkit.meteo"]
+where = ["src/"]
 
-[tool.coverage.run]
-branch = "true"
-
-[tool.pydocstyle]
-add_ignore = [ "D1", "D200", "D205", "D400", "D401" ]
-convention = "numpy"
+[tool.setuptools_scm]
+version_file = "src/earthkit/meteo/_version.py"

@@ -1,5 +1,4 @@
-from typing import Literal
-from typing import TypeVar
+from typing import Literal, TypeVar
 
 import numpy as np
 import xarray as xr
@@ -50,7 +49,6 @@ def spread(fcst: T, over: str | list[str], reference: T | None = None) -> T:
     xarray object
         The spread of the forecast compared to the reference.
     """
-
     # TODO: this could call the rmse function
     if reference is None:
         reference = fcst.mean(dim=over)
@@ -149,9 +147,7 @@ def crps_from_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
     if not isinstance(fcst, xr.Dataset):
         raise TypeError(f"Expected fcst to be an xarray.Dataset object, got {type(fcst)}")
     if not {"mean", "stdev"}.issubset(fcst.data_vars):
-        raise ValueError(
-            f"Expected fcst to have 'mean' and 'stdev' data variables, got {list(fcst.data_vars)}"
-        )
+        raise ValueError(f"Expected fcst to have 'mean' and 'stdev' data variables, got {list(fcst.data_vars)}")
     if not isinstance(obs, xr.DataArray):
         raise TypeError(f"Expected obs to be an xarray.DataArray object, got {type(obs)}")
 
@@ -161,9 +157,7 @@ def crps_from_gaussian(fcst: xr.Dataset, obs: xr.DataArray) -> xr.DataArray:
     c2 = np.sqrt(2.0 / np.pi)
     za = (obs - fcst["mean"]) / fcst["stdev"]
     return fcst["stdev"] * (
-        (2.0 * scipy.stats.norm().cdf(za.values) - 1.0) * za
-        + c2 * np.exp(-(za**2) / 2.0)
-        - 1.0 / np.sqrt(np.pi)
+        (2.0 * scipy.stats.norm().cdf(za.values) - 1.0) * za + c2 * np.exp(-(za**2) / 2.0) - 1.0 / np.sqrt(np.pi)
     )
 
 
@@ -319,9 +313,7 @@ def crps_from_ensemble(
             include_components=return_components,
         )
         if return_components:
-            return scores_xr.to_dataset(dim="component").rename(
-                {"total": "crps" if method == "ecdf" else "fcrps"}
-            )
+            return scores_xr.to_dataset(dim="component").rename({"total": "crps" if method == "ecdf" else "fcrps"})
         else:
             return scores_xr
     else:
@@ -361,9 +353,7 @@ def _crps_from_ensemble_hersbach(
     if components_coords is None:
         components_coords = np.arange(1, ens_size + 2)
     else:
-        assert (
-            len(components_coords) == ens_size + 1
-        ), "component_coords must have the length of ensemble size + 1"
+        assert len(components_coords) == ens_size + 1, "component_coords must have the length of ensemble size + 1"
     # sort forecast values along the ensemble dimension
     fcst_sorted = _sorted_ensemble(fcst, over)
     alpha = xr.concat([xr.zeros_like(fcst_sorted[{over: 0}])] * (ens_size + 1), dim=over)
@@ -482,7 +472,6 @@ def crps_from_cdf(
     xarray.DataArray or xarray.Dataset
         The CRPS of the CDF compared to the observations.
     """
-
     scores = _import_scores_or_prompt_install()
     reduce_dim = [over]
     if return_components:

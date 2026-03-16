@@ -1,5 +1,4 @@
-from typing import Literal
-from typing import TypeVar
+from typing import Literal, TypeVar
 
 import numpy as np
 import xarray as xr
@@ -706,9 +705,7 @@ def kge(
     if method == "modified":
         kge["alpha"] = kge["alpha"] / kge["beta"]
 
-        kge["kge"] = 1 - (
-            ((kge["rho"] - 1) ** 2 + ((kge["alpha"] - 1) ** 2) + ((kge["beta"] - 1) ** 2)) ** 0.5
-        )
+        kge["kge"] = 1 - (((kge["rho"] - 1) ** 2 + ((kge["alpha"] - 1) ** 2) + ((kge["beta"] - 1) ** 2)) ** 0.5)
 
         kge = kge.rename({"alpha": "gamma"})
 

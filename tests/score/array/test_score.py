@@ -36,7 +36,6 @@ def crps_quaver2(x, y):
 
     The method is described in [Hersbach2000]_.
     """
-
     n_ens = x.shape[0]
     anarr = y
     earr = x
@@ -74,9 +73,7 @@ def crps_quaver2(x, y):
 def _get_crps_data():
     here = os.path.dirname(__file__)
     sys.path.insert(0, here)
-    from _crps import ens
-    from _crps import obs
-    from _crps import v_ref
+    from _crps import ens, obs, v_ref
 
     return obs, ens, v_ref
 
@@ -153,8 +150,7 @@ def test_crps_quaver2(xp, obs, ens, v_ref):
 def _get_pearson_data():
     here = os.path.dirname(__file__)
     sys.path.insert(0, here)
-    from _pearson import SAMPLE_X
-    from _pearson import SAMPLE_Y
+    from _pearson import SAMPLE_X, SAMPLE_Y
 
     rs = np.array([1.0, -1.0, 0.0, 0.42, -0.13, np.nan])
 

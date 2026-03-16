@@ -7,15 +7,12 @@
 # nor does it submit to any jurisdiction.
 
 
-from typing import Any
-from typing import Tuple
-from typing import Union
+from typing import Any, Tuple, Union
 
 import deprecation
 import numpy as np
 from earthkit.utils.array import array_namespace
-from numpy.typing import ArrayLike
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, NDArray
 
 from earthkit.meteo import constants
 
@@ -83,7 +80,7 @@ def pressure_at_model_levels(
         - :math:`A_{k+1/2}` and :math:`B_{k+1/2}` are the A- and B-coefficients defining
           the model levels.
 
-    See also
+    See Also
     --------
     pressure_at_height_levels
     relative_geopotential_thickness
@@ -124,35 +121,25 @@ def pressure_at_model_levels(
     # calculate alpha
     alpha = np.zeros(new_shape_full)
 
-    alpha[1:, ...] = (
-        1.0 - p_half_level[1:-1, ...] / (p_half_level[2:, ...] - p_half_level[1:-1, ...]) * delta[1:, ...]
-    )
+    alpha[1:, ...] = 1.0 - p_half_level[1:-1, ...] / (p_half_level[2:, ...] - p_half_level[1:-1, ...]) * delta[1:, ...]
 
     # pressure at highest half-level <= 0.1
     if np.any(p_half_level[0, ...] <= PRESSURE_TOA):
         alpha[0, ...] = alpha_top
     # pressure at highest half-level > 0.1
     else:
-        alpha[0, ...] = (
-            1.0 - p_half_level[0, ...] / (p_half_level[1, ...] - p_half_level[0, ...]) * delta[0, ...]
-        )
+        alpha[0, ...] = 1.0 - p_half_level[0, ...] / (p_half_level[1, ...] - p_half_level[0, ...]) * delta[0, ...]
 
     # calculate pressure on model full-levels
     # TODO: is there a faster way to calculate the averages?
     # TODO: introduce option to calculate full-levels in more complicated way
-    p_full_level = np.apply_along_axis(
-        lambda m: np.convolve(m, np.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level
-    )
+    p_full_level = np.apply_along_axis(lambda m: np.convolve(m, np.ones(2) / 2, mode="valid"), axis=0, arr=p_half_level)
 
     return p_full_level, p_half_level, delta, alpha
 
 
-@deprecation.deprecated(
-    deprecated_in="0.7", details="Use relative_geopotential_thickness_on_hybrid_levels instead."
-)
-def relative_geopotential_thickness(
-    alpha: ArrayLike, delta: ArrayLike, t: ArrayLike, q: ArrayLike
-) -> ArrayLike:
+@deprecation.deprecated(deprecated_in="0.7", details="Use relative_geopotential_thickness_on_hybrid_levels instead.")
+def relative_geopotential_thickness(alpha: ArrayLike, delta: ArrayLike, t: ArrayLike, q: ArrayLike) -> ArrayLike:
     """Calculate the geopotential thickness with respect to the surface on hybrid (IFS model) full-levels.
 
     *Deprecated in version 0.7.0*
@@ -187,7 +174,7 @@ def relative_geopotential_thickness(
 
     The computations are described in [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1.
 
-    See also
+    See Also
     --------
     pressure_at_model_levels
 
@@ -265,7 +252,7 @@ def pressure_at_height_levels(
     The pressure at height level is calculated by finding the model level above and
     below the specified height and interpolating the pressure with linear interpolation.
 
-    See also
+    See Also
     --------
     pressure_at_model_levels
     relative_geopotential_thickness
@@ -606,7 +593,7 @@ def pressure_on_hybrid_levels(
     - :ref:`/examples/hybrid_levels.ipynb`
 
 
-    See also
+    See Also
     --------
     relative_geopotential_thickness_on_hybrid_levels
 
@@ -619,9 +606,7 @@ def pressure_on_hybrid_levels(
 
     for out in output:
         if out not in ["full", "half", "alpha", "delta"]:
-            raise ValueError(
-                f"Unknown output type '{out}'. Allowed values are 'full', 'half', 'alpha' or 'delta'."
-            )
+            raise ValueError(f"Unknown output type '{out}'. Allowed values are 'full', 'half', 'alpha' or 'delta'.")
 
     if alpha_top not in ["ifs", "arpege"]:
         raise ValueError(f"Unknown method '{alpha_top}' for pressure calculation. Use 'ifs' or 'arpege'.")
@@ -693,9 +678,7 @@ def pressure_on_hybrid_levels(
             alpha[0, ...] = alpha_top
         # pressure at highest half-level > 0.1
         else:
-            alpha[0, ...] = (
-                1.0 - p_half_level[0, ...] / (p_half_level[1, ...] - p_half_level[0, ...]) * delta[0, ...]
-            )
+            alpha[0, ...] = 1.0 - p_half_level[0, ...] / (p_half_level[1, ...] - p_half_level[0, ...]) * delta[0, ...]
 
     if "full" in output:
         # calculate pressure on model full-levels
@@ -790,7 +773,7 @@ def _compute_relative_geopotential_thickness_on_hybrid_levels(
     - :ref:`/examples/hybrid_levels.ipynb`
 
 
-    See also
+    See Also
     --------
     pressure_on_hybrid_levels
 
@@ -863,12 +846,11 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     - :ref:`/examples/hybrid_levels.ipynb`
 
 
-    See also
+    See Also
     --------
     pressure_on_hybrid_levels
 
     """
-
     xp = array_namespace(alpha, delta, q, t)
     alpha = xp.asarray(alpha)
     delta = xp.asarray(delta)
@@ -954,7 +936,7 @@ def relative_geopotential_thickness_on_hybrid_levels(
     --------
     - :ref:`/examples/hybrid_levels.ipynb`
 
-    See also
+    See Also
     --------
     pressure_on_hybrid_levels
     relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta
@@ -969,9 +951,7 @@ def relative_geopotential_thickness_on_hybrid_levels(
 
     levels = _hybrid_subset(t, A, B, vertical_axis)
 
-    alpha, delta = pressure_on_hybrid_levels(
-        A, B, sp, alpha_top=alpha_top, levels=levels, output=("alpha", "delta")
-    )
+    alpha, delta = pressure_on_hybrid_levels(A, B, sp, alpha_top=alpha_top, levels=levels, output=("alpha", "delta"))
 
     # return relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     #     t, q, alpha, delta, vertical_axis=vertical_axis
@@ -1055,7 +1035,7 @@ def geopotential_on_hybrid_levels(
     - :ref:`/examples/hybrid_levels.ipynb`
 
 
-    See also
+    See Also
     --------
     pressure_on_hybrid_levels
     relative_geopotential_thickness_on_hybrid_levels
@@ -1152,14 +1132,13 @@ def height_on_hybrid_levels(
     --------
     - :ref:`/examples/hybrid_levels.ipynb`
 
-    See also
+    See Also
     --------
     hybrid_level_parameters
     pressure_on_hybrid_levels
     geopotential_on_hybrid_levels
     relative_geopotential_thickness_on_hybrid_levels
     """
-
     if h_reference not in ["sea", "ground"]:
         raise ValueError(f"Unknown '{h_reference=}'. Use 'sea' or 'ground'.")
 
@@ -1299,7 +1278,7 @@ def interpolate_hybrid_to_pressure_levels(
     --------
     - :ref:`/examples/interpolate_hybrid_to_pl.ipynb`
 
-    See also
+    See Also
     --------
     interpolate_monotonic
 
@@ -1455,7 +1434,7 @@ def interpolate_hybrid_to_height_levels(
     - :ref:`/examples/interpolate_hybrid_to_hl.ipynb`
 
 
-    See also
+    See Also
     --------
     interpolate_monotonic
 
@@ -1585,7 +1564,7 @@ def interpolate_pressure_to_height_levels(
     - :ref:`/examples/interpolate_pl_to_hl.ipynb`
 
 
-    See also
+    See Also
     --------
     interpolate_monotonic
 

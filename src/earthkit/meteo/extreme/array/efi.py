@@ -30,7 +30,6 @@ def efi(clim, ens, eps=-0.1):
     array-like (npoints)
         EFI values
     """
-
     xp = array_namespace(clim, ens)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)

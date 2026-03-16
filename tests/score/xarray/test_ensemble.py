@@ -4,11 +4,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from earthkit.meteo.score import crps_from_cdf
-from earthkit.meteo.score import crps_from_ensemble
-from earthkit.meteo.score import crps_from_gaussian
-from earthkit.meteo.score import quantile_score
-from earthkit.meteo.score import spread
+from earthkit.meteo.score import crps_from_cdf, crps_from_ensemble, crps_from_gaussian, quantile_score, spread
 from earthkit.meteo.utils.testing import NO_SCORES
 
 LATITUDES = [40.0, 41.0]
@@ -124,7 +120,6 @@ def rng():
 
 def test_spread_without_reference():
     """Test spread calculation without a reference, using the ensemble mean."""
-
     # Forecast data: shape (time, lat, lon, number)
     fcst_values = np.array(
         [
@@ -674,9 +669,7 @@ def test_crps_from_cdf():
     xr.testing.assert_allclose(result["crps"], expected_total_da)
     xr.testing.assert_allclose(result["underforecast_penalty"], expected_under_da)
     xr.testing.assert_allclose(result["overforecast_penalty"], expected_over_da)
-    xr.testing.assert_allclose(
-        result["crps"], result["underforecast_penalty"] + result["overforecast_penalty"]
-    )
+    xr.testing.assert_allclose(result["crps"], result["underforecast_penalty"] + result["overforecast_penalty"])
     xr.testing.assert_allclose(total_only, expected_total_da)
 
 
