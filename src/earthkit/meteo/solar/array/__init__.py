@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Solar computation functions operating on numpy arrays.
-"""
+"""Solar computation functions operating on numpy arrays."""
 
 from .solar import *  # noqa

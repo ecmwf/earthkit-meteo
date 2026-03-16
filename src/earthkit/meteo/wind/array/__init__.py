@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Wind related functions operating on numpy arrays.
-"""
+"""Wind related functions operating on numpy arrays."""
 
 from .wind import *  # noqa

@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Vertical computation functions operating on numpy arrays.
-"""
+"""Vertical computation functions operating on numpy arrays."""
 
 from .hybrid import *  # noqa
 from .vertical import *  # noqa
