@@ -100,7 +100,7 @@ def cpf(
     symmetric=False,
     from_zero=False,
 ):
-    """Compute Crossing Point Forecast (CPF)
+    """Compute Crossing Point Forecast (CPF).
 
     WARNING: this code is experimental, use at your own risk!
 

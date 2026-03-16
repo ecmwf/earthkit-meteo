@@ -26,7 +26,7 @@ from earthkit.meteo.utils.testing import NO_XARRAY
 
 
 def _make_xr(xp, data, coord, vdim):
-    """Make xarray Dataset from data and coord arrays"""
+    """Make xarray Dataset from data and coord arrays."""
     import xarray as xr
 
     data_is_scalar = xp.ndim(data[0]) == 0

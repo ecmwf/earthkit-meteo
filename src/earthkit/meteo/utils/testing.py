@@ -78,7 +78,7 @@ def read_test_data_file(path):
 
 
 def save_test_data_reference(file_name, data):
-    """Helper function to save test reference data into csv"""
+    """Helper function to save test reference data into csv."""
     import numpy as np
 
     np.savetxt(

@@ -14,7 +14,7 @@ from earthkit.utils.array import array_namespace
 
 
 def efi(clim, ens, eps=-0.1):
-    """Compute Extreme Forecast Index (EFI)
+    """Compute Extreme Forecast Index (EFI).
 
     Parameters
     ----------

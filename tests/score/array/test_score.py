@@ -20,7 +20,7 @@ from earthkit.meteo.score import array as score
 
 def crps_quaver2(x, y):
     """Compute Continuous Ranked Probability Score (CRPS) from Quaver
-    Used for testing
+    Used for testing.
 
     Parameters
     ----------

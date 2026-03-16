@@ -8,7 +8,7 @@
 #
 
 """
-Tests for the array level thermo functions
+Tests for the array level thermo functions.
 """
 
 import os
@@ -38,7 +38,7 @@ def read_data_file(path):
 
 
 def save_test_reference(file_name, data):
-    """Helper function to save test reference data into csv"""
+    """Helper function to save test reference data into csv."""
     np.savetxt(
         data_file(file_name),
         np.column_stack(tuple(data.values())),
@@ -114,9 +114,7 @@ def test_vapour_pressure_from_specific_humidity(xp, device, q, p, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "mr, p, v_ref", [([0.0080645161, 0.0183299389], [700, 1000], [895.992614, 2862.662152])]
-)
+@pytest.mark.parametrize("mr, p, v_ref", [([0.0080645161, 0.0183299389], [700, 1000], [895.992614, 2862.662152])])
 def test_vapour_pressure_from_mixing_ratio(xp, device, mr, p, v_ref):
     mr = xp.asarray(mr, device=device)
     p = xp.asarray(p, device=device)

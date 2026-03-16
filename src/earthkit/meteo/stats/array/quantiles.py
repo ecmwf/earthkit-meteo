@@ -19,7 +19,7 @@ def iter_quantiles(
     axis: int = 0,
     method: str = "sort",
 ) -> Iterable[np.ndarray]:
-    """Iterate over the quantiles of a large array
+    """Iterate over the quantiles of a large array.
 
     Parameters
     ----------

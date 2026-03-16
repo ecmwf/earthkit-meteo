@@ -11,7 +11,7 @@ from earthkit.utils.array import array_namespace
 
 
 def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
-    """Compute basic Shift of Tails (SOT) using already computed percentiles
+    """Compute basic Shift of Tails (SOT) using already computed percentiles.
 
     Parameters
     ----------
@@ -51,7 +51,7 @@ def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
 def sot(clim, ens, perc, eps=-1e4):
     """Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    and ensemble forecast (not sorted).
 
     Parameters
     ----------
@@ -78,9 +78,7 @@ def sot(clim, ens, perc, eps=-1e4):
         raise Exception("Percentile value should be and Integer between 2 and 98, is {}".format(perc))
 
     if clim.shape[0] != 101:
-        raise Exception(
-            "Climatology array should contain 101 percentiles, it has {} values".format(clim.shape)
-        )
+        raise Exception("Climatology array should contain 101 percentiles, it has {} values".format(clim.shape))
 
     qc = clim[perc]
     # if eps>0, set to zero everything below eps
@@ -94,9 +92,7 @@ def sot(clim, ens, perc, eps=-1e4):
     elif perc < 50:
         qc_tail = clim[1]
     else:
-        raise Exception(
-            "Percentile value to be computed cannot be 50 for sot, has to be in the upper or lower half"
-        )
+        raise Exception("Percentile value to be computed cannot be 50 for sot, has to be in the upper or lower half")
 
     sot = sot_func(qc_tail, qc, qf, eps=eps)
 
@@ -106,7 +102,7 @@ def sot(clim, ens, perc, eps=-1e4):
 def sot_unsorted(clim, ens, perc, eps=-1e4):
     """Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    and ensemble forecast (not sorted).
 
     Parameters
     ----------
@@ -133,9 +129,7 @@ def sot_unsorted(clim, ens, perc, eps=-1e4):
         raise Exception("Percentile value should be and Integer between 2 and 98, is {}".format(perc))
 
     if clim.shape[0] != 101:
-        raise Exception(
-            "Climatology array should contain 101 percentiles, it has {} values".format(clim.shape)
-        )
+        raise Exception("Climatology array should contain 101 percentiles, it has {} values".format(clim.shape))
 
     if eps > 0:
         ens = xp.where(ens < eps, 0.0, ens)
@@ -148,9 +142,7 @@ def sot_unsorted(clim, ens, perc, eps=-1e4):
     elif perc < 50:
         perc_tail = 1
     else:
-        raise Exception(
-            "Percentile value to be computed cannot be 50 for sot, has to be in the upper or lower half"
-        )
+        raise Exception("Percentile value to be computed cannot be 50 for sot, has to be in the upper or lower half")
     qc_tail = xp.percentile(clim, q=perc_tail, axis=0)
 
     sot = sot_func(qc_tail, qc, qf, eps=eps)
