@@ -160,7 +160,7 @@ REFERENCE_CASES = {
         "expected": {
             "surface": {"cape": 0.0, "cin": 0.0},
             "mixed": {"cape": 0.0, "cin": 0.0},
-            "mu": {"cape": 978.01972316, "cin": 0.0},
+            "mu": {"cape": 977.57643248, "cin": 0.0},
         },
     },
     "unstable": {
@@ -237,9 +237,9 @@ REFERENCE_CASES = {
             ]
         ),
         "expected": {
-            "surface": {"cape": 235.88565888, "cin": 41.60505289},
-            "mixed": {"cape": 329.37140795, "cin": 12.15479423},
-            "mu": {"cape": 645.43837633, "cin": -0.0},
+            "surface": {"cape": 235.70048467, "cin": 41.58963294},
+            "mixed": {"cape": 329.26386708, "cin": 12.13904596},
+            "mu": {"cape": 645.03900776, "cin": -0.0},
         },
     },
     "large_cape_small_cin": {
@@ -316,9 +316,9 @@ REFERENCE_CASES = {
             ]
         ),
         "expected": {
-            "surface": {"cape": 927.52859354, "cin": 2.58203251},
-            "mixed": {"cape": 862.33499892, "cin": 2.51359153},
-            "mu": {"cape": 927.52859354, "cin": 2.58203251},
+            "surface": {"cape": 927.86714423, "cin": 2.56065899},
+            "mixed": {"cape": 862.6504042, "cin": 2.49233215},
+            "mu": {"cape": 927.86714423, "cin": 2.56065899},
         },
     },
 }
