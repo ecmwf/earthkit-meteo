@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Tests for the array level thermo functions.
-"""
+"""Tests for the array level thermo functions."""
 
 import os
 
