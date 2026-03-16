@@ -1,13 +1,17 @@
 import numpy as np
 from scipy import interpolate
+
 from earthkit.meteo import thermo
 from earthkit.meteo.constants import constants
 
 C_pl = 4180
 
+
 def _ept_from_mixing_ratio(t, p, r):
     specific_humidity = thermo.specific_humidity_from_mixing_ratio(r)
     return thermo.ept_from_specific_humidity(t, specific_humidity, p, method="bolton39")
+
+
 # TODO add option to use the method "bolton43" for ept calculation, which is the method used in the reference implementation.
 # Use "bolton39" for now, the difference is small.
 # Potentially make method configurable, as well as the method used for lcl calculation.
@@ -18,63 +22,67 @@ def _moist_ascent_lookup_table():
     def dt_dp_moist(t_parcel, p):
         # moist adiabatic gradient according to Emanuel, 1995 (Eq. 4.7.3) ignoring liquid and solid water, i.e. r_l = 0 and r_t = r
         es_parcel = thermo.saturation_vapour_pressure(t_parcel, phase="water")
-        r_parcel = constants.epsilon * es_parcel/p
-        
+        r_parcel = constants.epsilon * es_parcel / p
+
         dlv_dt = constants.c_pv - C_pl
         lv = constants.Lv + dlv_dt * (t_parcel - constants.T0)
 
         # Terms from Emanuel, 1995 (Eq. 4.7.3)
-        a_prefactor = - (constants.g / constants.c_pd) * (1 + r_parcel) / (1 + r_parcel * (constants.c_pv / constants.c_pd))
+        a_prefactor = (
+            -(constants.g / constants.c_pd)
+            * (1 + r_parcel)
+            / (1 + r_parcel * (constants.c_pv / constants.c_pd))
+        )
         b_factor = 1 + (lv * r_parcel) / (constants.Rd * t_parcel)
         c_term = lv * lv * r_parcel * (1 + r_parcel / constants.epsilon)
         d_term = constants.Rv * np.power(t_parcel, 2) * (constants.c_pd + r_parcel * constants.c_pv)
         dt_dz = a_prefactor * b_factor / (1 + (c_term / d_term))
 
         t_v = thermo.virtual_temperature(t_parcel, thermo.specific_humidity_from_mixing_ratio(r_parcel))
-        dz_dp = - (constants.Rd * t_v) / (p * constants.g)
+        dz_dp = -(constants.Rd * t_v) / (p * constants.g)
         return dt_dz * dz_dp
-    
+
     p_max = 110000
     p_min = 1000
-    
+
     t_initial = np.arange(180, 320, 2)
     es_initial = thermo.saturation_vapour_pressure(t_initial, phase="water")
     r_initial = constants.epsilon * (es_initial / (p_max - es_initial))
     theta_ep_range = _ept_from_mixing_ratio(t_initial, p_max, r_initial)
-    
+
     pressure_levels = np.arange(p_max, p_min, -100)
-    
+
     t_lookup = np.empty((pressure_levels.shape[0], t_initial.shape[0]))
     r_lookup = np.empty((pressure_levels.shape[0], r_initial.shape[0]))
-    
-    t_lookup[0,:] = t_initial
-    r_lookup[0,:] = r_initial
-    
+
+    t_lookup[0, :] = t_initial
+    r_lookup[0, :] = r_initial
+
     for level in range(1, pressure_levels.shape[0]):
         p_mid = (pressure_levels[level - 1] + pressure_levels[level]) / 2
         dp = pressure_levels[level] - pressure_levels[level - 1]
-        t_lookup[level,:] = t_lookup[level - 1, :] + dt_dp_moist(t_lookup[level - 1, :], p_mid) * dp
+        t_lookup[level, :] = t_lookup[level - 1, :] + dt_dp_moist(t_lookup[level - 1, :], p_mid) * dp
         es_level = thermo.saturation_vapour_pressure(t_lookup[level, :], phase="water")
         r_lookup[level, :] = constants.epsilon * es_level / (pressure_levels[level] - es_level)
 
     t_lookup = t_lookup[::-10, :]
     pressure_levels = pressure_levels[::-10]
 
-    return { "temperature": t_lookup, "theta_ep": theta_ep_range, "pressure": pressure_levels }
+    return {"temperature": t_lookup, "theta_ep": theta_ep_range, "pressure": pressure_levels}
 
 
 def _determine_mixed_layer_parcel(p, t, r, layer_depth=None):
-    '''
+    """
     Compute mixed-layer parameters
     :param p: pressure array in Pa
     :param t: temperature array in K
     :param r: mixing ratio array in kg/kg
     :param layer_depth: in Pa
     :return:
-    bottom pressure, mixed-layer t, mixed_layer r 
-    '''
+    bottom pressure, mixed-layer t, mixed_layer r
+    """
 
-    if layer_depth == None:
+    if layer_depth is None:
         layer_depth = 5000
 
     p_bottom = p[-1, :]
@@ -112,15 +120,15 @@ def _determine_most_unstable_parcel(p, zh, t, r, layer_depth=None):
     localmax[1:-1, :] = maxima
     trues = localmax.sum(axis=0)
     maxtrues = np.amax(trues)
-    
+
     # localmaxarg is an integer array with values of k where a local maximum of theta_ep was found
     nz = t.shape[0]
     vertical_indices = np.arange(nz)[(...,) + (None,) * (t.ndim - 1)]
-    
+
     localmaxarg = np.where(localmax, vertical_indices, 0)
     localmaxarg = np.sort(localmaxarg, axis=0)
 
-    localmaxarg = localmaxarg[:-maxtrues-1 :-1, :]
+    localmaxarg = localmaxarg[: -maxtrues - 1 : -1, :]
 
     cape_max = np.zeros(t_shape[1:])
     start_index_max = np.zeros(t_shape[1:], dtype=int)
@@ -135,8 +143,10 @@ def _determine_most_unstable_parcel(p, zh, t, r, layer_depth=None):
         t_start_candidate = np.take_along_axis(t, start_level_indices[None, ...], axis=0).squeeze(0)
         r_start_candidate = np.take_along_axis(r, start_level_indices[None, ...], axis=0).squeeze(0)
 
-        buoyancy, _, _, _, _, _, _, _, _, _ = _lift_parcel(p_start_candidate, t_start_candidate, r_start_candidate, p, t, r)
-        
+        buoyancy, _, _, _, _, _, _, _, _, _ = _lift_parcel(
+            p_start_candidate, t_start_candidate, r_start_candidate, p, t, r
+        )
+
         dcape = constants.g * ((buoyancy[:-1, :] + buoyancy[1:, :]) / 2) * layer_thickness
         dcape[dcape < 0] = 0
         cape = np.nansum(dcape, axis=0)
@@ -179,7 +189,9 @@ def _lift_parcel(p_start, t_start, r_start, p, t, r):
     # Dry adiabatic ascent to LCL
     # ------------------------------
     between_start_and_lcl = (p > p_lcl[None, ...]) * (p <= p_start[None, ...])
-    t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(theta_parcel[None, ...], p)[between_start_and_lcl]
+    t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(
+        theta_parcel[None, ...], p
+    )[between_start_and_lcl]
     r_parcel[between_start_and_lcl] = (r_start[None, ...] * np.ones(p_shape))[between_start_and_lcl]
 
     # Moist adiabatic ascent
@@ -187,12 +199,16 @@ def _lift_parcel(p_start, t_start, r_start, p, t, r):
     # first integrate to the first full pressure level above the LCL
     # for k in range(npressures - 1, 0, -1): # loop from top to bottom
     # boolean mask with True values where given point is first level above LCL
-    above_lcl = (p_lcl[None, ...] > p)
+    above_lcl = p_lcl[None, ...] > p
     p_2d = p * np.ones(p_shape)
     theta_ep_parcel_2d = theta_ep_parcel[None, ...] * np.ones(p_shape)
 
     lookup_table = _moist_ascent_lookup_table()
-    t_moist_adiabat, theta_ep_range, p_range = lookup_table["temperature"], lookup_table["theta_ep"], lookup_table["pressure"]
+    t_moist_adiabat, theta_ep_range, p_range = (
+        lookup_table["temperature"],
+        lookup_table["theta_ep"],
+        lookup_table["pressure"],
+    )
     t_interp = interpolate.RectBivariateSpline(p_range, theta_ep_range, t_moist_adiabat)
     t_parcel[above_lcl] = t_interp(p_2d[above_lcl], theta_ep_parcel_2d[above_lcl], grid=False)
     es_t_parcel = thermo.saturation_vapour_pressure(t_parcel[above_lcl], phase="water")
@@ -208,15 +224,13 @@ def _lift_parcel(p_start, t_start, r_start, p, t, r):
     buoyancy = dtv / tv_env
 
     buoyant_layer_mask = (buoyancy > 0.0) * (t < t_lcl[None, ...])
-    
+
     lfc_index = buoyant_layer_mask.shape[0] - np.argmax(buoyant_layer_mask[::-1, ...], axis=0) - 1
     el_index = np.argmax(buoyant_layer_mask, axis=0)
-
 
     # For now, this gives the pressure at which the parcel is not buoyant i.e. it does not interpolate
     p_lfc = np.take_along_axis(p, lfc_index[None, ...], axis=0).squeeze(0)
     t_lfc = np.take_along_axis(t, lfc_index[None, ...], axis=0).squeeze(0)
-
 
     p_el = np.take_along_axis(p, el_index[None, ...], axis=0).squeeze(0)
     t_el = np.take_along_axis(t, el_index[None, ...], axis=0).squeeze(0)
@@ -224,50 +238,52 @@ def _lift_parcel(p_start, t_start, r_start, p, t, r):
     buoyant_mask = np.max(buoyant_layer_mask, axis=0)
     p_lfc = np.where(buoyant_mask, p_lfc.astype(float), np.nan)
     # p_lfc[~buoyant_2d] = np.nan
-    
+
     return buoyancy, dtv, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env
 
 
-def _cape_cin(p, zh, t, r, cape_type, layer_depth=None):
+def _cape_cin(p, zh, t, r, cape_type, layer_depth=None, output="cape_cin"):
     # shapes of all arrays should be (n_vertical_levels, n_horizontal_locations)
     # pressure levels should be in ascending order
-    
+
     # Make sure pressure levels are in ascending order
     is_sorted = (np.diff(p, axis=0) >= 0).all()
-    if is_sorted == False:
+    if not is_sorted:
         sorted_inds = np.argsort(p, axis=0)
-        p = np.take_along_axis(p, sorted_inds, axis = 0)
-        t = np.take_along_axis(t, sorted_inds, axis = 0)
-        r = np.take_along_axis(r, sorted_inds, axis = 0)
-        zh = np.take_along_axis(zh, sorted_inds, axis = 0)
+        p = np.take_along_axis(p, sorted_inds, axis=0)
+        t = np.take_along_axis(t, sorted_inds, axis=0)
+        r = np.take_along_axis(r, sorted_inds, axis=0)
+        zh = np.take_along_axis(zh, sorted_inds, axis=0)
 
     # check for NaN values in the input arrays and mask them out in the output
     # if any input value for a vertical profile is NaN, the output for that profile will be NaN
     nan_mask = np.any(np.isnan(p) | np.isnan(t) | np.isnan(r) | np.isnan(zh), axis=0)
 
-    if (cape_type == 'surface'):
+    if cape_type == "surface":
         p_start = p[-1, :]
         t_start = t[-1, :]
         r_start = r[-1, :]
-    elif (cape_type == 'mixed'):
+    elif cape_type == "mixed":
         p_start, t_start, r_start = _determine_mixed_layer_parcel(p, t, r, layer_depth)
-    elif (cape_type == 'mu'):
+    elif cape_type == "mu":
         p_start, t_start, r_start = _determine_most_unstable_parcel(p, zh, t, r, layer_depth)
     else:
         raise NotImplementedError(f"CAPE type '{cape_type}' not implemented")
-        
-    buoyancy, dtv, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env = _lift_parcel(p_start, t_start, r_start, p, t, r)
-    
+
+    buoyancy, _, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env = _lift_parcel(
+        p_start, t_start, r_start, p, t, r
+    )
+
     dcape = constants.g * ((buoyancy[:-1, :] + buoyancy[1:, :]) / 2) * (-np.diff(zh, axis=0))
     dcin = np.copy(dcape)
 
     dcape[dcape < 0] = 0
-    above_lfc = (p[1:, :] <= p_lfc[None, :])
-    dcape[above_lfc == False] = 0
+    above_lfc = p[1:, :] <= p_lfc[None, :]
+    dcape[~above_lfc] = 0
     cape = np.nansum(dcape, axis=0)
     cape[np.isnan(p_lfc)] = 0
-    
-    above_el = (p[1:, :] <= p_el[None, :])
+
+    above_el = p[1:, :] <= p_el[None, :]
     dcin[above_el] = 0
     dcin[dcin > 0] = 0
 
@@ -282,20 +298,24 @@ def _cape_cin(p, zh, t, r, cape_type, layer_depth=None):
     cape[nan_mask] = np.nan
     cin[nan_mask] = np.nan
 
-    return cape, cin #, LI, p_start, T_start, p_LFC, T_LFC, p_LCL, T_LCL, p_EL, Tv_parcel, Tv_env
+    if output == "full":
+        return cape, cin, p_start, t_start, r_start, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env
+    return cape, cin
 
 
 def cape_cin(p, zh, t, r, type, layer_depth=None, output="cape_cin", vertical_axis=0):
     # TODO add options for output: "cape_cin", "cape_cin_li", "full" where full includes parcel_path and intermediate variables for debugging/validation
     if output not in ["cape_cin"]:
         raise ValueError(f"Invalid output option '{output}'")
-    
+
     if vertical_axis != 0:
         if vertical_axis == -1:
             vertical_axis = p.ndim - 1
         if vertical_axis < 0 or vertical_axis >= p.ndim:
-            raise ValueError(f"Invalid vertical_axis {vertical_axis} for input arrays with {p.ndim} dimensions")
-        
+            raise ValueError(
+                f"Invalid vertical_axis {vertical_axis} for input arrays with {p.ndim} dimensions"
+            )
+
         p = np.swapaxes(p, 0, vertical_axis)
         zh = np.swapaxes(zh, 0, vertical_axis)
         t = np.swapaxes(t, 0, vertical_axis)
