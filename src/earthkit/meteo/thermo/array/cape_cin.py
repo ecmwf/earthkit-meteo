@@ -14,7 +14,14 @@ def _ept_from_mixing_ratio(t, p, r):
 
 # TODO add option to use the method "bolton43" for ept calculation, which is the method used in the reference implementation.
 # Use "bolton39" for now, the difference is small.
-# Potentially make method configurable, as well as the method used for lcl calculation.
+# TODO make method configurable, as well as the method used for lcl calculation.
+
+
+def _lifted_condensation_level_from_mixing_ratio(t_departure, p_departure, r_departure):
+    specific_humidity = thermo.specific_humidity_from_mixing_ratio(r_departure)
+    dewpoint = thermo.dewpoint_from_specific_humidity(specific_humidity, p_departure)
+    t_LCL, p_LCL = thermo.lcl(t_departure, dewpoint, p_departure)
+    return p_LCL, t_LCL
 
 
 def _moist_ascent_lookup_table():
@@ -143,7 +150,7 @@ def _determine_most_unstable_parcel(p, zh, t, r, layer_depth=None):
         t_start_candidate = np.take_along_axis(t, start_level_indices[None, ...], axis=0).squeeze(0)
         r_start_candidate = np.take_along_axis(r, start_level_indices[None, ...], axis=0).squeeze(0)
 
-        buoyancy, _, _, _, _, _, _, _, _, _ = _lift_parcel(
+        buoyancy, _, _, _, _, _, _, _, _ = _lift_parcel(
             p_start_candidate, t_start_candidate, r_start_candidate, p, t, r
         )
 
@@ -164,30 +171,17 @@ def _determine_most_unstable_parcel(p, zh, t, r, layer_depth=None):
     return p_start, t_start, r_start
 
 
-def _lifted_condensation_level_from_mixing_ratio(t_departure, p_departure, r_departure):
-    specific_humidity = thermo.specific_humidity_from_mixing_ratio(r_departure)
-    dewpoint = thermo.dewpoint_from_specific_humidity(specific_humidity, p_departure)
-    t_LCL, p_LCL = thermo.lcl(t_departure, dewpoint, p_departure)
-    return p_LCL, t_LCL
-
-
 def _lift_parcel(p_start, t_start, r_start, p, t, r):
-    # npressures = p.shape[0]
-    # nprofiles = p.shape[1]
     p_shape = p.shape
     t_parcel = np.zeros(p_shape) * np.nan
     r_parcel = np.zeros(p_shape) * np.nan
 
     p_lcl, t_lcl = _lifted_condensation_level_from_mixing_ratio(t_start, p_start, r_start)
 
-    # Potential temperature of the parcel - conserved for dry adiabatic processes
     theta_parcel = thermo.potential_temperature(t_start, p_start)
-
-    # Pseudoequivalent potential temperature of the parcel
     theta_ep_parcel = _ept_from_mixing_ratio(t_start, p_start, r_start)
 
     # Dry adiabatic ascent to LCL
-    # ------------------------------
     between_start_and_lcl = (p > p_lcl[None, ...]) * (p <= p_start[None, ...])
     t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(
         theta_parcel[None, ...], p
@@ -195,10 +189,6 @@ def _lift_parcel(p_start, t_start, r_start, p, t, r):
     r_parcel[between_start_and_lcl] = (r_start[None, ...] * np.ones(p_shape))[between_start_and_lcl]
 
     # Moist adiabatic ascent
-    # ------------------------------
-    # first integrate to the first full pressure level above the LCL
-    # for k in range(npressures - 1, 0, -1): # loop from top to bottom
-    # boolean mask with True values where given point is first level above LCL
     above_lcl = p_lcl[None, ...] > p
     p_2d = p * np.ones(p_shape)
     theta_ep_parcel_2d = theta_ep_parcel[None, ...] * np.ones(p_shape)
@@ -237,16 +227,11 @@ def _lift_parcel(p_start, t_start, r_start, p, t, r):
 
     buoyant_mask = np.max(buoyant_layer_mask, axis=0)
     p_lfc = np.where(buoyant_mask, p_lfc.astype(float), np.nan)
-    # p_lfc[~buoyant_2d] = np.nan
 
-    return buoyancy, dtv, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env
+    return buoyancy, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env
 
 
-def _cape_cin(p, zh, t, r, cape_type, layer_depth=None, output="cape_cin"):
-    # shapes of all arrays should be (n_vertical_levels, n_horizontal_locations)
-    # pressure levels should be in ascending order
-
-    # Make sure pressure levels are in ascending order
+def _sort_pressure_levels(p, t, r, zh):
     is_sorted = (np.diff(p, axis=0) >= 0).all()
     if not is_sorted:
         sorted_inds = np.argsort(p, axis=0)
@@ -254,15 +239,23 @@ def _cape_cin(p, zh, t, r, cape_type, layer_depth=None, output="cape_cin"):
         t = np.take_along_axis(t, sorted_inds, axis=0)
         r = np.take_along_axis(r, sorted_inds, axis=0)
         zh = np.take_along_axis(zh, sorted_inds, axis=0)
+    return p, t, r, zh
 
-    # check for NaN values in the input arrays and mask them out in the output
-    # if any input value for a vertical profile is NaN, the output for that profile will be NaN
+
+def _cape_cin(p, zh, t, r, cape_type, layer_depth=None, output="cape_cin"):
+    # Shapes of all arrays should be (n_vertical_levels, ...) where the vertical axis is the first axis (axis=0)
+
+    # Make sure pressure levels are in ascending order
+    p, t, r, zh = _sort_pressure_levels(p, t, r, zh)
+
+    # Check for NaN values in the input arrays and mask them out in the output
+    # If any input value for a vertical profile is NaN, the output for that profile will be NaN
     nan_mask = np.any(np.isnan(p) | np.isnan(t) | np.isnan(r) | np.isnan(zh), axis=0)
 
     if cape_type == "surface":
-        p_start = p[-1, :]
-        t_start = t[-1, :]
-        r_start = r[-1, :]
+        p_start = p[-1]
+        t_start = t[-1]
+        r_start = r[-1]
     elif cape_type == "mixed":
         p_start, t_start, r_start = _determine_mixed_layer_parcel(p, t, r, layer_depth)
     elif cape_type == "mu":
@@ -270,11 +263,11 @@ def _cape_cin(p, zh, t, r, cape_type, layer_depth=None, output="cape_cin"):
     else:
         raise NotImplementedError(f"CAPE type '{cape_type}' not implemented")
 
-    buoyancy, _, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env = _lift_parcel(
+    buoyancy, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env = _lift_parcel(
         p_start, t_start, r_start, p, t, r
     )
 
-    dcape = constants.g * ((buoyancy[:-1, :] + buoyancy[1:, :]) / 2) * (-np.diff(zh, axis=0))
+    dcape = constants.g * ((buoyancy[:-1] + buoyancy[1:]) / 2) * (-np.diff(zh, axis=0))
     dcin = np.copy(dcape)
 
     dcape[dcape < 0] = 0
