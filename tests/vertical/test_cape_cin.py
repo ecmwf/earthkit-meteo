@@ -220,8 +220,6 @@ def test_cape_cin_lat_lon(reference_cases_stacked):
     p, zh, t, r, expected_values = reference_cases_stacked
 
     ny, nx = 2, 2
-    ncols = ny * nx
-
     nz = p.shape[0]
     p = p.reshape(nz, ny, nx)
     t = t.reshape(nz, ny, nx)
@@ -237,3 +235,18 @@ def test_cape_cin_lat_lon(reference_cases_stacked):
         assert np.isclose(cape, expected_cape, atol=1).all()
         assert np.isclose(cin, expected_cin, atol=1).all()
 
+
+def test_cape_cin_missing_values(reference_cases_stacked):
+    p, zh, t, r, _ = reference_cases_stacked
+
+    # Introduce NaNs in the input
+    t[0, 0] = np.nan
+    r[3, 2] = np.nan
+
+    for cape_type in ["surface", "mixed", "mu"]:
+        cape, cin = vertical.cape_cin(p, zh, t, r, cape_type)
+
+        assert np.isnan(cape[0])
+        assert np.isnan(cin[0])
+        assert np.isnan(cape[2])
+        assert np.isnan(cin[2])

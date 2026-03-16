@@ -241,6 +241,10 @@ def _cape_cin(p, zh, t, r, cape_type, layer_depth=None):
         r = np.take_along_axis(r, sorted_inds, axis = 0)
         zh = np.take_along_axis(zh, sorted_inds, axis = 0)
 
+    # check for NaN values in the input arrays and mask them out in the output
+    # if any input value for a vertical profile is NaN, the output for that profile will be NaN
+    nan_mask = np.any(np.isnan(p) | np.isnan(t) | np.isnan(r) | np.isnan(zh), axis=0)
+
     if (cape_type == 'surface'):
         p_start = p[-1, :]
         t_start = t[-1, :]
@@ -275,6 +279,8 @@ def _cape_cin(p, zh, t, r, cape_type, layer_depth=None):
     # LI = -LI
     # LI[np.isnan(LI)] = 0
 
+    cape[nan_mask] = np.nan
+    cin[nan_mask] = np.nan
 
     return cape, cin #, LI, p_start, T_start, p_LFC, T_LFC, p_LCL, T_LCL, p_EL, Tv_parcel, Tv_env
 
