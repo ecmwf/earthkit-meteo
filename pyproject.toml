@@ -92,7 +92,8 @@ ignore = [
   "D413",
   "D415",
   "D416",
-  "D417"
+  "D417",
+  "D420"
 ]
 select = [
   "F",  # pyflakes

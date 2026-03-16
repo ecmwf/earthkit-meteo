@@ -55,6 +55,11 @@ def pressure_at_model_levels(
         Alpha at full-levels
 
 
+    See Also
+    --------
+    pressure_at_height_levels
+    relative_geopotential_thickness
+
     Notes
     -----
     ``A`` and ``B`` must contain the same model half-levels in ascending order with
@@ -80,11 +85,6 @@ def pressure_at_model_levels(
         - :math:`p_{k}` is the pressure at the full-levels
         - :math:`A_{k+1/2}` and :math:`B_{k+1/2}` are the A- and B-coefficients defining
           the model levels.
-
-    See Also
-    --------
-    pressure_at_height_levels
-    relative_geopotential_thickness
 
     """
     # constants
@@ -163,6 +163,10 @@ def relative_geopotential_thickness(alpha: ArrayLike, delta: ArrayLike, t: Array
     array-like
         Geopotential thickness (m2/s2) of hybrid (IFS model) full-levels with respect to the surface
 
+    See Also
+    --------
+    pressure_at_model_levels
+
     Notes
     -----
     ``t`` and ``q`` must contain the same levels in ascending order with respect to
@@ -174,10 +178,6 @@ def relative_geopotential_thickness(alpha: ArrayLike, delta: ArrayLike, t: Array
     values can be calculated using :func:`pressure_at_model_levels`.
 
     The computations are described in [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1.
-
-    See Also
-    --------
-    pressure_at_model_levels
 
     """
     from earthkit.meteo.thermo import specific_gas_constant
@@ -239,6 +239,11 @@ def pressure_at_height_levels(
     number or ndarray
         pressure at the given height level (Pa)
 
+    See Also
+    --------
+    pressure_at_model_levels
+    relative_geopotential_thickness
+
     Notes
     -----
     ``t`` and ``q`` must contain the same model levels in ascending order with respect to
@@ -252,12 +257,6 @@ def pressure_at_height_levels(
 
     The pressure at height level is calculated by finding the model level above and
     below the specified height and interpolating the pressure with linear interpolation.
-
-    See Also
-    --------
-    pressure_at_model_levels
-    relative_geopotential_thickness
-
 
     """
     A = np.asarray(A)
@@ -590,14 +589,14 @@ def pressure_on_hybrid_levels(
 
     For more details see [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1.
 
+    See Also
+    --------
+    relative_geopotential_thickness_on_hybrid_levels
+
     Examples
     --------
     - :ref:`/examples/hybrid_levels.ipynb`
 
-
-    See Also
-    --------
-    relative_geopotential_thickness_on_hybrid_levels
 
     """
     if isinstance(output, str):
