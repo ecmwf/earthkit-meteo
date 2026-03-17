@@ -161,16 +161,14 @@ def _get_pearson_data():
     ymiss = SAMPLE_Y.copy()
     ymiss[12:20] = np.nan
     x = np.vstack([SAMPLE_X, SAMPLE_X, SAMPLE_X, SAMPLE_Y, SAMPLE_X, SAMPLE_X])
-    y = np.vstack(
-        [
-            SAMPLE_X,
-            -SAMPLE_X,
-            SAMPLE_Y,
-            crs[3] * SAMPLE_X + rs[3] * SAMPLE_Y,
-            rs[4] * SAMPLE_X + crs[4] * SAMPLE_Y,
-            ymiss,
-        ]
-    )
+    y = np.vstack([
+        SAMPLE_X,
+        -SAMPLE_X,
+        SAMPLE_Y,
+        crs[3] * SAMPLE_X + rs[3] * SAMPLE_Y,
+        rs[4] * SAMPLE_X + crs[4] * SAMPLE_Y,
+        ymiss,
+    ])
     return x.tolist(), y.tolist(), rs.tolist()
 
 

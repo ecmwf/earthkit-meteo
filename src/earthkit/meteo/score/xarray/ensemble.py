@@ -330,22 +330,18 @@ def crps_from_ensemble(
         valid_mask, alpha, beta, crps, fcrps = _crps_from_ensemble_hersbach(fcst, obs, over)
         if return_components:
             if method == "fair":
-                return xr.Dataset(
-                    {
-                        "alpha": alpha.where(valid_mask),
-                        "beta": beta.where(valid_mask),
-                        "crps": crps.where(valid_mask),
-                        "fcrps": fcrps.where(valid_mask),
-                    }
-                )
+                return xr.Dataset({
+                    "alpha": alpha.where(valid_mask),
+                    "beta": beta.where(valid_mask),
+                    "crps": crps.where(valid_mask),
+                    "fcrps": fcrps.where(valid_mask),
+                })
             else:
-                return xr.Dataset(
-                    {
-                        "alpha": alpha.where(valid_mask),
-                        "beta": beta.where(valid_mask),
-                        "crps": crps.where(valid_mask),
-                    }
-                )
+                return xr.Dataset({
+                    "alpha": alpha.where(valid_mask),
+                    "beta": beta.where(valid_mask),
+                    "crps": crps.where(valid_mask),
+                })
 
         else:
             return fcrps.where(valid_mask) if method == "fair" else crps.where(valid_mask)
@@ -376,7 +372,8 @@ def _crps_from_ensemble_hersbach(
     beta[{over: 0}] = (fcst_sorted[{over: 0}] - obs).where(obs_below_ens, 0.0)
 
     rhs = (
-        fcst_sorted.diff(dim=over)
+        fcst_sorted
+        .diff(dim=over)
         .where(
             fcst_sorted[{over: slice(1, None)}] <= obs,
             -fcst_sorted[{over: slice(None, -1)}] + obs,
@@ -387,7 +384,8 @@ def _crps_from_ensemble_hersbach(
     alpha[{over: slice(1, -1)}] = rhs
 
     rhs = (
-        fcst_sorted.diff(dim=over)
+        fcst_sorted
+        .diff(dim=over)
         .where(
             fcst_sorted[{over: slice(None, -1)}] > obs,
             fcst_sorted[{over: slice(1, None)}] - obs,
