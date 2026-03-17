@@ -31,7 +31,8 @@ Thermo
 .. toctree::
     :maxdepth: 1
 
-    excess_heat_factor.ipynb
+    excess_heat_factors.ipynb
+    excess_heat_time_zones.ipynb
 
 
 Vertical

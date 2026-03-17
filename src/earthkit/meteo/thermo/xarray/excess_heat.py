@@ -132,6 +132,7 @@ def daily_mean_temperature(t2m, day_start=9, time_shift=0, **kwargs):
     if isinstance(time_shift, str):
         time_shift = t2m.coords[time_shift]
     if isinstance(time_shift, xr.DataArray):
+        # TODO? verify that time zones don't vary over time
         unique_shifts = np.unique(time_shift.values)
         # Can only proceed if all timeseries are in the same time zone. If
         # there are multiple time zones: split, process separately, merge.
