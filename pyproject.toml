@@ -30,6 +30,7 @@ dependencies = [
   "deprecation",
   "earthkit-utils>=0.0.1",
   "numpy",
+  "scipy",
 ]
 optional-dependencies.all = [
   "earthkit-meteo[samples]",
