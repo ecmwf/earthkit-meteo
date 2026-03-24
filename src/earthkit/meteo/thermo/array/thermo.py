@@ -1316,10 +1316,49 @@ class _EptCompBolton39(_EptComp):
         )
 
 
+class _EptCompBolton43(_EptComp):
+    def __init__(self):
+        # Comment on the Bolton formulas. The constants used by Bolton to
+        # derive the formulas differ from the ones used by earthkit.meteo E.g.
+        #           Bolton   earthkit.meteo
+        #  kappa    0.2854   0.285691
+        self.K4 = 0.28
+        self.K5 = 0.81
+        self.K6 = 3376
+        self.K7 = 2.54
+
+    def _ept(self, ths):
+        xp = ths.ns
+        t_lcl = lcl_temperature(ths.t, ths.td, method="bolton")
+        if ths.q is None:
+            w = mixing_ratio_from_dewpoint(ths.td, ths.p)
+        else:
+            w = mixing_ratio_from_specific_humidity(ths.q)
+
+        return (
+            ths.t
+            * xp.pow(1e5 / ths.p, constants.kappa * (1 - self.K4 * 1e-3 * w))
+            * xp.exp(w * (1 + self.K5 * w) * (self.K6 / t_lcl - self.K7))
+        )
+
+    def compute_ept_sat(self, t, p):
+        raise NotImplementedError("compute_ept_sat is not implemented for Bolton43 method!")
+
+    def compute_wbpt(self, ept):
+        raise NotImplementedError("compute_wbpt is not implemented for Bolton43 method!")
+
+    def compute_t_on_ma_stipanuk(self, ept, p):
+        raise NotImplementedError("compute_t_on_ma_stipanuk is not implemented for Bolton43 method!")
+
+    def compute_t_on_ma_davies(self, ept, p):
+        raise NotImplementedError("compute_t_on_ma_davies is not implemented for Bolton43 method!")
+
+
 _EptComp.CM = {
     "ifs": _EptCompIfs,
     "bolton35": _EptCompBolton35,
     "bolton39": _EptCompBolton39,
+    "bolton43": _EptCompBolton43,
 }
 
 
@@ -1335,7 +1374,7 @@ def ept_from_dewpoint(t, td, p, method="ifs"):
     p: number or array-like
         Pressure (Pa)
     method: str, optional
-        Specifies the computation method. The possible values are: "ifs", "bolton35", "bolton39".
+        Specifies the computation method. The possible values are: "ifs", "bolton35", "bolton39", "bolton43".
 
     Returns
     -------
@@ -1366,14 +1405,23 @@ def ept_from_dewpoint(t, td, p, method="ifs"):
             t (\frac{10^{5}}{p-e})^{\kappa} (\frac{t}{t_{LCL}})^{0.28 w} exp[(\frac{3036}{t_{LCL}} -
             1.78)w(1+0.448\; w)]
 
+    * "bolton43": Eq (43) from [Bolton1980]_ is used:
+
+        .. math::
+
+            \Theta_{e} =
+            t (\frac{10^{5}}{p})^{\kappa (1-0.28\; 10^{-3}w)} exp[(\frac{3376}{t_{LCL}} -
+            2.54)w(1+0.81w)]
+
     where:
 
         * :math:`\Theta` is the :func:`potential_temperature`
+        * :math:`t` is the temperature at the start level
         * :math:`t_{LCL}` is the temperature at the Lifting Condestation Level computed
           with :func:`lcl_temperature` using option:
 
             * method="davis" when ``method`` is "ifs"
-            * method="bolton" when ``method`` is "bolton35" or "bolton39"
+            * method="bolton" when ``method`` is "bolton35", "bolton39", or "bolton43"
         * :math:`q` is the specific humidity computed with :func:`specific_humidity_from_dewpoint`
         * :math:`w`: is the mixing ratio computed with :func:`mixing_ratio_from_dewpoint`
         * :math:`e` is the vapour pressure computed with :func:`vapour_pressure_from_mixing_ratio`
@@ -1400,7 +1448,7 @@ def ept_from_specific_humidity(t, q, p, method="ifs"):
         Pressure (Pa)
     method: str, optional
         Specifies the computation method. The possible values are: "ifs",
-        "bolton35", "bolton39. See :func:`ept_from_dewpoint` for details.
+        "bolton35", "bolton39", "bolton43". See :func:`ept_from_dewpoint` for details.
 
     Returns
     -------
