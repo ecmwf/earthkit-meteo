@@ -10,7 +10,7 @@
 from earthkit.utils.array import array_namespace
 
 
-def pearson(x, y, axis=0):
+def pearson_correlation(x, y, axis=0):
     """Compute pearson correlation coefficient
 
     Parameters
@@ -35,13 +35,3 @@ def pearson(x, y, axis=0):
     y /= xp.linalg.vector_norm(y, axis=axis, keepdims=True)
     x *= y
     return xp.sum(x, axis=axis)
-
-    # x = np.asarray(x)
-    # y = np.asarray(y)
-    # assert x.shape == y.shape
-    # x = x - np.mean(x, axis=axis, keepdims=True)
-    # y = y - np.mean(y, axis=axis, keepdims=True)
-    # x /= np.linalg.norm(x, axis=axis, keepdims=True)
-    # y /= np.linalg.norm(y, axis=axis, keepdims=True)
-    # x *= y
-    # return np.sum(x, axis=axis)

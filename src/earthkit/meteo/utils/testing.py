@@ -136,3 +136,4 @@ class Tolerance:
 
 
 NO_XARRAY = not modules_installed("xarray")
+NO_SCORES = not modules_installed("scores")

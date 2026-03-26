@@ -5,7 +5,7 @@ channels:
 dependencies:
 - pip
 - numpy
-- earthkit-utils>=0.0.1
+- earthkit-utils>=0.2.0
 - make
 - mypy
 - myst-parser
@@ -23,3 +23,4 @@ dependencies:
 - nbconvert
 - nbsphinx
 - ipykernel
+- scores
