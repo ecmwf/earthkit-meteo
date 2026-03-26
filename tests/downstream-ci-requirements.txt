@@ -1,4 +1,4 @@
-earthkit.data
+earthkit-data
 netcdf4
 numpy
 requests

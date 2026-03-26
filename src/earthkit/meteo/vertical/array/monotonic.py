@@ -57,7 +57,7 @@ class MonotonicInterpolator:
         aux_min_level_coord=None,
         aux_max_level_data=None,
         aux_max_level_coord=None,
-        vertical_axis=0,
+        vertical_dim=0,
     ):
 
         if interpolation not in ["linear", "log", "nearest"]:
@@ -72,13 +72,13 @@ class MonotonicInterpolator:
         data = xp.asarray(data)
 
         # move the vertical axis to the first position for easier processing
-        if vertical_axis != 0:
+        if vertical_dim != 0:
             if data.ndim > 1:
-                data = xp.moveaxis(data, vertical_axis, 0)
+                data = xp.moveaxis(data, vertical_dim, 0)
             if coord.ndim > 1:
-                coord = xp.moveaxis(coord, vertical_axis, 0)
+                coord = xp.moveaxis(coord, vertical_dim, 0)
             if target_coord.ndim > 1:
-                target_coord = xp.moveaxis(target_coord, vertical_axis, 0)
+                target_coord = xp.moveaxis(target_coord, vertical_dim, 0)
 
         # Ensure levels are in descending order with respect to the values in the first
         # dimension of coord
@@ -177,8 +177,8 @@ class MonotonicInterpolator:
             return self.simple_compute(res)
 
         # move back the vertical axis to the original position
-        if vertical_axis != 0 and res.ndim > 1:
-            res = xp.moveaxis(res, 0, vertical_axis)
+        if vertical_dim != 0 and res.ndim > 1:
+            res = xp.moveaxis(res, 0, vertical_dim)
 
         return res
 

@@ -75,36 +75,36 @@ def pressure_on_hybrid_levels(
     levels=None,
     alpha_top="ifs",
     output="full",
-    vertical_axis=0,
+    vertical_dim=0,
 ):
     return dispatch(pressure_on_hybrid_levels, xarray=False, fieldlist=False, array=True)(
-        A, B, sp, levels=levels, alpha_top=alpha_top, output=output, vertical_axis=vertical_axis
+        A, B, sp, levels=levels, alpha_top=alpha_top, output=output, vertical_dim=vertical_dim
     )
 
 
-def relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, ap, alpha_top="ifs", vertical_axis=0):
+def relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, ap, alpha_top="ifs", vertical_dim=0):
     return dispatch(
         relative_geopotential_thickness_on_hybrid_levels, xarray=False, fieldlist=False, array=True
-    )(t, q, A, B, ap, alpha_top=alpha_top, vertical_axis=vertical_axis)
+    )(t, q, A, B, ap, alpha_top=alpha_top, vertical_dim=vertical_dim)
 
 
-def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta, vertical_axis=0):
+def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta, vertical_dim=0):
     return dispatch(
         relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta,
         xarray=False,
         fieldlist=False,
         array=True,
-    )(t, q, alpha, delta, vertical_axis=vertical_axis)
+    )(t, q, alpha, delta, vertical_dim=vertical_dim)
 
 
-def geopotential_on_hybrid_levels(t, q, zs, A, B, sp, alpha_top="ifs", vertical_axis=0):
+def geopotential_on_hybrid_levels(t, q, zs, A, B, sp, alpha_top="ifs", vertical_dim=0):
     return dispatch(geopotential_on_hybrid_levels, xarray=False, fieldlist=False, array=True)(
-        t, q, zs, A, B, sp, alpha_top=alpha_top, vertical_axis=vertical_axis
+        t, q, zs, A, B, sp, alpha_top=alpha_top, vertical_dim=vertical_dim
     )
 
 
 def height_on_hybrid_levels(
-    t, q, zs, A, B, sp, alpha_top="ifs", h_type="geometrics", h_reference="ground", vertical_axis=0
+    t, q, zs, A, B, sp, alpha_top="ifs", h_type="geometrics", h_reference="ground", vertical_dim=0
 ):
     return dispatch(height_on_hybrid_levels, xarray=False, fieldlist=False, array=True)(
         t,
@@ -116,7 +116,7 @@ def height_on_hybrid_levels(
         alpha_top=alpha_top,
         h_type=h_type,
         h_reference=h_reference,
-        vertical_axis=vertical_axis,
+        vertical_dim=vertical_dim,
     )
 
 
@@ -132,7 +132,7 @@ def interpolate_hybrid_to_pressure_levels(
     aux_bottom_p=None,
     aux_top_data=None,
     aux_top_p=None,
-    vertical_axis=0,
+    vertical_dim=0,
 ):
     return dispatch(interpolate_hybrid_to_pressure_levels, xarray=False, fieldlist=False, array=True)(
         data,
@@ -146,7 +146,7 @@ def interpolate_hybrid_to_pressure_levels(
         aux_bottom_p=aux_bottom_p,
         aux_top_data=aux_top_data,
         aux_top_p=aux_top_p,
-        vertical_axis=vertical_axis,
+        vertical_dim=vertical_dim,
     )
 
 
@@ -167,7 +167,7 @@ def interpolate_hybrid_to_height_levels(
     aux_bottom_h=None,
     aux_top_data=None,
     aux_top_h=None,
-    vertical_axis=0,
+    vertical_dim=0,
 ):
     return dispatch(interpolate_hybrid_to_height_levels, xarray=False, fieldlist=False, array=True)(
         data,
@@ -186,7 +186,7 @@ def interpolate_hybrid_to_height_levels(
         aux_bottom_h=aux_bottom_h,
         aux_top_data=aux_top_data,
         aux_top_h=aux_top_h,
-        vertical_axis=vertical_axis,
+        vertical_dim=vertical_dim,
     )
 
 
@@ -202,7 +202,7 @@ def interpolate_pressure_to_height_levels(
     aux_bottom_h=None,
     aux_top_data=None,
     aux_top_h=None,
-    vertical_axis: int = 0,
+    vertical_dim: int = 0,
 ):
     return dispatch(interpolate_pressure_to_height_levels, xarray=False, fieldlist=False, array=True)(
         data,
@@ -216,5 +216,5 @@ def interpolate_pressure_to_height_levels(
         aux_bottom_h=aux_bottom_h,
         aux_top_data=aux_top_data,
         aux_top_h=aux_top_h,
-        vertical_axis=vertical_axis,
+        vertical_dim=vertical_dim,
     )

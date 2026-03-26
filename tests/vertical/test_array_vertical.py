@@ -235,7 +235,7 @@ def test_pressure_on_hybrid_levels_core(index, xp, device):
 @pytest.mark.parametrize("index", [(slice(None), slice(None)), (slice(None), 0), (slice(None), 1)])
 def test_pressure_on_hybrid_levels_axis(index, xp, device):
     # nondefault vertical axis for output
-    vertical_axis = 1
+    vertical_dim = 1
 
     sp = DATA_HYBRID_CORE.p_surf
     A = DATA_HYBRID_CORE.A
@@ -263,7 +263,7 @@ def test_pressure_on_hybrid_levels_axis(index, xp, device):
         sp,
         alpha_top="ifs",
         output=["full", "half", "delta", "alpha"],
-        vertical_axis=vertical_axis,
+        vertical_dim=vertical_dim,
     )
 
     input_shape = sp.shape
@@ -274,10 +274,10 @@ def test_pressure_on_hybrid_levels_axis(index, xp, device):
     assert alpha.shape == input_shape + (nlev,)
 
     if p_full.ndim > 1:
-        p_full = xp.moveaxis(p_full, vertical_axis, 0)
-        p_half = xp.moveaxis(p_half, vertical_axis, 0)
-        delta = xp.moveaxis(delta, vertical_axis, 0)
-        alpha = xp.moveaxis(alpha, vertical_axis, 0)
+        p_full = xp.moveaxis(p_full, vertical_dim, 0)
+        p_half = xp.moveaxis(p_half, vertical_dim, 0)
+        delta = xp.moveaxis(delta, vertical_dim, 0)
+        alpha = xp.moveaxis(alpha, vertical_dim, 0)
 
     tolerance = Tolerance(
         {
