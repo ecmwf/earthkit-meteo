@@ -13,8 +13,7 @@ from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import extreme
 
-from . import _cpf
-from . import _data
+from . import _cpf, _data
 
 
 def _move_axis(data, axis):

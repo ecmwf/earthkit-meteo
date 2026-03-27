@@ -7,11 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import Any
-from typing import Iterable
-from typing import Sequence
-from typing import TypeAlias
-from typing import overload
+from typing import Any, Iterable, Sequence, TypeAlias, overload
 
 from ..utils.decorators import dispatch
 

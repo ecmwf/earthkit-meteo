@@ -12,8 +12,7 @@
 
 from earthkit.utils.array import array_namespace
 
-from .utils import flatten_extreme_input
-from .utils import validate_extreme_shapes
+from .utils import flatten_extreme_input, validate_extreme_shapes
 
 
 def efi(clim, ens, eps=-0.1, clim_dim=0, ens_dim=0):
@@ -40,7 +39,6 @@ def efi(clim, ens, eps=-0.1, clim_dim=0, ens_dim=0):
     array-like
         EFI values.
     """
-
     if clim_dim is None:
         clim_dim = 0
     if ens_dim is None:

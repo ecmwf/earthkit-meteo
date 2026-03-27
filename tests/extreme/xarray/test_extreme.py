@@ -14,8 +14,7 @@ xr = pytest.importorskip("xarray")
 
 from earthkit.meteo.extreme import xarray as extreme_xr
 
-from .. import _cpf
-from .. import _data
+from .. import _cpf, _data
 
 
 def _da(values, dims):

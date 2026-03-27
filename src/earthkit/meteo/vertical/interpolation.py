@@ -26,9 +26,7 @@ def interpolate_monotonic(
     )
 
 
-def interpolate_to_pressure_levels(
-    data, p, target_p, target_p_units="Pa", interpolation="linear", vertical_dim="z"
-):
+def interpolate_to_pressure_levels(data, p, target_p, target_p_units="Pa", interpolation="linear", vertical_dim="z"):
     return dispatch(interpolate_to_pressure_levels, xarray=True, fieldlist=False, array=False)(
         data,
         p,
@@ -39,16 +37,25 @@ def interpolate_to_pressure_levels(
     )
 
 
-def interpolate_sleve_to_coord_levels(
-    data, h, coord, target_coord, folding_mode="undef_fold", vertical_dim="z"
-):
+def interpolate_sleve_to_coord_levels(data, h, coord, target_coord, folding_mode="undef_fold", vertical_dim="z"):
     return dispatch(interpolate_sleve_to_coord_levels, xarray=True, fieldlist=False, array=False)(
-        data, h, coord, target_coord, folding_mode=folding_mode, vertical_dim=vertical_dim
+        data,
+        h,
+        coord,
+        target_coord,
+        folding_mode=folding_mode,
+        vertical_dim=vertical_dim,
     )
 
 
 def interpolate_sleve_to_theta_levels(
-    data, g, theta, target_theta, target_t_units="K", folding_mode="undef_fold", vertical_dim="z"
+    data,
+    g,
+    theta,
+    target_theta,
+    target_t_units="K",
+    folding_mode="undef_fold",
+    vertical_dim="z",
 ):
     return dispatch(interpolate_sleve_to_theta_levels, xarray=True, fieldlist=False, array=False)(
         data,

@@ -11,8 +11,7 @@ from __future__ import annotations
 
 import xarray as xr
 
-from earthkit.meteo.utils.decorators import get_dim_from_defaults
-from earthkit.meteo.utils.decorators import xarray_ufunc
+from earthkit.meteo.utils.decorators import get_dim_from_defaults, xarray_ufunc
 
 from .. import array
 

@@ -62,8 +62,7 @@ class MonotonicInterpolator:
 
         if interpolation not in ["linear", "log", "nearest"]:
             raise ValueError(
-                f"Unknown interpolation method '{interpolation}'. Supported "
-                "methods are 'linear', 'log' and 'nearest'."
+                f"Unknown interpolation method '{interpolation}'. Supported methods are 'linear', 'log' and 'nearest'."
             )
 
         xp = array_namespace(data, coord)
@@ -110,11 +109,7 @@ class MonotonicInterpolator:
         if same_shape:
             if self.data_is_scalar and not self.target_is_scalar:
                 raise ValueError("If values and p have the same shape, they cannot both be scalars.")
-            if (
-                not self.data_is_scalar
-                and not self.target_is_scalar
-                and data.shape[1:] != target_coord.shape[1:]
-            ):
+            if not self.data_is_scalar and not self.target_is_scalar and data.shape[1:] != target_coord.shape[1:]:
                 raise ValueError(
                     "When values and target_p have different shapes, target_p must be a scalar or a 1D array."
                 )
@@ -194,7 +189,6 @@ class MonotonicInterpolator:
         # vertical position in the atmosphere. Of course, if the  coordinate is pressure these
         # two definitions coincide.
         for target_idx, tc in enumerate(self.target_coord):
-
             # find the level below the target
             idx_bottom = (self.coord > tc).sum(0)
             idx_bottom = xp.atleast_1d(idx_bottom)

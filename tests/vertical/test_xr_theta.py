@@ -49,9 +49,7 @@ def test_interpolate_to_pressure(interpolation, input_ds, output_ds):
     target_p = [40.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1100.0]
     target_p_units = "hPa"
 
-    observed = interpolate_to_pressure_levels(
-        t, p, target_p, target_p_units, interpolation=interpolation
-    ).values
+    observed = interpolate_to_pressure_levels(t, p, target_p, target_p_units, interpolation=interpolation).values
     expected = output_ds("pressure", interpolation)["T"].values.squeeze()
 
     np.testing.assert_allclose(observed, expected, 1e-5, 1e-7)

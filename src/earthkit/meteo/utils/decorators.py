@@ -8,13 +8,11 @@
 #
 from __future__ import annotations
 
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from functools import wraps
 from importlib import import_module
 from inspect import signature
-from typing import TYPE_CHECKING
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from earthkit.utils.array import array_namespace
 
@@ -152,9 +150,7 @@ def dispatch(func, match=0, xarray=True, fieldlist=True, array=False):
         if match in params:
             param_name = match
         else:
-            raise ValueError(
-                f"'match' parameter name {match} is not in the function signature of {func.__name__}"
-            )
+            raise ValueError(f"'match' parameter name {match} is not in the function signature of {func.__name__}")
     else:
         raise TypeError(f"'match' must be an integer index or a string parameter name, got {type(match)}")
 
@@ -177,8 +173,7 @@ def dispatch(func, match=0, xarray=True, fieldlist=True, array=False):
 def _infer_output_count(func) -> int:
     try:
         import inspect
-        from typing import get_args
-        from typing import get_origin
+        from typing import get_args, get_origin
 
         annotation = inspect.signature(func).return_annotation
     except (ValueError, TypeError):

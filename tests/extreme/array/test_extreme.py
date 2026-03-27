@@ -12,11 +12,9 @@ import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import extreme
-from earthkit.meteo.extreme.array.utils import flatten_extreme_input
-from earthkit.meteo.extreme.array.utils import validate_extreme_shapes
+from earthkit.meteo.extreme.array.utils import flatten_extreme_input, validate_extreme_shapes
 
-from .. import _cpf
-from .. import _data
+from .. import _cpf, _data
 
 
 def _move_axis(data, axis):

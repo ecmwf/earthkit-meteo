@@ -9,11 +9,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Any  # noqa: F401
-from typing import Iterable
-from typing import TypeAlias
-from typing import overload
+from typing import (
+    TYPE_CHECKING,
+    Any,  # noqa: F401
+    Iterable,
+    TypeAlias,
+    overload,
+)
 
 from earthkit.meteo.utils.decorators import dispatch
 
@@ -140,9 +142,7 @@ def direction(
 
 
 @overload
-def xy_to_polar(
-    x: "ArrayLike", y: "ArrayLike", convention: str = "meteo"
-) -> tuple["ArrayLike", "ArrayLike"]: ...
+def xy_to_polar(x: "ArrayLike", y: "ArrayLike", convention: str = "meteo") -> tuple["ArrayLike", "ArrayLike"]: ...
 
 
 @overload

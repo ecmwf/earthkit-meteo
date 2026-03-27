@@ -40,9 +40,7 @@ p_h = vertical.interpolate_hybrid_to_height_levels(
 # Option 2
 
 # compute the pressure on full hybrid levels
-p_full, alpha, delta = vertical.pressure_on_hybrid_levels(
-    A, B, sp, alpha_top="ifs", output=("full", "alpha", "delta")
-)
+p_full, alpha, delta = vertical.pressure_on_hybrid_levels(A, B, sp, alpha_top="ifs", output=("full", "alpha", "delta"))
 
 z = vertical.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta)
 h = vertical.geopotential_height_from_geopotential(z)

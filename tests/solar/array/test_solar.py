@@ -102,15 +102,11 @@ def test_cos_solar_zenith_angle_1(xp, device, date, lat, lon, v_ref):
         ),
     ],
 )
-def test_cos_solar_zenith_angle_integrated(
-    xp, device, begin_date, end_date, lat, lon, integration_order, v_ref
-):
+def test_cos_solar_zenith_angle_integrated(xp, device, begin_date, end_date, lat, lon, integration_order, v_ref):
     lat = xp.asarray(lat, device=device)
     lon = xp.asarray(lon, device=device)
     v_ref = xp.asarray(v_ref, device=device)
-    v = solar.cos_solar_zenith_angle_integrated(
-        begin_date, end_date, lat, lon, integration_order=integration_order
-    )
+    v = solar.cos_solar_zenith_angle_integrated(begin_date, end_date, lat, lon, integration_order=integration_order)
     v_ref = xp.asarray(v_ref, dtype=v.dtype)
     assert xp.allclose(v, v_ref)
 

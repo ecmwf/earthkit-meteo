@@ -35,6 +35,5 @@ def validate_extreme_shapes(
     ens_shape_tmp.pop(ens_dim)
     if clim_shape_tmp != ens_shape_tmp:
         raise ValueError(
-            f"{func}(): clim and ens must match in shape "
-            f"{clim_dim=} {ens_dim=}. {clim_shape=}, {ens_shape=}"
+            f"{func}(): clim and ens must match in shape {clim_dim=} {ens_dim=}. {clim_shape=}, {ens_shape=}"
         )

@@ -36,9 +36,7 @@ def project(field, patterns, weights, **patterns_extra_coords):
     """
     ndim_field = len(patterns.shape)
     if field.shape[-ndim_field:] != patterns.shape:
-        raise ValueError(
-            f"shape of input fields {field.shape} incompatible with shape of patterns {patterns.shape}"
-        )
+        raise ValueError(f"shape of input fields {field.shape} incompatible with shape of patterns {patterns.shape}")
 
     if weights is None:
         # TODO generate area-based weights from grid of patterns with earthkit-geo

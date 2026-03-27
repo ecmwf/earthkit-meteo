@@ -9,10 +9,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Any  # noqa: F401
-from typing import TypeAlias
-from typing import overload
+from typing import (
+    TYPE_CHECKING,
+    Any,  # noqa: F401
+    TypeAlias,
+    overload,
+)
 
 from earthkit.meteo.utils.decorators import dispatch
 
@@ -31,7 +33,9 @@ def celsius_to_kelvin(t: "ArrayLike") -> "ArrayLike": ...
 def celsius_to_kelvin(t: "xarray.DataArray") -> "xarray.DataArray": ...
 
 
-def celsius_to_kelvin(t: "ArrayLike" | "xarray.DataArray") -> "ArrayLike" | "xarray.DataArray":
+def celsius_to_kelvin(
+    t: "ArrayLike" | "xarray.DataArray",
+) -> "ArrayLike" | "xarray.DataArray":
     r"""Convert temperature values from Celsius to Kelvin.
 
     Parameters
@@ -70,7 +74,9 @@ def kelvin_to_celsius(t: "ArrayLike") -> "ArrayLike": ...
 def kelvin_to_celsius(t: "xarray.DataArray") -> "xarray.DataArray": ...
 
 
-def kelvin_to_celsius(t: "ArrayLike" | "xarray.DataArray") -> "ArrayLike" | "xarray.DataArray":
+def kelvin_to_celsius(
+    t: "ArrayLike" | "xarray.DataArray",
+) -> "ArrayLike" | "xarray.DataArray":
     r"""Convert temperature values from Kelvin to Celsius.
 
     Parameters
@@ -2455,7 +2461,11 @@ def wet_bulb_potential_temperature_from_specific_humidity(
 
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(wet_bulb_potential_temperature_from_specific_humidity, fieldlist=False, array=True)
+    dispatched = dispatch(
+        wet_bulb_potential_temperature_from_specific_humidity,
+        fieldlist=False,
+        array=True,
+    )
     return dispatched(t, q, p, ept_method=ept_method, t_method=t_method)
 
 
@@ -2467,7 +2477,9 @@ def specific_gas_constant(q: "ArrayLike") -> "ArrayLike": ...
 def specific_gas_constant(q: "xarray.DataArray") -> "xarray.DataArray": ...
 
 
-def specific_gas_constant(q: "ArrayLike" | "xarray.DataArray") -> "ArrayLike" | "xarray.DataArray":
+def specific_gas_constant(
+    q: "ArrayLike" | "xarray.DataArray",
+) -> "ArrayLike" | "xarray.DataArray":
     r"""Compute the specific gas constant of moist air.
 
     Specific content of cloud particles and hydrometeors are neglected.

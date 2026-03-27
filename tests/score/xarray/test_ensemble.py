@@ -5,13 +5,8 @@ import pytest
 
 xr = pytest.importorskip("xarray")
 
-from earthkit.meteo.score import crps_from_cdf
-from earthkit.meteo.score import crps_from_ensemble
-from earthkit.meteo.score import crps_from_gaussian
-from earthkit.meteo.score import quantile_score
-from earthkit.meteo.score import spread
-from earthkit.meteo.utils.testing import NO_SCIPY
-from earthkit.meteo.utils.testing import NO_SCORES
+from earthkit.meteo.score import crps_from_cdf, crps_from_ensemble, crps_from_gaussian, quantile_score, spread
+from earthkit.meteo.utils.testing import NO_SCIPY, NO_SCORES
 
 LATITUDES = [40.0, 41.0]
 LONGITUDES = [10.0, 11.0]
@@ -126,20 +121,17 @@ def rng():
 
 def test_spread_without_reference():
     """Test spread calculation without a reference, using the ensemble mean."""
-
     # Forecast data: shape (time, lat, lon, number)
-    fcst_values = np.array(
+    fcst_values = np.array([
         [
-            [
-                [[10, 12, 14], [20, 22, 24]],
-                [[30, 32, 34], [40, 42, 44]],
-            ],
-            [
-                [[11, 13, 15], [21, 23, 25]],
-                [[31, 33, 35], [41, 43, 45]],
-            ],
-        ]
-    )
+            [[10, 12, 14], [20, 22, 24]],
+            [[30, 32, 34], [40, 42, 44]],
+        ],
+        [
+            [[11, 13, 15], [21, 23, 25]],
+            [[31, 33, 35], [41, 43, 45]],
+        ],
+    ])
     spread_values = np.std(fcst_values, axis=3, ddof=0)
 
     fcst = make_ensemble_dataset(fcst_values)
@@ -150,24 +142,20 @@ def test_spread_without_reference():
 
 
 def test_spread_with_reference():
-    fcst_values = np.array(
+    fcst_values = np.array([
         [
-            [
-                [[10, 12, 14], [20, 22, 24]],
-                [[30, 32, 34], [40, 42, 44]],
-            ],
-            [
-                [[11, 13, 15], [21, 23, 25]],
-                [[31, 33, 35], [41, 43, 45]],
-            ],
-        ]
-    )
-    reference_values = np.array(
+            [[10, 12, 14], [20, 22, 24]],
+            [[30, 32, 34], [40, 42, 44]],
+        ],
         [
-            [[12, 24], [36, 48]],
-            [[7, 19], [31, 43]],
-        ]
-    )
+            [[11, 13, 15], [21, 23, 25]],
+            [[31, 33, 35], [41, 43, 45]],
+        ],
+    ])
+    reference_values = np.array([
+        [[12, 24], [36, 48]],
+        [[7, 19], [31, 43]],
+    ])
     spread_values = np.sqrt(
         np.mean(
             (fcst_values - reference_values[:, :, :, np.newaxis]) ** 2,
@@ -204,30 +192,26 @@ def test_spread_with_reference():
 )
 def test_quantile_score(tau: float, expected_scores: np.ndarray):
     # Forecast data: shape (time, lat, lon, number)
-    fcst_values = np.array(
+    fcst_values = np.array([
         [
-            [
-                [np.linspace(0.0, 1.0, 10), np.linspace(10.0, 11.0, 10)],
-                [np.linspace(20.0, 21.0, 10), np.linspace(30.0, 31.0, 10)],
-            ],
-            [
-                [np.linspace(1.0, 2.0, 10), np.linspace(11.0, 12.0, 10)],
-                [np.linspace(21.0, 22.0, 10), np.linspace(31.0, 32.0, 10)],
-            ],
-        ]
-    )
-    obs_values = np.array(
+            [np.linspace(0.0, 1.0, 10), np.linspace(10.0, 11.0, 10)],
+            [np.linspace(20.0, 21.0, 10), np.linspace(30.0, 31.0, 10)],
+        ],
         [
-            [
-                [-1.0, 10.0],
-                [21.0, 32.0],
-            ],
-            [
-                [1.5, 11.1],
-                [-2.0, 33.0],
-            ],
-        ]
-    )
+            [np.linspace(1.0, 2.0, 10), np.linspace(11.0, 12.0, 10)],
+            [np.linspace(21.0, 22.0, 10), np.linspace(31.0, 32.0, 10)],
+        ],
+    ])
+    obs_values = np.array([
+        [
+            [-1.0, 10.0],
+            [21.0, 32.0],
+        ],
+        [
+            [1.5, 11.1],
+            [-2.0, 33.0],
+        ],
+    ])
 
     fcst = make_ensemble_dataset(fcst_values)
     obs = make_deterministic_dataset(obs_values)
@@ -259,30 +243,22 @@ def test_quantile_score_invalid_tau(tau: float):
 
 @pytest.mark.skipif(NO_SCIPY, reason="scipy required for Gaussian CRPS tests")
 def test_crps_from_gaussian():
-    fcst_mean_values = np.array(
-        [
-            [[10.0, 20.0], [30.0, 40.0]],
-            [[15.0, 25.0], [35.0, 45.0]],
-        ]
-    )
-    fcst_stddev_values = np.array(
-        [
-            [[2.0, 3.0], [4.0, 5.0]],
-            [[2.5, 3.5], [4.5, 5.5]],
-        ]
-    )
-    obs_values = np.array(
-        [
-            [[12.0, 19.0], [29.0, 42.0]],
-            [[14.0, 27.0], [36.0, 44.0]],
-        ]
-    )
-    expected_crps_values = np.array(
-        [
-            [[1.20488272, 0.83284794], [1.03399925, 1.48344045]],
-            [[0.74172023, 1.26185368], [1.1399182, 1.35765817]],
-        ]
-    )
+    fcst_mean_values = np.array([
+        [[10.0, 20.0], [30.0, 40.0]],
+        [[15.0, 25.0], [35.0, 45.0]],
+    ])
+    fcst_stddev_values = np.array([
+        [[2.0, 3.0], [4.0, 5.0]],
+        [[2.5, 3.5], [4.5, 5.5]],
+    ])
+    obs_values = np.array([
+        [[12.0, 19.0], [29.0, 42.0]],
+        [[14.0, 27.0], [36.0, 44.0]],
+    ])
+    expected_crps_values = np.array([
+        [[1.20488272, 0.83284794], [1.03399925, 1.48344045]],
+        [[0.74172023, 1.26185368], [1.1399182, 1.35765817]],
+    ])
 
     # TODO: Settle on stdev vs stddev
     fcst = make_gaussian_ensemble_dataset(fcst_mean_values, fcst_stddev_values)
@@ -294,12 +270,10 @@ def test_crps_from_gaussian():
 
 
 def test_crps_from_gaussian_invalid_input():
-    fcst_mean_values = np.array(
-        [
-            [[10.0, 20.0], [30.0, 40.0]],
-            [[15.0, 25.0], [35.0, 45.0]],
-        ]
-    )
+    fcst_mean_values = np.array([
+        [[10.0, 20.0], [30.0, 40.0]],
+        [[15.0, 25.0], [35.0, 45.0]],
+    ])
     # Missing 'stdev' variable
     fcst = xr.Dataset(
         {
@@ -311,12 +285,10 @@ def test_crps_from_gaussian_invalid_input():
             "longitude": LONGITUDES,
         },
     )
-    obs_values = np.array(
-        [
-            [[12.0, 19.0], [29.0, 42.0]],
-            [[14.0, 27.0], [36.0, 44.0]],
-        ]
-    )
+    obs_values = np.array([
+        [[12.0, 19.0], [29.0, 42.0]],
+        [[14.0, 27.0], [36.0, 44.0]],
+    ])
     obs = make_deterministic_dataset(obs_values)["2t"]
 
     with pytest.raises(ValueError, match="Expected fcst to have 'mean' and 'stdev' data variables"):
@@ -680,9 +652,7 @@ def test_crps_from_cdf():
     xr.testing.assert_allclose(result["crps"], expected_total_da)
     xr.testing.assert_allclose(result["underforecast_penalty"], expected_under_da)
     xr.testing.assert_allclose(result["overforecast_penalty"], expected_over_da)
-    xr.testing.assert_allclose(
-        result["crps"], result["underforecast_penalty"] + result["overforecast_penalty"]
-    )
+    xr.testing.assert_allclose(result["crps"], result["underforecast_penalty"] + result["overforecast_penalty"])
     xr.testing.assert_allclose(total_only, expected_total_da)
 
 

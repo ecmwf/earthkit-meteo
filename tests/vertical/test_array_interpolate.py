@@ -223,9 +223,7 @@ def test_array_interpolate_monotonic_s_a_a(value, pres, target, mode, xp, device
         ),
     ],
 )
-def test_array_interpolate_monotonic_to_pressure_s_s_s_aux(
-    data, coord, target_coord, mode, expected_data, xp, device
-):
+def test_array_interpolate_monotonic_to_pressure_s_s_s_aux(data, coord, target_coord, mode, expected_data, xp, device):
     """Test interpolation with auxiliary min/max level data"""
     data = xp.asarray(data, device=device)
     coord = xp.asarray(coord, device=device)
@@ -257,9 +255,7 @@ def test_array_interpolate_monotonic_to_pressure_s_s_s_aux(
         ),
     ],
 )
-def test_array_interpolate_monotonic_to_height_s_s_s_aux(
-    data, coord, target_coord, mode, expected_data, xp, device
-):
+def test_array_interpolate_monotonic_to_height_s_s_s_aux(data, coord, target_coord, mode, expected_data, xp, device):
     """Test interpolation with auxiliary min/max level data"""
     data = xp.asarray(data, device=device)
     coord = xp.asarray(coord, device=device)
@@ -411,9 +407,7 @@ def test_array_interpolate_hybrid_to_pressure_levels(_kwargs, expected_values, p
 
     tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
     atol, rtol = tolerance.get(dtype=t.dtype)
-    assert xp.allclose(
-        r, r_ref, atol=atol, rtol=rtol, equal_nan=True
-    ), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
+    assert xp.allclose(r, r_ref, atol=atol, rtol=rtol, equal_nan=True), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
 
 
 @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
@@ -544,9 +538,7 @@ def test_array_interpolate_hybrid_to_height_levels(_kwargs, expected_values, par
 
     tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
     atol, rtol = tolerance.get(dtype=t.dtype)
-    assert xp.allclose(
-        r, r_ref, atol=atol, rtol=rtol, equal_nan=True
-    ), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
+    assert xp.allclose(r, r_ref, atol=atol, rtol=rtol, equal_nan=True), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
 
 
 @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
@@ -668,6 +660,4 @@ def test_array_interpolate_pressure_to_height_levels(_kwargs, expected_values, x
 
     tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
     atol, rtol = tolerance.get(dtype=t.dtype)
-    assert xp.allclose(
-        r, r_ref, atol=atol, rtol=rtol, equal_nan=True
-    ), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
+    assert xp.allclose(r, r_ref, atol=atol, rtol=rtol, equal_nan=True), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
