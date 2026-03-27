@@ -39,22 +39,21 @@
 ## Quick Start
 
 ```python
+from earthkit.meteo import thermo
 
-    from earthkit.meteo import thermo
+# using Numpy arrays
+import numpy as np
 
-    # using Numpy arrays
-    import numpy as np
+t = np.array([264.12, 261.45])  # Kelvins
+p = np.array([850, 850]) * 100.0  # Pascals
+theta = thermo.potential_temperature(t, p)
 
-    t = np.array([264.12, 261.45])  # Kelvins
-    p = np.array([850, 850]) * 100.0  # Pascals
-    theta = thermo.potential_temperature(t, p)
+# using Torch tensors
+import torch
 
-    # using Torch tensors
-    import torch
-
-    t = torch.tensor([264.12, 261.45])  # Kelvins
-    p = torch.tensor([850.0, 850.0]) * 100.0  # Pascals
-    theta = thermo.potential_temperature(t, p)
+t = torch.tensor([264.12, 261.45])  # Kelvins
+p = torch.tensor([850.0, 850.0]) * 100.0  # Pascals
+theta = thermo.potential_temperature(t, p)
 ```
 
 ## Installation

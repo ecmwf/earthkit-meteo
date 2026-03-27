@@ -154,6 +154,8 @@ xref_links = {
     ),
 }
 
+# ruff: noqa: E501
+
 html_theme_options = {
     "light_css_variables": {
         "color-sidebar-background": "#131320",
@@ -195,6 +197,8 @@ html_theme_options = {
         },
     ],
 }
+
+# ruff: enable: E501
 
 
 def setup(app):
