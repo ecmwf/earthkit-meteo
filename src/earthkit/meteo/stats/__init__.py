@@ -9,8 +9,8 @@
 
 """Statistical functions."""
 
+from .array.extreme_values import GumbelDistribution
 from .extreme_values import (
-    GumbelDistribution,
     fit_gumbel,
     return_period_to_value,
     value_to_return_period,
