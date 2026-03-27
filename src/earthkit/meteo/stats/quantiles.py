@@ -38,7 +38,7 @@ def iter_quantiles(
     dim: int = 0,
     method: str = "sort",
 ) -> "Iterable[ArrayLike]":
-    """Iterate over the quantiles of a large array
+    """Iterate over the quantiles of a large array.
 
 
     .. admonition:: Implementations

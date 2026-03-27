@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Vertical computation functions operating on xarray objects.
-"""
+"""Vertical computation functions operating on xarray objects."""
 
 from .interpolation import *  # noqa

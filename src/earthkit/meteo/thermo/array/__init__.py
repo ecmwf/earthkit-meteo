@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Thermodynamic functions operating on numpy arrays.
-"""
+"""Thermodynamic functions operating on numpy arrays."""
 
 from .thermo import *  # noqa

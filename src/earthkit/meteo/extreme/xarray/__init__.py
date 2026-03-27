@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Extreme index functions operating on xarray objects.
-"""
+"""Extreme index functions operating on xarray objects."""
 
 from .cpf import cpf  # noqa
 from .efi import efi  # noqa

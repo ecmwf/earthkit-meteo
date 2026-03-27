@@ -11,7 +11,7 @@ from earthkit.utils.array import array_namespace
 
 
 def pearson_correlation(x, y, axis=0):
-    """Compute pearson correlation coefficient
+    """Compute pearson correlation coefficient.
 
     Parameters
     ----------

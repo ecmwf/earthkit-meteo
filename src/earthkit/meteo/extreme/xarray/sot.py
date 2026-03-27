@@ -26,7 +26,7 @@ def sot(
 ) -> xr.DataArray:
     """Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    and ensemble forecast (not sorted).
 
     Parameters
     ----------
@@ -79,7 +79,7 @@ def sot_unsorted(
 ) -> xr.DataArray:
     """Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    and ensemble forecast (not sorted).
 
     Parameters
     ----------

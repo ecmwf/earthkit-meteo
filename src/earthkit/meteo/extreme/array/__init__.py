@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Extreme index functions operating on numpy arrays.
-"""
+"""Extreme index functions operating on numpy arrays."""
 
 from .cpf import cpf  # noqa
 from .efi import efi  # noqa

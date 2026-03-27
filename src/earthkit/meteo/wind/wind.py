@@ -292,7 +292,7 @@ def w_from_omega(
     t: "ArrayLike" | "xarray.DataArray",
     p: "ArrayLike" | "xarray.DataArray",
 ) -> "ArrayLike" | "xarray.DataArray":
-    r"""Compute the hydrostatic vertical velocity from pressure velocity
+    r"""Compute the hydrostatic vertical velocity from pressure velocity.
 
     Parameters
     ----------
@@ -346,7 +346,7 @@ def coriolis(lat: "xarray.DataArray") -> "xarray.DataArray": ...
 
 
 def coriolis(lat: "xarray.DataArray" | "ArrayLike") -> "xarray.DataArray" | "ArrayLike":
-    r"""Compute the Coriolis parameter
+    r"""Compute the Coriolis parameter.
 
     Parameters
     ----------

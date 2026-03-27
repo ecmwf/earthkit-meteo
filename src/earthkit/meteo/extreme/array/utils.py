@@ -28,7 +28,7 @@ def validate_extreme_shapes(
     clim_dim: int,
     ens_dim: int,
 ) -> None:
-    """Validate that clim and ens shapes match in shape"""
+    """Validate that clim and ens shapes match in shape."""
     clim_shape_tmp = list(clim_shape)
     clim_shape_tmp.pop(clim_dim)
     ens_shape_tmp = list(ens_shape)

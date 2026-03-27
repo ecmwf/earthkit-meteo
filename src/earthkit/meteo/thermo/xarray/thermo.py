@@ -1213,7 +1213,7 @@ def temperature_on_moist_adiabat(
     ept_method: str = "ifs",
     t_method: str = "bisect",
 ) -> xr.DataArray:
-    r"""Compute the temperature on a moist adiabat (pseudoadiabat)
+    r"""Compute the temperature on a moist adiabat (pseudoadiabat).
 
     Parameters
     ----------

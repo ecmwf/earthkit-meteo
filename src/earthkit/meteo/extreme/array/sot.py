@@ -13,7 +13,7 @@ from .utils import flatten_extreme_input, validate_extreme_shapes
 
 
 def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
-    """Compute basic Shift of Tails (SOT) using already computed percentiles
+    """Compute basic Shift of Tails (SOT) using already computed percentiles.
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
 def sot(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
     """Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    and ensemble forecast (not sorted).
 
     The reduction axis (ensemble and quantiles) is configurable by the user,
     but the other dimensions of clim and ens must be aligned and match.
@@ -131,7 +131,7 @@ def sot(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
 def sot_unsorted(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
     """Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    and ensemble forecast (not sorted).
 
     The reduction axis (ensemble and quantiles) is configurable by the user,
     but the other dimensions of clim and ens must be aligned and match.

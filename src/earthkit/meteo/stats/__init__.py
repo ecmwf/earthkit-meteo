@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Statistical functions.
-"""
+"""Statistical functions."""
 
 from .extreme_values import *  # noqa
 from .numpy_extended import *  # noqa

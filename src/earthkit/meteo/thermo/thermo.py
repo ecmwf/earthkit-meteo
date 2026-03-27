@@ -1904,8 +1904,7 @@ def ept_from_dewpoint(
 
         .. math::
 
-            \Theta_{e} = t (\frac{10^{5}}{p-e})^{\kappa} (\frac{t}{t_{LCL}})^{0.28 w} \operatorname{exp}[(\frac{3036}{t_{LCL}} -
-            1.78)w(1+0.448 w)]
+            \Theta_{e} = t (\frac{10^{5}}{p-e})^{\kappa} (\frac{t}{t_{LCL}})^{0.28 w} \operatorname{exp}[(\frac{3036}{t_{LCL}} - 1.78)w(1+0.448 w)]
 
     where:
 
@@ -2112,7 +2111,7 @@ def temperature_on_moist_adiabat(
     ept_method: str = "ifs",
     t_method: str = "bisect",
 ) -> "ArrayLike" | "xarray.DataArray":
-    r"""Compute the temperature on a moist adiabat (pseudoadiabat)
+    r"""Compute the temperature on a moist adiabat (pseudoadiabat).
 
     Parameters
     ----------

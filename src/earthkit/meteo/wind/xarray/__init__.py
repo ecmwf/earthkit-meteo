@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Wind related functions operating on xarray objects.
-"""
+"""Wind related functions operating on xarray objects."""
 
 from .wind import coriolis, direction, polar_to_xy, speed, w_from_omega, windrose, xy_to_polar
 

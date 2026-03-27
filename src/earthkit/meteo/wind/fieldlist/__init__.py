@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Wind related functions operating on earthkit.data FieldList objects.
-"""
+"""Wind related functions operating on earthkit.data FieldList objects."""
 
 from .wind import *  # noqa

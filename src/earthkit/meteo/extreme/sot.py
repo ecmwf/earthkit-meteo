@@ -51,7 +51,7 @@ def sot(
 ):
     r"""Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    and ensemble forecast (not sorted).
 
     Parameters
     ----------
@@ -119,7 +119,7 @@ def sot_unsorted(
 ):
     r"""Compute Shift of Tails (SOT)
     from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    and ensemble forecast (not sorted).
 
     Parameters
     ----------

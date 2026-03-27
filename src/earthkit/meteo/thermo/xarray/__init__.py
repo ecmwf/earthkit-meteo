@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Thermo related functions operating on xarray objects.
-"""
+"""Thermo related functions operating on xarray objects."""
 
 from .thermo import (
     celsius_to_kelvin,

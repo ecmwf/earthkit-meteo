@@ -49,9 +49,7 @@ def _is_fieldlist(obj: Any) -> bool:
 
 
 class DataDispatcher(metaclass=ABCMeta):
-    """
-    A dispatcher class to route function calls based on input data types.
-    """
+    """A dispatcher class to route function calls based on input data types."""
 
     @staticmethod
     @abstractmethod
@@ -191,9 +189,7 @@ def _infer_output_count(func) -> int:
 
 
 def get_dim_from_defaults(da: xr.DataArray, dim: str | None, dim_names: tuple[str, ...]) -> str | None:
-    """
-    Get dimension name from defaults if not provided.
-    """
+    """Get dimension name from defaults if not provided."""
     if dim is not None:
         return dim
     for name in dim_names:
