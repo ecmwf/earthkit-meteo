@@ -12,6 +12,7 @@ repos:
   - id: debug-statements     # Check for debugger imports and py37+ breakpoint()
   - id: mixed-line-ending
   - id: no-commit-to-branch     # Prevent committing to main / master
+    args: [--branch, main, --branch, master, --branch, develop]
   - id: check-merge-conflict     # Check for files that contain merge conflict
     exclude: /README\.rst$|^docs/.*\.rst$
 - repo: https://github.com/astral-sh/ruff-pre-commit
