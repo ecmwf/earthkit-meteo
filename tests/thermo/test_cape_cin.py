@@ -7,493 +7,178 @@
 # nor does it submit to any jurisdiction.
 #
 
+"""
+Tests for the CAPE/CIN functions.
+
+Input data and reference values are stored in tests/data/cape_cin_input.csv
+and tests/data/cape_cin_expected.csv.  Use save_cape_cin_reference() to
+regenerate those files when the expected values change.
+"""
+
+import os
+
 import numpy as np
 import pytest
 
 from earthkit.meteo import thermo
 
-# Expected values are calculated based on current commit
-REFERENCE_CASES = {
-    "stable": {
-        "p": np.array(
-            [
-                50.0,
-                100.0,
-                150.0,
-                200.0,
-                250.0,
-                300.0,
-                400.0,
-                500.0,
-                600.0,
-                700.0,
-                850.0,
-                925.0,
-                1000.0,
-                1024.77728271,
-            ]
-        ),
-        "t": np.array(
-            [
-                225.74617004,
-                225.61347961,
-                227.22886658,
-                227.09010315,
-                226.18617249,
-                223.35209656,
-                225.96180725,
-                235.34315491,
-                243.71420288,
-                250.77044678,
-                257.38471985,
-                256.66688538,
-                255.0138855,
-                256.38453674,
-            ]
-        ),
-        "zh": np.array(
-            [
-                2.04774911e04,
-                1.59099897e04,
-                1.32232798e04,
-                1.13071802e04,
-                9.82837671e03,
-                8.62787976e03,
-                6.74741736e03,
-                5.24377783e03,
-                3.96499622e03,
-                2.84909973e03,
-                1.40258386e03,
-                7.65287432e02,
-                1.83113159e02,
-                -2.58148193e-01,
-            ]
-        ),
-        "r": np.array(
-            [
-                3.08937478e-06,
-                2.76289338e-06,
-                2.70137755e-06,
-                2.92586029e-06,
-                5.03272428e-06,
-                1.51696122e-05,
-                8.07112028e-05,
-                2.11879791e-04,
-                3.81853902e-04,
-                6.51784104e-04,
-                9.72739431e-04,
-                8.57611240e-04,
-                8.54745316e-04,
-                8.21906027e-04,
-            ]
-        ),
-        "expected": {
-            "surface": {"cape": 0.0, "cin": 0.0},
-            "mixed": {"cape": 0.0, "cin": 0.0},
-            "mu": {"cape": 0.0, "cin": 0.0},
-        },
-    },
-    "elevated_instability": {
-        "p": np.array(
-            [
-                50.0,
-                100.0,
-                150.0,
-                200.0,
-                250.0,
-                300.0,
-                400.0,
-                500.0,
-                600.0,
-                700.0,
-                850.0,
-                925.0,
-                1000.0,
-                890.47729492,
-            ]
-        ),
-        "t": np.array(
-            [
-                214.33650208,
-                216.44648743,
-                220.21812439,
-                215.66041565,
-                215.93861389,
-                225.26615906,
-                241.76356506,
-                254.44471741,
-                263.93099976,
-                272.4520874,
-                286.62495422,
-                292.2938385,
-                296.6076355,
-                292.31422424,
-            ]
-        ),
-        "zh": np.array(
-            [
-                20616.81323242,
-                16251.12133789,
-                13664.76806641,
-                11819.00488281,
-                10421.24108887,
-                9244.90319824,
-                7280.13903809,
-                5659.62902832,
-                4276.74450684,
-                3064.92541504,
-                1473.99060059,
-                756.54634285,
-                93.43426514,
-                1080.06802368,
-            ]
-        ),
-        "r": np.array(
-            [
-                2.83276479e-06,
-                2.76068147e-06,
-                3.07064908e-06,
-                9.38000516e-06,
-                3.41134787e-05,
-                7.95040154e-05,
-                1.79799931e-04,
-                5.15130144e-04,
-                1.72937450e-03,
-                3.80528068e-03,
-                5.27286602e-03,
-                5.77523488e-03,
-                5.88522516e-03,
-                6.87201680e-03,
-            ]
-        ),
-        "expected": {
-            "surface": {"cape": 0.0, "cin": 0.0},
-            "mixed": {"cape": 0.0, "cin": 0.0},
-            "mu": {"cape": 977.57643248, "cin": 0.0},
-        },
-    },
-    "unstable": {
-        "p": np.array(
-            [
-                50.0,
-                100.0,
-                150.0,
-                200.0,
-                250.0,
-                300.0,
-                400.0,
-                500.0,
-                600.0,
-                700.0,
-                850.0,
-                925.0,
-                1000.0,
-                988.72729492,
-            ]
-        ),
-        "t": np.array(
-            [
-                217.64167786,
-                218.91816711,
-                222.0643158,
-                219.50270081,
-                215.67152405,
-                223.68998718,
-                239.55848694,
-                251.81581116,
-                261.70443726,
-                269.39544678,
-                280.1933136,
-                285.49305725,
-                290.56271362,
-                290.83180237,
-            ]
-        ),
-        "zh": np.array(
-            [
-                20608.42895508,
-                16186.18762207,
-                13575.31860352,
-                11710.39123535,
-                10297.28588867,
-                9127.82873535,
-                7177.46325684,
-                5570.86755371,
-                4199.88415527,
-                3000.80712891,
-                1436.42687988,
-                734.22218513,
-                74.37207031,
-                170.89370728,
-            ]
-        ),
-        "r": np.array(
-            [
-                2.90162485e-06,
-                2.74880704e-06,
-                2.85644362e-06,
-                6.15571631e-06,
-                3.57601721e-05,
-                9.09947695e-05,
-                3.37356851e-04,
-                7.66984337e-04,
-                1.59063225e-03,
-                3.02751741e-03,
-                6.01454274e-03,
-                7.35454821e-03,
-                8.30190131e-03,
-                8.65592702e-03,
-            ]
-        ),
-        "expected": {
-            "surface": {"cape": 235.70048467, "cin": 41.58963294},
-            "mixed": {"cape": 329.26386708, "cin": 12.13904596},
-            "mu": {"cape": 645.03900776, "cin": -0.0},
-        },
-    },
-    "large_cape_small_cin": {
-        "p": np.array(
-            [
-                50.0,
-                100.0,
-                150.0,
-                200.0,
-                250.0,
-                300.0,
-                400.0,
-                500.0,
-                600.0,
-                700.0,
-                850.0,
-                925.0,
-                1000.0,
-                1014.50726318,
-            ]
-        ),
-        "t": np.array(
-            [
-                211.94538879,
-                206.74043274,
-                207.76548767,
-                212.93922424,
-                225.02601624,
-                234.93022156,
-                250.23524475,
-                261.38026428,
-                271.58529663,
-                277.85443115,
-                287.0917511,
-                290.94813538,
-                293.92599487,
-                294.93336487,
-            ]
-        ),
-        "zh": np.array(
-            [
-                20610.54406738,
-                16410.34655762,
-                13948.76403809,
-                12191.68579102,
-                10762.78027344,
-                9534.70947266,
-                7492.44787598,
-                5822.09082031,
-                4397.38671875,
-                3154.73168945,
-                1542.97631836,
-                823.6462574,
-                151.02850342,
-                25.63345337,
-            ]
-        ),
-        "r": np.array(
-            [
-                2.79327067e-06,
-                2.85672465e-06,
-                6.00294481e-06,
-                3.06504016e-05,
-                1.13473873e-04,
-                2.72005257e-04,
-                7.75401559e-04,
-                1.64911460e-03,
-                3.58359133e-03,
-                6.40824917e-03,
-                8.17005639e-03,
-                1.22880057e-02,
-                1.49398775e-02,
-                1.52478107e-02,
-            ]
-        ),
-        "expected": {
-            "surface": {"cape": 927.86714423, "cin": 2.56065899},
-            "mixed": {"cape": 862.6504042, "cin": 2.49233215},
-            "mu": {"cape": 927.86714423, "cin": 2.56065899},
-        },
-    },
-}
+# ---------------------------------------------------------------------------
+# Data helpers
+# ---------------------------------------------------------------------------
+
+CASE_NAMES = ["stable", "elevated_instability", "unstable", "large_cape_small_cin"]
+PARCEL_TYPES = ["surface", "mixed", "mu"]
 
 
-@pytest.mark.parametrize("case_data", list(REFERENCE_CASES.values()), ids=list(REFERENCE_CASES.keys()))
-def test_cape_cin_surface(case_data):
-
-    p = case_data["p"][:, None] * 100
-    t = case_data["t"][:, None]
-    r = case_data["r"][:, None]
-    zh = case_data["zh"][:, None]
-
-    cape_type = "surface"
-    expected_values = case_data["expected"][cape_type]
-    cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
-    expected_cape = expected_values["cape"]
-    expected_cin = expected_values["cin"]
-    assert np.isclose(
-        cape, expected_cape, atol=1
-    ), f" type '{cape_type}': Expected CAPE {expected_cape}, got {cape}"
-    assert np.isclose(
-        cin, expected_cin, atol=1
-    ), f" type '{cape_type}': Expected CIN {expected_cin}, got {cin}"
+def data_file(name):
+    return os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", name)
 
 
-@pytest.mark.parametrize("case_data", list(REFERENCE_CASES.values()), ids=list(REFERENCE_CASES.keys()))
-def test_cape_cin_mixed(case_data):
-
-    p = case_data["p"][:, None] * 100
-    t = case_data["t"][:, None]
-    r = case_data["r"][:, None]
-    zh = case_data["zh"][:, None]
-
-    cape_type = "mixed"
-    expected_values = case_data["expected"][cape_type]
-    cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
-    expected_cape = expected_values["cape"]
-    expected_cin = expected_values["cin"]
-    assert np.isclose(
-        cape, expected_cape, atol=1
-    ), f" type '{cape_type}': Expected CAPE {expected_cape}, got {cape}"
-    assert np.isclose(
-        cin, expected_cin, atol=1
-    ), f" type '{cape_type}': Expected CIN {expected_cin}, got {cin}"
+def read_data_file(path):
+    return np.genfromtxt(data_file(path), delimiter=",", names=True)
 
 
-@pytest.mark.parametrize("case_data", list(REFERENCE_CASES.values()), ids=list(REFERENCE_CASES.keys()))
-def test_cape_cin_mu(case_data):
-
-    p = case_data["p"][:, None] * 100
-    t = case_data["t"][:, None]
-    r = case_data["r"][:, None]
-    zh = case_data["zh"][:, None]
-
-    cape_type = "mu"
-    expected_values = case_data["expected"][cape_type]
-    cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
-    expected_cape = expected_values["cape"]
-    expected_cin = expected_values["cin"]
-    assert np.isclose(
-        cape, expected_cape, atol=1
-    ), f" type '{cape_type}': Expected CAPE {expected_cape}, got {cape}"
-    assert np.isclose(
-        cin, expected_cin, atol=1
-    ), f" type '{cape_type}': Expected CIN {expected_cin}, got {cin}"
+def save_cape_cin_reference(input_data, expected_data):
+    """Regenerate the CSV reference files from dicts of 1-D arrays."""
+    np.savetxt(
+        data_file("cape_cin_input.csv"),
+        np.column_stack(list(input_data.values())),
+        delimiter=",",
+        header=",".join(input_data.keys()),
+    )
+    np.savetxt(
+        data_file("cape_cin_expected.csv"),
+        np.column_stack(list(expected_data.values())),
+        delimiter=",",
+        header=",".join(expected_data.keys()),
+    )
 
 
-@pytest.fixture()
-def reference_cases_stacked():
-    reference_cases = list(REFERENCE_CASES.values())
-    p = np.stack([case["p"] * 100 for case in reference_cases], axis=-1)
-    t = np.stack([case["t"] for case in reference_cases], axis=-1)
-    r = np.stack([case["r"] for case in reference_cases], axis=-1)
-    zh = np.stack([case["zh"] for case in reference_cases], axis=-1)
+class CapeCinData:
+    """Load CAPE/CIN test data from the reference CSV files.
 
-    expected_values = {"cape": {}, "cin": {}}
-    for cape_type in ["surface", "mixed", "mu"]:
-        expected_values["cape"][cape_type] = np.array(
-            [case["expected"][cape_type]["cape"] for case in reference_cases]
+    Attributes
+    ----------
+    p, t, zh, r : dict[str, np.ndarray]
+        Per-case 1-D arrays (shape ``(nz,)``), keyed by case name.
+        Pressure is in Pa, temperature in K, height in m, mixing ratio in kg/kg.
+    p_stacked, t_stacked, zh_stacked, r_stacked : np.ndarray
+        All four cases stacked column-wise (shape ``(nz, ncases)``).
+    expected_cape, expected_cin : dict[str, np.ndarray]
+        Per-parcel-type arrays of expected values (shape ``(ncases,)``).
+    """
+
+    def __init__(self):
+        input = read_data_file("cape_cin_input.csv")
+        expected = read_data_file("cape_cin_expected.csv")
+
+        self.p = {n: input[f"{n}_p"] for n in CASE_NAMES}
+        self.t = {n: input[f"{n}_t"] for n in CASE_NAMES}
+        self.zh = {n: input[f"{n}_zh"] for n in CASE_NAMES}
+        self.r = {n: input[f"{n}_r"] for n in CASE_NAMES}
+
+        self.p_stacked = np.column_stack([self.p[n] for n in CASE_NAMES])
+        self.t_stacked = np.column_stack([self.t[n] for n in CASE_NAMES])
+        self.zh_stacked = np.column_stack([self.zh[n] for n in CASE_NAMES])
+        self.r_stacked = np.column_stack([self.r[n] for n in CASE_NAMES])
+
+        self.expected_cape = {parcel_type: expected[f"{parcel_type}_cape"] for parcel_type in PARCEL_TYPES}
+        self.expected_cin = {parcel_type: expected[f"{parcel_type}_cin"] for parcel_type in PARCEL_TYPES}
+
+
+# ---------------------------------------------------------------------------
+# Per-case, per-parcel-type correctness tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("parcel_type", PARCEL_TYPES)
+@pytest.mark.parametrize("case_name", CASE_NAMES)
+def test_cape_cin(case_name, parcel_type):
+    data = CapeCinData()
+    p = data.p[case_name][:, None]
+    t = data.t[case_name][:, None]
+    zh = data.zh[case_name][:, None]
+    r = data.r[case_name][:, None]
+
+    cape, cin = thermo.cape_cin(p, zh, t, r, parcel_type)
+
+    case_idx = CASE_NAMES.index(case_name)
+    np.testing.assert_allclose(cape, data.expected_cape[parcel_type][case_idx], atol=1)
+    np.testing.assert_allclose(cin, data.expected_cin[parcel_type][case_idx], atol=1)
+
+
+# ---------------------------------------------------------------------------
+# Multi-profile (stacked) and shape tests
+# ---------------------------------------------------------------------------
+
+
+def test_cape_cin_stacked():
+    data = CapeCinData()
+    for parcel_type in PARCEL_TYPES:
+        cape, cin = thermo.cape_cin(
+            data.p_stacked, data.zh_stacked, data.t_stacked, data.r_stacked, parcel_type
         )
-        expected_values["cin"][cape_type] = np.array(
-            [case["expected"][cape_type]["cin"] for case in reference_cases]
-        )
-
-    return p, zh, t, r, expected_values
+        np.testing.assert_allclose(cape, data.expected_cape[parcel_type], atol=1)
+        np.testing.assert_allclose(cin, data.expected_cin[parcel_type], atol=1)
 
 
-def test_cape_cin_stacked(reference_cases_stacked):
-    p, zh, t, r, expected_values = reference_cases_stacked
+def test_cape_cin_vertical_axis_minus_1():
+    data = CapeCinData()
+    p = data.p_stacked.T
+    t = data.t_stacked.T
+    r = data.r_stacked.T
+    zh = data.zh_stacked.T
 
-    for cape_type in ["surface", "mixed", "mu"]:
-        cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
-        expected_cape = expected_values["cape"][cape_type]
-        expected_cin = expected_values["cin"][cape_type]
-        assert (np.isclose(cape, expected_cape, atol=1)).all()
-        assert (np.isclose(cin, expected_cin, atol=1)).all()
-
-
-def test_cape_cin_vertical_axis_minus_1(reference_cases_stacked):
-    p, zh, t, r, expected_values = reference_cases_stacked
-
-    # Move vertical axis to the end
-    p = np.transpose(p, (1, 0))
-    t = np.transpose(t, (1, 0))
-    r = np.transpose(r, (1, 0))
-    zh = np.transpose(zh, (1, 0))
-
-    for cape_type in ["surface", "mixed", "mu"]:
-        cape, cin = thermo.cape_cin(p, zh, t, r, cape_type, vertical_axis=-1)
-
-        expected_cape = expected_values["cape"][cape_type]
-        expected_cin = expected_values["cin"][cape_type]
-
-        assert np.isclose(cape, expected_cape, atol=1).all()
-        assert np.isclose(cin, expected_cin, atol=1).all()
+    for parcel_type in PARCEL_TYPES:
+        cape, cin = thermo.cape_cin(p, zh, t, r, parcel_type, vertical_axis=-1)
+        np.testing.assert_allclose(cape, data.expected_cape[parcel_type], atol=1)
+        np.testing.assert_allclose(cin, data.expected_cin[parcel_type], atol=1)
 
 
 def test_cape_cin_arbitrary_nd_shape():
     nz = 3
-    horiz_shape = (2, 3, 4)
+    horizontal_shape = (2, 3, 4)
+    shape = (nz,) + horizontal_shape
 
-    shape = (nz,) + horiz_shape
-
-    p = np.broadcast_to(np.array([1000, 900, 800])[:, None, None, None], shape)
+    p = np.broadcast_to(np.array([100000, 90000, 80000])[:, None, None, None], shape)
     t = np.broadcast_to(np.array([290, 280, 270])[:, None, None, None], shape)
     r = np.broadcast_to(np.array([0.01, 0.02, 0.03])[:, None, None, None], shape)
     zh = np.broadcast_to(np.array([100, 200, 300])[:, None, None, None], shape)
 
-    for cape_type in ["surface", "mixed", "mu"]:
-        cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
+    for parcel_type in PARCEL_TYPES:
+        cape, cin = thermo.cape_cin(p, zh, t, r, parcel_type)
+        assert cape.shape == horizontal_shape
+        assert cin.shape == horizontal_shape
 
-        assert cape.shape == horiz_shape
-        assert cin.shape == horiz_shape
 
-
-def test_cape_cin_lat_lon(reference_cases_stacked):
-    p, zh, t, r, expected_values = reference_cases_stacked
-
+def test_cape_cin_lat_lon():
+    data = CapeCinData()
+    nz = data.p_stacked.shape[0]
     ny, nx = 2, 2
-    nz = p.shape[0]
-    p = p.reshape(nz, ny, nx)
-    t = t.reshape(nz, ny, nx)
-    r = r.reshape(nz, ny, nx)
-    zh = zh.reshape(nz, ny, nx)
+    p = data.p_stacked.reshape(nz, ny, nx)
+    t = data.t_stacked.reshape(nz, ny, nx)
+    r = data.r_stacked.reshape(nz, ny, nx)
+    zh = data.zh_stacked.reshape(nz, ny, nx)
 
-    for cape_type in ["surface", "mixed", "mu"]:
-        cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
-
-        expected_cape = expected_values["cape"][cape_type].reshape(ny, nx)
-        expected_cin = expected_values["cin"][cape_type].reshape(ny, nx)
-
-        assert np.isclose(cape, expected_cape, atol=1).all()
-        assert np.isclose(cin, expected_cin, atol=1).all()
+    for parcel_type in PARCEL_TYPES:
+        cape, cin = thermo.cape_cin(p, zh, t, r, parcel_type)
+        np.testing.assert_allclose(cape, data.expected_cape[parcel_type].reshape(ny, nx), atol=1)
+        np.testing.assert_allclose(cin, data.expected_cin[parcel_type].reshape(ny, nx), atol=1)
 
 
-def test_cape_cin_missing_values(reference_cases_stacked):
-    p, zh, t, r, _ = reference_cases_stacked
+def test_cape_cin_missing_values():
+    data = CapeCinData()
+    p = data.p_stacked.copy()
+    t = data.t_stacked.copy()
+    r = data.r_stacked.copy()
+    zh = data.zh_stacked.copy()
 
-    # Introduce NaNs in the input
+    # Introduce NaNs: column 0 via t, column 2 via r
     t[0, 0] = np.nan
     r[3, 2] = np.nan
 
-    for cape_type in ["surface", "mixed", "mu"]:
-        cape, cin = thermo.cape_cin(p, zh, t, r, cape_type)
-
+    for parcel_type in PARCEL_TYPES:
+        cape, cin = thermo.cape_cin(p, zh, t, r, parcel_type)
         assert np.isnan(cape[0])
         assert np.isnan(cin[0])
         assert np.isnan(cape[2])
@@ -501,29 +186,33 @@ def test_cape_cin_missing_values(reference_cases_stacked):
 
 
 def test_cape_cin_options_forwarded():
-    """Options passed to cape_cin() must reach the subclass.
+    """Regression: options passed to cape_cin() must reach the subclass.
+
+    Previously, _CapeCinComp.make() was a @staticmethod that instantiated the
+    subclass with default arguments, silently discarding layer_depth, ept_method,
+    lcl_method and output set on the outer instance.
     """
-    case = REFERENCE_CASES["unstable"]
-    p = case["p"][:, None] * 100
-    t = case["t"][:, None]
-    r = case["r"][:, None]
-    zh = case["zh"][:, None]
+    data = CapeCinData()
+    p = data.p["unstable"][:, None]
+    t = data.t["unstable"][:, None]
+    r = data.r["unstable"][:, None]
+    zh = data.zh["unstable"][:, None]
 
     # Default layer_depth (5000 Pa) vs a wider mixed layer (15000 Pa) must differ.
     cape_default, _ = thermo.cape_cin(p, zh, t, r, "mixed")
     cape_wide, _ = thermo.cape_cin(p, zh, t, r, "mixed", layer_depth=15000)
-    assert not np.isclose(cape_default, cape_wide, atol=1), (
-        "layer_depth option was not forwarded to the mixed-layer parcel computation"
-    )
+    assert not np.isclose(
+        cape_default, cape_wide, atol=1
+    ), "layer_depth option was not forwarded to the mixed-layer parcel computation"
 
 
 def test_cape_cin_invalid_parcel_type():
     """cape_cin() must raise ValueError for an unrecognised parcel_type."""
-    case = REFERENCE_CASES["unstable"]
-    p = case["p"][:, None] * 100
-    t = case["t"][:, None]
-    r = case["r"][:, None]
-    zh = case["zh"][:, None]
+    data = CapeCinData()
+    p = data.p["unstable"][:, None]
+    t = data.t["unstable"][:, None]
+    r = data.r["unstable"][:, None]
+    zh = data.zh["unstable"][:, None]
 
     with pytest.raises(ValueError, match="parcel_type"):
         thermo.cape_cin(p, zh, t, r, "unknown_parcel")

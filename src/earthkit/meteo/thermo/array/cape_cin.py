@@ -398,9 +398,7 @@ def cape_cin(
         raise ValueError(f"Invalid output option '{output}'")
 
     if parcel_type not in _PARCEL_CLASSES:
-        raise ValueError(
-            f"Invalid parcel_type '{parcel_type}'. Must be one of {list(_PARCEL_CLASSES)}"
-        )
+        raise ValueError(f"Invalid parcel_type '{parcel_type}'. Must be one of {list(_PARCEL_CLASSES)}")
 
     if vertical_axis != 0:
         if vertical_axis == -1:
