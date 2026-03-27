@@ -68,17 +68,11 @@ def _moist_ascent_lookup_table(ept_method):
 
 
 class _CapeCinComp:
-    CM = {}
-
     def __init__(self, layer_depth=None, output="cape_cin", lcl_method="davies", ept_method="bolton39"):
         self.layer_depth = layer_depth
         self.output = output
         self.lcl_method = lcl_method
         self.ept_method = ept_method
-
-    @staticmethod
-    def make(method):
-        return _CapeCinComp.CM[method]()
 
     def _lifted_condensation_level_from_mixing_ratio(self, t_departure, p_departure, r_departure):
         specific_humidity = thermo.specific_humidity_from_mixing_ratio(r_departure)
@@ -325,7 +319,7 @@ class _CapeCinMostUnstable(_CapeCinComp):
         return p_start, t_start, r_start
 
 
-_CapeCinComp.CM = {
+_PARCEL_CLASSES = {
     "surface": _CapeCinSurface,
     "mixed": _CapeCinMixed,
     "mu": _CapeCinMostUnstable,
@@ -349,6 +343,11 @@ def cape_cin(
     if output not in ["cape_cin"]:
         raise ValueError(f"Invalid output option '{output}'")
 
+    if parcel_type not in _PARCEL_CLASSES:
+        raise ValueError(
+            f"Invalid parcel_type '{parcel_type}'. Must be one of {list(_PARCEL_CLASSES)}"
+        )
+
     if vertical_axis != 0:
         if vertical_axis == -1:
             vertical_axis = p.ndim - 1
@@ -362,8 +361,6 @@ def cape_cin(
         t = np.swapaxes(t, 0, vertical_axis)
         r = np.swapaxes(r, 0, vertical_axis)
 
-    return (
-        _CapeCinComp(layer_depth=layer_depth, output=output, lcl_method=lcl_method, ept_method=ept_method)
-        .make(parcel_type)
-        ._cape_cin(p, zh, t, r)
-    )
+    return _PARCEL_CLASSES[parcel_type](
+        layer_depth=layer_depth, output=output, lcl_method=lcl_method, ept_method=ept_method
+    )._cape_cin(p, zh, t, r)
