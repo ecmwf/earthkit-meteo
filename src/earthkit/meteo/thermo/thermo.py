@@ -1861,6 +1861,9 @@ def ept_from_dewpoint(
 ) -> "xarray.DataArray": ...
 
 
+# ruff: noqa: E501
+
+
 def ept_from_dewpoint(
     t: "ArrayLike" | "xarray.DataArray",
     td: "ArrayLike" | "xarray.DataArray",
@@ -2085,6 +2088,9 @@ def saturation_ept(
     """
     dispatched = dispatch(saturation_ept, fieldlist=False, array=True)
     return dispatched(t, p, method=method)
+
+
+# ruff: enable
 
 
 @overload
