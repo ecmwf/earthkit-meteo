@@ -1,7 +1,16 @@
+# (C) Copyright 2026 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation
+# nor does it submit to any jurisdiction.
+#
+
 import numpy as np
 import pytest
 
-from earthkit.meteo.thermo.array import cape_cin as thermo
+from earthkit.meteo import thermo
 
 # Expected values are calculated based on current commit
 REFERENCE_CASES = {
@@ -489,3 +498,32 @@ def test_cape_cin_missing_values(reference_cases_stacked):
         assert np.isnan(cin[0])
         assert np.isnan(cape[2])
         assert np.isnan(cin[2])
+
+
+def test_cape_cin_options_forwarded():
+    """Options passed to cape_cin() must reach the subclass.
+    """
+    case = REFERENCE_CASES["unstable"]
+    p = case["p"][:, None] * 100
+    t = case["t"][:, None]
+    r = case["r"][:, None]
+    zh = case["zh"][:, None]
+
+    # Default layer_depth (5000 Pa) vs a wider mixed layer (15000 Pa) must differ.
+    cape_default, _ = thermo.cape_cin(p, zh, t, r, "mixed")
+    cape_wide, _ = thermo.cape_cin(p, zh, t, r, "mixed", layer_depth=15000)
+    assert not np.isclose(cape_default, cape_wide, atol=1), (
+        "layer_depth option was not forwarded to the mixed-layer parcel computation"
+    )
+
+
+def test_cape_cin_invalid_parcel_type():
+    """cape_cin() must raise ValueError for an unrecognised parcel_type."""
+    case = REFERENCE_CASES["unstable"]
+    p = case["p"][:, None] * 100
+    t = case["t"][:, None]
+    r = case["r"][:, None]
+    zh = case["zh"][:, None]
+
+    with pytest.raises(ValueError, match="parcel_type"):
+        thermo.cape_cin(p, zh, t, r, "unknown_parcel")

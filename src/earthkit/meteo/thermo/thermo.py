@@ -164,3 +164,7 @@ def wet_bulb_potential_temperature_from_specific_humidity(*args, **kwargs):
 
 def specific_gas_constant(*args, **kwargs):
     return array.specific_gas_constant(*args, **kwargs)
+
+
+def cape_cin(*args, **kwargs):
+    return array.cape_cin(*args, **kwargs)

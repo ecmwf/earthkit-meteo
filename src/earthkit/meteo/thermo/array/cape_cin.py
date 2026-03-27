@@ -1,3 +1,12 @@
+# (C) Copyright 2021 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation
+# nor does it submit to any jurisdiction.
+#
+
 import numpy as np
 from scipy import interpolate
 
@@ -338,6 +347,51 @@ def cape_cin(
     ept_method="bolton39",
     lcl_method="davies",
 ):
+    r"""Compute Convective Available Potential Energy (CAPE) and Convective Inhibition (CIN).
+
+    Parameters
+    ----------
+    p : array-like
+        Pressure (Pa). The vertical axis must be the first axis (axis=0) unless
+        ``vertical_axis`` is set.
+    zh : array-like
+        Geopotential height (m), same shape as ``p``.
+    t : array-like
+        Temperature (K), same shape as ``p``.
+    r : array-like
+        Mixing ratio (kg/kg), same shape as ``p``.
+    parcel_type : str
+        Method used to define the lifted parcel. One of:
+
+        * ``"surface"`` — parcel taken from the lowest level.
+        * ``"mixed"`` — parcel properties averaged over a mixed layer of depth
+          ``layer_depth`` (Pa) above the surface.
+        * ``"mu"`` — most-unstable parcel: the level within ``layer_depth`` (Pa)
+          of the surface that maximises CAPE.
+    layer_depth : number, optional
+        Depth (Pa) of the layer used to define the mixed-layer or most-unstable
+        parcel. Defaults to 5000 Pa for ``"mixed"`` and 50000 Pa for ``"mu"``.
+    output : str, optional
+        Output selection. Currently only ``"cape_cin"`` is supported.
+    vertical_axis : int, optional
+        Axis of the input arrays that corresponds to the vertical dimension.
+        Defaults to ``0``. ``-1`` may also be used to indicate the last axis.
+    ept_method : str, optional
+        Method used to compute equivalent potential temperature. Passed to
+        :func:`earthkit.meteo.thermo.array.ept_from_specific_humidity`.
+        Defaults to ``"bolton39"``.
+    lcl_method : str, optional
+        Method used to compute the Lifted Condensation Level. Passed to
+        :func:`earthkit.meteo.thermo.array.lcl`. Defaults to ``"davies"``.
+
+    Returns
+    -------
+    cape : array-like
+        CAPE (J/kg), shape equal to the horizontal dimensions of the input arrays.
+    cin : array-like
+        CIN (J/kg), shape equal to the horizontal dimensions of the input arrays.
+
+    """
     # TODO add options for output: "cape_cin", "cape_cin_li", "full" where full includes parcel_path and intermediate variables for debugging/validation
     # For full output, we need to decide on a format for the output, e.g. a dictionary or a structured array, and we need to handle the case where vertical_axis is not 0
     if output not in ["cape_cin"]:
