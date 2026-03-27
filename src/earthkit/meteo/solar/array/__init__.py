@@ -9,4 +9,22 @@
 
 """Solar computation functions operating on numpy arrays."""
 
-from .solar import *  # noqa
+from .solar import (
+    DAYS_PER_YEAR,
+    cos_solar_zenith_angle,
+    cos_solar_zenith_angle_integrated,
+    incoming_solar_radiation,
+    julian_day,
+    solar_declination_angle,
+    toa_incident_solar_radiation,
+)
+
+__all__ = [
+    "DAYS_PER_YEAR",
+    "julian_day",
+    "solar_declination_angle",
+    "cos_solar_zenith_angle",
+    "cos_solar_zenith_angle_integrated",
+    "incoming_solar_radiation",
+    "toa_incident_solar_radiation",
+]

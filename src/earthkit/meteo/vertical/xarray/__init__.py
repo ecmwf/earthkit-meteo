@@ -9,4 +9,18 @@
 
 """Vertical computation functions operating on xarray objects."""
 
-from .interpolation import *  # noqa
+from .interpolation import (
+    TargetCoordinates,
+    interpolate_monotonic,
+    interpolate_sleve_to_coord_levels,
+    interpolate_sleve_to_theta_levels,
+    interpolate_to_pressure_levels,
+)
+
+__all__ = [
+    "TargetCoordinates",
+    "interpolate_monotonic",
+    "interpolate_sleve_to_coord_levels",
+    "interpolate_sleve_to_theta_levels",
+    "interpolate_to_pressure_levels",
+]

@@ -18,4 +18,22 @@ The API is split into two layers:
   ``xarray`` implementations based on input type.
 """
 
-from .wind import *  # noqa
+from .wind import (
+    coriolis,
+    direction,
+    polar_to_xy,
+    speed,
+    w_from_omega,
+    windrose,
+    xy_to_polar,
+)
+
+__all__ = [
+    "coriolis",
+    "direction",
+    "polar_to_xy",
+    "speed",
+    "w_from_omega",
+    "windrose",
+    "xy_to_polar",
+]

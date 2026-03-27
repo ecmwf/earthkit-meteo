@@ -7,5 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .deterministic import *  # noqa
-from .ensemble import *  # noqa
+from .deterministic import pearson_correlation
+from .ensemble import crps_from_ensemble
+
+__all__ = [
+    "pearson_correlation",
+    "crps_from_ensemble",
+]

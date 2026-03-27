@@ -9,6 +9,20 @@
 
 """Statistical functions operating on numpy arrays."""
 
-from .extreme_values import *  # noqa
-from .numpy_extended import *  # noqa
-from .quantiles import *  # noqa
+from .extreme_values import (
+    GumbelDistribution,
+    fit_gumbel,
+    return_period_to_value,
+    value_to_return_period,
+)
+from .numpy_extended import nanaverage
+from .quantiles import iter_quantiles
+
+__all__ = [
+    "GumbelDistribution",
+    "fit_gumbel",
+    "return_period_to_value",
+    "value_to_return_period",
+    "nanaverage",
+    "iter_quantiles",
+]

@@ -9,4 +9,20 @@
 
 """Wind related functions operating on earthkit.data FieldList objects."""
 
-from .wind import *  # noqa
+from .wind import (
+    coriolis,
+    direction,
+    polar_to_xy,
+    speed,
+    w_from_omega,
+    xy_to_polar,
+)
+
+__all__ = [
+    "coriolis",
+    "direction",
+    "polar_to_xy",
+    "speed",
+    "w_from_omega",
+    "xy_to_polar",
+]
