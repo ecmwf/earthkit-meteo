@@ -299,7 +299,6 @@ class _CapeCinMostUnstable(_CapeCinComp):
 
         layer_thickness = -np.diff(zh, axis=0)
 
-        # TODO can we vectorise this loop? less readable but potentially faster
         for k_candidate in np.arange(0, localmaxarg.shape[0]):
 
             start_level_indices = localmaxarg[k_candidate, ...]

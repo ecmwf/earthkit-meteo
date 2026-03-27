@@ -186,12 +186,7 @@ def test_cape_cin_missing_values():
 
 
 def test_cape_cin_options_forwarded():
-    """Regression: options passed to cape_cin() must reach the subclass.
-
-    Previously, _CapeCinComp.make() was a @staticmethod that instantiated the
-    subclass with default arguments, silently discarding layer_depth, ept_method,
-    lcl_method and output set on the outer instance.
-    """
+    """Regression: options passed to cape_cin() must reach the subclass."""
     data = CapeCinData()
     p = data.p["unstable"][:, None]
     t = data.t["unstable"][:, None]
@@ -216,3 +211,120 @@ def test_cape_cin_invalid_parcel_type():
 
     with pytest.raises(ValueError, match="parcel_type"):
         thermo.cape_cin(p, zh, t, r, "unknown_parcel")
+
+
+# ---------------------------------------------------------------------------
+# Edge-case tests
+# ---------------------------------------------------------------------------
+
+
+def test_cape_cin_all_nan_profile():
+    """An entirely NaN profile must produce NaN outputs without raising.
+
+    Two-column input: column 0 is all-NaN, column 1 is a real stable profile
+    that should produce CAPE=0, CIN=0 regardless.
+    """
+    data = CapeCinData()
+    p_real = data.p["stable"][:, None]
+    t_real = data.t["stable"][:, None]
+    zh_real = data.zh["stable"][:, None]
+    r_real = data.r["stable"][:, None]
+
+    p = np.hstack([np.full_like(p_real, np.nan), p_real])
+    t = np.hstack([np.full_like(t_real, np.nan), t_real])
+    zh = np.hstack([np.full_like(zh_real, np.nan), zh_real])
+    r = np.hstack([np.full_like(r_real, np.nan), r_real])
+
+    for parcel_type in PARCEL_TYPES:
+        cape, cin = thermo.cape_cin(p, zh, t, r, parcel_type)
+        assert np.isnan(cape[0]), f"{parcel_type}: expected NaN for all-NaN column, got {cape[0]}"
+        assert np.isnan(cin[0]), f"{parcel_type}: expected NaN for all-NaN column, got {cin[0]}"
+        np.testing.assert_allclose(cape[1], 0.0, atol=1)
+        np.testing.assert_allclose(cin[1], 0.0, atol=1)
+
+
+def test_cape_cin_no_lfc():
+    """A strongly stable (isothermal) profile must return CAPE=0, CIN=0."""
+    data = CapeCinData()
+    p = data.p["stable"][:, None]
+    zh = data.zh["stable"][:, None]
+    r = data.r["stable"][:, None]
+    # Isothermal profile: parcel lifted dry-adiabatically is always cooler than env.
+    t = np.full_like(p, 260.0)
+
+    for parcel_type in PARCEL_TYPES:
+        cape, cin = thermo.cape_cin(p, zh, t, r, parcel_type)
+        np.testing.assert_allclose(cape, 0.0, atol=1e-6, err_msg=f"{parcel_type}: expected CAPE=0")
+        np.testing.assert_allclose(cin, 0.0, atol=1e-6, err_msg=f"{parcel_type}: expected CIN=0")
+
+
+def test_cape_cin_unsorted_pressure():
+    """A vertically flipped (surface-first) profile must give the same result as sorted."""
+    data = CapeCinData()
+    p = data.p["unstable"][:, None]
+    t = data.t["unstable"][:, None]
+    zh = data.zh["unstable"][:, None]
+    r = data.r["unstable"][:, None]
+
+    p_flip = np.flip(p, axis=0)
+    t_flip = np.flip(t, axis=0)
+    zh_flip = np.flip(zh, axis=0)
+    r_flip = np.flip(r, axis=0)
+
+    for parcel_type in PARCEL_TYPES:
+        cape_sorted, cin_sorted = thermo.cape_cin(p, zh, t, r, parcel_type)
+        cape_flip, cin_flip = thermo.cape_cin(p_flip, zh_flip, t_flip, r_flip, parcel_type)
+        np.testing.assert_allclose(
+            cape_flip, cape_sorted, atol=1, err_msg=f"{parcel_type}: CAPE differs for flipped input"
+        )
+        np.testing.assert_allclose(
+            cin_flip, cin_sorted, atol=1, err_msg=f"{parcel_type}: CIN differs for flipped input"
+        )
+
+
+def test_cape_cin_unsorted_pressure_stacked():
+    """Mixed stacked input (one sorted, one unsorted column) must sort both correctly."""
+    data = CapeCinData()
+    p = data.p["unstable"][:, None]
+    t = data.t["unstable"][:, None]
+    zh = data.zh["unstable"][:, None]
+    r = data.r["unstable"][:, None]
+
+    p_flip = np.flip(p, axis=0)
+    t_flip = np.flip(t, axis=0)
+    zh_flip = np.flip(zh, axis=0)
+    r_flip = np.flip(r, axis=0)
+
+    # col0 = flipped (unsorted), col1 = sorted — both should give the same result
+    p2 = np.hstack([p_flip, p])
+    t2 = np.hstack([t_flip, t])
+    zh2 = np.hstack([zh_flip, zh])
+    r2 = np.hstack([r_flip, r])
+
+    for parcel_type in PARCEL_TYPES:
+        cape, cin = thermo.cape_cin(p2, zh2, t2, r2, parcel_type)
+        np.testing.assert_allclose(
+            cape[0],
+            cape[1],
+            atol=1,
+            err_msg=f"{parcel_type}: CAPE mismatch between flipped and sorted columns",
+        )
+        np.testing.assert_allclose(
+            cin[0], cin[1], atol=1, err_msg=f"{parcel_type}: CIN mismatch between flipped and sorted columns"
+        )
+
+
+def test_cape_cin_very_dry():
+    """A near-zero mixing ratio profile must return CAPE=0, CIN=0 without raising."""
+    data = CapeCinData()
+    p = data.p["stable"][:, None]
+    zh = data.zh["stable"][:, None]
+    t = data.t["stable"][:, None]
+    r = np.full_like(p, 1e-9)  # effectively bone-dry
+
+    for parcel_type in PARCEL_TYPES:
+        cape, cin = thermo.cape_cin(p, zh, t, r, parcel_type)
+        np.testing.assert_allclose(
+            cape, 0.0, atol=1, err_msg=f"{parcel_type}: expected CAPE=0 for dry profile"
+        )
+        np.testing.assert_allclose(cin, 0.0, atol=1, err_msg=f"{parcel_type}: expected CIN=0 for dry profile")
