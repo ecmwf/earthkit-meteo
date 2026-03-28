@@ -55,5 +55,4 @@ p_h = vertical.interpolate_monotonic(
     h,
     target_h,
     interpolation="linear",
-    vertical_dim=0,
 )
