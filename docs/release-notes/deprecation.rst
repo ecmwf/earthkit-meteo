@@ -1,11 +1,10 @@
 Deprecations
 =============
 
+.. _deprecated-1.0.0:
 
-.. _deprecated-0.7.0:
-
-Version 0.7.0
------------------
+Version 1.0.0rc0
+----------------------
 
 .. _deprecated-hybrid-pressure-at-model-levels:
 

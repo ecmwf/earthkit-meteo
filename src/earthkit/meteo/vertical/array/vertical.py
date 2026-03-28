@@ -610,7 +610,7 @@ def pressure_on_hybrid_levels(
 
     Examples
     --------
-    - :ref:`/examples/hybrid_levels.ipynb`
+    - :ref:`/how-tos/hybrid_levels.ipynb`
 
 
     See also
@@ -794,7 +794,7 @@ def _compute_relative_geopotential_thickness_on_hybrid_levels(
 
     Examples
     --------
-    - :ref:`/examples/hybrid_levels.ipynb`
+    - :ref:`/how-tos/hybrid_levels.ipynb`
 
 
     See also
@@ -867,7 +867,7 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
 
     Examples
     --------
-    - :ref:`/examples/hybrid_levels.ipynb`
+    - :ref:`/how-tos/hybrid_levels.ipynb`
 
 
     See also
@@ -959,7 +959,7 @@ def relative_geopotential_thickness_on_hybrid_levels(
 
     Examples
     --------
-    - :ref:`/examples/hybrid_levels.ipynb`
+    - :ref:`/how-tos/hybrid_levels.ipynb`
 
     See also
     --------
@@ -1059,7 +1059,7 @@ def geopotential_on_hybrid_levels(
 
     Examples
     --------
-    - :ref:`/examples/hybrid_levels.ipynb`
+    - :ref:`/how-tos/hybrid_levels.ipynb`
 
 
     See also
@@ -1157,7 +1157,7 @@ def height_on_hybrid_levels(
 
     Examples
     --------
-    - :ref:`/examples/hybrid_levels.ipynb`
+    - :ref:`/how-tos/hybrid_levels.ipynb`
 
     See also
     --------
@@ -1304,7 +1304,7 @@ def interpolate_hybrid_to_pressure_levels(
 
     Examples
     --------
-    - :ref:`/examples/interpolate_hybrid_to_pl.ipynb`
+    - :ref:`/how-tos/interpolate_hybrid_to_pl.ipynb`
 
     See also
     --------
@@ -1459,7 +1459,7 @@ def interpolate_hybrid_to_height_levels(
 
     Examples
     --------
-    - :ref:`/examples/interpolate_hybrid_to_hl.ipynb`
+    - :ref:`/how-tos/interpolate_hybrid_to_hl.ipynb`
 
 
     See also
@@ -1589,7 +1589,7 @@ def interpolate_pressure_to_height_levels(
 
     Examples
     --------
-    - :ref:`/examples/interpolate_pl_to_hl.ipynb`
+    - :ref:`/how-tos/interpolate_pl_to_hl.ipynb`
 
 
     See also
@@ -1704,10 +1704,10 @@ def interpolate_monotonic(
 
     Examples
     --------
-    - :ref:`/examples/interpolate_hybrid_to_pl.ipynb`
-    - :ref:`/examples/interpolate_hybrid_to_hl.ipynb`
-    - :ref:`/examples/interpolate_pl_to_hl.ipynb`
-    - :ref:`/examples/interpolate_pl_to_pl.ipynb`
+    - :ref:`/how-tos/interpolate_hybrid_to_pl.ipynb`
+    - :ref:`/how-tos/interpolate_hybrid_to_hl.ipynb`
+    - :ref:`/how-tos/interpolate_pl_to_hl.ipynb`
+    - :ref:`/how-tos/interpolate_pl_to_pl.ipynb`
 
     """
     from .monotonic import MonotonicInterpolator

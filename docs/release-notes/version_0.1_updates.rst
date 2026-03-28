@@ -17,4 +17,4 @@ Version 0.1.0
 New features
 +++++++++++++++
 
-- added new submodules: :py:mod:`meteo.extreme`, :py:mod:`meteo.score` , :py:mod:`meteo.stats`, :py:mod:`meteo.thermo` and :py:mod:`meteo.wind`
+- added new submodules: :py:mod:`earthkit.meteo.extreme`, :py:mod:`earthkit.meteo.score` , :py:mod:`earthkit.meteo.stats`, :py:mod:`earthkit.meteo.thermo` and :py:mod:`earthkit.meteo.wind`

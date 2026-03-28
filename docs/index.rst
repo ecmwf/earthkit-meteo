@@ -13,70 +13,82 @@ Welcome to earthkit-meteo's documentation
    :target: https://github.com/ecmwf/earthkit-meteo/releases
 
 
-.. important::
-
-    This software is **Incubating** and subject to ECMWF's guidelines on `Software Maturity <https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity>`_.
-
 
 **earthkit-meteo** is a Python package providing meteorological computations using array input (Numpy, Torch and CuPy) and output. It is part of the :xref:`earthkit` ecosystem.
 
 
-Quick start
------------
 
-.. code-block:: python
+.. grid:: 1
+   :gutter: 2
 
-    from earthkit.meteo import thermo
+   .. grid-item-card:: Installation and Getting Started
+      :img-top: _static/rocket.svg
+      :link: getting-started
+      :link-type: doc
+      :class-card: sd-shadow-sm
 
-    # using Numpy arrays
-    import numpy as np
+      New to earthkit-meteo? Start here with installation and a quick overview.
 
-    t = np.array([264.12, 261.45])  # Kelvins
-    p = np.array([850, 850]) * 100.0  # Pascals
-    theta = thermo.potential_temperature(t, p)
+.. grid:: 1 1 2 2
+   :gutter: 2
 
-    # using Torch tensors
-    import torch
+   .. grid-item-card:: Tutorials
+      :img-top: _static/book.svg
+      :link: tutorials/index
+      :link-type: doc
+      :class-card: sd-shadow-sm
 
-    t = torch.tensor([264.12, 261.45])  # Kelvins
-    p = torch.tensor([850.0, 850.0]) * 100.0  # Pascals
-    theta = thermo.potential_temperature(t, p)
+      Step-by-step guides to learn earthkit-meteo.
+
+   .. grid-item-card:: How-tos
+      :img-top: _static/tool.svg
+      :link: how-tos/index
+      :link-type: doc
+      :class-card: sd-shadow-sm
+
+      Practical recipes for common tasks.
+
+   .. grid-item-card:: Concepts and Explanations
+      :img-top: _static/bulb.svg
+      :link: explanations/index
+      :link-type: doc
+      :class-card: sd-shadow-sm
+
+      Understand the core ideas behind earthkit-meteo.
+
+   .. grid-item-card:: API Reference Guide
+      :img-top: _static/brackets-contain.svg
+      :link: api-reference
+      :link-type: doc
+      :class-card: sd-shadow-sm
+
+      Detailed documentation of all functions and classes.
 
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Examples
+   :caption: User guide
+   :maxdepth: 2
+   :hidden:
 
-   examples/index
+   getting-started
+   tutorials/index
+   how-tos/index
+   explanations/index
+   api-reference
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Documentation
+   :caption: Developer guide
+   :maxdepth: 2
+   :hidden:
 
-   API Reference <autoapi/earthkit/meteo/index.rst>
-   references.rst
    development
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Installation
 
-   install
-   release_notes/index
+.. toctree::
+   :maxdepth: 2
+   :caption: Extras
+   :hidden:
+
+   release-notes/index
    licence
-
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Projects
-
-   earthkit <https://earthkit.readthedocs.io/en/latest>
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-
-.. * :ref:`modindex`
-.. * :ref:`search`
+   genindex

@@ -51,8 +51,8 @@ optional-dependencies.docs = [
   "sphinx>=7.3.7",
   "sphinx-autoapi",
   "sphinx-copybutton",
+  "sphinx-design",
   "sphinx-issues",
-  "sphinx-tabs",       # is this needed?
 ]
 optional-dependencies.gpu = [
   "cupy",

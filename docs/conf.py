@@ -6,8 +6,11 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import json
 import os
 import sys
+
+import yaml
 
 on_rtd = os.environ.get("READTHEDOCS") == "True"
 
@@ -75,6 +78,7 @@ extensions = [
     "sphinx_issues",
     "sphinx_copybutton",
     "xref",
+    "sphinx_design",
 ]
 
 # autodoc configuration
@@ -83,7 +87,7 @@ autodoc_typehints = "description"
 
 # autoapi configuration
 autoapi_dirs = ["../src/earthkit"]
-autoapi_ignore = ["*/_version.py", "sphinxext/*"]
+autoapi_ignore = ["*/_version.py", "*/sphinxext/*"]
 autoapi_options = [
     "members",
     "undoc-members",
@@ -130,29 +134,14 @@ html_css_files = [
     "custom.css",
 ]
 
-xref_links = {
-    "earthkit": ("earthkit", "https://earthkit.readthedocs.io/en/latest/"),
-    "earthkit-data": (
-        "earthkit-data",
-        "https://earthkit-data.readthedocs.io/en/latest/",
-    ),
-    "earthkit-plots": (
-        "earthkit-plots",
-        "https://earthkit-plots.readthedocs.io/en/latest/",
-    ),
-    "earthkit-utils": (
-        "earthkit-utils",
-        "https://github.com/ecmwf/earthkit-utils",
-    ),
-    "fieldlist": (
-        "fieldlist",
-        "https://earthkit-data.readthedocs.io/en/latest/guide/data_format/grib.html",
-    ),
-    "field": (
-        "field",
-        "https://earthkit-data.readthedocs.io/en/latest/guide/data_format/grib.html",
-    ),
-}
+html_js_files = [
+    "earthkit-packages.js",  # generated from earthkit-packages.yml at build time
+    "custom.js",
+]
+
+html_favicon = (
+    "https://raw.githubusercontent.com/ecmwf/logos/refs/heads/main/logos/earthkit/earthkit-logo-only.svg"
+)
 
 html_theme_options = {
     "light_css_variables": {
@@ -181,7 +170,7 @@ html_theme_options = {
     "dark_logo": "earthkit-meteo-dark.svg",
     "source_repository": "https://github.com/ecmwf/earthkit-meteo/",
     "source_branch": source_branch,
-    "source_directory": "docs/source",
+    "source_directory": "docs",
     "footer_icons": [
         {
             "name": "GitHub",
@@ -197,7 +186,46 @@ html_theme_options = {
 }
 
 
+xref_links = {
+    "earthkit": ("earthkit", "https://earthkit.ecmwf.int/"),
+    "earthkit-data": (
+        "earthkit-data",
+        "https://earthkit-data.readthedocs.io/en/latest/",
+    ),
+    "earthkit-plots": (
+        "earthkit-plots",
+        "https://earthkit-plots.readthedocs.io/en/latest/",
+    ),
+    "earthkit-utils": (
+        "earthkit-utils",
+        "https://github.com/ecmwf/earthkit-utils",
+    ),
+}
+
+intersphinx_mapping = {
+    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "xarray": ("https://docs.xarray.dev/en/latest/", None),
+    "geopandas": ("https://geopandas.org", None),
+    "earthkit-data": ("https://earthkit-data.readthedocs.io/en/latest/", None),
+    "earthkit-plots": ("https://earthkit-plots.readthedocs.io/en/latest/", None),
+}
+
+
+def _write_earthkit_packages_js(app):
+    """Read earthkit-packages.yml and write a JS data file into the output _static dir."""
+    config_path = os.path.join(os.path.dirname(__file__), "earthkit-packages.yml")
+    with open(config_path, encoding="utf-8") as fh:
+        config = yaml.safe_load(fh)
+    packages = config.get("packages", [])
+    static_dir = os.path.join(app.outdir, "_static")
+    os.makedirs(static_dir, exist_ok=True)
+    js_path = os.path.join(static_dir, "earthkit-packages.js")
+    with open(js_path, "w", encoding="utf-8") as fh:
+        fh.write(f"window.earthkitPackages = {json.dumps(packages)};\n")
+
+
 def setup(app):
     from skip_api_rules import _skip_api_items
 
+    app.connect("builder-inited", _write_earthkit_packages_js)
     app.connect("autoapi-skip-member", _skip_api_items)
