@@ -51,8 +51,6 @@ def _ops(impl, celsius, kelvin, t, td, r, q, p):
     ept = impl.ept_from_dewpoint(t, td, p)
 
     return {
-        "celsius_to_kelvin": ((celsius,), {}),
-        "kelvin_to_celsius": ((kelvin,), {}),
         "specific_humidity_from_mixing_ratio": ((w,), {}),
         "mixing_ratio_from_specific_humidity": ((q,), {}),
         "vapour_pressure_from_specific_humidity": ((q, p), {}),
@@ -142,8 +140,6 @@ def backend_case(request):
 @pytest.mark.parametrize(
     "op_name",
     [
-        "celsius_to_kelvin",
-        "kelvin_to_celsius",
         "specific_humidity_from_mixing_ratio",
         "mixing_ratio_from_specific_humidity",
         "vapour_pressure_from_specific_humidity",

@@ -23,82 +23,82 @@ if TYPE_CHECKING:
 ArrayLike: TypeAlias = Any
 
 
-@overload
-def celsius_to_kelvin(t: "ArrayLike") -> "ArrayLike": ...
+# @overload
+# def _celsius_to_kelvin(t: "ArrayLike") -> "ArrayLike": ...
 
 
-@overload
-def celsius_to_kelvin(t: "xarray.DataArray") -> "xarray.DataArray": ...
+# @overload
+# def _celsius_to_kelvin(t: "xarray.DataArray") -> "xarray.DataArray": ...
 
 
-def celsius_to_kelvin(t: "ArrayLike" | "xarray.DataArray") -> "ArrayLike" | "xarray.DataArray":
-    r"""Convert temperature values from Celsius to Kelvin.
+# def _celsius_to_kelvin(t: "ArrayLike" | "xarray.DataArray") -> "ArrayLike" | "xarray.DataArray":
+#     r"""Convert temperature values from Celsius to Kelvin.
 
-    Parameters
-    ----------
-    t : array-like | xarray.DataArray
-        Temperature in Celsius units
+#     Parameters
+#     ----------
+#     t : array-like | xarray.DataArray
+#         Temperature in Celsius units
 
-    Returns
-    -------
-    array-like | xarray.DataArray
-        Temperature in Kelvin units
-
-
-    Implementations
-    ------------------------
-    :func:`celsius_to_kelvin` calls one of the following implementations depending on
-    the type of the input arguments:
-
-    - :py:meth:`earthkit.meteo.thermo.array.celsius_to_kelvin` for array-like
+#     Returns
+#     -------
+#     array-like | xarray.DataArray
+#         Temperature in Kelvin units
 
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.celsius_to_kelvin`
-      for xarray.DataArray
+#     Implementations
+#     ------------------------
+#     :func:`_celsius_to_kelvin` calls one of the following implementations depending on
+#     the type of the input arguments:
 
-    The function returns an object of the same type as the input arguments.
-    """
-    dispatched = dispatch(celsius_to_kelvin, fieldlist=False, array=True)
-    return dispatched(t)
-
-
-@overload
-def kelvin_to_celsius(t: "ArrayLike") -> "ArrayLike": ...
+#     - :py:meth:`earthkit.meteo.thermo.array._celsius_to_kelvin` for array-like
 
 
-@overload
-def kelvin_to_celsius(t: "xarray.DataArray") -> "xarray.DataArray": ...
+#     - :py:meth:`earthkit.meteo.thermo.xarray._celsius_to_kelvin`
+#       for xarray.DataArray
+
+#     The function returns an object of the same type as the input arguments.
+#     """
+#     dispatched = dispatch(_celsius_to_kelvin, fieldlist=False, array=True)
+#     return dispatched(t)
 
 
-def kelvin_to_celsius(t: "ArrayLike" | "xarray.DataArray") -> "ArrayLike" | "xarray.DataArray":
-    r"""Convert temperature values from Kelvin to Celsius.
-
-    Parameters
-    ----------
-    t : array-like | xarray.DataArray
-        Temperature in Kelvin units
-
-    Returns
-    -------
-    array-like | xarray.DataArray
-        Temperature in Celsius units
+# @overload
+# def _kelvin_to_celsius(t: "ArrayLike") -> "ArrayLike": ...
 
 
-    Implementations
-    ------------------------
-    :func:`kelvin_to_celsius` calls one of the following implementations depending on
-    the type of the input arguments:
-
-    - :py:meth:`earthkit.meteo.thermo.array.kelvin_to_celsius` for array-like
+# @overload
+# def _kelvin_to_celsius(t: "xarray.DataArray") -> "xarray.DataArray": ...
 
 
-    - :py:meth:`earthkit.meteo.thermo.xarray.kelvin_to_celsius`
-      for xarray.DataArray
+# def _kelvin_to_celsius(t: "ArrayLike" | "xarray.DataArray") -> "ArrayLike" | "xarray.DataArray":
+#     r"""Convert temperature values from Kelvin to Celsius.
 
-    The function returns an object of the same type as the input arguments.
-    """
-    dispatched = dispatch(kelvin_to_celsius, fieldlist=False, array=True)
-    return dispatched(t)
+#     Parameters
+#     ----------
+#     t : array-like | xarray.DataArray
+#         Temperature in Kelvin units
+
+#     Returns
+#     -------
+#     array-like | xarray.DataArray
+#         Temperature in Celsius units
+
+
+#     Implementations
+#     ------------------------
+#     :func:`_kelvin_to_celsius` calls one of the following implementations depending on
+#     the type of the input arguments:
+
+#     - :py:meth:`earthkit.meteo.thermo.array._kelvin_to_celsius` for array-like
+
+
+#     - :py:meth:`earthkit.meteo.thermo.xarray._kelvin_to_celsius`
+#       for xarray.DataArray
+
+#     The function returns an object of the same type as the input arguments.
+#     """
+#     dispatched = dispatch(_kelvin_to_celsius, fieldlist=False, array=True)
+#     return dispatched(t)
 
 
 @overload

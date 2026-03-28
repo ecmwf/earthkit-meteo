@@ -15,6 +15,7 @@ from typing import TypeAlias
 from earthkit.utils.array import array_namespace
 
 from earthkit.meteo import constants
+from earthkit.meteo.utils.convert import celsius_to_kelvin
 
 # import numpy as np
 
@@ -23,40 +24,6 @@ ArrayLike: TypeAlias = Any
 
 # def _valid_number(x):
 #     return x is not None and not np.isnan(x)
-
-
-def celsius_to_kelvin(t: ArrayLike) -> ArrayLike:
-    """Convert temperature values from Celsius to Kelvin.
-
-    Parameters
-    ----------
-    t : number or array-like
-        Temperature in Celsius units
-
-    Returns
-    -------
-    number or array-like
-        Temperature in Kelvin units
-
-    """
-    return t + constants.T_C2K
-
-
-def kelvin_to_celsius(t: ArrayLike) -> ArrayLike:
-    """Convert temperature values from Kelvin to Celsius.
-
-    Parameters
-    ----------
-    t : number or array-like
-        Temperature in Kelvin units
-
-    Returns
-    -------
-    number or array-like
-        Temperature in Celsius units
-
-    """
-    return t - constants.T_C2K
 
 
 def specific_humidity_from_mixing_ratio(w: ArrayLike) -> ArrayLike:

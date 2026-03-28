@@ -16,7 +16,7 @@ from earthkit.meteo.utils.decorators import xarray_ufunc
 from .. import array
 
 
-def celsius_to_kelvin(t: xr.DataArray) -> xr.DataArray:
+def _celsius_to_kelvin(t: xr.DataArray) -> xr.DataArray:
     r"""Convert temperature values from Celsius to Kelvin.
 
     Parameters
@@ -30,7 +30,7 @@ def celsius_to_kelvin(t: xr.DataArray) -> xr.DataArray:
         Temperature in Kelvin units
 
     """
-    return xarray_ufunc(array.celsius_to_kelvin, t).assign_attrs(
+    return xarray_ufunc(array._celsius_to_kelvin, t).assign_attrs(
         {
             "standard_name": "air_temperature",
             "units": "K",
@@ -38,7 +38,7 @@ def celsius_to_kelvin(t: xr.DataArray) -> xr.DataArray:
     )
 
 
-def kelvin_to_celsius(t: xr.DataArray) -> xr.DataArray:
+def _kelvin_to_celsius(t: xr.DataArray) -> xr.DataArray:
     r"""Convert temperature values from Kelvin to Celsius.
 
     Parameters
@@ -52,7 +52,7 @@ def kelvin_to_celsius(t: xr.DataArray) -> xr.DataArray:
         Temperature in Celsius units
 
     """
-    return xarray_ufunc(array.kelvin_to_celsius, t).assign_attrs(
+    return xarray_ufunc(array._kelvin_to_celsius, t).assign_attrs(
         {
             "standard_name": "air_temperature",
             "units": "degC",

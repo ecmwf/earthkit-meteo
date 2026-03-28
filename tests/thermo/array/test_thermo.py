@@ -18,6 +18,7 @@ import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import thermo
+from earthkit.meteo.utils import convert
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
@@ -64,17 +65,17 @@ class ThermoInputData:
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("t, v_ref", [([-10, 23.6], [263.15, 296.75])])
-def test_celsius_to_kelvin(xp, device, t, v_ref):
+def test_convert_celsius_to_kelvin(xp, device, t, v_ref):
     t, v_ref = xp.asarray(t, device=device), xp.asarray(v_ref, device=device)
-    tk = thermo.array.celsius_to_kelvin(t)
+    tk = convert.celsius_to_kelvin(t)
     assert xp.allclose(tk, v_ref)
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("t, v_ref", [([263.15, 296.75], [-10, 23.6])])
-def test_kelvin_to_celsius(xp, device, t, v_ref):
+def test_convert_kelvin_to_celsius(xp, device, t, v_ref):
     t, v_ref = xp.asarray(t, device=device), xp.asarray(v_ref, device=device)
-    tc = thermo.array.kelvin_to_celsius(t)
+    tc = convert.kelvin_to_celsius(t)
     assert xp.allclose(tc, v_ref)
 
 
@@ -169,7 +170,7 @@ def test_saturation_vapour_pressure_1(xp, device, phase):
     ref_file = "sat_vp.csv"
     # phases = ["mixed", "water", "ice"]
 
-    # o = {"t": thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 49))}
+    # o = {"t": thermo.array._celsius_to_kelvin(np.linspace(-40.0, 56.0, 49))}
     # for phase in ["mixed", "water", "ice"]:
     #     o[phase] = thermo.array.saturation_vapour_pressure(o["t"], phase=phase)
     # save_test_reference(ref_file, o)
@@ -205,7 +206,7 @@ def test_saturation_vapour_pressure_2(xp, device, t, v_ref, phase):
 def test_saturation_mixing_ratio(phase, xp, device):
     ref_file = "sat_mr.csv"
 
-    # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
+    # t = thermo.array._celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
     # p = [1000, 950, 850, 700]
     # t_num = len(t)
     # t = np.repeat(t, repeats=len(p))
@@ -229,7 +230,7 @@ def test_saturation_mixing_ratio(phase, xp, device):
 def test_saturation_specific_humidity(phase, xp, device):
     ref_file = "sat_q.csv"
 
-    # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
+    # t = thermo.array._celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
     # p = [1000, 950, 850, 700]
     # t_num = len(t)
     # t = np.repeat(t, repeats=len(p))
@@ -253,7 +254,7 @@ def test_saturation_specific_humidity(phase, xp, device):
 def test_saturation_vapour_pressure_slope(phase, xp, device):
     ref_file = "sat_vp_slope.csv"
 
-    # o = {"t": thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 49))}
+    # o = {"t": thermo.array._celsius_to_kelvin(np.linspace(-40.0, 56.0, 49))}
     # for phase in ["mixed", "water", "ice"]:
     #     o[phase] = thermo.array.saturation_vapour_pressure_slope(o["t"], phase=phase)
     # save_test_reference(ref_file, o)
@@ -271,7 +272,7 @@ def test_saturation_vapour_pressure_slope(phase, xp, device):
 def test_saturation_mixing_ratio_slope_1(phase, xp, device):
     ref_file = "sat_mr_slope.csv"
 
-    # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
+    # t = thermo.array._celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
     # p = [1000, 950, 850, 700]
     # t_num = len(t)
     # t = np.repeat(t, repeats=len(p))
@@ -313,7 +314,7 @@ def test_saturation_specific_humidity_slope_1(phase, xp, device):
     ref_file = "sat_q_slope.csv"
     # phases = ["mixed", "water", "ice"]
 
-    # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
+    # t = thermo.array._celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
     # p = [1000, 950, 850, 700]
     # t_num = len(t)
     # t = np.repeat(t, repeats=len(p))
@@ -400,8 +401,8 @@ def test_relative_humidity_from_dewpoint(t, td, v_ref, xp, device):
     t = xp.asarray(t, device=device)
     td = xp.asarray(td, device=device)
     v_ref = xp.asarray(v_ref, device=device)
-    t = thermo.array.celsius_to_kelvin(t)
-    td = thermo.array.celsius_to_kelvin(td)
+    t = convert.celsius_to_kelvin(t)
+    td = convert.celsius_to_kelvin(td)
 
     r = thermo.array.relative_humidity_from_dewpoint(t, td)
     assert xp.allclose(r, v_ref, rtol=1e-05)
@@ -436,7 +437,7 @@ def test_relative_humidity_from_specific_humidity(t, p, q, v_ref, xp, device):
     p = xp.asarray(p, device=device)
     q = xp.asarray(q, device=device)
     v_ref = xp.asarray(v_ref, device=device)
-    t = thermo.array.celsius_to_kelvin(t)
+    t = convert.celsius_to_kelvin(t)
     p = p * 100.0
 
     r = thermo.array.relative_humidity_from_specific_humidity(t, q, p)
@@ -465,7 +466,7 @@ def test_specific_humidity_from_dewpoint(td, p, v_ref, xp, device):
     td = xp.asarray(td, device=device)
     p = xp.asarray(p, device=device)
     v_ref = xp.asarray(v_ref, device=device)
-    td = thermo.array.celsius_to_kelvin(td)
+    td = convert.celsius_to_kelvin(td)
     p = p * 100.0
 
     q = thermo.array.specific_humidity_from_dewpoint(td, p)
@@ -495,7 +496,7 @@ def test_specific_humidity_from_relative_humidity(t, p, r, v_ref, xp, device):
     p = xp.asarray(p, device=device)
     r = xp.asarray(r, device=device)
     v_ref = xp.asarray(v_ref, device=device)
-    t = thermo.array.celsius_to_kelvin(t)
+    t = convert.celsius_to_kelvin(t)
     p = p * 100.0
 
     q = thermo.array.specific_humidity_from_relative_humidity(t, r, p)
@@ -530,8 +531,8 @@ def test_dewpoint_from_relative_humidity(t, r, v_ref, xp, device):
     t = xp.asarray(t, device=device)
     r = xp.asarray(r, device=device)
     v_ref = xp.asarray(v_ref, device=device)
-    t = thermo.array.celsius_to_kelvin(t)
-    v_ref = thermo.array.celsius_to_kelvin(v_ref)
+    t = convert.celsius_to_kelvin(t)
+    v_ref = convert.celsius_to_kelvin(v_ref)
 
     td = thermo.array.dewpoint_from_relative_humidity(t, r)
     assert xp.allclose(td, v_ref, equal_nan=True)
@@ -570,7 +571,7 @@ def test_dewpoint_from_specific_humidity(q, p, v_ref, xp, device):
     q = xp.asarray(q, device=device)
     v_ref = xp.asarray(v_ref, device=device)
     p = p * 100.0
-    v_ref = thermo.array.celsius_to_kelvin(v_ref)
+    v_ref = convert.celsius_to_kelvin(v_ref)
 
     td = thermo.array.dewpoint_from_specific_humidity(q, p)
     assert xp.allclose(td, v_ref, equal_nan=True)
@@ -719,8 +720,8 @@ def test_lcl(t, td, p, t_ref, p_ref, method, xp, device):
     td = xp.asarray(td, device=device)
     t = xp.asarray(t, device=device)
 
-    t = thermo.array.celsius_to_kelvin(t)
-    td = thermo.array.celsius_to_kelvin(td)
+    t = convert.celsius_to_kelvin(t)
+    td = convert.celsius_to_kelvin(td)
 
     t_lcl = thermo.array.lcl_temperature(t, td, method=method)
     assert xp.allclose(t_lcl, t_ref)
