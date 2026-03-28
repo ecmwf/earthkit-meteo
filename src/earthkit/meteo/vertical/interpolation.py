@@ -11,19 +11,31 @@ def interpolate_monotonic(
     aux_min_level_coord=None,
     aux_max_level_data=None,
     aux_max_level_coord=None,
-    vertical_dim: int = "z",
+    vertical_dim=None,
 ):
-    return dispatch(interpolate_monotonic, xarray=True, fieldlist=False, array=True)(
-        data,
-        coord,
-        target_coord,
-        interpolation=interpolation,
-        aux_min_level_data=aux_min_level_data,
-        aux_min_level_coord=aux_min_level_coord,
-        aux_max_level_data=aux_max_level_data,
-        aux_max_level_coord=aux_max_level_coord,
-        vertical_dim=vertical_dim,
-    )
+    if vertical_dim is not None:
+        return dispatch(interpolate_monotonic, xarray=True, fieldlist=False, array=True)(
+            data,
+            coord,
+            target_coord,
+            interpolation=interpolation,
+            aux_min_level_data=aux_min_level_data,
+            aux_min_level_coord=aux_min_level_coord,
+            aux_max_level_data=aux_max_level_data,
+            aux_max_level_coord=aux_max_level_coord,
+            vertical_dim=vertical_dim,
+        )
+    else:
+        return dispatch(interpolate_monotonic, xarray=True, fieldlist=False, array=True)(
+            data,
+            coord,
+            target_coord,
+            interpolation=interpolation,
+            aux_min_level_data=aux_min_level_data,
+            aux_min_level_coord=aux_min_level_coord,
+            aux_max_level_data=aux_max_level_data,
+            aux_max_level_coord=aux_max_level_coord,
+        )
 
 
 def interpolate_to_pressure_levels(
