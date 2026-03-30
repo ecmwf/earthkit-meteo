@@ -26,4 +26,5 @@ New features
 
 Changes
 -----------------------
+
 - Uses :py:meth:`acos` instead of :py:meth:`arccos` internally for array-based computations (:pr:`56`)

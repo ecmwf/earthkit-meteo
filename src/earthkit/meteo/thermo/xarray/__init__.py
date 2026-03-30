@@ -11,12 +11,12 @@
 Thermo related functions operating on xarray objects.
 """
 
-from .thermo import celsius_to_kelvin
+from .thermo import _celsius_to_kelvin
+from .thermo import _kelvin_to_celsius
 from .thermo import dewpoint_from_relative_humidity
 from .thermo import dewpoint_from_specific_humidity
 from .thermo import ept_from_dewpoint
 from .thermo import ept_from_specific_humidity
-from .thermo import kelvin_to_celsius
 from .thermo import lcl
 from .thermo import lcl_temperature
 from .thermo import mixing_ratio_from_dewpoint
@@ -52,12 +52,12 @@ from .thermo import wet_bulb_temperature_from_dewpoint
 from .thermo import wet_bulb_temperature_from_specific_humidity
 
 __all__ = [
-    "celsius_to_kelvin",
+    "_celsius_to_kelvin",
     "dewpoint_from_relative_humidity",
     "dewpoint_from_specific_humidity",
     "ept_from_dewpoint",
     "ept_from_specific_humidity",
-    "kelvin_to_celsius",
+    "_kelvin_to_celsius",
     "lcl",
     "lcl_temperature",
     "mixing_ratio_from_dewpoint",

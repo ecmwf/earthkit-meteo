@@ -1,10 +1,9 @@
-.. _examples:
+.. _how-tos:
 
-Examples
-============
+How-tos Guide
+===============
 
 Here is a list of example notebooks to illustrate how to use earthkit-meteo.
-
 
 
 Statistics

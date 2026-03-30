@@ -62,38 +62,6 @@ def _read_data_file(path):
 
 
 @pytest.mark.parametrize(
-    "t_c",
-    [
-        [-273.15, -40.0, 0.0, 20.0, 100.0, np.nan],
-        0.0,
-    ],
-)
-def test_xr_celsius_to_kelvin(t_c):
-    t_da = _scalar_da(t_c) if np.isscalar(t_c) else _da(t_c)
-    out = thermo.celsius_to_kelvin(t_da)
-    ref = thermo.array.celsius_to_kelvin(_np(t_c))
-    assert np.allclose(out.values, ref, equal_nan=True)
-    if np.isscalar(t_c):
-        assert out.ndim == 0
-
-
-@pytest.mark.parametrize(
-    "t_k",
-    [
-        [0.0, 233.15, 273.15, 293.15, 373.15, np.nan],
-        273.16,
-    ],
-)
-def test_xr_kelvin_to_celsius(t_k):
-    t_da = _scalar_da(t_k) if np.isscalar(t_k) else _da(t_k)
-    out = thermo.kelvin_to_celsius(t_da)
-    ref = thermo.array.kelvin_to_celsius(_np(t_k))
-    assert np.allclose(out.values, ref, equal_nan=True)
-    if np.isscalar(t_k):
-        assert out.ndim == 0
-
-
-@pytest.mark.parametrize(
     "q,p",
     [
         ([0.01], [100000.0]),

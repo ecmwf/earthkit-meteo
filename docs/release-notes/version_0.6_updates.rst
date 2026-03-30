@@ -9,7 +9,7 @@ Version 0.6.1
 Changes
 -------------------------
 
-- Revert change to shape of array returned from :py:meth:`meteo.stats.array.iter_quantiles` with ``method=sort``. The output shape should be the same as that returned by other methods. (:pr:`107`)
+- Revert change to shape of array returned from :py:meth:`earthkit.meteo.stats.array.iter_quantiles` with ``method=sort``. The output shape should be the same as that returned by other methods. (:pr:`107`)
 
 
 Version 0.6.0
