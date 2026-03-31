@@ -3,6 +3,15 @@ Version 0.6 Updates
 /////////////////////////
 
 
+Version 0.6.2
+===============
+
+Dependency updates
+-------------------------
+
+- Limited the version of :xref:`earthkit-utils` to be less than 0.99 to avoid potential compatibility issues with future major releases of :xref:`earthkit-utils`.
+
+
 Version 0.6.1
 ===============
 
