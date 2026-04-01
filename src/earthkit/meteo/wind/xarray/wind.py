@@ -12,7 +12,11 @@ from __future__ import annotations
 from typing import Iterable
 
 import numpy as np
-import xarray as xr
+
+try:
+    import xarray as xr
+except ImportError:
+    xr = None
 
 from earthkit.meteo.utils.decorators import xarray_ufunc
 

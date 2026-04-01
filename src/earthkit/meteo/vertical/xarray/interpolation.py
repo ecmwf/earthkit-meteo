@@ -9,8 +9,8 @@ import numpy as np
 
 try:
     import xarray as xr
-except ImportError as e:
-    raise RuntimeError("vertical.xarray.interpolation requires xarray") from e
+except ImportError:
+    xr = None
 
 __all__ = [
     "TargetCoordinates",

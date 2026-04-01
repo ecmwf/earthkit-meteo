@@ -1,9 +1,13 @@
 from typing import Optional
 from typing import TypeVar
 
-import xarray as xr
+try:
+    import xarray as xr
 
-T = TypeVar("T", xr.DataArray, xr.Dataset)
+    T = TypeVar("T", xr.DataArray, xr.Dataset)
+except ImportError:
+    xr = None
+    T = TypeVar("T")
 
 
 def nanaverage(data: T, weights: Optional[T] = None, **kwargs):

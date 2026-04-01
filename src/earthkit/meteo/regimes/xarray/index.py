@@ -6,7 +6,10 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-import xarray as xr
+try:
+    import xarray as xr
+except ImportError:
+    xr = None
 
 
 def project(field, patterns, weights, **patterns_extra_coords):
