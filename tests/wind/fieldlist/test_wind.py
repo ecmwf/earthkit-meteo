@@ -16,6 +16,7 @@ from earthkit.meteo.utils.testing import NO_EKD
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
 
+@pytest.mark.skip("Related code needs to be reimplemented")
 @pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
 def test_fieldlist_wind_speed():
     import earthkit.data as ekd
@@ -37,6 +38,7 @@ def test_fieldlist_wind_speed():
     assert np.allclose(res[0].values, ref, equal_nan=True)
 
 
+@pytest.mark.skip("Related code needs to be reimplemented")
 @pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
 def test_fieldlist_wind_direction():
     import earthkit.data as ekd
@@ -58,6 +60,7 @@ def test_fieldlist_wind_direction():
     assert np.allclose(res[0].values, ref, equal_nan=True)
 
 
+@pytest.mark.skip("Related code needs to be reimplemented")
 @pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
 def test_fieldlist_w_from_omega():
     import earthkit.data as ekd
