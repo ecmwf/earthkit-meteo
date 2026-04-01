@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
   "deprecation",
-  "earthkit-utils==1.0.0rc0",
+  "earthkit-utils>=1.0.0rc0",
   "numpy"
 ]
 description = "A Python library for meteorological computations"
