@@ -9,10 +9,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import TypeAlias
-from typing import overload
+from typing import TYPE_CHECKING, Any, TypeAlias, overload
 
 from earthkit.meteo.utils.decorators import dispatch
 
@@ -52,14 +49,12 @@ def sot(
     clim_dim: str | int | None = None,
     ens_dim: str | int | None = None,
 ):
-    r"""Compute Shift of Tails (SOT)
-    from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    r"""Compute Shift of Tails (SOT) from climatology percentiles (sorted) and ensemble forecast (not sorted).
 
     Parameters
     ----------
     clim: array-like or xarray.DataArray
-        Model climatology (percentiles). The reduction dimension is set by ``clim_dim``.
+        Model climatology (percentiles). The reduction dimension is set by ``clim_dim``.ß
     ens: array-like or xarray.DataArray
         Ensemble forecast. The reduction dimension is set by ``ens_dim``.
     perc: int
@@ -120,9 +115,7 @@ def sot_unsorted(
     clim_dim: str | int | None = None,
     ens_dim: str | int | None = None,
 ):
-    r"""Compute Shift of Tails (SOT)
-    from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    r"""Compute Shift of Tails (SOT) from climatology percentiles (sorted) and ensemble forecast (not sorted).
 
     Parameters
     ----------

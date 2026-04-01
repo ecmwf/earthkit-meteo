@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import dataclasses as dc
-from typing import Any
-from typing import Literal
-from typing import Sequence
+from typing import Any, Literal, Sequence
 
 import numpy as np
 
@@ -185,8 +183,7 @@ def interpolate_to_pressure_levels(
     target_values = np.array(sorted(target_p)) * target_factor
     if np.any((target_values < target_p_min) | (target_values > target_p_max)):
         raise ValueError(
-            "target coordinate value out of range "
-            f"(must be in interval [{target_p_min}, {target_p_max}]Pa)"
+            f"target coordinate value out of range (must be in interval [{target_p_min}, {target_p_max}]Pa)"
         )
     target = TargetCoordinates(
         type_of_level="isobaricInPa",
@@ -347,9 +344,7 @@ def interpolate_sleve_to_theta_levels(
     # not monotonous wrt to height tc values are stored in K
     tc_values = np.array(target_theta) * th_tc_unit_conversions[target_t_units]
     if np.any((tc_values < th_tc_min) | (tc_values > th_tc_max)):
-        raise ValueError(
-            "target coordinate value " f"out of range (must be in interval [{th_tc_min}, {th_tc_max}]K)"
-        )
+        raise ValueError(f"target coordinate value out of range (must be in interval [{th_tc_min}, {th_tc_max}]K)")
     tc = TargetCoordinates(
         type_of_level="theta",
         values=tc_values.tolist(),

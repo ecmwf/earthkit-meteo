@@ -63,7 +63,7 @@ DATA_PL = _get_data_2("_pl_data")
 
 
 def _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected_data, xp, device):
-    """Test to_pressure with scalar value, scalar pres, scalar target"""
+    """Test to_pressure with scalar value, scalar pres, scalar target."""
     data = xp.asarray(data, device=device)
     coord = xp.asarray(coord, device=device)
     target_coord = xp.asarray(target_coord, device=device)
@@ -80,7 +80,7 @@ def _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected
     DATA["pressure_s_s_s"],
 )
 def test_array_interpolate_monotonic_s_s_s_1(data, coord, target_coord, mode, expected_data, xp, device):
-    """Test with scalar data, scalar coord, scalar target_coord"""
+    """Test with scalar data, scalar coord, scalar target_coord."""
     _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected_data, xp, device)
 
 
@@ -90,7 +90,7 @@ def test_array_interpolate_monotonic_s_s_s_1(data, coord, target_coord, mode, ex
     DATA["height_s_s_s"],
 )
 def test_array_interpolate_monotonic_s_s_s_2(data, coord, target_coord, mode, expected_data, xp, device):
-    """Test with scalar data, scalar coord, scalar target_coord"""
+    """Test with scalar data, scalar coord, scalar target_coord."""
     _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected_data, xp, device)
 
 
@@ -100,7 +100,7 @@ def test_array_interpolate_monotonic_s_s_s_2(data, coord, target_coord, mode, ex
     DATA["pressure_a_a_s"],
 )
 def test_array_interpolate_monotonic_a_a_s(data, coord, target_coord, mode, expected_data, xp, device):
-    """Test with array data, array coord, scalar target_coord"""
+    """Test with array data, array coord, scalar target_coord."""
     _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected_data, xp, device)
 
 
@@ -110,7 +110,7 @@ def test_array_interpolate_monotonic_a_a_s(data, coord, target_coord, mode, expe
     DATA["pressure_a_s_s"],
 )
 def test_array_interpolate_monotonic_a_s_s(data, coord, target_coord, mode, expected_data, xp, device):
-    """Test with array data, scalar coord, scalar target_coord"""
+    """Test with array data, scalar coord, scalar target_coord."""
     _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected_data, xp, device)
 
 
@@ -120,7 +120,7 @@ def test_array_interpolate_monotonic_a_s_s(data, coord, target_coord, mode, expe
     DATA["pressure_a_s_a"],
 )
 def test_array_interpolate_monotonic_a_s_a(data, coord, target_coord, mode, expected_data, xp, device):
-    """Test with array data, scalar coord, array target_coord"""
+    """Test with array data, scalar coord, array target_coord."""
     _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected_data, xp, device)
 
 
@@ -130,7 +130,7 @@ def test_array_interpolate_monotonic_a_s_a(data, coord, target_coord, mode, expe
     DATA["pressure_a_a_a"],
 )
 def test_array_interpolate_monotonic_a_a_a_1(data, coord, target_coord, mode, expected_data, xp, device):
-    """Test with array data, array coord, array target_coord"""
+    """Test with array data, array coord, array target_coord."""
     _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected_data, xp, device)
 
 
@@ -140,7 +140,7 @@ def test_array_interpolate_monotonic_a_a_a_1(data, coord, target_coord, mode, ex
     DATA["height_a_a_a"],
 )
 def test_array_interpolate_monotonic_a_a_a_2(data, coord, target_coord, mode, expected_data, xp, device):
-    """Test with array data, array coord, array target_coord"""
+    """Test with array data, array coord, array target_coord."""
     _check_array_interpolate_monotonic(data, coord, target_coord, mode, expected_data, xp, device)
 
 
@@ -223,10 +223,8 @@ def test_array_interpolate_monotonic_s_a_a(value, pres, target, mode, xp, device
         ),
     ],
 )
-def test_array_interpolate_monotonic_to_pressure_s_s_s_aux(
-    data, coord, target_coord, mode, expected_data, xp, device
-):
-    """Test interpolation with auxiliary min/max level data"""
+def test_array_interpolate_monotonic_to_pressure_s_s_s_aux(data, coord, target_coord, mode, expected_data, xp, device):
+    """Test interpolation with auxiliary min/max level data."""
     data = xp.asarray(data, device=device)
     coord = xp.asarray(coord, device=device)
     target_coord = xp.asarray(target_coord, device=device)
@@ -257,10 +255,8 @@ def test_array_interpolate_monotonic_to_pressure_s_s_s_aux(
         ),
     ],
 )
-def test_array_interpolate_monotonic_to_height_s_s_s_aux(
-    data, coord, target_coord, mode, expected_data, xp, device
-):
-    """Test interpolation with auxiliary min/max level data"""
+def test_array_interpolate_monotonic_to_height_s_s_s_aux(data, coord, target_coord, mode, expected_data, xp, device):
+    """Test interpolation with auxiliary min/max level data."""
     data = xp.asarray(data, device=device)
     coord = xp.asarray(coord, device=device)
     target_coord = xp.asarray(target_coord, device=device)
@@ -314,7 +310,7 @@ def test_array_interpolate_monotonic_to_height_s_s_s_aux(
 def test_array_interpolate_monotonic_to_height_a_a_a_aux(
     data, coord, target_coord, aux_data, aux_coord, mode, expected_data, xp, device
 ):
-    """Test interpolation with auxiliary min/max level data"""
+    """Test interpolation with auxiliary min/max level data."""
     data = xp.asarray(data, device=device)
     coord = xp.asarray(coord, device=device)
     target_coord = xp.asarray(target_coord, device=device)
@@ -411,9 +407,7 @@ def test_array_interpolate_hybrid_to_pressure_levels(_kwargs, expected_values, p
 
     tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
     atol, rtol = tolerance.get(dtype=t.dtype)
-    assert xp.allclose(
-        r, r_ref, atol=atol, rtol=rtol, equal_nan=True
-    ), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
+    assert xp.allclose(r, r_ref, atol=atol, rtol=rtol, equal_nan=True), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
 
 
 @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
@@ -544,9 +538,7 @@ def test_array_interpolate_hybrid_to_height_levels(_kwargs, expected_values, par
 
     tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
     atol, rtol = tolerance.get(dtype=t.dtype)
-    assert xp.allclose(
-        r, r_ref, atol=atol, rtol=rtol, equal_nan=True
-    ), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
+    assert xp.allclose(r, r_ref, atol=atol, rtol=rtol, equal_nan=True), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
 
 
 @pytest.mark.parametrize("xp, device", [(_NUMPY_NAMESPACE, "cpu")])
@@ -668,6 +660,4 @@ def test_array_interpolate_pressure_to_height_levels(_kwargs, expected_values, x
 
     tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
     atol, rtol = tolerance.get(dtype=t.dtype)
-    assert xp.allclose(
-        r, r_ref, atol=atol, rtol=rtol, equal_nan=True
-    ), f"max abs diff={xp.max(xp.abs(r - r_ref))}"
+    assert xp.allclose(r, r_ref, atol=atol, rtol=rtol, equal_nan=True), f"max abs diff={xp.max(xp.abs(r - r_ref))}"

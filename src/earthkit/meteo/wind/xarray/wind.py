@@ -81,9 +81,7 @@ def direction(
     return xarray_ufunc(array.direction, u, v, convention=convention, to_positive=to_positive)
 
 
-def xy_to_polar(
-    x: xr.DataArray, y: xr.DataArray, convention: str = "meteo"
-) -> tuple[xr.DataArray, xr.DataArray]:
+def xy_to_polar(x: xr.DataArray, y: xr.DataArray, convention: str = "meteo") -> tuple[xr.DataArray, xr.DataArray]:
     r"""Convert wind/vector data from xy representation to polar representation.
 
     Parameters

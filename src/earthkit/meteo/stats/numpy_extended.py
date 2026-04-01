@@ -9,10 +9,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import TypeAlias
-from typing import overload
+from typing import TYPE_CHECKING, Any, TypeAlias, overload
 
 from ..utils.decorators import dispatch
 

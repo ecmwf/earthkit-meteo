@@ -9,8 +9,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-from typing import TypeAlias
+from typing import Any, TypeAlias
 
 from earthkit.utils.array import array_namespace
 
@@ -1174,10 +1173,7 @@ class _EptCompIfs(_EptComp):
     def _d_G_sat(self, ths):
         if ths.qs is None:
             ths.qs = saturation_specific_humidity(ths.t, ths.p)
-        return (
-            -self.K0 * ths.qs / (ths.t**2)
-            + self.K0 * saturation_specific_humidity_slope(ths.t, ths.p) / ths.t
-        )
+        return -self.K0 * ths.qs / (ths.t**2) + self.K0 * saturation_specific_humidity_slope(ths.t, ths.p) / ths.t
 
     def _f(self, ths):
         xp = ths.ns
@@ -1215,10 +1211,7 @@ class _EptCompBolton35(_EptComp):
 
     def _d_G_sat(self, ths):
         xp = ths.ns
-        return (
-            -self.K0 * ths.ws / xp.square(ths.t)
-            + self.K0 * saturation_mixing_ratio_slope(ths.t, ths.p) / ths.t
-        )
+        return -self.K0 * ths.ws / xp.square(ths.t) + self.K0 * saturation_mixing_ratio_slope(ths.t, ths.p) / ths.t
 
     def _f(self, ths):
         # print(f" c_tw={ths.c_tw}")
@@ -1226,9 +1219,7 @@ class _EptCompBolton35(_EptComp):
         # print(f" exp={self._G_sat(ths, scale=-self.c_lambda)}")
         xp = ths.ns
         return (
-            ths.c_tw
-            * xp.pow(ths.p / constants.p0, self.K3 * ths.ws)
-            * xp.exp(self._G_sat(ths, scale=-self.c_lambda))
+            ths.c_tw * xp.pow(ths.p / constants.p0, self.K3 * ths.ws) * xp.exp(self._G_sat(ths, scale=-self.c_lambda))
         )
 
     def _d_lnf(self, ths):
@@ -1287,9 +1278,9 @@ class _EptCompBolton39(_EptComp):
     def _d_G_sat(self, ths):
         xp = ths.ns
         # print(f" d_ws={saturation_mixing_ratio_slope(ths.t, ths.p)}")
-        return -self.K0 * (ths.ws + self.K2 * xp.square(ths.ws)) / (xp.square(ths.t)) + (
-            self.K0 / ths.t - self.K1
-        ) * (1 + (2 * self.K2) * ths.ws) * saturation_mixing_ratio_slope(ths.t, ths.p)
+        return -self.K0 * (ths.ws + self.K2 * xp.square(ths.ws)) / (xp.square(ths.t)) + (self.K0 / ths.t - self.K1) * (
+            1 + (2 * self.K2) * ths.ws
+        ) * saturation_mixing_ratio_slope(ths.t, ths.p)
 
     def _f(self, ths):
         xp = ths.ns
@@ -1465,7 +1456,7 @@ def temperature_on_moist_adiabat(
     ept_method: str = "ifs",
     t_method: str = "bisect",
 ) -> ArrayLike:
-    r"""Compute the temperature on a moist adiabat (pseudoadiabat)
+    r"""Compute the temperature on a moist adiabat (pseudoadiabat).
 
     Parameters
     ----------

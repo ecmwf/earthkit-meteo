@@ -203,14 +203,12 @@ def test_pressure_on_hybrid_levels_core(index, xp, device):
     # print("delta diff", repr(xp.max(xp.abs(delta - ref_delta))))
     # print("alpha diff", repr(xp.max(xp.abs(alpha - ref_alpha))))
 
-    tolerance = Tolerance(
-        {
-            "p_full": {64: (1e-8, 1e-6)},
-            "p_half": {64: (1e-8, 1e-6)},
-            "delta": {64: (1e-8, 1e-6), 32: (1e-6, 1e-5)},
-            "alpha": {64: (1e-8, 1e-6), 32: (1e-4, 1e-5)},
-        }
-    )
+    tolerance = Tolerance({
+        "p_full": {64: (1e-8, 1e-6)},
+        "p_half": {64: (1e-8, 1e-6)},
+        "delta": {64: (1e-8, 1e-6), 32: (1e-6, 1e-5)},
+        "alpha": {64: (1e-8, 1e-6), 32: (1e-4, 1e-5)},
+    })
     atol, rtol = tolerance.get(key="p_full", dtype=sp.dtype)
     assert xp.allclose(p_full, ref_p_full, atol=atol, rtol=rtol)
 
@@ -279,14 +277,12 @@ def test_pressure_on_hybrid_levels_axis(index, xp, device):
         delta = xp.moveaxis(delta, vertical_dim, 0)
         alpha = xp.moveaxis(alpha, vertical_dim, 0)
 
-    tolerance = Tolerance(
-        {
-            "p_full": {64: (1e-8, 1e-6)},
-            "p_half": {64: (1e-8, 1e-6)},
-            "delta": {64: (1e-8, 1e-6), 32: (1e-6, 1e-5)},
-            "alpha": {64: (1e-8, 1e-6), 32: (1e-4, 1e-5)},
-        }
-    )
+    tolerance = Tolerance({
+        "p_full": {64: (1e-8, 1e-6)},
+        "p_half": {64: (1e-8, 1e-6)},
+        "delta": {64: (1e-8, 1e-6), 32: (1e-6, 1e-5)},
+        "alpha": {64: (1e-8, 1e-6), 32: (1e-4, 1e-5)},
+    })
     atol, rtol = tolerance.get(key="p_full", dtype=sp.dtype)
     assert xp.allclose(p_full, ref_p_full, atol=atol, rtol=rtol)
 
@@ -380,31 +376,29 @@ def test_pressure_on_hybrid_levels_output(index, levels, output, xp, device):
     res = vertical.pressure_on_hybrid_levels(A, B, sp, levels=levels, alpha_top="ifs", output=output)
 
     # atol and rtol for different outputs, due to different precisions in backends
-    tolerance = Tolerance(
-        {
-            "full": {64: (1e-8, 1e-6)},
-            "half": {64: (1e-8, 1e-6)},
-            "delta": {64: (1e-8, 1e-6), 32: (1e-6, 1e-5)},
-            "alpha": {64: (1e-8, 1e-6), 32: (1e-4, 1e-5)},
-        }
-    )
+    tolerance = Tolerance({
+        "full": {64: (1e-8, 1e-6)},
+        "half": {64: (1e-8, 1e-6)},
+        "delta": {64: (1e-8, 1e-6), 32: (1e-6, 1e-5)},
+        "alpha": {64: (1e-8, 1e-6), 32: (1e-4, 1e-5)},
+    })
 
     if isinstance(output, str) or len(output) == 1:
         key = output if isinstance(output, str) else output[0]
         # print(f"{key=}, max abs diff={xp.max(xp.abs(res - ref[key]))}")
 
         atol, rtol = tolerance.get(key=key, dtype=sp.dtype)
-        assert xp.allclose(
-            res, ref[key], atol=atol, rtol=rtol
-        ), f"{key=}, max abs diff={xp.max(xp.abs(res - ref[key]))}"
+        assert xp.allclose(res, ref[key], atol=atol, rtol=rtol), (
+            f"{key=}, max abs diff={xp.max(xp.abs(res - ref[key]))}"
+        )
     else:
         assert isinstance(res, tuple)
         assert len(res) == len(output)
         for key, rd in zip(output, res):
             atol, rtol = tolerance.get(key=key, dtype=sp.dtype)
-            assert xp.allclose(
-                rd, ref[key], atol=atol, rtol=rtol
-            ), f"{key=}, max abs diff={xp.max(xp.abs(rd - ref[key]))}"
+            assert xp.allclose(rd, ref[key], atol=atol, rtol=rtol), (
+                f"{key=}, max abs diff={xp.max(xp.abs(rd - ref[key]))}"
+            )
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)

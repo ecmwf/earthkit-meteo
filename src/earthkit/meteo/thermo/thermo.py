@@ -9,10 +9,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Any  # noqa: F401
-from typing import TypeAlias
-from typing import overload
+from typing import (
+    TYPE_CHECKING,
+    Any,  # noqa: F401
+    TypeAlias,
+    overload,
+)
 
 from earthkit.meteo.utils.decorators import dispatch
 
@@ -1898,7 +1900,8 @@ def ept_from_dewpoint(
 
         .. math::
 
-            \Theta_{e} = t (\frac{10^{5}}{p-e})^{\kappa} (\frac{t}{t_{LCL}})^{0.28 w} \operatorname{exp}[(\frac{3036}{t_{LCL}} -
+            \Theta_{e} =
+            t (\frac{10^{5}}{p-e})^{\kappa} (\frac{t}{t_{LCL}})^{0.28 w} \operatorname{exp}[(\frac{3036}{t_{LCL}} -
             1.78)w(1+0.448 w)]
 
     where:
@@ -2054,7 +2057,8 @@ def saturation_ept(
 
         .. math::
 
-            \Theta_{e} = t (\frac{10^{5}}{p-e_{sat}})^{\kappa} \operatorname{exp}[(\frac{3036}{t} - 1.78)w_{sat}(1+0.448 w_{sat})]
+            \Theta_{e} =
+            t (\frac{10^{5}}{p-e_{sat}})^{\kappa} \operatorname{exp}[(\frac{3036}{t} - 1.78)w_{sat}(1+0.448 w_{sat})]
 
     where:
 
@@ -2106,7 +2110,7 @@ def temperature_on_moist_adiabat(
     ept_method: str = "ifs",
     t_method: str = "bisect",
 ) -> "ArrayLike" | "xarray.DataArray":
-    r"""Compute the temperature on a moist adiabat (pseudoadiabat)
+    r"""Compute the temperature on a moist adiabat (pseudoadiabat).
 
     Parameters
     ----------

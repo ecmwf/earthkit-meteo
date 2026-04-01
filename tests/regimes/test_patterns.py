@@ -13,7 +13,6 @@ from earthkit.meteo import regimes
 
 
 class TestConstantPatterns:
-
     lat = np.linspace(90.0, 0.0, 91)
     lon = np.linspace(60.0, -60.0, 121)
     dipole = np.cos(np.deg2rad(lon[None, :])) * np.cos(np.deg2rad(lat[:, None]) * 2)
@@ -50,7 +49,6 @@ class TestConstantPatterns:
 
 
 class TestModulatedPatterns:
-
     lat = np.linspace(90.0, 0.0, 91)
     lon = np.linspace(60.0, -60.0, 121)
     dipole = np.cos(np.deg2rad(lon[None, :])) * np.cos(np.deg2rad(lat[:, None]) * 2)

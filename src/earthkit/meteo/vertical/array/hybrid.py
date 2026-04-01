@@ -7,8 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import Any
-from typing import Tuple
+from typing import Any, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -44,7 +43,7 @@ def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> Tuple[NDArray[
     r"""Get the A and B parameters of hybrid levels for a given configuration.
 
     Parameters
-    -----------
+    ----------
         n_levels: int
             Number of (full) hybrid levels. Currently, only ``n_levels`` 91 and 137 are supported.
         model : str
@@ -98,8 +97,6 @@ def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> Tuple[NDArray[
             c = _CONF[model][n_levels]
             return c["A"], c["B"]
         else:
-            raise ValueError(
-                f"Hybrid level parameters not available for {n_levels} levels in model '{model}'."
-            )
+            raise ValueError(f"Hybrid level parameters not available for {n_levels} levels in model '{model}'.")
     else:
         raise ValueError(f"Model '{model}' not recognised for hybrid level parameters.")

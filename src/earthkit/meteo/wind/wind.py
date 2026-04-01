@@ -9,11 +9,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Any  # noqa: F401
-from typing import Iterable
-from typing import TypeAlias
-from typing import overload
+from typing import (
+    TYPE_CHECKING,
+    Any,  # noqa: F401
+    Iterable,
+    TypeAlias,
+    overload,
+)
 
 from earthkit.meteo.utils.decorators import dispatch
 
@@ -140,9 +142,7 @@ def direction(
 
 
 @overload
-def xy_to_polar(
-    x: "ArrayLike", y: "ArrayLike", convention: str = "meteo"
-) -> tuple["ArrayLike", "ArrayLike"]: ...
+def xy_to_polar(x: "ArrayLike", y: "ArrayLike", convention: str = "meteo") -> tuple["ArrayLike", "ArrayLike"]: ...
 
 
 @overload
@@ -292,7 +292,7 @@ def w_from_omega(
     t: "ArrayLike" | "xarray.DataArray",
     p: "ArrayLike" | "xarray.DataArray",
 ) -> "ArrayLike" | "xarray.DataArray":
-    r"""Compute the hydrostatic vertical velocity from pressure velocity
+    r"""Compute the hydrostatic vertical velocity from pressure velocity.
 
     Parameters
     ----------
@@ -346,7 +346,7 @@ def coriolis(lat: "xarray.DataArray") -> "xarray.DataArray": ...
 
 
 def coriolis(lat: "xarray.DataArray" | "ArrayLike") -> "xarray.DataArray" | "ArrayLike":
-    r"""Compute the Coriolis parameter
+    r"""Compute the Coriolis parameter.
 
     Parameters
     ----------

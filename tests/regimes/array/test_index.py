@@ -15,7 +15,6 @@ from earthkit.meteo.regimes import array
 @pytest.fixture
 def patterns():
     class MockPatterns:
-
         _lat = np.linspace(90.0, 0.0, 91)
         _lon = np.linspace(60.0, -60.0, 121)
         _dipole = np.cos(np.deg2rad(_lon[None, :])) * np.cos(np.deg2rad(_lat[:, None]) * 2)

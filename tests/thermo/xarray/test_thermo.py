@@ -538,9 +538,7 @@ def test_xr_wet_bulb_temperature_from_specific_humidity_vectorized(t, q, p, ept_
     q_da = _xr_da_1d(q)
     p_da = _xr_da_1d(p)
 
-    out = thermo.wet_bulb_temperature_from_specific_humidity(
-        t_da, q_da, p_da, ept_method=ept_method, t_method=t_method
-    )
+    out = thermo.wet_bulb_temperature_from_specific_humidity(t_da, q_da, p_da, ept_method=ept_method, t_method=t_method)
 
     ref = thermo.array.wet_bulb_temperature_from_specific_humidity(
         np.asarray(t),
@@ -588,9 +586,7 @@ def test_xr_wet_bulb_potential_temperature_from_specific_humidity(t, q, p, metho
     p_da = _scalar_da(p)
 
     out = thermo.wet_bulb_potential_temperature_from_specific_humidity(t_da, q_da, p_da, ept_method=method)
-    ref = thermo.array.wet_bulb_potential_temperature_from_specific_humidity(
-        _np(t), _np(q), _np(p), ept_method=method
-    )
+    ref = thermo.array.wet_bulb_potential_temperature_from_specific_humidity(_np(t), _np(q), _np(p), ept_method=method)
 
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0

@@ -9,8 +9,7 @@
 
 from earthkit.utils.array import array_namespace
 
-from .utils import flatten_extreme_input
-from .utils import validate_extreme_shapes
+from .utils import flatten_extreme_input, validate_extreme_shapes
 
 
 def _cpf(clim, ens, epsilon=None, from_zero=False):

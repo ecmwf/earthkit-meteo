@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import Iterable
-from typing import List
-from typing import Union
+from typing import Iterable, List, Union
 
 import numpy as np
 from earthkit.utils.array import array_namespace
@@ -21,7 +19,7 @@ def iter_quantiles(
     dim: int = 0,
     method: str = "sort",
 ) -> Iterable[np.ndarray]:
-    """Iterate over the quantiles of a large array
+    """Iterate over the quantiles of a large array.
 
     Parameters
     ----------
@@ -43,7 +41,6 @@ def iter_quantiles(
     Iterable[numpy array]
         Quantiles, in increasing order if `which` is an `int`, otherwise in the order specified
     """
-
     if method not in ("sort", "numpy_bulk", "numpy"):
         raise ValueError(f"Invalid method {method!r}, expected 'sort', 'numpy_bulk', or 'numpy'")
 

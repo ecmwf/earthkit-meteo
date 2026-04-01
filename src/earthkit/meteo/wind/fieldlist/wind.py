@@ -9,8 +9,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-from typing import TypeAlias
+from typing import Any, TypeAlias
 
 from earthkit.data import FieldList  # type: ignore[import]
 from earthkit.utils.array import array_namespace

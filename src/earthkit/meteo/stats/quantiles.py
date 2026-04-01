@@ -7,11 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import Any
-from typing import Iterable
-from typing import Sequence
-from typing import TypeAlias
-from typing import overload
+from typing import Any, Iterable, Sequence, TypeAlias, overload
 
 from ..utils.decorators import dispatch
 
@@ -42,7 +38,7 @@ def iter_quantiles(
     dim: int = 0,
     method: str = "sort",
 ) -> "Iterable[ArrayLike]":
-    """Iterate over the quantiles of a large array
+    """Iterate over the quantiles of a large array.
 
 
     .. admonition:: Implementations

@@ -11,8 +11,7 @@ from __future__ import annotations
 
 import xarray as xr
 
-from earthkit.meteo.utils.decorators import get_dim_from_defaults
-from earthkit.meteo.utils.decorators import xarray_ufunc
+from earthkit.meteo.utils.decorators import get_dim_from_defaults, xarray_ufunc
 
 from .. import array
 
@@ -25,9 +24,10 @@ def sot(
     clim_dim: str | None = None,
     ens_dim: str | None = None,
 ) -> xr.DataArray:
-    """Compute Shift of Tails (SOT)
-    from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    """Compute Shift of Tails (SOT).
+
+    From climatology percentiles (sorted)
+    and ensemble forecast (not sorted).
 
     Parameters
     ----------
@@ -78,9 +78,7 @@ def sot_unsorted(
     clim_dim: str | None = None,
     ens_dim: str | None = None,
 ) -> xr.DataArray:
-    """Compute Shift of Tails (SOT)
-    from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+    """Compute Shift of Tails (SOT) from climatology percentiles (sorted) and ensemble forecast (not sorted).
 
     Parameters
     ----------

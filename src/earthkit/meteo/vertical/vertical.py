@@ -12,15 +12,11 @@ from earthkit.meteo.utils.decorators import dispatch
 
 
 def pressure_at_model_levels(A, B, sp, alpha_top="ifs"):
-    return dispatch(pressure_at_model_levels, xarray=False, fieldlist=False, array=True)(
-        A, B, sp, alpha_top=alpha_top
-    )
+    return dispatch(pressure_at_model_levels, xarray=False, fieldlist=False, array=True)(A, B, sp, alpha_top=alpha_top)
 
 
 def relative_geopotential_thickness(alpha, delta, t, q):
-    return dispatch(relative_geopotential_thickness, xarray=False, fieldlist=False, array=True)(
-        alpha, delta, t, q
-    )
+    return dispatch(relative_geopotential_thickness, xarray=False, fieldlist=False, array=True)(alpha, delta, t, q)
 
 
 def pressure_at_height_levels(height, t, q, sp, A, B, alpha_top="ifs"):
@@ -44,9 +40,7 @@ def geopotential_height_from_geometric_height(h, R_earth=constants.R_earth):
 
 
 def geopotential_from_geometric_height(h, R_earth=constants.R_earth):
-    return dispatch(geopotential_from_geometric_height, xarray=False, fieldlist=False, array=True)(
-        h, R_earth=R_earth
-    )
+    return dispatch(geopotential_from_geometric_height, xarray=False, fieldlist=False, array=True)(h, R_earth=R_earth)
 
 
 def geometric_height_from_geopotential_height(gh, R_earth=constants.R_earth):
@@ -56,9 +50,7 @@ def geometric_height_from_geopotential_height(gh, R_earth=constants.R_earth):
 
 
 def geometric_height_from_geopotential(z, R_earth=constants.R_earth):
-    return dispatch(geometric_height_from_geopotential, xarray=False, fieldlist=False, array=True)(
-        z, R_earth=R_earth
-    )
+    return dispatch(geometric_height_from_geopotential, xarray=False, fieldlist=False, array=True)(z, R_earth=R_earth)
 
 
 # TODO: figure out to handle this case gracefully
@@ -83,9 +75,9 @@ def pressure_on_hybrid_levels(
 
 
 def relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, ap, alpha_top="ifs", vertical_dim=0):
-    return dispatch(
-        relative_geopotential_thickness_on_hybrid_levels, xarray=False, fieldlist=False, array=True
-    )(t, q, A, B, ap, alpha_top=alpha_top, vertical_dim=vertical_dim)
+    return dispatch(relative_geopotential_thickness_on_hybrid_levels, xarray=False, fieldlist=False, array=True)(
+        t, q, A, B, ap, alpha_top=alpha_top, vertical_dim=vertical_dim
+    )
 
 
 def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta, vertical_dim=0):

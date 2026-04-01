@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Tests for the array level thermo functions
-"""
+"""Tests for the array level thermo functions."""
 
 import os
 
@@ -39,7 +37,7 @@ def read_data_file(path):
 
 
 def save_test_reference(file_name, data):
-    """Helper function to save test reference data into csv"""
+    """Helper function to save test reference data into csv."""
     np.savetxt(
         data_file(file_name),
         np.column_stack(tuple(data.values())),

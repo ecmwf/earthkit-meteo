@@ -103,9 +103,7 @@ class Patterns(abc.ABC):
             )
         )
         # Rearrange to match provided kwarg-coord mapping
-        extra_coords = {
-            kwarg: extra_coords_arrs[patterns_extra_coords[kwarg]] for kwarg in patterns_extra_coords
-        }
+        extra_coords = {kwarg: extra_coords_arrs[patterns_extra_coords[kwarg]] for kwarg in patterns_extra_coords}
         # Delegate the pattern generation and package the patterns as DataArrays
         for name, patterns in self.patterns(**extra_coords).items():
             yield name, xr.DataArray(patterns, coords=coords, dims=dims)
