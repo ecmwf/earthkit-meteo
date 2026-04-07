@@ -9,9 +9,11 @@
 
 from earthkit.utils.array import array_namespace
 
+from .utils import flatten_extreme_input, validate_extreme_shapes
+
 
 def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
-    """Compute basic Shift of Tails (SOT) using already computed percentiles
+    """Compute basic Shift of Tails (SOT) using already computed percentiles.
 
     Parameters
     ----------
@@ -48,39 +50,65 @@ def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
     return sot
 
 
-def sot(clim, ens, perc, eps=-1e4):
-    """Compute Shift of Tails (SOT)
-    from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+def sot(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
+    """Compute Shift of Tails (SOT).
+
+    From climatology percentiles (sorted)
+    and ensemble forecast (not sorted).
+
+    The reduction axis (ensemble and quantiles) is configurable by the user,
+    but the other dimensions of clim and ens must be aligned and match.
 
     Parameters
     ----------
-    clim: array-like (nclim, npoints)
-        Model climatology (percentiles)
-    ens: array-like (nens, npoints)
-        Ensemble forecast
+    clim: array-like
+        Model climatology (percentiles). The reduction axis is set by ``clim_dim``.
+    ens: array-like
+        Ensemble forecast. The reduction axis is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
     eps: (float)
         Epsilon factor for zero values
+    clim_dim: int
+        Dimension index of the climatology/quantile dimension in ``clim``. Default is 0.
+    ens_dim: int
+        Dimension index of the ensemble/member dimension in ``ens``. Default is 0.
 
     Returns
     -------
-    array-like (npoints)
-        SOT values
+    array-like
+        SOT values.
     """
+    if clim_dim is None:
+        clim_dim = 0
+    if ens_dim is None:
+        ens_dim = 0
+
     xp = array_namespace(clim, ens, perc)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
+    validate_extreme_shapes(
+        func="sot",
+        clim_shape=clim.shape,
+        ens_shape=ens.shape,
+        clim_dim=clim_dim,
+        ens_dim=ens_dim,
+    )
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_dim)
+    ens, _ = flatten_extreme_input(xp, ens, ens_dim)
     # perc = xp.asarray(perc)
 
-    if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (perc < 2 or perc > 98):
-        raise Exception("Percentile value should be and Integer between 2 and 98, is {}".format(perc))
+    signed_int_dtypes = xp.__array_namespace_info__().dtypes(kind="signed integer")
+    signed_int_dtypes = set(signed_int_dtypes.values())
+    if xp.asarray(perc).dtype not in signed_int_dtypes or (perc < 2 or perc > 98):
+        raise Exception(
+            "Percentile value should be and Integer between 2 and 98, is {} {}, {}".format(
+                xp.asarray(perc).dtype, perc, signed_int_dtypes
+            )
+        )
 
     if clim.shape[0] != 101:
-        raise Exception(
-            "Climatology array should contain 101 percentiles, it has {} values".format(clim.shape)
-        )
+        raise Exception("Climatology array should contain 101 percentiles, it has {} values".format(clim.shape))
 
     qc = clim[perc]
     # if eps>0, set to zero everything below eps
@@ -94,48 +122,70 @@ def sot(clim, ens, perc, eps=-1e4):
     elif perc < 50:
         qc_tail = clim[1]
     else:
-        raise Exception(
-            "Percentile value to be computed cannot be 50 for sot, has to be in the upper or lower half"
-        )
+        raise Exception("Percentile value to be computed cannot be 50 for sot, has to be in the upper or lower half")
 
     sot = sot_func(qc_tail, qc, qf, eps=eps)
 
-    return sot
+    return xp.reshape(sot, out_shape)
 
 
-def sot_unsorted(clim, ens, perc, eps=-1e4):
-    """Compute Shift of Tails (SOT)
-    from climatology percentiles (sorted)
-    and ensemble forecast (not sorted)
+def sot_unsorted(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
+    """Compute Shift of Tails (SOT).
+
+    From climatology percentiles (sorted)
+    and ensemble forecast (not sorted).
+
+    The reduction axis (ensemble and quantiles) is configurable by the user,
+    but the other dimensions of clim and ens must be aligned and match.
 
     Parameters
     ----------
-    clim: array-like (nclim, npoints)
-        Model climatology (percentiles)
-    ens: array-like (nens, npoints)
-        Ensemble forecast
+    clim: array-like
+        Model climatology (percentiles). The reduction axis is set by ``clim_dim``.
+    ens: array-like
+        Ensemble forecast. The reduction axis is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
     eps: (float)
         Epsilon factor for zero values
+    clim_dim: int
+        Dimension index of the climatology/quantile dimension in ``clim``. Default is 0.
+    ens_dim: int
+        Dimension index of the ensemble/member dimension in ``ens``. Default is 0.
 
     Returns
     -------
-    array-like (npoints)
-        SOT values
+    array-like
+        SOT values.
     """
+    if clim_dim is None:
+        clim_dim = 0
+    if ens_dim is None:
+        ens_dim = 0
+
     xp = array_namespace(clim, ens, perc)
     clim = xp.asarray(clim)
     ens = xp.asarray(ens)
     perc = xp.asarray(perc)
+    validate_extreme_shapes(
+        func="sot_unsorted",
+        clim_shape=clim.shape,
+        ens_shape=ens.shape,
+        clim_dim=clim_dim,
+        ens_dim=ens_dim,
+    )
+    clim, out_shape = flatten_extreme_input(xp, clim, clim_dim)
+    ens, _ = flatten_extreme_input(xp, ens, ens_dim)
 
-    if not (isinstance(perc, int) or isinstance(perc, xp.int64)) or (perc < 2 or perc > 98):
-        raise Exception("Percentile value should be and Integer between 2 and 98, is {}".format(perc))
+    signed_int_dtypes = xp.__array_namespace_info__().dtypes(kind="signed integer")
+    signed_int_dtypes = set(signed_int_dtypes.values())
+    if xp.asarray(perc).dtype not in signed_int_dtypes or (perc < 2 or perc > 98):
+        raise Exception(
+            "Percentile value should be and Integer between 2 and 98, is {} {}".format(xp.asarray(perc).dtype, perc)
+        )
 
     if clim.shape[0] != 101:
-        raise Exception(
-            "Climatology array should contain 101 percentiles, it has {} values".format(clim.shape)
-        )
+        raise Exception("Climatology array should contain 101 percentiles, it has {} values".format(clim.shape))
 
     if eps > 0:
         ens = xp.where(ens < eps, 0.0, ens)
@@ -148,11 +198,9 @@ def sot_unsorted(clim, ens, perc, eps=-1e4):
     elif perc < 50:
         perc_tail = 1
     else:
-        raise Exception(
-            "Percentile value to be computed cannot be 50 for sot, has to be in the upper or lower half"
-        )
+        raise Exception("Percentile value to be computed cannot be 50 for sot, has to be in the upper or lower half")
     qc_tail = xp.percentile(clim, q=perc_tail, axis=0)
 
     sot = sot_func(qc_tail, qc, qf, eps=eps)
 
-    return sot
+    return xp.reshape(sot, out_shape)

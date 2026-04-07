@@ -78,7 +78,7 @@ def read_test_data_file(path):
 
 
 def save_test_data_reference(file_name, data):
-    """Helper function to save test reference data into csv"""
+    """Helper function to save test reference data into csv."""
     import numpy as np
 
     np.savetxt(
@@ -136,4 +136,6 @@ class Tolerance:
 
 
 NO_XARRAY = not modules_installed("xarray")
+NO_EKD = not modules_installed("earthkit.data")
 NO_SCORES = not modules_installed("scores")
+NO_SCIPY = not modules_installed("scipy")

@@ -2,19 +2,22 @@ import datetime
 
 import numpy as np
 import pytest
-import xarray as xr
 
-from earthkit.meteo.score import abs_error
-from earthkit.meteo.score import cosine_similarity
-from earthkit.meteo.score import error
-from earthkit.meteo.score import kge
-from earthkit.meteo.score import mean_abs_error
-from earthkit.meteo.score import mean_error
-from earthkit.meteo.score import mean_squared_error
-from earthkit.meteo.score import pearson_correlation
-from earthkit.meteo.score import root_mean_squared_error
-from earthkit.meteo.score import squared_error
-from earthkit.meteo.score import standard_deviation_of_error
+xr = pytest.importorskip("xarray")
+
+from earthkit.meteo.score import (
+    abs_error,
+    cosine_similarity,
+    error,
+    mean_abs_error,
+    mean_error,
+    mean_squared_error,
+    pearson_correlation,
+    root_mean_squared_error,
+    squared_error,
+    standard_deviation_of_error,
+)
+from earthkit.meteo.score.xarray import kge
 from earthkit.meteo.utils.testing import NO_SCORES
 
 LATITUDES = [40.0, 41.0, 42.0]
@@ -108,7 +111,12 @@ def test_error_with_aggregation():
     # Aggregate over lat only -> should preserve lon dimension
     result_lat = error(fcst, obs, agg_method="mean", agg_dim="latitude")
     expected_lat = xr.Dataset(
-        {"2t": (["valid_datetime", "longitude"], np.array([[2.0, 2.0, 2.0], [3.0, 3.0, 3.0]]))},
+        {
+            "2t": (
+                ["valid_datetime", "longitude"],
+                np.array([[2.0, 2.0, 2.0], [3.0, 3.0, 3.0]]),
+            )
+        },
         coords={"valid_datetime": VALID_DATETIMES, "longitude": LONGITUDES},
     )
     xr.testing.assert_equal(result_lat, expected_lat)
@@ -712,27 +720,23 @@ def test_pearson_correlation_with_weights(rng):
 
 
 def test_cosine_similarity():
-    fcst = make_dataset(
-        [
-            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
-            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
-        ]
-    )
+    fcst = make_dataset([
+        [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+        [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+    ])
     # Add a bias of 10 and some noise on top
-    obs = fcst + make_dataset(
+    obs = fcst + make_dataset([
         [
-            [
-                [10.8784503, 9.95007409, 9.81513764],
-                [9.31907046, 11.22254134, 9.84547052],
-                [9.57167218, 9.64786645, 10.53230919],
-            ],
-            [
-                [10.36544406, 10.41273261, 10.430821],
-                [12.1416476, 9.59358498, 9.48775727],
-                [9.18622727, 10.61597942, 11.12897229],
-            ],
-        ]
-    )
+            [10.8784503, 9.95007409, 9.81513764],
+            [9.31907046, 11.22254134, 9.84547052],
+            [9.57167218, 9.64786645, 10.53230919],
+        ],
+        [
+            [10.36544406, 10.41273261, 10.430821],
+            [12.1416476, 9.59358498, 9.48775727],
+            [9.18622727, 10.61597942, 11.12897229],
+        ],
+    ])
 
     result = cosine_similarity(fcst, obs, over=["latitude", "longitude"])
     expected_values = np.asarray([0.9208026403441584, 0.9954127943028712])
@@ -749,27 +753,23 @@ def test_cosine_similarity():
 
 @pytest.mark.skipif(NO_SCORES, reason="Scores tests disabled")
 def test_cosine_similarity_with_weights():
-    fcst = make_dataset(
-        [
-            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
-            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
-        ]
-    )
+    fcst = make_dataset([
+        [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+        [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+    ])
     # Add a bias of 10 and some noise on top
-    obs = fcst + make_dataset(
+    obs = fcst + make_dataset([
         [
-            [
-                [10.8784503, 9.95007409, 9.81513764],
-                [9.31907046, 11.22254134, 9.84547052],
-                [9.57167218, 9.64786645, 10.53230919],
-            ],
-            [
-                [10.36544406, 10.41273261, 10.430821],
-                [12.1416476, 9.59358498, 9.48775727],
-                [9.18622727, 10.61597942, 11.12897229],
-            ],
-        ]
-    )
+            [10.8784503, 9.95007409, 9.81513764],
+            [9.31907046, 11.22254134, 9.84547052],
+            [9.57167218, 9.64786645, 10.53230919],
+        ],
+        [
+            [10.36544406, 10.41273261, 10.430821],
+            [12.1416476, 9.59358498, 9.48775727],
+            [9.18622727, 10.61597942, 11.12897229],
+        ],
+    ])
     weights = xr.DataArray(
         np.array([[1, 1, 1], [1, 2, 1], [1, 1, 1]], dtype=float),
         dims=["latitude", "longitude"],
@@ -911,14 +911,12 @@ def test_kge_modified_return_components(rng):
         name="r",
     )
 
-    expected = xr.Dataset(
-        {
-            "kge": expected_kge,
-            "gamma": expected_gamma,
-            "beta": expected_beta,
-            "rho": expected_rho,
-        }
-    )
+    expected = xr.Dataset({
+        "kge": expected_kge,
+        "gamma": expected_gamma,
+        "beta": expected_beta,
+        "rho": expected_rho,
+    })
 
     xr.testing.assert_allclose(result, expected)
 
@@ -989,13 +987,11 @@ def test_kge_original_return_components(rng):
         name="r",
     )
 
-    expected = xr.Dataset(
-        {
-            "kge": expected_kge,
-            "alpha": expected_alpha,
-            "beta": expected_beta,
-            "rho": expected_rho,
-        }
-    )
+    expected = xr.Dataset({
+        "kge": expected_kge,
+        "alpha": expected_alpha,
+        "beta": expected_beta,
+        "rho": expected_rho,
+    })
 
     xr.testing.assert_allclose(result, expected)

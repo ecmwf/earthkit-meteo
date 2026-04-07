@@ -1,88 +1,126 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = [ "setuptools>=61", "setuptools-scm>=8", "wheel" ]
+requires = ["setuptools>=77", "setuptools-scm>=8"]
 
 [project]
-name = "earthkit-meteo"
-description = "Meteorological computations"
-readme = "README.md"
-license = { text = "Apache License Version 2.0" }
 authors = [
-  { name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int" },
+  {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"}
 ]
-requires-python = ">=3.10"
-
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: Apache Software License",
+  "Intended Audience :: Science/Research",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Scientific/Engineering"
 ]
-dynamic = [ "version" ]
 dependencies = [
   "deprecation",
-  "earthkit-utils>=0.2",
-  "numpy",
-  "xarray",
+  "earthkit-utils>=1.0.0rc0",
+  "numpy"
 ]
+description = "A Python library for meteorological computations"
+dynamic = ["version"]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+name = "earthkit-meteo"
+readme = "README.md"
+requires-python = ">=3.10"
 optional-dependencies.all = [
-  "earthkit-meteo[samples,scores]",
+  "earthkit-meteo[samples,scores,stats]"
 ]
 optional-dependencies.dev = [
-  "earthkit-meteo[all,docs,test]",
+  "earthkit-meteo[all,docs,test]"
 ]
 optional-dependencies.docs = [
+  "docutils",
+  "furo",
+  "ipykernel",
+  "nbconvert",
   "nbsphinx",
-  "requests",
+  "pygments>=2.6.1",
+  "requests",  # is this needed?
+  "setuptools",
   "sphinx>=7.3.7",
   "sphinx-autoapi",
   "sphinx-copybutton",
-  "sphinx-issues",
-  "sphinx-rtd-theme",
-  "sphinx-tabs",
+  "sphinx-design",
+  "sphinx-issues"
 ]
 optional-dependencies.gpu = [
   "cupy",
-  "torch",
+  "torch"
 ]
 optional-dependencies.samples = [
-  "requests",
+  "requests"
 ]
 optional-dependencies.scores = [
+  "scipy",
   "scores",
+  "xarray"
+]
+optional-dependencies.stats = [
+  "scipy>=1.15"
 ]
 optional-dependencies.test = [
-  "earthkit-meteo[samples,scores]",
+  "earthkit-data>=1.0.0rc0",
   "netcdf4",
   "pytest",
   "pytest-cov",
-  "xarray",
+  "requests",
+  "xarray"
 ]
 urls.Documentation = "https://earthkit-meteo.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-meteo/"
-urls.Issues = "https://github.com/ecmwf/earthkit-meteo.issues"
+urls.Issues = "https://github.com/ecmwf/earthkit-meteo/issues"
 urls.Repository = "https://github.com/ecmwf/earthkit-meteo/"
 
-[tool.setuptools.packages.find]
-include = [ "earthkit.meteo" ]
-where = [ "src/" ]
-
-[tool.setuptools_scm]
-version_file = "src/earthkit/meteo/_version.py"
+[tool.coverage]
+run.branch = "true"
 
 [tool.isort]
 profile = "black"
 
-[tool.coverage.run]
-branch = "true"
-
 [tool.pydocstyle]
-add_ignore = [ "D1", "D200", "D205", "D400", "D401" ]
+add_ignore = ["D1", "D200", "D205", "D400", "D401"]
 convention = "numpy"
+
+[tool.ruff]
+line-length = 120
+preview = true
+lint.ignore = [
+  "D1",  # pydocstyle: Missing Docstrings
+  "D107",  # pydocstyle: numpy convention
+  "D203",
+  "D205",
+  "D212",
+  "D213",
+  "D401",
+  "D402",
+  "D413",
+  "D415",
+  "D416",
+  "D417"
+]
+lint.select = [
+  "D",  # pydocstyle
+  "E",  # pycodestyle
+  "F",  # pyflakes
+  "I",  # isort
+  "W"  # pycodestyle warnings
+]
+lint.per-file-ignores."tests/**.py" = ["E402"]
+
+[tool.setuptools]
+packages.find.include = ["earthkit.meteo"]
+packages.find.where = ["src/"]
+
+[tool.setuptools_scm]
+version_file = "src/earthkit/meteo/_version.py"

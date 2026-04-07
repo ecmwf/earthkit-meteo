@@ -36,9 +36,7 @@ def project(field, patterns, weights, **patterns_extra_coords):
     """
     ndim_field = len(patterns.shape)
     if field.shape[-ndim_field:] != patterns.shape:
-        raise ValueError(
-            f"shape of input fields {field.shape} incompatible with shape of patterns {patterns.shape}"
-        )
+        raise ValueError(f"shape of input fields {field.shape} incompatible with shape of patterns {patterns.shape}")
 
     if weights is None:
         # TODO generate area-based weights from grid of patterns with earthkit-geo
@@ -63,10 +61,10 @@ def regime_index(projections, mean, std):
 
     Parameters
     ----------
-    projections : dict[str, array_like]
+    projections : dict[str,array_like]
         Projections onto regime patterns.
-    mean : dict[str, array_like]
-    std : dict[str, array_like]
+    mean : dict[str,array_like]
+    std : dict[str,array_like]
 
     Returns
     -------
