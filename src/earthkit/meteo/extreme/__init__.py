@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,11 +10,21 @@
 """
 Extreme index functions.
 
-The API is split into two levels. The low level functions are in the ``array`` submodule and they
-can be used to operate on numpy arrays. The high level functions are still to be developed and
-planned to work with objects like *earthkit.data FieldLists* or *xarray DataSets*.
+The API is split into two layers:
+
+- Low-level implementations are in the ``array`` and ``xarray`` submodules.
+- High-level functions are in this module and dispatch to backend implementations
+  based on input type.
 """
 
-from .cpf import *  # noqa
-from .efi import *  # noqa
-from .sot import *  # noqa
+from .cpf import cpf  # noqa
+from .efi import efi  # noqa
+from .sot import sot  # noqa
+from .sot import sot_unsorted  # noqa
+
+__all__ = [
+    "cpf",
+    "efi",
+    "sot",
+    "sot_unsorted",
+]

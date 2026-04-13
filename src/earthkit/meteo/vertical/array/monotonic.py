@@ -57,7 +57,7 @@ class MonotonicInterpolator:
         aux_min_level_coord=None,
         aux_max_level_data=None,
         aux_max_level_coord=None,
-        vertical_axis=0,
+        vertical_dim=0,
     ):
 
         if interpolation not in ["linear", "log", "nearest"]:
@@ -71,13 +71,13 @@ class MonotonicInterpolator:
         data = xp.asarray(data)
 
         # move the vertical axis to the first position for easier processing
-        if vertical_axis != 0:
+        if vertical_dim != 0:
             if data.ndim > 1:
-                data = xp.moveaxis(data, vertical_axis, 0)
+                data = xp.moveaxis(data, vertical_dim, 0)
             if coord.ndim > 1:
-                coord = xp.moveaxis(coord, vertical_axis, 0)
+                coord = xp.moveaxis(coord, vertical_dim, 0)
             if target_coord.ndim > 1:
-                target_coord = xp.moveaxis(target_coord, vertical_axis, 0)
+                target_coord = xp.moveaxis(target_coord, vertical_dim, 0)
 
         # Ensure levels are in descending order with respect to the values in the first
         # dimension of coord
@@ -96,7 +96,9 @@ class MonotonicInterpolator:
 
         if data.shape[0] != coord.shape[0]:
             raise ValueError(
-                f"The first dimension of data and that of coord must match! {data.shape=} {coord.shape=} {data.shape[0]} != {coord.shape[0]}"
+                "The first dimension of data and that of coord must match! "
+                f"{data.shape=} {coord.shape=} {data.shape[0]} != "
+                f"{coord.shape[0]}"
             )
 
         self.data_is_scalar = data[0].ndim == 0
@@ -107,18 +109,15 @@ class MonotonicInterpolator:
         if same_shape:
             if self.data_is_scalar and not self.target_is_scalar:
                 raise ValueError("If values and p have the same shape, they cannot both be scalars.")
-            if (
-                not self.data_is_scalar
-                and not self.target_is_scalar
-                and data.shape[1:] != target_coord.shape[1:]
-            ):
+            if not self.data_is_scalar and not self.target_is_scalar and data.shape[1:] != target_coord.shape[1:]:
                 raise ValueError(
                     "When values and target_p have different shapes, target_p must be a scalar or a 1D array."
                 )
 
         if not same_shape and coord.ndim != 1:
             raise ValueError(
-                f"When values and p have different shapes, p must be a scalar or a 1D array. {data.shape=} {coord.shape=} {coord.ndim}"
+                "When values and p have different shapes, p must be a scalar "
+                f"or a 1D array. {data.shape=} {coord.shape=} {coord.ndim}"
             )
 
         # initialize the output array
@@ -135,7 +134,10 @@ class MonotonicInterpolator:
             assert self.coord_is_scalar
             # print(f"scalar_info.target: {scalar_info.target}")
             # if scalar_info.target:
-            #     return _to_level_1(data, coord, nlev, target_coord, interpolation, scalar_info, xp, res, aux_bottom, aux_top)
+            #     return _to_level_1(
+            #         data, coord, nlev, target_coord, interpolation,
+            #         scalar_info, xp, res, aux_bottom, aux_top
+            #     )
             # else:
             #     coord = xp.broadcast_to(coord, (nlev,) + data.shape[1:]).T
 
@@ -170,8 +172,8 @@ class MonotonicInterpolator:
             return self.simple_compute(res)
 
         # move back the vertical axis to the original position
-        if vertical_axis != 0 and res.ndim > 1:
-            res = xp.moveaxis(res, 0, vertical_axis)
+        if vertical_dim != 0 and res.ndim > 1:
+            res = xp.moveaxis(res, 0, vertical_dim)
 
         return res
 
@@ -187,7 +189,6 @@ class MonotonicInterpolator:
         # vertical position in the atmosphere. Of course, if the  coordinate is pressure these
         # two definitions coincide.
         for target_idx, tc in enumerate(self.target_coord):
-
             # find the level below the target
             idx_bottom = (self.coord > tc).sum(0)
             idx_bottom = xp.atleast_1d(idx_bottom)
@@ -266,7 +267,10 @@ class MonotonicInterpolator:
                     d_bottom = self.data[-1][aux_mask]
                     c_top = self.aux_top.coord[aux_mask]
                     c_bottom = self.coord[-1][aux_mask]
-                    # print(f"tc: {tc} c_top: {c_top} c_bottom: {c_bottom} d_top: {d_top} d_bottom: {d_bottom}")
+                    # print(
+                    #     f"tc: {tc} c_top: {c_top} c_bottom: {c_bottom} "
+                    #     f"d_top: {d_top} d_bottom: {d_bottom}"
+                    # )
 
                     if not self.target_is_scalar:
                         tc = tc[aux_mask]

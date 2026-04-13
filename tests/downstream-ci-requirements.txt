@@ -1,5 +1,0 @@
-netCDF4
-numpy
-requests
-scores
-xarray

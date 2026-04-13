@@ -26,7 +26,7 @@ from earthkit.meteo.utils.testing import NO_XARRAY
 
 
 def _make_xr(xp, data, coord, vdim):
-    """Make xarray Dataset from data and coord arrays"""
+    """Make xarray Dataset from data and coord arrays."""
     import xarray as xr
 
     data_is_scalar = xp.ndim(data[0]) == 0
@@ -110,8 +110,7 @@ def _make_input_xr(data, coord, target_coord, expected_data, vdim, xp=np, device
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
 @pytest.mark.parametrize("ds_input,ds_expected,vdim,mode", make_input("pressure_s_s_s"))
 def test_xr_interpolate_monotonic_s_s_s(ds_input, ds_expected, vdim, mode):
-    from earthkit.meteo.vertical.interpolation import TargetCoordinates
-    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+    from earthkit.meteo.vertical.interpolation import TargetCoordinates, interpolate_monotonic
 
     tc = TargetCoordinates("isobaricInhPa", ds_expected[vdim])
     observed = interpolate_monotonic(ds_input.data, ds_input[vdim], tc, mode, vertical_dim=vdim)
@@ -121,8 +120,7 @@ def test_xr_interpolate_monotonic_s_s_s(ds_input, ds_expected, vdim, mode):
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
 @pytest.mark.parametrize("ds_input,ds_expected,vdim,mode", make_input("pressure_a_a_s"))
 def test_xr_interpolate_monotonic_a_a_s(ds_input, ds_expected, vdim, mode):
-    from earthkit.meteo.vertical.interpolation import TargetCoordinates
-    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+    from earthkit.meteo.vertical.interpolation import TargetCoordinates, interpolate_monotonic
 
     tc = TargetCoordinates("isobaricInhPa", ds_expected[vdim].values)
     observed = interpolate_monotonic(ds_input.data, ds_input.coord, tc, mode, vertical_dim=vdim)
@@ -132,8 +130,7 @@ def test_xr_interpolate_monotonic_a_a_s(ds_input, ds_expected, vdim, mode):
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
 @pytest.mark.parametrize("ds_input,ds_expected,vdim,mode", make_input("pressure_a_s_s"))
 def test_xr_interpolate_monotonic_a_s_s(ds_input, ds_expected, vdim, mode):
-    from earthkit.meteo.vertical.interpolation import TargetCoordinates
-    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+    from earthkit.meteo.vertical.interpolation import TargetCoordinates, interpolate_monotonic
 
     tc = TargetCoordinates("isobaricInhPa", ds_expected[vdim].values)
     observed = interpolate_monotonic(ds_input.data, ds_input[vdim], tc, mode, vertical_dim=vdim)

@@ -3,7 +3,7 @@ References
 
 .. [Bechtold2015]
 
-Bechtold, P., (2015). Atmospheric thermodynamics. Technical report, ECMWF Leture Notes, URL: https://www.ecmwf.int/sites/default/files/elibrary/2015/16954-atmospheric-thermodynamics.pdf
+Bechtold, P., (2015). Atmospheric thermodynamics. Technical report, ECMWF Lecture Notes, URL: https://www.ecmwf.int/sites/default/files/elibrary/2015/16954-atmospheric-thermodynamics.pdf
 
 
 .. [Biricombe2022]

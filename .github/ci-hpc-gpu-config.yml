@@ -5,4 +5,4 @@ build:
   gpus: 1
   python_dependencies:
   - ecmwf/earthkit-utils@develop
-  requirements: tests/downstream-ci-requirements.txt
+  toml_opt_dep_sections: all,tests,ci

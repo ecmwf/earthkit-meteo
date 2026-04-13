@@ -1,4 +1,4 @@
-# (C) Copyright 2021 ECMWF.
+# (C) Copyright 2026 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,857 +7,183 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Tests for the array level thermo functions
-"""
-
-import os
+from pathlib import Path
 
 import numpy as np
 import pytest
+from earthkit.utils.array import array_namespace
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.meteo import thermo
-
-np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
-
-
-def data_file(name):
-    return os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", name)
+from earthkit.meteo.utils.testing import NO_XARRAY
 
 
-def read_data_file(path):
-    import numpy as np
+def _signature(obj):
+    if isinstance(obj, tuple):
+        return tuple(_signature(x) for x in obj)
 
-    d = np.genfromtxt(
-        data_file(path),
-        delimiter=",",
-        names=True,
-    )
-    return d
+    if hasattr(obj, "dims") and hasattr(obj, "shape"):
+        return ("xarray", tuple(obj.dims), tuple(obj.shape))
 
-
-def save_test_reference(file_name, data):
-    """Helper function to save test reference data into csv"""
-    np.savetxt(
-        data_file(file_name),
-        np.column_stack(tuple(data.values())),
-        delimiter=",",
-        header=",".join(list(data.keys())),
-    )
+    xp = array_namespace(obj)
+    arr = xp.asarray(obj)
+    return ("array", tuple(arr.shape))
 
 
-class ThermoInputData:
-    """Helper class to load thermo input data."""
+def _da(values):
+    import xarray as xr
 
-    def __init__(self, xp, device, file_name="t_hum_p_data.csv"):
-        self.file_name = file_name
-
-        d = read_data_file(self.file_name)
-
-        self.t = xp.asarray(d["t"], device=device)
-        self.td = xp.asarray(d["td"], device=device)
-        self.r = xp.asarray(d["r"], device=device)
-        self.q = xp.asarray(d["q"], device=device)
-        self.p = xp.asarray(d["p"], device=device)
+    return xr.DataArray(np.asarray(values))
 
 
-# high level method call
-def test_high_level_celsius_to_kelvin():
-    t = np.array([-10, 23.6])
-    v = thermo.celsius_to_kelvin(t)
-    v_ref = np.array([263.16, 296.76])
-    np.testing.assert_allclose(v, v_ref)
+def _load_input():
+    path = Path(__file__).resolve().parents[1] / "data" / "t_hum_p_data.csv"
+    data = np.genfromtxt(path, delimiter=",", names=True)
+    index = [250, 300]
+    return {name: data[name][index] for name in data.dtype.names}
 
 
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("t, v_ref", [([-10, 23.6], [263.16, 296.76])])
-def test_celsius_to_kelvin(xp, device, t, v_ref):
-    t, v_ref = xp.asarray(t, device=device), xp.asarray(v_ref, device=device)
-    tk = thermo.array.celsius_to_kelvin(t)
-    assert xp.allclose(tk, v_ref)
+def _ops(impl, celsius, kelvin, t, td, r, q, p):
+    w = impl.mixing_ratio_from_specific_humidity(q)
+    e = impl.vapour_pressure_from_specific_humidity(q, p)
+    es = impl.saturation_vapour_pressure(t)
+    th = impl.potential_temperature(t, p)
+    ept = impl.ept_from_dewpoint(t, td, p)
+
+    return {
+        "specific_humidity_from_mixing_ratio": ((w,), {}),
+        "mixing_ratio_from_specific_humidity": ((q,), {}),
+        "vapour_pressure_from_specific_humidity": ((q, p), {}),
+        "vapour_pressure_from_mixing_ratio": ((w, p), {}),
+        "specific_humidity_from_vapour_pressure": ((e, p), {}),
+        "mixing_ratio_from_vapour_pressure": ((e, p), {}),
+        "saturation_vapour_pressure": ((t,), {}),
+        "saturation_mixing_ratio": ((t, p), {}),
+        "saturation_specific_humidity": ((t, p), {}),
+        "saturation_vapour_pressure_slope": ((t,), {}),
+        "saturation_mixing_ratio_slope": ((t, p), {}),
+        "saturation_specific_humidity_slope": ((t, p), {}),
+        "temperature_from_saturation_vapour_pressure": ((es,), {}),
+        "relative_humidity_from_dewpoint": ((t, td), {}),
+        "relative_humidity_from_specific_humidity": ((t, q, p), {}),
+        "specific_humidity_from_dewpoint": ((td, p), {}),
+        "mixing_ratio_from_dewpoint": ((td, p), {}),
+        "specific_humidity_from_relative_humidity": ((t, r, p), {}),
+        "dewpoint_from_relative_humidity": ((t, r), {}),
+        "dewpoint_from_specific_humidity": ((q, p), {}),
+        "virtual_temperature": ((t, q), {}),
+        "virtual_potential_temperature": ((t, q, p), {}),
+        "potential_temperature": ((t, p), {}),
+        "temperature_from_potential_temperature": ((th, p), {}),
+        "pressure_on_dry_adiabat": ((t, t, p), {}),
+        "temperature_on_dry_adiabat": ((p, t, p), {}),
+        "lcl_temperature": ((t, td), {}),
+        "lcl": ((t, td, p), {}),
+        "ept_from_dewpoint": ((t, td, p), {}),
+        "ept_from_specific_humidity": ((t, q, p), {}),
+        "saturation_ept": ((t, p), {}),
+        "temperature_on_moist_adiabat": ((ept, p), {}),
+        "wet_bulb_temperature_from_dewpoint": ((t, td, p), {}),
+        "wet_bulb_temperature_from_specific_humidity": ((t, q, p), {}),
+        "wet_bulb_potential_temperature_from_dewpoint": ((t, td, p), {}),
+        "wet_bulb_potential_temperature_from_specific_humidity": ((t, q, p), {}),
+        "specific_gas_constant": ((q,), {}),
+    }
 
 
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("t, v_ref", [([263.16, 296.76], [-10, 23.6])])
-def test_kelvin_to_celsius(xp, device, t, v_ref):
-    t, v_ref = xp.asarray(t, device=device), xp.asarray(v_ref, device=device)
-    tc = thermo.array.kelvin_to_celsius(t)
-    assert xp.allclose(tc, v_ref)
+def _case_array(xp, device):
+    import earthkit.meteo.thermo.array as impl
+
+    data = _load_input()
+    celsius = xp.asarray([-10.0, 23.6], device=device)
+    kelvin = xp.asarray([263.15, 296.75], device=device)
+    t = xp.asarray(data["t"], device=device)
+    td = xp.asarray(data["td"], device=device)
+    r = xp.asarray(data["r"] / 100.0, device=device)
+    q = xp.asarray(data["q"], device=device)
+    p = xp.asarray(data["p"], device=device)
+
+    return {"impl": impl, "ops": _ops(impl, celsius, kelvin, t, td, r, q, p)}
 
 
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("q, v_ref", [([0.008, 0.018], [0.0080645161, 0.0183299389])])
-def test_mixing_ratio_from_specific_humidity(xp, device, q, v_ref):
-    q, v_ref = xp.asarray(q, device=device), xp.asarray(v_ref, device=device)
-    mr = thermo.array.mixing_ratio_from_specific_humidity(q)
-    assert xp.allclose(mr, v_ref, equal_nan=True, rtol=1e-07)
+def _case_xarray():
+    import earthkit.meteo.thermo.xarray as impl
+
+    data = _load_input()
+    celsius = _da([-10.0, 23.6])
+    kelvin = _da([263.15, 296.75])
+    t = _da(data["t"])
+    td = _da(data["td"])
+    r = _da(data["r"] / 100.0)
+    q = _da(data["q"])
+    p = _da(data["p"])
+
+    return {"impl": impl, "ops": _ops(impl, celsius, kelvin, t, td, r, q, p)}
 
 
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("mr, v_ref", [([0.0080645161, 0.0183299389], [0.008, 0.018])])
-def test_specific_humidity_from_mixing_ratio(xp, device, mr, v_ref):
-    mr, v_ref = xp.asarray(mr, device=device), xp.asarray(v_ref, device=device)
-    q = thermo.array.specific_humidity_from_mixing_ratio(mr)
-    assert xp.allclose(q, v_ref, equal_nan=True, rtol=1e-07)
+BACKEND_PARAMS = [
+    pytest.param(("array", xp, device), id=f"array-{xp._earthkit_array_namespace_name}-{device}")
+    for xp, device in NAMESPACE_DEVICES
+]
+if not NO_XARRAY:
+    BACKEND_PARAMS.append(pytest.param(("xarray", None, None), id="xarray"))
 
 
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("q, p, v_ref", [([0.008, 0.018], [700, 1000], [895.992614, 2862.662152])])
-def test_vapour_pressure_from_specific_humidity(xp, device, q, p, v_ref):
-    q = xp.asarray(q, device=device)
-    p = xp.asarray(p, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    p = p * 100
-    vp = thermo.array.vapour_pressure_from_specific_humidity(q, p)
-    assert xp.allclose(vp, v_ref, equal_nan=True)
+@pytest.fixture(params=BACKEND_PARAMS)
+def backend_case(request):
+    kind, xp, device = request.param
+    if kind == "xarray":
+        return _case_xarray()
+    return _case_array(xp, device)
 
 
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
-    "mr, p, v_ref", [([0.0080645161, 0.0183299389], [700, 1000], [895.992614, 2862.662152])]
-)
-def test_vapour_pressure_from_mixing_ratio(xp, device, mr, p, v_ref):
-    mr = xp.asarray(mr, device=device)
-    p = xp.asarray(p, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    p = p * 100
-    vp = thermo.array.vapour_pressure_from_mixing_ratio(mr, p)
-    assert xp.allclose(vp, v_ref, equal_nan=True)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "vp, p, v_ref",
+    "op_name",
     [
-        ([895.992614, 2862.662152, 10000], [700, 1000, 50], [0.008, 0.018, np.nan]),
-        ([895.992614, 2862.662152, 100000], 700, [0.008, 0.0258354146, np.nan]),
-        (895.992614, 700, 0.008),
-        (100000, 700, np.nan),
+        "specific_humidity_from_mixing_ratio",
+        "mixing_ratio_from_specific_humidity",
+        "vapour_pressure_from_specific_humidity",
+        "vapour_pressure_from_mixing_ratio",
+        "specific_humidity_from_vapour_pressure",
+        "mixing_ratio_from_vapour_pressure",
+        "saturation_vapour_pressure",
+        "saturation_mixing_ratio",
+        "saturation_specific_humidity",
+        "saturation_vapour_pressure_slope",
+        "saturation_mixing_ratio_slope",
+        "saturation_specific_humidity_slope",
+        "temperature_from_saturation_vapour_pressure",
+        "relative_humidity_from_dewpoint",
+        "relative_humidity_from_specific_humidity",
+        "specific_humidity_from_dewpoint",
+        "mixing_ratio_from_dewpoint",
+        "specific_humidity_from_relative_humidity",
+        "dewpoint_from_relative_humidity",
+        "dewpoint_from_specific_humidity",
+        "virtual_temperature",
+        "virtual_potential_temperature",
+        "potential_temperature",
+        "temperature_from_potential_temperature",
+        "pressure_on_dry_adiabat",
+        "temperature_on_dry_adiabat",
+        "lcl_temperature",
+        "lcl",
+        "ept_from_dewpoint",
+        "ept_from_specific_humidity",
+        "saturation_ept",
+        "temperature_on_moist_adiabat",
+        "wet_bulb_temperature_from_dewpoint",
+        "wet_bulb_temperature_from_specific_humidity",
+        "wet_bulb_potential_temperature_from_dewpoint",
+        "wet_bulb_potential_temperature_from_specific_humidity",
+        "specific_gas_constant",
     ],
 )
-def test_specific_humidity_from_vapour_pressure(xp, device, vp, p, v_ref):
-    vp = xp.asarray(vp, device=device)
-    p = xp.asarray(p, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    p = p * 100
-    q = thermo.array.specific_humidity_from_vapour_pressure(vp, p)
+def test_highlevel_compatible_with_backend_api(backend_case, op_name):
+    impl = backend_case["impl"]
+    args, kwargs = backend_case["ops"][op_name]
 
-    assert xp.allclose(q, v_ref, equal_nan=True)
+    got = getattr(thermo, op_name)(*args, **kwargs)
+    ref = getattr(impl, op_name)(*args, **kwargs)
 
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "vp, p, v_ref",
-    [
-        ([895.992614, 2862.662152, 10000], [700, 1000, 50], [0.0080645161, 0.0183299389, np.nan]),
-        ([895.992614, 2862.662152, 100000], 700, [0.0080645161, 0.0265205849, np.nan]),
-        (895.992614, 700, 0.0080645161),
-        (100000.0, 700.0, np.nan),
-    ],
-)
-def test_mixing_ratio_from_vapour_pressure(xp, device, vp, p, v_ref):
-    vp = xp.asarray(vp, device=device)
-    p = xp.asarray(p, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    p = p * 100
-    mr = thermo.array.mixing_ratio_from_vapour_pressure(vp, p)
-
-    assert xp.allclose(mr, v_ref, equal_nan=True)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
-def test_saturation_vapour_pressure_1(xp, device, phase):
-    ref_file = "sat_vp.csv"
-    # phases = ["mixed", "water", "ice"]
-
-    # o = {"t": thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 49))}
-    # for phase in ["mixed", "water", "ice"]:
-    #     o[phase] = thermo.array.saturation_vapour_pressure(o["t"], phase=phase)
-    # save_test_reference(ref_file, o)
-
-    d = read_data_file(ref_file)
-
-    t = xp.asarray(d["t"], device=device)
-    v_ref = xp.asarray(d[phase], device=device)
-
-    svp = thermo.array.saturation_vapour_pressure(t, phase=phase)
-    assert xp.allclose(svp, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t,v_ref,phase",
-    [
-        (267.16, 3.807622914202970037e02, "mixed"),
-        (267.16, 3.909282234208898785e02, "water"),
-        (267.16, 3.685208149695831139e02, "ice"),
-    ],
-)
-def test_saturation_vapour_pressure_2(xp, device, t, v_ref, phase):
-    t = xp.asarray(t, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-
-    svp = thermo.array.saturation_vapour_pressure(t, phase=phase)
-    assert xp.allclose(svp, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
-def test_saturation_mixing_ratio(phase, xp, device):
-    ref_file = "sat_mr.csv"
-
-    # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
-    # p = [1000, 950, 850, 700]
-    # t_num = len(t)
-    # t = np.repeat(t, repeats=len(p))
-    # p = np.array(p * t_num) * 100.0
-    # o = {"t": t, "p": p}
-    # for phase in ["mixed", "water", "ice"]:
-    #     o[phase] = thermo.array.saturation_mixing_ratio(t, p, phase=phase)
-    # save_test_reference(ref_file, o)
-
-    d = read_data_file(ref_file)
-    t = xp.asarray(d["t"], device=device)
-    p = xp.asarray(d["p"], device=device)
-    v_ref = xp.asarray(d[phase], device=device)
-
-    mr = thermo.array.saturation_mixing_ratio(t, p, phase=phase)
-    assert xp.allclose(mr, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
-def test_saturation_specific_humidity(phase, xp, device):
-    ref_file = "sat_q.csv"
-
-    # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
-    # p = [1000, 950, 850, 700]
-    # t_num = len(t)
-    # t = np.repeat(t, repeats=len(p))
-    # p = np.array(p * t_num) * 100.0
-    # o = {"t": t, "p": p}
-    # for phase in ["mixed", "water", "ice"]:
-    #     o[phase] = thermo.array.saturation_specific_humidity(t, p, phase=phase)
-    # save_test_reference(ref_file, o)
-
-    d = read_data_file(ref_file)
-    t = xp.asarray(d["t"], device=device)
-    p = xp.asarray(d["p"], device=device)
-    v_ref = xp.asarray(d[phase], device=device)
-
-    q = thermo.array.saturation_specific_humidity(t, p, phase=phase)
-    assert xp.allclose(q, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
-def test_saturation_vapour_pressure_slope(phase, xp, device):
-    ref_file = "sat_vp_slope.csv"
-
-    # o = {"t": thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 49))}
-    # for phase in ["mixed", "water", "ice"]:
-    #     o[phase] = thermo.array.saturation_vapour_pressure_slope(o["t"], phase=phase)
-    # save_test_reference(ref_file, o)
-
-    d = read_data_file(ref_file)
-    t = xp.asarray(d["t"], device=device)
-    v_ref = xp.asarray(d[phase], device=device)
-
-    svp = thermo.array.saturation_vapour_pressure_slope(t, phase=phase)
-    assert xp.allclose(svp, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
-def test_saturation_mixing_ratio_slope_1(phase, xp, device):
-    ref_file = "sat_mr_slope.csv"
-
-    # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
-    # p = [1000, 950, 850, 700]
-    # t_num = len(t)
-    # t = np.repeat(t, repeats=len(p))
-    # p = np.array(p * t_num) * 100.0
-    # o = {"t": t, "p": p}
-    # for phase in ["mixed", "water", "ice"]:
-    #     o[phase] = thermo.array.saturation_mixing_ratio_slope(t, p, phase=phase)
-    # save_test_reference(ref_file, o)
-
-    d = read_data_file(ref_file)
-    t = xp.asarray(d["t"], device=device)
-    p = xp.asarray(d["p"], device=device)
-    v_ref = xp.asarray(d[phase], device=device)
-
-    svp = thermo.array.saturation_mixing_ratio_slope(t, p, phase=phase)
-    assert xp.allclose(svp, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t,p,v_ref",
-    [(283.0, 1e5, 0.0005189819), (600.0, 1e5, np.nan), ([200 + 273.16], [100000.0], [np.nan])],
-)
-def test_saturation_mixing_ratio_slope_numbers(t, p, v_ref, xp, device):
-    t = xp.asarray(t, device=device)
-    p = xp.asarray(p, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    svp = thermo.array.saturation_mixing_ratio_slope(t, p, phase="mixed")
-    assert xp.allclose(svp, v_ref, equal_nan=True)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
-def test_saturation_specific_humidity_slope_1(phase, xp, device):
-    ref_file = "sat_q_slope.csv"
-    # phases = ["mixed", "water", "ice"]
-
-    # t = thermo.array.celsius_to_kelvin(np.linspace(-40.0, 56.0, 25))
-    # p = [1000, 950, 850, 700]
-    # t_num = len(t)
-    # t = np.repeat(t, repeats=len(p))
-    # p = np.array(p * t_num) * 100.0
-    # o = {"t": t, "p": p}
-    # for phase in ["mixed", "water", "ice"]:
-    #     o[phase] = thermo.array.saturation_specific_humidity_slope(t, p, phase=phase)
-    # save_test_reference(ref_file, o)
-
-    d = read_data_file(ref_file)
-    t = xp.asarray(d["t"], device=device)
-    p = xp.asarray(d["p"], device=device)
-    v_ref = xp.asarray(d[phase], device=device)
-
-    svp = thermo.array.saturation_specific_humidity_slope(t, p, phase=phase)
-    assert xp.allclose(svp, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t,p,v_ref",
-    [(283.0, 1e5, 0.0005111349), (600.0, 1e5, np.nan), ([200 + 273.16], [100000.0], [np.nan])],
-)
-def test_saturation_specific_humidity_slope_number(t, p, v_ref, xp, device):
-    t = xp.asarray(t, device=device)
-    p = xp.asarray(p, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    svp = thermo.array.saturation_specific_humidity_slope(t, p, phase="mixed")
-    assert xp.allclose(svp, v_ref, equal_nan=True)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-def test_temperature_from_saturation_vapour_pressure_1(xp, device):
-    ref_file = "sat_vp.csv"
-    d = read_data_file(ref_file)
-
-    svp = xp.asarray(d["water"], device=device)
-    v_ref = xp.asarray(d["t"], device=device)
-
-    t = thermo.array.temperature_from_saturation_vapour_pressure(svp)
-    assert xp.allclose(t, v_ref, equal_nan=True)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "es,v_ref",
-    [
-        (4.2, 219.7796336743947),
-        (0, np.nan),
-    ],
-)
-def test_temperature_from_saturation_vapour_pressure_numbers(es, v_ref, xp, device):
-    es = xp.asarray(es, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    t = thermo.array.temperature_from_saturation_vapour_pressure(es)
-    assert xp.allclose(t, v_ref, equal_nan=True)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t,td,v_ref",
-    [
-        (
-            [20.0, 20, 0, 35, 5, -15, 25],
-            [20.0, 10, -10, 32, -15, -24, -3],
-            [
-                100.0000000000,
-                52.5224541378,
-                46.8714823296,
-                84.5391163313,
-                21.9244774232,
-                46.1081101229,
-                15.4779832381,
-            ],  # reference was tested with an online relhum calculator at:
-            # https://bmcnoldy.rsmas.miami.edu/Humidity.html
-        ),
-    ],
-)
-def test_relative_humidity_from_dewpoint(t, td, v_ref, xp, device):
-    t = xp.asarray(t, device=device)
-    td = xp.asarray(td, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    t = thermo.array.celsius_to_kelvin(t)
-    td = thermo.array.celsius_to_kelvin(td)
-
-    r = thermo.array.relative_humidity_from_dewpoint(t, td)
-    assert xp.allclose(r, v_ref, rtol=1e-05)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t,p,q,v_ref",
-    [
-        (
-            [-29.2884, -14.4118, -5.9235, 9.72339, 18.4514],
-            [300, 400, 500, 700, 850],
-            [
-                0.000845416891024797,
-                0.00277950354211498,
-                0.00464489207661245,
-                0.0076785187585422,
-                0.0114808182580539,
-            ],
-            [
-                99.70488530734642,
-                100.25885732613531,
-                97.15956159465799,
-                71.37937968160273,
-                73.41420898756694,
-            ],
-        ),
-    ],
-)
-def test_relative_humidity_from_specific_humidity(t, p, q, v_ref, xp, device):
-    t = xp.asarray(t, device=device)
-    p = xp.asarray(p, device=device)
-    q = xp.asarray(q, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    t = thermo.array.celsius_to_kelvin(t)
-    p = p * 100.0
-
-    r = thermo.array.relative_humidity_from_specific_humidity(t, q, p)
-    assert xp.allclose(r, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "td,p,v_ref",
-    [
-        (
-            [21.78907, 19.90885, 16.50236, 7.104064, -0.3548709, -16.37916],
-            [967.5085, 936.3775, 872.248, 756.1647, 649.157, 422.4207],
-            [
-                0.0169461501,
-                0.0155840075,
-                0.0134912382,
-                0.0083409720,
-                0.0057268584,
-                0.0025150791,
-            ],
-        )
-    ],
-)
-def test_specific_humidity_from_dewpoint(td, p, v_ref, xp, device):
-    td = xp.asarray(td, device=device)
-    p = xp.asarray(p, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    td = thermo.array.celsius_to_kelvin(td)
-    p = p * 100.0
-
-    q = thermo.array.specific_humidity_from_dewpoint(td, p)
-    assert xp.allclose(q, v_ref, rtol=1e-05)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t,p,r,v_ref",
-    [
-        (
-            [-29.2884, -14.4118, -5.9235, 9.72339, 18.4514],
-            [300, 400, 500, 700, 850],
-            [
-                99.70488530734642,
-                100.25885732613531,
-                97.15956159465799,
-                71.37937968160273,
-                73.41420898756694,
-            ],
-            [
-                0.000845416891024797,
-                0.00277950354211498,
-                0.00464489207661245,
-                0.0076785187585422,
-                0.0114808182580539,
-            ],
-        )
-    ],
-)
-def test_specific_humidity_from_relative_humidity(t, p, r, v_ref, xp, device):
-    t = xp.asarray(t, device=device)
-    p = xp.asarray(p, device=device)
-    r = xp.asarray(r, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    t = thermo.array.celsius_to_kelvin(t)
-    p = p * 100.0
-
-    q = thermo.array.specific_humidity_from_relative_humidity(t, r, p)
-    assert xp.allclose(q, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t,r,v_ref",
-    [
-        (
-            [20.0, 20, 0, 35, 5, -15, 25, 25],
-            [
-                100.0000000000,
-                52.5224541378,
-                46.8714823296,
-                84.5391163313,
-                21.9244774232,
-                46.1081101229,
-                15.4779832381,
-                0,
-            ],
-            [20.0, 10, -10, 32, -15, -24, -3, np.nan],
-        ),
-        (20.0, 52.5224541378, 10.0),
-    ],
-)
-def test_dewpoint_from_relative_humidity(t, r, v_ref, xp, device):
-    # reference was tested with an online relhum calculator at:
-    # https://bmcnoldy.rsmas.miami.edu/Humidity.html
-
-    t = xp.asarray(t, device=device)
-    r = xp.asarray(r, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    t = thermo.array.celsius_to_kelvin(t)
-    v_ref = thermo.array.celsius_to_kelvin(v_ref)
-
-    td = thermo.array.dewpoint_from_relative_humidity(t, r)
-    assert xp.allclose(td, v_ref, equal_nan=True)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "q,p,v_ref",
-    [
-        (
-            [0.0169461501, 0.0155840075, 0.0134912382, 0.0083409720, 0.0057268584, 0.0025150791, 0],
-            [967.5085, 936.3775, 872.248, 756.1647, 649.157, 422.4207, 422.4207],
-            [21.78907, 19.90885, 16.50236, 7.104064, -0.3548709, -16.37916, np.nan],
-        ),
-        (0.0169461501, 967.508, 21.78907),
-    ],
-)
-def test_dewpoint_from_specific_humidity(q, p, v_ref, xp, device):
-    p = xp.asarray(p, device=device)
-    q = xp.asarray(q, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    p = p * 100.0
-    v_ref = thermo.array.celsius_to_kelvin(v_ref)
-
-    td = thermo.array.dewpoint_from_specific_humidity(q, p)
-    assert xp.allclose(td, v_ref, equal_nan=True)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t,q,v_ref",
-    [([286.4, 293.4], [0.0196078431, 0.0291262136], [289.8130240470, 298.5937453245])],
-)
-def test_virtual_temperature(t, q, v_ref, xp, device):
-    t = xp.asarray(t, device=device)
-    q = xp.asarray(q, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    tv = thermo.array.virtual_temperature(t, q)
-    assert xp.allclose(tv, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t,q,p,v_ref",
-    [([286.4, 293.4], [0.0196078431, 0.0291262136], [100300.0, 95000.0], [289.5651110613, 303.0015650834])],
-)
-def test_virtual_potential_temperature_temperature(t, q, p, v_ref, xp, device):
-    t = xp.asarray(t, device=device)
-    p = xp.asarray(p, device=device)
-    q = xp.asarray(q, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    tv = thermo.array.virtual_potential_temperature(t, q, p)
-    assert xp.allclose(tv, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t,p,v_ref",
-    [([252.16, 298.16], [72350, 100500], [276.588026, 297.735455])],
-)
-def test_potential_temperature(t, p, v_ref, xp, device):
-    p = xp.asarray(p, device=device)
-    t = xp.asarray(t, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    th = thermo.array.potential_temperature(t, p)
-    assert xp.allclose(th, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "p,th,v_ref",
-    [([72350, 100500], [276.588026, 297.735455], [252.16, 298.16])],
-)
-def test_temperature_from_potential_temperature(p, th, v_ref, xp, device):
-    p = xp.asarray(p, device=device)
-    th = xp.asarray(th, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    t = thermo.array.temperature_from_potential_temperature(th, p)
-    assert xp.allclose(t, v_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t_def,p_def, p, v_ref",
-    [
-        ([252.16, 298.16], [72350, 100500], [700, 500], [249.792414, 244.246863]),
-        (252.16, 72350, [700, 500], [249.792414, 226.898581]),
-    ],
-)
-def test_temperature_on_dry_adibat(t_def, p_def, p, v_ref, xp, device):
-    p_def = xp.asarray(p_def, device=device)
-    t_def = xp.asarray(t_def, device=device)
-    p = xp.asarray(p, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-    p = p * 100.0
-
-    t = thermo.array.temperature_on_dry_adiabat(p, t_def, p_def)
-    assert xp.allclose(t, v_ref)
-
-    # cross checking
-    if not callable(t.size) and t_def.size > 1:
-        th1 = thermo.array.potential_temperature(t_def, p_def)
-        th2 = thermo.array.potential_temperature(t, p)
-        assert xp.allclose(th1, th2)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t_def,p_def,t,v_ref",
-    [
-        ([252.16, 298.16], [72350, 100500], [249.792414, 244.246863], [70000.0, 50000.0]),
-        (252.16, 72350, [249.792414, 244.246863], [70000, 64709.699161]),
-    ],
-)
-def test_pressure_on_dry_adibat(t_def, p_def, t, v_ref, xp, device):
-    p_def = xp.asarray(p_def, device=device)
-    t_def = xp.asarray(t_def, device=device)
-    t = xp.asarray(t, device=device)
-    v_ref = xp.asarray(v_ref, device=device)
-
-    p = thermo.array.pressure_on_dry_adiabat(t, t_def, p_def)
-    assert xp.allclose(p, v_ref)
-
-    # cross checking
-    if not callable(t.size) and t_def.size > 1:
-        th1 = thermo.array.potential_temperature(t_def, p_def)
-        th2 = thermo.array.potential_temperature(t, p)
-        assert xp.allclose(th1, th2)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "t,td,p,t_ref, p_ref,,method",
-    [
-        (
-            [10, 30, 43, 20],
-            [-2, 26, 5, 28],
-            [95000, 100500, 100100, 100200],
-            [268.706024, 298.200936, 270.517934, 303.138144],
-            [79081.766347, 94862.350635, 57999.83367, 112654.210439],
-            "davies",
-        ),
-        (
-            [10, 30, 43, 20],
-            [-2, 26, 5, 28],
-            [95000, 100500, 100100, 100200],
-            [268.683018, 298.182282, 270.531264, 303.199544],
-            [79058.068785, 94841.581142, 58009.838027, 112734.100243],
-            "bolton",
-        ),
-    ],
-)
-def test_lcl(t, td, p, t_ref, p_ref, method, xp, device):
-    p_ref = xp.asarray(p_ref, device=device)
-    t_ref = xp.asarray(t_ref, device=device)
-    p = xp.asarray(p, device=device)
-    td = xp.asarray(td, device=device)
-    t = xp.asarray(t, device=device)
-
-    t = thermo.array.celsius_to_kelvin(t)
-    td = thermo.array.celsius_to_kelvin(td)
-
-    t_lcl = thermo.array.lcl_temperature(t, td, method=method)
-    assert xp.allclose(t_lcl, t_ref)
-
-    t_lcl, p_lcl = thermo.array.lcl(t, td, p, method=method)
-    assert xp.allclose(t_lcl, t_ref)
-    assert xp.allclose(p_lcl, p_ref)
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("method", ["ifs", "bolton35", "bolton39"])
-def test_ept(method, xp, device):
-    data = ThermoInputData(xp, device)
-
-    ref_file = "eqpt.csv"
-
-    # o = {}
-    # for m in methods:
-    #     o[f"{m}_td"] = thermo.array.ept_from_dewpoint(data.t, data.td, data.p, method=m)
-    #     o[f"{m}_q"] = thermo.array.ept_from_specific_humidity(
-    #         data.t, data.q, data.p, method=m
-    #     )
-    # save_test_reference(ref_file, o)
-
-    ref = read_data_file(ref_file)
-
-    pt = thermo.array.ept_from_dewpoint(data.t, data.td, data.p, method=method)
-    v_ref = xp.asarray(ref[method + "_td"], device=device)
-    assert xp.allclose(pt, v_ref), f"td {method=}"
-
-    pt = thermo.array.ept_from_specific_humidity(data.t, data.q, data.p, method=method)
-    v_ref = xp.asarray(ref[method + "_q"], device=device)
-    assert xp.allclose(pt, v_ref), f"q {method=}"
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("method", ["ifs", "bolton35", "bolton39"])
-def test_saturation_ept(method, xp, device):
-    data = ThermoInputData(xp, device)
-
-    ref_file = "seqpt.csv"
-
-    # o = {}
-    # for m in methods:
-    #     o[m] = thermo.array.saturation_ept(data.t, data.p, method=m)
-    # save_test_reference(ref_file, o)
-
-    ref = read_data_file(ref_file)
-
-    pt = thermo.array.saturation_ept(data.t, data.p, method=method)
-    v_ref = xp.asarray(ref[method], device=device)
-    assert xp.allclose(pt, v_ref), f"{method=}"
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
-@pytest.mark.parametrize("t_method", ["bisect", "newton"])
-def test_temperature_on_moist_adiabat(ept_method, t_method, xp, device):
-    ref_file = "t_on_most_adiabat.csv"
-
-    # ept = np.array([220, 250, 273.16, 300, 330, 360, 400, 500, 600, 700, 800, 900])
-    # p = np.array([1010, 1000, 925, 850, 700, 500, 300]) * 100
-    # o = {"ept": np.repeat(ept, repeats=len(p)), "p": np.array(p.tolist() * len(ept))}
-    # for m_ept in ept_methods:
-    #     for m_t in t_methods:
-    #         o[f"{m_ept}_{m_t}"] = thermo.array.temperature_on_moist_adiabat(
-    #             o["ept"], o["p"], ept_method=m_ept, t_method=m_t
-    #         )
-    # save_test_reference(ref_file, o)
-
-    ref = read_data_file(ref_file)
-    ept = xp.asarray(ref["ept"], device=device)
-    p = xp.asarray(ref["p"], device=device)
-
-    pt = thermo.array.temperature_on_moist_adiabat(ept, p, ept_method=ept_method, t_method=t_method)
-    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}"], device=device)
-    assert xp.allclose(pt, v_ref, equal_nan=True), f"{ept_method=} {t_method=}"
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
-@pytest.mark.parametrize("t_method", ["bisect", "newton"])
-def test_wet_bulb_temperature(ept_method, t_method, xp, device):
-    data = ThermoInputData(xp, device)
-
-    ref_file = "t_wet.csv"
-
-    # o = {}
-    # for m_ept in ept_methods:
-    #     for m_t in t_methods:
-    #         o[f"{m_ept}_{m_t}_td"] = thermo.array.wet_bulb_temperature_from_dewpoint(
-    #             data.t, data.td, data.p, ept_method=m_ept, t_method=m_t
-    #         )
-    #         o[f"{m_ept}_{m_t}_q"] = thermo.array.wet_bulb_temperature_from_specific_humidity(
-    #             data.t, data.q, data.p, ept_method=m_ept, t_method=m_t
-    #         )
-    # save_test_reference(ref_file, o)
-
-    ref = read_data_file(ref_file)
-
-    pt = thermo.array.wet_bulb_temperature_from_dewpoint(
-        data.t, data.td, data.p, ept_method=ept_method, t_method=t_method
-    )
-
-    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_td"], device=device)
-    assert xp.allclose(pt, v_ref, rtol=1e-03, atol=0, equal_nan=True), f"td {ept_method=} {t_method=}"
-
-    pt = thermo.array.wet_bulb_temperature_from_specific_humidity(
-        data.t, data.q, data.p, ept_method=ept_method, t_method=t_method
-    )
-
-    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_q"], device=device)
-    assert xp.allclose(pt, v_ref, rtol=1e-03, atol=0, equal_nan=True), f"q {ept_method=} {t_method=}"
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
-@pytest.mark.parametrize("t_method", ["bisect", "newton", "direct"])
-def test_wet_bulb_potential_temperature(ept_method, t_method, xp, device):
-    data = ThermoInputData(xp, device)
-
-    ref_file = "t_wetpt.csv"
-
-    # o = {}
-    # for m_ept in ept_methods:
-    #     for m_t in t_methods:
-    #         o[
-    #             f"{m_ept}_{m_t}_td"
-    #         ] = thermo.array.wet_bulb_potential_temperature_from_dewpoint(
-    #             data.t, data.td, data.p, ept_method=m_ept, t_method=m_t
-    #         )
-    #         o[
-    #             f"{m_ept}_{m_t}_q"
-    #         ] = thermo.array.wet_bulb_potential_temperature_from_specific_humidity(
-    #             data.t, data.q, data.p, ept_method=m_ept, t_method=m_t
-    #         )
-    # save_test_reference(ref_file, o)
-
-    ref = read_data_file(ref_file)
-
-    pt = thermo.array.wet_bulb_potential_temperature_from_dewpoint(
-        data.t, data.td, data.p, ept_method=ept_method, t_method=t_method
-    )
-
-    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_td"], device=device)
-    assert xp.allclose(pt, v_ref, rtol=1e-03, atol=0, equal_nan=True), f"td {ept_method=} {t_method=}"
-
-    pt = thermo.array.wet_bulb_potential_temperature_from_specific_humidity(
-        data.t, data.q, data.p, ept_method=ept_method, t_method=t_method
-    )
-
-    v_ref = xp.asarray(ref[f"{ept_method}_{t_method}_q"], device=device)
-    assert xp.allclose(pt, v_ref, rtol=1e-03, atol=0, equal_nan=True), f"q {ept_method=} {t_method=}"
-
-
-@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize(
-    "q,v_ref",
-    [
-        ([0.0, 0.0196078431, 0.0291262136], [287.0597, 290.4802941111, 292.1407767004]),
-        (0.0196078431, 290.4802941111),
-    ],
-)
-def test_specific_gas_constant(q, v_ref, xp, device):
-    q, v_ref = xp.asarray(q, device=device), xp.asarray(v_ref, device=device)
-    r = thermo.array.specific_gas_constant(q)
-    assert xp.allclose(r, v_ref)
+    assert _signature(got) == _signature(ref)

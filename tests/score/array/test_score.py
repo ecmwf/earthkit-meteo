@@ -19,7 +19,8 @@ from earthkit.meteo.score import array as score
 
 
 def crps_quaver2(x, y):
-    """Compute Continuous Ranked Probability Score (CRPS) from Quaver
+    """Compute Continuous Ranked Probability Score (CRPS) from Quaver.
+
     Used for testing
 
     Parameters
@@ -36,7 +37,6 @@ def crps_quaver2(x, y):
 
     The method is described in [Hersbach2000]_.
     """
-
     n_ens = x.shape[0]
     anarr = y
     earr = x
@@ -74,9 +74,7 @@ def crps_quaver2(x, y):
 def _get_crps_data():
     here = os.path.dirname(__file__)
     sys.path.insert(0, here)
-    from _crps import ens
-    from _crps import obs
-    from _crps import v_ref
+    from _crps import ens, obs, v_ref
 
     return obs, ens, v_ref
 
@@ -153,8 +151,7 @@ def test_crps_quaver2(xp, obs, ens, v_ref):
 def _get_pearson_data():
     here = os.path.dirname(__file__)
     sys.path.insert(0, here)
-    from _pearson import SAMPLE_X
-    from _pearson import SAMPLE_Y
+    from _pearson import SAMPLE_X, SAMPLE_Y
 
     rs = np.array([1.0, -1.0, 0.0, 0.42, -0.13, np.nan])
 
@@ -165,16 +162,14 @@ def _get_pearson_data():
     ymiss = SAMPLE_Y.copy()
     ymiss[12:20] = np.nan
     x = np.vstack([SAMPLE_X, SAMPLE_X, SAMPLE_X, SAMPLE_Y, SAMPLE_X, SAMPLE_X])
-    y = np.vstack(
-        [
-            SAMPLE_X,
-            -SAMPLE_X,
-            SAMPLE_Y,
-            crs[3] * SAMPLE_X + rs[3] * SAMPLE_Y,
-            rs[4] * SAMPLE_X + crs[4] * SAMPLE_Y,
-            ymiss,
-        ]
-    )
+    y = np.vstack([
+        SAMPLE_X,
+        -SAMPLE_X,
+        SAMPLE_Y,
+        crs[3] * SAMPLE_X + rs[3] * SAMPLE_Y,
+        rs[4] * SAMPLE_X + crs[4] * SAMPLE_Y,
+        ymiss,
+    ])
     return x.tolist(), y.tolist(), rs.tolist()
 
 

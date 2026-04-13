@@ -14,12 +14,12 @@ def project(field, patterns, weights, **patterns_extra_coords):
 
     Parameters
     ----------
-    field : xarray.Dataarray
+    field : xarray.DataArray
         Input field(s) to project. The patterns are projected onto the trailing
         dimensions of the input fields.
     patterns : earthkit.meteo.regimes.Patterns
         Patterns to project on.
-    weights : xarray.Dataarray
+    weights : xarray.DataArray
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1.
     **patterns_coords : dict[str,str], optional
@@ -30,7 +30,7 @@ def project(field, patterns, weights, **patterns_extra_coords):
     Returns
     -------
     xarray.DataArray
-        The projection(s) for each pattern, with "pattern" as a new leftmost
+        The projection(s) for each pattern, with ``"pattern"`` as a new leftmost
         dimension and all dimensions of field following except for the
         dimensions reduced in the projection (i.e., the spatial dimensions of
         the patterns are missing on the right).
@@ -66,14 +66,14 @@ def regime_index(projections, mean, std):
 
     Parameters
     ----------
-    projections : xarray.Dataarray
+    projections : xarray.DataArray
         Projections onto regime patterns.
-    mean : xarray.Dataarray
-    std : xarray.Dataarray
+    mean : xarray.DataArray
+    std : xarray.DataArray
 
     Returns
     -------
-    xarray.Dataarray
+    xarray.DataArray
         ``(projection - mean) / std``
     """
     return ((projections - mean) / std).rename("IWR")

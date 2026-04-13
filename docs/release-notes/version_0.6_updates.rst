@@ -1,0 +1,46 @@
+
+Version 0.6 Updates
+/////////////////////////
+
+
+Version 0.6.2
+===============
+
+Dependency updates
+-------------------------
+
+- Limited the version of :xref:`earthkit-utils` to be less than 0.99 to avoid potential compatibility issues with future major releases of :xref:`earthkit-utils`.
+
+
+Version 0.6.1
+===============
+
+Changes
+-------------------------
+
+- Revert change to shape of array returned from :py:meth:`earthkit.meteo.stats.array.iter_quantiles` with ``method=sort``. The output shape should be the same as that returned by other methods. (:pr:`107`)
+
+
+Version 0.6.0
+===============
+
+Refactored array backends
+-------------------------
+
+.. note::
+
+    The array backend implementation in :xref:`earthkit-utils` has been refactored. The minimum required version of :xref:`earthkit-utils` is now ``0.2.0`` (:pr:`74`).
+
+The public API of ``earthkit-meteo`` did not change.
+
+
+Changes
+-----------------------
+
+- Uses :py:meth:`atan2` instead of :py:meth:`arctan2` internally for array-based computations (:pr:`63`)
+
+
+Installation
+-----------------------
+
+- The minimum required version of Python is now 3.10
