@@ -17,7 +17,8 @@ C_pl = 4180
 
 
 def _ept_from_mixing_ratio(t, p, r, method="bolton39"):
-    # TODO add option to use the method "bolton43" for ept calculation, which is the method used in the reference implementation.
+    # TODO add option to use the method "bolton43" for ept calculation,
+    # which is the method used in the reference implementation.
     # Use "bolton39" for now, the difference is small.
     specific_humidity = thermo.specific_humidity_from_mixing_ratio(r)
     return thermo.ept_from_specific_humidity(t, specific_humidity, p, method=method)
@@ -25,7 +26,8 @@ def _ept_from_mixing_ratio(t, p, r, method="bolton39"):
 
 def _moist_ascent_lookup_table(ept_method):
     def dt_dp_moist(t_parcel, p):
-        # moist adiabatic gradient according to Emanuel, 1995 (Eq. 4.7.3) ignoring liquid and solid water, i.e. r_l = 0 and r_t = r
+        # moist adiabatic gradient according to Emanuel, 1995 (Eq. 4.7.3) ignoring liquid and solid water,
+        # i.e. r_l = 0 and r_t = r
         es_parcel = thermo.saturation_vapour_pressure(t_parcel, phase="water")
         r_parcel = constants.epsilon * es_parcel / p
 
@@ -34,9 +36,7 @@ def _moist_ascent_lookup_table(ept_method):
 
         # Terms from Emanuel, 1995 (Eq. 4.7.3)
         a_prefactor = (
-            -(constants.g / constants.c_pd)
-            * (1 + r_parcel)
-            / (1 + r_parcel * (constants.c_pv / constants.c_pd))
+            -(constants.g / constants.c_pd) * (1 + r_parcel) / (1 + r_parcel * (constants.c_pv / constants.c_pd))
         )
         b_factor = 1 + (lv * r_parcel) / (constants.Rd * t_parcel)
         c_term = lv * lv * r_parcel * (1 + r_parcel / constants.epsilon)
@@ -104,9 +104,9 @@ class _CapeCinComp:
 
         # Dry adiabatic ascent to LCL
         between_start_and_lcl = (p > p_lcl[None, ...]) * (p <= p_start[None, ...])
-        t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(
-            theta_parcel[None, ...], p
-        )[between_start_and_lcl]
+        t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(theta_parcel[None, ...], p)[
+            between_start_and_lcl
+        ]
         r_parcel[between_start_and_lcl] = (r_start[None, ...] * np.ones(p_shape))[between_start_and_lcl]
 
         # Moist adiabatic ascent
@@ -203,7 +203,8 @@ class _CapeCinComp:
         cape[nan_mask] = np.nan
         cin[nan_mask] = np.nan
 
-        # TODO include LI calculation and see if we can use earthkit's vertical interpolation function instead of the custom Interpolate function from the reference implementation
+        # TODO include LI calculation and see if we can use earthkit's vertical interpolation function
+        # instead of the custom Interpolate function from the reference implementation
         # [LI] = Interpolate(pressure_arr, [dTv], 500)
         # LI = -LI
         # LI[np.isnan(LI)] = 0
@@ -235,16 +236,6 @@ class _CapeCinSurface(_CapeCinComp):
 
 class _CapeCinMixed(_CapeCinComp):
     def _determine_parcel(self, p, zh, t, r, layer_depth=None):
-        """
-        Compute mixed-layer parameters
-        :param p: pressure array in Pa
-        :param t: temperature array in K
-        :param r: mixing ratio array in kg/kg
-        :param layer_depth: in Pa
-        :return:
-        bottom pressure, mixed-layer t, mixed_layer r
-        """
-
         if layer_depth is None:
             layer_depth = 5000
 
@@ -300,7 +291,6 @@ class _CapeCinMostUnstable(_CapeCinComp):
         layer_thickness = -np.diff(zh, axis=0)
 
         for k_candidate in np.arange(0, localmaxarg.shape[0]):
-
             start_level_indices = localmaxarg[k_candidate, ...]
             p_start_candidate = np.take_along_axis(p, start_level_indices[None, ...], axis=0).squeeze(0)
             t_start_candidate = np.take_along_axis(t, start_level_indices[None, ...], axis=0).squeeze(0)
@@ -391,8 +381,11 @@ def cape_cin(
         CIN (J/kg), shape equal to the horizontal dimensions of the input arrays.
 
     """
-    # TODO add options for output: "cape_cin", "cape_cin_li", "full" where full includes parcel_path and intermediate variables for debugging/validation
-    # For full output, we need to decide on a format for the output, e.g. a dictionary or a structured array, and we need to handle the case where vertical_axis is not 0
+    # TODO add options for output: "cape_cin", "cape_cin_li", "full"
+    # where full includes parcel_path and intermediate variables for debugging/validation
+    # For full output, we need to decide on a format for the output,
+    # e.g. a dictionary or a structured array,
+    # and we need to handle the case where vertical_axis is not 0
     if output not in ["cape_cin"]:
         raise ValueError(f"Invalid output option '{output}'")
 
@@ -403,9 +396,7 @@ def cape_cin(
         if vertical_axis == -1:
             vertical_axis = p.ndim - 1
         if vertical_axis < 0 or vertical_axis >= p.ndim:
-            raise ValueError(
-                f"Invalid vertical_axis {vertical_axis} for input arrays with {p.ndim} dimensions"
-            )
+            raise ValueError(f"Invalid vertical_axis {vertical_axis} for input arrays with {p.ndim} dimensions")
 
         p = np.swapaxes(p, 0, vertical_axis)
         zh = np.swapaxes(zh, 0, vertical_axis)

@@ -31,7 +31,7 @@ PARCEL_TYPES = ["surface", "mixed", "mu"]
 
 
 def data_file(name):
-    return os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", name)
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", name)
 
 
 def read_data_file(path):
@@ -115,9 +115,7 @@ def test_cape_cin(case_name, parcel_type):
 def test_cape_cin_stacked():
     data = CapeCinData()
     for parcel_type in PARCEL_TYPES:
-        cape, cin = thermo.cape_cin(
-            data.p_stacked, data.zh_stacked, data.t_stacked, data.r_stacked, parcel_type
-        )
+        cape, cin = thermo.cape_cin(data.p_stacked, data.zh_stacked, data.t_stacked, data.r_stacked, parcel_type)
         np.testing.assert_allclose(cape, data.expected_cape[parcel_type], atol=1)
         np.testing.assert_allclose(cin, data.expected_cin[parcel_type], atol=1)
 
@@ -196,9 +194,9 @@ def test_cape_cin_options_forwarded():
     # Default layer_depth (5000 Pa) vs a wider mixed layer (15000 Pa) must differ.
     cape_default, _ = thermo.cape_cin(p, zh, t, r, "mixed")
     cape_wide, _ = thermo.cape_cin(p, zh, t, r, "mixed", layer_depth=15000)
-    assert not np.isclose(
-        cape_default, cape_wide, atol=1
-    ), "layer_depth option was not forwarded to the mixed-layer parcel computation"
+    assert not np.isclose(cape_default, cape_wide, atol=1), (
+        "layer_depth option was not forwarded to the mixed-layer parcel computation"
+    )
 
 
 def test_cape_cin_invalid_parcel_type():
@@ -324,7 +322,5 @@ def test_cape_cin_very_dry():
 
     for parcel_type in PARCEL_TYPES:
         cape, cin = thermo.cape_cin(p, zh, t, r, parcel_type)
-        np.testing.assert_allclose(
-            cape, 0.0, atol=1, err_msg=f"{parcel_type}: expected CAPE=0 for dry profile"
-        )
+        np.testing.assert_allclose(cape, 0.0, atol=1, err_msg=f"{parcel_type}: expected CAPE=0 for dry profile")
         np.testing.assert_allclose(cin, 0.0, atol=1, err_msg=f"{parcel_type}: expected CIN=0 for dry profile")
