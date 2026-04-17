@@ -4,7 +4,12 @@ Version 1.0.0 Release Candidate Updates
 ///////////////////////////////////////
 
 
-Version 1.0.0rc0
+Version 1.0.0rc2
+==================
+
+- Added high level fieldlist interface to :py:mod:`earthkit.meteo.wind` module and also to the :py:meth:`earthkit.meteo.thermo.potential_temperature` method in :py:mod:`earthkit.meteo.thermo` (:pr:`147`).
+
+Version 1.0.0rc1
 ==================
 
 Deprecations
