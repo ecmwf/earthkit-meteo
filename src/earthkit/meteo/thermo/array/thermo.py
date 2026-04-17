@@ -910,7 +910,7 @@ def temperature_on_dry_adiabat(p: ArrayLike, t_def: ArrayLike, p_def: ArrayLike)
 
 
 def lcl_temperature(t: ArrayLike, td: ArrayLike, method: str = "davies") -> ArrayLike:
-    r"""Compute the Lifting Condenstaion Level (LCL) temperature from dewpoint.
+    r"""Compute the Lifting Condensation Level (LCL) temperature from dewpoint.
 
     Parameters
     ----------
@@ -958,7 +958,7 @@ def lcl_temperature(t: ArrayLike, td: ArrayLike, method: str = "davies") -> Arra
 
 
 def lcl(t: ArrayLike, td: ArrayLike, p: ArrayLike, method: str = "davies") -> tuple[ArrayLike, ArrayLike]:
-    r"""Compute the temperature and pressure of the Lifting Condenstaion Level (LCL) from dewpoint.
+    r"""Compute the temperature and pressure of the Lifting Condensation Level (LCL) from dewpoint.
 
     Parameters
     ----------
@@ -1355,7 +1355,7 @@ def ept_from_dewpoint(t: ArrayLike, td: ArrayLike, p: ArrayLike, method: str = "
     p: number or array-like
         Pressure (Pa)
     method: str, optional
-        Specifies the computation method. The possible values are: "ifs", "bolton35", "bolton39", "bolton43".
+        Specify the computation method. The possible values are: "ifs", "bolton35", "bolton39", "bolton43".
 
     Returns
     -------
@@ -1398,7 +1398,7 @@ def ept_from_dewpoint(t: ArrayLike, td: ArrayLike, p: ArrayLike, method: str = "
 
         * :math:`\Theta` is the :func:`potential_temperature`
         * :math:`t` is the temperature at the start level
-        * :math:`t_{LCL}` is the temperature at the Lifting Condestation Level computed
+        * :math:`t_{LCL}` is the temperature at the Lifting Condensation Level computed
           with :func:`lcl_temperature` using option:
 
             * method="davis" when ``method`` is "ifs"
@@ -1428,7 +1428,7 @@ def ept_from_specific_humidity(t: ArrayLike, q: ArrayLike, p: ArrayLike, method:
     p: number or array-like
         Pressure (Pa)
     method: str, optional
-        Specifies the computation method. The possible values are: "ifs",
+        Specify the computation method. The possible values are: "ifs",
         "bolton35", "bolton39", "bolton43". See :func:`ept_from_dewpoint` for details.
 
     Returns

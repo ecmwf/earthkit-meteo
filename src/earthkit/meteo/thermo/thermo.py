@@ -1725,7 +1725,7 @@ def lcl_temperature(
     td: "ArrayLike" | "xarray.DataArray",
     method: str = "davies",
 ) -> "ArrayLike" | "xarray.DataArray":
-    r"""Compute the Lifting Condenstaion Level (LCL) temperature from dewpoint.
+    r"""Compute the Lifting Condensation Level (LCL) temperature from dewpoint.
 
     Parameters
     ----------
@@ -1798,7 +1798,7 @@ def lcl(
     p: "ArrayLike" | "xarray.DataArray",
     method: str = "davies",
 ) -> tuple["ArrayLike" | "xarray.DataArray", "ArrayLike" | "xarray.DataArray"]:
-    r"""Compute the temperature and pressure of the Lifting Condenstaion Level (LCL) from dewpoint.
+    r"""Compute the temperature and pressure of the Lifting Condensation Level (LCL) from dewpoint.
 
     Parameters
     ----------
@@ -1874,7 +1874,7 @@ def ept_from_dewpoint(
     p: number or array-like
         Pressure (Pa)
     method: str, optional
-        Specifies the computation method. The possible values are: "ifs", "bolton35", "bolton39".
+        Specify the computation method. The possible values are: "ifs", "bolton35", "bolton39", "bolton43".
 
     Returns
     -------
@@ -1904,14 +1904,22 @@ def ept_from_dewpoint(
             t (\frac{10^{5}}{p-e})^{\kappa} (\frac{t}{t_{LCL}})^{0.28 w} \operatorname{exp}[(\frac{3036}{t_{LCL}} -
             1.78)w(1+0.448 w)]
 
+    * "bolton43": Eq (43) from [Bolton1980]_ is used:
+
+        .. math::
+
+            \Theta_{e} =
+            t (\frac{10^{5}}{p})^{\kappa (1-0.28\; 10^{-3}w)} exp[(\frac{3376}{t_{LCL}} -
+            2.54)w(1+0.81w)]
+
     where:
 
         * :math:`\Theta` is the :func:`potential_temperature`
-        * :math:`t_{LCL}` is the temperature at the Lifting Condestation Level computed
+        * :math:`t_{LCL}` is the temperature at the Lifting Condensation Level computed
           with :func:`lcl_temperature` using option:
 
             * method="davis" when ``method`` is "ifs"
-            * method="bolton" when ``method`` is "bolton35" or "bolton39"
+            * method="bolton" when ``method`` is "bolton35", "bolton39", or "bolton43"
         * :math:`q` is the specific humidity computed with :func:`specific_humidity_from_dewpoint`
         * :math:`w`: is the mixing ratio computed with :func:`mixing_ratio_from_dewpoint`
         * :math:`e` is the vapour pressure computed with :func:`vapour_pressure_from_mixing_ratio`
@@ -1972,8 +1980,8 @@ def ept_from_specific_humidity(
     p: number or array-like
         Pressure (Pa)
     method: str, optional
-        Specifies the computation method. The possible values are: "ifs",
-        "bolton35", "bolton39. See :func:`ept_from_dewpoint` for details.
+        Specify the computation method. The possible values are: "ifs",
+        "bolton35", "bolton39", "bolton43". See :func:`ept_from_dewpoint` for details.
 
     Returns
     -------

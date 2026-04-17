@@ -4,6 +4,15 @@ Version 1.0.0 Release Candidate Updates
 ///////////////////////////////////////
 
 
+Version 1.0.0rc3
+==================
+
+- Added option "bolton43" to compute the equivalent potential temperature using equation (43) from [Bolton1980]_ (:pr:`128`). See:
+
+  - :py:func:`~earthkit.meteo.thermo.ept_from_dewpoint`
+  - :py:func:`~earthkit.meteo.thermo.ept_from_specific_humidity`
+
+
 Version 1.0.0rc2
 ==================
 
