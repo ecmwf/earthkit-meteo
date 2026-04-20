@@ -11,11 +11,12 @@ import numpy as np
 import pytest
 
 import earthkit.meteo.wind.array as array_wind
-from earthkit.meteo.utils.testing import NO_EKD
+from earthkit.meteo.utils.testing import IN_GITHUB, NO_EKD
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Disabled in github CI")
 @pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
 def test_fieldlist_wind_speed():
     import earthkit.data as ekd
@@ -37,6 +38,7 @@ def test_fieldlist_wind_speed():
     assert np.allclose(res[0].values, ref, equal_nan=True)
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Disabled in github CI")
 @pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
 def test_fieldlist_wind_direction():
     import earthkit.data as ekd
@@ -58,6 +60,7 @@ def test_fieldlist_wind_direction():
     assert np.allclose(res[0].values, ref, equal_nan=True)
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Disabled in github CI")
 @pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
 def test_fieldlist_w_from_omega():
     import earthkit.data as ekd
@@ -79,6 +82,7 @@ def test_fieldlist_w_from_omega():
     assert np.allclose(res[0].values, ref, equal_nan=True)
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Disabled in github CI")
 @pytest.mark.skipif(NO_EKD, reason="earthkit.data is not installed")
 def test_fieldlist_coriolis():
     import earthkit.data as ekd
