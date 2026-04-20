@@ -71,6 +71,7 @@ optional-dependencies.stats = [
 ]
 optional-dependencies.test = [
   "earthkit-data>=1.0.0rc0",
+  "eccodes",
   "netcdf4",
   "pytest",
   "pytest-cov",
