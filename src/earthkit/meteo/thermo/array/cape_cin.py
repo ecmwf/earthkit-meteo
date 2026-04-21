@@ -8,12 +8,15 @@
 #
 
 import dataclasses as dc
+from typing import Any, TypeAlias
 
 import numpy as np
 from scipy import interpolate
 
 from earthkit.meteo import thermo
 from earthkit.meteo.constants import constants
+
+ArrayLike: TypeAlias = Any
 
 C_pl = 4180
 
@@ -167,23 +170,24 @@ class _CapeCinComp:
 
     def _lift_parcel(self, p_start, t_start, r_start, p, t, r):
         p_shape = p.shape
-        t_parcel = np.zeros(p_shape) * np.nan
-        r_parcel = np.zeros(p_shape) * np.nan
+        t_parcel = np.full(p_shape, np.nan)
+        r_parcel = np.full(p_shape, np.nan)
 
         p_lcl, t_lcl = self._lifted_condensation_level_from_mixing_ratio(t_start, p_start, r_start)
 
         theta_parcel = thermo.potential_temperature(t_start, p_start)
         theta_ep_parcel = _ept_from_mixing_ratio(t_start, p_start, r_start, method=self.ept_method)
 
-        # Dry adiabatic ascent to LCL
-        between_start_and_lcl = (p > p_lcl[None, ...]) * (p <= p_start[None, ...])
+        # Dry adiabatic ascent to LCL (only at valid, non-NaN pressure levels)
+        valid_p = ~np.isnan(p)
+        between_start_and_lcl = valid_p & (p > p_lcl[None, ...]) & (p <= p_start[None, ...])
         t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(theta_parcel[None, ...], p)[
             between_start_and_lcl
         ]
         r_parcel[between_start_and_lcl] = (r_start[None, ...] * np.ones(p_shape))[between_start_and_lcl]
 
         # Moist adiabatic ascent
-        above_lcl = p_lcl[None, ...] > p
+        above_lcl = valid_p & (p_lcl[None, ...] > p)
         p_2d = p * np.ones(p_shape)
         theta_ep_parcel_2d = theta_ep_parcel[None, ...] * np.ones(p_shape)
 
@@ -207,7 +211,7 @@ class _CapeCinComp:
         dtv = tv_parcel - tv_env
         buoyancy = dtv / tv_env
 
-        buoyant_layer_mask = (buoyancy > 0.0) * (t < t_lcl[None, ...])
+        buoyant_layer_mask = (buoyancy > 0.0) & (t < t_lcl[None, ...])
 
         lfc_index = buoyant_layer_mask.shape[0] - np.argmax(buoyant_layer_mask[::-1, ...], axis=0) - 1
         el_index = np.argmax(buoyant_layer_mask, axis=0)
@@ -225,13 +229,13 @@ class _CapeCinComp:
         return buoyancy, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env, t_parcel, r_parcel
 
     def _sort_pressure_levels(self, p, t, r, zh):
-        is_sorted = (np.diff(p, axis=0) >= 0).all()
-        if not is_sorted:
-            sorted_inds = np.argsort(p, axis=0)
-            p = np.take_along_axis(p, sorted_inds, axis=0)
-            t = np.take_along_axis(t, sorted_inds, axis=0)
-            r = np.take_along_axis(r, sorted_inds, axis=0)
-            zh = np.take_along_axis(zh, sorted_inds, axis=0)
+        # np.argsort places NaN at the end, which is what we want:
+        # subground levels (NaN) sort to the high-pressure tail.
+        sorted_inds = np.argsort(p, axis=0)
+        p = np.take_along_axis(p, sorted_inds, axis=0)
+        t = np.take_along_axis(t, sorted_inds, axis=0)
+        r = np.take_along_axis(r, sorted_inds, axis=0)
+        zh = np.take_along_axis(zh, sorted_inds, axis=0)
         return p, t, r, zh
 
     def _integrate_buoyancy(self, buoyancy, p, zh, p_lfc, p_el):
@@ -253,28 +257,53 @@ class _CapeCinComp:
         cin[cape <= 1] = 0
         return cape, cin
 
-    def _determine_parcel(self, p, zh, t, r, layer_depth):
+    def _determine_parcel(self, p, zh, t, r, layer_depth, p_sfc, t_sfc, r_sfc):
         raise NotImplementedError("This method should be implemented in the subclass")
 
-    def _cape_cin(self, p, zh, t, r):
+    def _cape_cin(self, p, zh, t, r, p_sfc, zh_sfc, t_sfc, r_sfc):
         # Shapes of all arrays should be (n_vertical_levels, ...) where the vertical axis is the first axis (axis=0)
+        # Surface arrays have shape (...) — i.e. horizontal dims only.
 
-        # Make sure pressure levels are in ascending order
+        # 1. Identify subground levels using height
+        subground = zh < zh_sfc[None, ...]
+
+        # 2. Detect bad-data NaN: NaN at above-ground grid positions or NaN in the surface inputs.
+        #    NaN at subground positions (which may already be present in the input) is expected
+        #    and should NOT be treated as bad data.
+        nan_in_grid = np.isnan(p) | np.isnan(t) | np.isnan(r) | np.isnan(zh)
+        bad_data_in_grid = nan_in_grid & ~subground
+        bad_data_in_sfc = np.isnan(p_sfc) | np.isnan(t_sfc) | np.isnan(r_sfc) | np.isnan(zh_sfc)
+        bad_data_mask = np.any(bad_data_in_grid, axis=0) | bad_data_in_sfc
+
+        # 3. Mask subground levels to NaN in working copies
+        p = np.where(subground, np.nan, p)
+        zh = np.where(subground, np.nan, zh)
+        t = np.where(subground, np.nan, t)
+        r = np.where(subground, np.nan, r)
+
+        # 4. Concatenate surface level into the grid
+        p = np.concatenate([p, p_sfc[None, ...]], axis=0)
+        zh = np.concatenate([zh, zh_sfc[None, ...]], axis=0)
+        t = np.concatenate([t, t_sfc[None, ...]], axis=0)
+        r = np.concatenate([r, r_sfc[None, ...]], axis=0)
+
+        # 5. Sort pressure ascending (NaN subground levels go to the end)
         p, t, r, zh = self._sort_pressure_levels(p, t, r, zh)
 
-        # Check for NaN values in the input arrays and mask them out in the output
-        # If any input value for a vertical profile is NaN, the output for that profile will be NaN
-        nan_mask = np.any(np.isnan(p) | np.isnan(t) | np.isnan(r) | np.isnan(zh), axis=0)
+        # 6. Determine parcel (using explicit surface properties)
+        p_start, t_start, r_start = self._determine_parcel(p, zh, t, r, self.layer_depth, p_sfc, t_sfc, r_sfc)
 
-        p_start, t_start, r_start = self._determine_parcel(p, zh, t, r, self.layer_depth)
-
+        # 7. Lift parcel and compute buoyancy
         buoyancy, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env, t_parcel, r_parcel = self._lift_parcel(
             p_start, t_start, r_start, p, t, r
         )
+
+        # 8. Integrate buoyancy (nansum naturally skips NaN subground levels)
         cape, cin = self._integrate_buoyancy(buoyancy, p, zh, p_lfc, p_el)
 
-        cape[nan_mask] = np.nan
-        cin[nan_mask] = np.nan
+        # 9. Apply bad-data mask (only genuine missing data, not subground NaN)
+        cape[bad_data_mask] = np.nan
+        cin[bad_data_mask] = np.nan
 
         # TODO include LI calculation and see if we can use earthkit's vertical interpolation function
         # instead of the custom Interpolate function from the reference implementation
@@ -316,34 +345,34 @@ class _CapeCinComp:
 
 
 class _CapeCinSurface(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, layer_depth):
-        return p[-1], t[-1], r[-1]
+    def _determine_parcel(self, p, zh, t, r, layer_depth, p_sfc, t_sfc, r_sfc):
+        return p_sfc, t_sfc, r_sfc
 
 
 class _CapeCinMixed(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, layer_depth=None):
+    def _determine_parcel(self, p, zh, t, r, layer_depth, p_sfc, t_sfc, r_sfc):
         if layer_depth is None:
             layer_depth = 5000
 
-        p_bottom = p[-1, :]
+        p_bottom = p_sfc
         p_bound = p_bottom - layer_depth
-        indx = (np.abs(p - p_bound)).argmin(axis=0)
+        indx = (np.abs(np.nan_to_num(p, nan=0.0) - p_bound)).argmin(axis=0)
         p_top = np.take_along_axis(p, indx[None, ...], axis=0).squeeze(0)
 
         theta = thermo.potential_temperature(t, p)
-        theta[(p > p_bottom) | (p < p_top)] = np.nan
+        theta[(p > p_bottom[None, ...]) | (p < p_top[None, ...])] = np.nan
         theta_mean = np.nanmean(theta, axis=0)
         t_mixed = thermo.temperature_from_potential_temperature(theta_mean, p_bottom)
 
         r_copy = np.copy(r)
-        r_copy[(p > p_bottom) | (p < p_top)] = np.nan
+        r_copy[(p > p_bottom[None, ...]) | (p < p_top[None, ...])] = np.nan
         r_mixed = np.nanmean(r_copy, axis=0)
 
         return p_bottom, t_mixed, r_mixed
 
 
 class _CapeCinMostUnstable(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, layer_depth=None):
+    def _determine_parcel(self, p, zh, t, r, layer_depth, p_sfc, t_sfc, r_sfc):
         t_shape = t.shape
 
         theta_ep_env = _ept_from_mixing_ratio(t, p, r, method=self.ept_method)
@@ -411,34 +440,51 @@ _PARCEL_CLASSES = {
 
 
 def cape_cin(
-    p,
-    zh,
-    t,
-    r,
-    parcel_type,
-    layer_depth=None,
-    extra_outputs=None,
-    vertical_axis=0,
-    ept_method="bolton39",
-    lcl_method="davies",
+    p: "ArrayLike",
+    zh: "ArrayLike",
+    t: "ArrayLike",
+    r: "ArrayLike",
+    p_sfc: "ArrayLike",
+    zh_sfc: "ArrayLike",
+    t_sfc: "ArrayLike",
+    r_sfc: "ArrayLike",
+    parcel_type: str,
+    layer_depth: float | None = None,
+    extra_outputs: list | None = None,
+    vertical_axis: int = 0,
+    ept_method: str = "bolton39",
+    lcl_method: str = "davies",
 ):
     r"""Compute Convective Available Potential Energy (CAPE) and Convective Inhibition (CIN).
+
+    The surface level must be provided separately from the pressure-level grid.
+    Grid levels below the surface (sub-ground) are automatically masked
+    using geopotential height and do not affect the result.
 
     Parameters
     ----------
     p : array-like
-        Pressure (Pa). The vertical axis must be the first axis (axis=0) unless
+        Pressure on model/pressure levels (Pa), shape ``(n_levels, ...)``.
+        The vertical axis must be the first axis (axis=0) unless
         ``vertical_axis`` is set.
     zh : array-like
-        Geopotential height (m), same shape as ``p``.
+        Geopotential height on model/pressure levels (m), same shape as ``p``.
     t : array-like
-        Temperature (K), same shape as ``p``.
+        Temperature on model/pressure levels (K), same shape as ``p``.
     r : array-like
-        Mixing ratio (kg/kg), same shape as ``p``.
+        Mixing ratio on model/pressure levels (kg/kg), same shape as ``p``.
+    p_sfc : array-like
+        Surface pressure (Pa), shape ``(...)`` (horizontal dimensions only).
+    zh_sfc : array-like
+        Surface geopotential height (m), same shape as ``p_sfc``.
+    t_sfc : array-like
+        Surface temperature (K), same shape as ``p_sfc``.
+    r_sfc : array-like
+        Surface mixing ratio (kg/kg), same shape as ``p_sfc``.
     parcel_type : str
         Method used to define the lifted parcel. One of:
 
-        * ``"surface"`` — parcel taken from the lowest level.
+        * ``"surface"`` — parcel taken from the surface level.
         * ``"mixed"`` — parcel properties averaged over a mixed layer of depth
           ``layer_depth`` (Pa) above the surface.
         * ``"mu"`` — most-unstable parcel: the level within ``layer_depth`` (Pa)
@@ -455,7 +501,7 @@ def cape_cin(
         * ``"el"``  — :class:`PressureLevel` for the Equilibrium Level.
         * ``"parcel"`` — :class:`ParcelOrigin` with the parcel launch properties.
         * ``"parcel_path"`` — :class:`ParcelPath` with the full parcel profile
-          and all key levels bundled together.
+          and all key levels bundled together (includes the surface level).
 
         When ``None`` or an empty list the function returns only ``(cape, cin)``.
     vertical_axis : int, optional
@@ -490,6 +536,15 @@ def cape_cin(
     if parcel_type not in _PARCEL_CLASSES:
         raise ValueError(f"Invalid parcel_type '{parcel_type}'. Must be one of {list(_PARCEL_CLASSES)}")
 
+    p = np.asarray(p, dtype=float)
+    zh = np.asarray(zh, dtype=float)
+    t = np.asarray(t, dtype=float)
+    r = np.asarray(r, dtype=float)
+    p_sfc = np.asarray(p_sfc, dtype=float)
+    zh_sfc = np.asarray(zh_sfc, dtype=float)
+    t_sfc = np.asarray(t_sfc, dtype=float)
+    r_sfc = np.asarray(r_sfc, dtype=float)
+
     if vertical_axis != 0:
         if vertical_axis == -1:
             vertical_axis = p.ndim - 1
@@ -503,7 +558,7 @@ def cape_cin(
 
     result = _PARCEL_CLASSES[parcel_type](
         layer_depth=layer_depth, extra_outputs=extra_outputs, lcl_method=lcl_method, ept_method=ept_method
-    )._cape_cin(p, zh, t, r)
+    )._cape_cin(p, zh, t, r, p_sfc, zh_sfc, t_sfc, r_sfc)
 
     # Swap the vertical axis of profile arrays back to match caller's layout.
     if vertical_axis != 0 and len(result) == 3:

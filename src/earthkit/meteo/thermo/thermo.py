@@ -2519,6 +2519,10 @@ def cape_cin(
     zh: "ArrayLike",
     t: "ArrayLike",
     r: "ArrayLike",
+    p_sfc: "ArrayLike",
+    zh_sfc: "ArrayLike",
+    t_sfc: "ArrayLike",
+    r_sfc: "ArrayLike",
     parcel_type: str,
     layer_depth: float | None = None,
     extra_outputs: list | None = None,
@@ -2528,21 +2532,34 @@ def cape_cin(
 ) -> tuple["ArrayLike", "ArrayLike"]:
     r"""Compute Convective Available Potential Energy (CAPE) and Convective Inhibition (CIN).
 
+    The surface level must be provided separately from the pressure-level grid.
+    Grid levels below the surface (sub-ground) are automatically masked
+    using geopotential height and do not affect the result.
+
     Parameters
     ----------
     p : array-like
-        Pressure (Pa). The vertical axis must be the first axis (axis=0) unless
+        Pressure on model/pressure levels (Pa), shape ``(n_levels, ...)``.
+        The vertical axis must be the first axis (axis=0) unless
         ``vertical_axis`` is set.
     zh : array-like
-        Geopotential height (m), same shape as ``p``.
+        Geopotential height on model/pressure levels (m), same shape as ``p``.
     t : array-like
-        Temperature (K), same shape as ``p``.
+        Temperature on model/pressure levels (K), same shape as ``p``.
     r : array-like
-        Mixing ratio (kg/kg), same shape as ``p``.
+        Mixing ratio on model/pressure levels (kg/kg), same shape as ``p``.
+    p_sfc : array-like
+        Surface pressure (Pa), shape ``(...)`` (horizontal dimensions only).
+    zh_sfc : array-like
+        Surface geopotential height (m), same shape as ``p_sfc``.
+    t_sfc : array-like
+        Surface temperature (K), same shape as ``p_sfc``.
+    r_sfc : array-like
+        Surface mixing ratio (kg/kg), same shape as ``p_sfc``.
     parcel_type : str
         Method used to define the lifted parcel. One of:
 
-        * ``"surface"`` — parcel taken from the lowest level.
+        * ``"surface"`` — parcel taken from the surface level.
         * ``"mixed"`` — parcel properties averaged over a mixed layer of depth
           ``layer_depth`` (Pa) above the surface.
         * ``"mu"`` — most-unstable parcel: the level within ``layer_depth`` (Pa)
@@ -2589,6 +2606,10 @@ def cape_cin(
         zh,
         t,
         r,
+        p_sfc,
+        zh_sfc,
+        t_sfc,
+        r_sfc,
         parcel_type,
         layer_depth=layer_depth,
         extra_outputs=extra_outputs,
