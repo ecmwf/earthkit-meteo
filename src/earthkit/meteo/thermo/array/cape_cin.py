@@ -89,14 +89,6 @@ class ParcelPath:
     """Parcel properties at the launch level."""
 
 
-def _ept_from_mixing_ratio(t, p, r, method="bolton39"):
-    # TODO add option to use the method "bolton43" for ept calculation,
-    # which is the method used in the reference implementation.
-    # Use "bolton39" for now, the difference is small.
-    specific_humidity = thermo.specific_humidity_from_mixing_ratio(r)
-    return thermo.ept_from_specific_humidity(t, specific_humidity, p, method=method)
-
-
 def _moist_ascent_lookup_table(ept_method):
     def dt_dp_moist(t_parcel, p):
         # moist adiabatic gradient according to Emanuel, 1995 (Eq. 4.7.3) ignoring liquid and solid water,
@@ -126,7 +118,8 @@ def _moist_ascent_lookup_table(ept_method):
     t_initial = np.arange(180, 320, 2)
     es_initial = thermo.saturation_vapour_pressure(t_initial, phase="water")
     r_initial = constants.epsilon * (es_initial / (p_max - es_initial))
-    theta_ep_range = _ept_from_mixing_ratio(t_initial, p_max, r_initial, method=ept_method)
+    q_initial = thermo.specific_humidity_from_mixing_ratio(r_initial)
+    theta_ep_range = thermo.ept_from_specific_humidity(t_initial, q_initial, p_max, method=ept_method)
 
     pressure_levels = np.arange(p_max, p_min, -100)
 
@@ -153,7 +146,7 @@ _VALID_EXTRA_OUTPUTS = frozenset(["lcl", "lfc", "el", "parcel", "parcel_path"])
 
 
 class _CapeCinComp:
-    def __init__(self, layer_depth=None, extra_outputs=None, lcl_method="davies", ept_method="bolton39"):
+    def __init__(self, layer_depth=None, extra_outputs=None, lcl_method="davies", ept_method="bolton43"):
         self.layer_depth = layer_depth
         self.extra_outputs = extra_outputs or []
         self.lcl_method = lcl_method
@@ -449,7 +442,7 @@ def cape_cin(
     layer_depth: float | None = None,
     extra_outputs: list | None = None,
     vertical_axis: int = 0,
-    ept_method: str = "bolton39",
+    ept_method: str = "bolton43",
     lcl_method: str = "davies",
 ):
     r"""Compute Convective Available Potential Energy (CAPE) and Convective Inhibition (CIN).
@@ -507,7 +500,7 @@ def cape_cin(
     ept_method : str, optional
         Method used to compute equivalent potential temperature. Passed to
         :func:`earthkit.meteo.thermo.array.ept_from_specific_humidity`.
-        Defaults to ``"bolton39"``.
+        Defaults to ``"bolton43"``.
     lcl_method : str, optional
         Method used to compute the Lifted Condensation Level. Passed to
         :func:`earthkit.meteo.thermo.array.lcl`. Defaults to ``"davies"``.

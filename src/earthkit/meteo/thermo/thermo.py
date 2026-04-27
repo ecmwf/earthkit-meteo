@@ -2535,7 +2535,7 @@ def cape_cin(
     layer_depth: float | None = None,
     extra_outputs: list | None = None,
     vertical_axis: int = 0,
-    ept_method: str = "bolton39",
+    ept_method: str = "bolton43",
     lcl_method: str = "davies",
 ) -> tuple["ArrayLike", "ArrayLike"]:
     r"""Compute Convective Available Potential Energy (CAPE) and Convective Inhibition (CIN).
@@ -2586,7 +2586,7 @@ def cape_cin(
     ept_method : str, optional
         Method used to compute equivalent potential temperature. Passed to
         :func:`earthkit.meteo.thermo.array.ept_from_specific_humidity`.
-        Defaults to ``"bolton39"``.
+        Defaults to ``"bolton43"``.
     lcl_method : str, optional
         Method used to compute the Lifted Condensation Level. Passed to
         :func:`earthkit.meteo.thermo.array.lcl`. Defaults to ``"davies"``.
