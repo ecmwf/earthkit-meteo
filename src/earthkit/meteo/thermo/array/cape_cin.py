@@ -47,15 +47,15 @@ class ParcelOrigin:
     """Pressure (Pa)."""
     t: np.ndarray
     """Temperature (K)."""
-    r: np.ndarray
-    """Mixing ratio (kg/kg)."""
+    q: np.ndarray
+    """Specific humidity (kg/kg)."""
 
 
 @dc.dataclass(frozen=True)
 class ParcelPath:
     """Temperature profile of the lifted parcel and its environment.
 
-    Profile arrays (``p``, ``t``, ``r``, ``tv``, ``tv_env``) have shape
+    Profile arrays (``p``, ``t``, ``q``, ``tv``, ``tv_env``) have shape
     ``(n_levels, ...)``, where the levels are sorted in ascending pressure
     order regardless of the order supplied by the caller.
 
@@ -69,8 +69,8 @@ class ParcelPath:
     """Pressure grid, sorted ascending (Pa)."""
     t: np.ndarray
     """Parcel temperature (K)."""
-    r: np.ndarray
-    """Parcel mixing ratio (kg/kg)."""
+    q: np.ndarray
+    """Parcel specific humidity (kg/kg)."""
     tv: np.ndarray
     """Parcel virtual temperature (K)."""
     tv_env: np.ndarray
@@ -159,24 +159,23 @@ class _CapeCinComp:
         self.lcl_method = lcl_method
         self.ept_method = ept_method
 
-    def _lifted_condensation_level_from_mixing_ratio(self, t_departure, p_departure, r_departure):
-        specific_humidity = thermo.specific_humidity_from_mixing_ratio(r_departure)
-        dewpoint = thermo.dewpoint_from_specific_humidity(specific_humidity, p_departure)
+    def _lifted_condensation_level(self, t_departure, p_departure, q_departure):
+        dewpoint = thermo.dewpoint_from_specific_humidity(q_departure, p_departure)
         t_LCL, p_LCL = thermo.lcl(t_departure, dewpoint, p_departure, method=self.lcl_method)
         return p_LCL, t_LCL
 
     def _moist_ascent_lookup_table(self):
         return _moist_ascent_lookup_table(ept_method=self.ept_method)
 
-    def _lift_parcel(self, p_start, t_start, r_start, p, t, r):
+    def _lift_parcel(self, p_start, t_start, q_start, p, t, q):
         p_shape = p.shape
         t_parcel = np.full(p_shape, np.nan)
-        r_parcel = np.full(p_shape, np.nan)
+        q_parcel = np.full(p_shape, np.nan)
 
-        p_lcl, t_lcl = self._lifted_condensation_level_from_mixing_ratio(t_start, p_start, r_start)
+        p_lcl, t_lcl = self._lifted_condensation_level(t_start, p_start, q_start)
 
         theta_parcel = thermo.potential_temperature(t_start, p_start)
-        theta_ep_parcel = _ept_from_mixing_ratio(t_start, p_start, r_start, method=self.ept_method)
+        theta_ep_parcel = thermo.ept_from_specific_humidity(t_start, q_start, p_start, method=self.ept_method)
 
         # Dry adiabatic ascent to LCL (only at valid, non-NaN pressure levels)
         valid_p = ~np.isnan(p)
@@ -184,7 +183,7 @@ class _CapeCinComp:
         t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(theta_parcel[None, ...], p)[
             between_start_and_lcl
         ]
-        r_parcel[between_start_and_lcl] = (r_start[None, ...] * np.ones(p_shape))[between_start_and_lcl]
+        q_parcel[between_start_and_lcl] = (q_start[None, ...] * np.ones(p_shape))[between_start_and_lcl]
 
         # Moist adiabatic ascent
         above_lcl = valid_p & (p_lcl[None, ...] > p)
@@ -200,14 +199,12 @@ class _CapeCinComp:
         t_interp = interpolate.RectBivariateSpline(p_range, theta_ep_range, t_moist_adiabat)
         t_parcel[above_lcl] = t_interp(p_2d[above_lcl], theta_ep_parcel_2d[above_lcl], grid=False)
         es_t_parcel = thermo.saturation_vapour_pressure(t_parcel[above_lcl], phase="water")
-        r_parcel[above_lcl] = constants.epsilon * es_t_parcel / (p_2d[above_lcl] - es_t_parcel)
+        r_parcel_moist = constants.epsilon * es_t_parcel / (p_2d[above_lcl] - es_t_parcel)
+        q_parcel[above_lcl] = thermo.specific_humidity_from_mixing_ratio(r_parcel_moist)
 
         # Calculate buoyancy
-        specific_humidity_arr = thermo.specific_humidity_from_mixing_ratio(r)
-        tv_env = thermo.virtual_temperature(t, specific_humidity_arr)
-
-        specific_humidity_parcel = thermo.specific_humidity_from_mixing_ratio(r_parcel)
-        tv_parcel = thermo.virtual_temperature(t_parcel, specific_humidity_parcel)
+        tv_env = thermo.virtual_temperature(t, q)
+        tv_parcel = thermo.virtual_temperature(t_parcel, q_parcel)
         dtv = tv_parcel - tv_env
         buoyancy = dtv / tv_env
 
@@ -226,17 +223,17 @@ class _CapeCinComp:
         buoyant_mask = np.max(buoyant_layer_mask, axis=0)
         p_lfc = np.where(buoyant_mask, p_lfc.astype(float), np.nan)
 
-        return buoyancy, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env, t_parcel, r_parcel
+        return buoyancy, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env, t_parcel, q_parcel
 
-    def _sort_pressure_levels(self, p, t, r, zh):
+    def _sort_pressure_levels(self, p, t, q, zh):
         # np.argsort places NaN at the end, which is what we want:
         # subground levels (NaN) sort to the high-pressure tail.
         sorted_inds = np.argsort(p, axis=0)
         p = np.take_along_axis(p, sorted_inds, axis=0)
         t = np.take_along_axis(t, sorted_inds, axis=0)
-        r = np.take_along_axis(r, sorted_inds, axis=0)
+        q = np.take_along_axis(q, sorted_inds, axis=0)
         zh = np.take_along_axis(zh, sorted_inds, axis=0)
-        return p, t, r, zh
+        return p, t, q, zh
 
     def _integrate_buoyancy(self, buoyancy, p, zh, p_lfc, p_el):
         layer_thickness = -np.diff(zh, axis=0)
@@ -257,10 +254,10 @@ class _CapeCinComp:
         cin[cape <= 1] = 0
         return cape, cin
 
-    def _determine_parcel(self, p, zh, t, r, layer_depth, p_sfc, t_sfc, r_sfc):
+    def _determine_parcel(self, p, zh, t, q, layer_depth, p_sfc, t_sfc, q_sfc):
         raise NotImplementedError("This method should be implemented in the subclass")
 
-    def _cape_cin(self, p, zh, t, r, p_sfc, zh_sfc, t_sfc, r_sfc):
+    def _cape_cin(self, p, zh, t, q, p_sfc, zh_sfc, t_sfc, q_sfc):
         # Shapes of all arrays should be (n_vertical_levels, ...) where the vertical axis is the first axis (axis=0)
         # Surface arrays have shape (...) — i.e. horizontal dims only.
 
@@ -270,32 +267,32 @@ class _CapeCinComp:
         # 2. Detect bad-data NaN: NaN at above-ground grid positions or NaN in the surface inputs.
         #    NaN at subground positions (which may already be present in the input) is expected
         #    and should NOT be treated as bad data.
-        nan_in_grid = np.isnan(p) | np.isnan(t) | np.isnan(r) | np.isnan(zh)
+        nan_in_grid = np.isnan(p) | np.isnan(t) | np.isnan(q) | np.isnan(zh)
         bad_data_in_grid = nan_in_grid & ~subground
-        bad_data_in_sfc = np.isnan(p_sfc) | np.isnan(t_sfc) | np.isnan(r_sfc) | np.isnan(zh_sfc)
+        bad_data_in_sfc = np.isnan(p_sfc) | np.isnan(t_sfc) | np.isnan(q_sfc) | np.isnan(zh_sfc)
         bad_data_mask = np.any(bad_data_in_grid, axis=0) | bad_data_in_sfc
 
         # 3. Mask subground levels to NaN in working copies
         p = np.where(subground, np.nan, p)
         zh = np.where(subground, np.nan, zh)
         t = np.where(subground, np.nan, t)
-        r = np.where(subground, np.nan, r)
+        q = np.where(subground, np.nan, q)
 
         # 4. Concatenate surface level into the grid
         p = np.concatenate([p, p_sfc[None, ...]], axis=0)
         zh = np.concatenate([zh, zh_sfc[None, ...]], axis=0)
         t = np.concatenate([t, t_sfc[None, ...]], axis=0)
-        r = np.concatenate([r, r_sfc[None, ...]], axis=0)
+        q = np.concatenate([q, q_sfc[None, ...]], axis=0)
 
         # 5. Sort pressure ascending (NaN subground levels go to the end)
-        p, t, r, zh = self._sort_pressure_levels(p, t, r, zh)
+        p, t, q, zh = self._sort_pressure_levels(p, t, q, zh)
 
         # 6. Determine parcel (using explicit surface properties)
-        p_start, t_start, r_start = self._determine_parcel(p, zh, t, r, self.layer_depth, p_sfc, t_sfc, r_sfc)
+        p_start, t_start, q_start = self._determine_parcel(p, zh, t, q, self.layer_depth, p_sfc, t_sfc, q_sfc)
 
         # 7. Lift parcel and compute buoyancy
-        buoyancy, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env, t_parcel, r_parcel = self._lift_parcel(
-            p_start, t_start, r_start, p, t, r
+        buoyancy, p_lcl, t_lcl, p_lfc, t_lfc, p_el, t_el, tv_parcel, tv_env, t_parcel, q_parcel = self._lift_parcel(
+            p_start, t_start, q_start, p, t, q
         )
 
         # 8. Integrate buoyancy (nansum naturally skips NaN subground levels)
@@ -317,7 +314,7 @@ class _CapeCinComp:
         lcl = PressureLevel(p=p_lcl, t=t_lcl)
         lfc = PressureLevel(p=p_lfc, t=t_lfc)
         el = PressureLevel(p=p_el, t=t_el)
-        origin = ParcelOrigin(p=p_start, t=t_start, r=r_start)
+        origin = ParcelOrigin(p=p_start, t=t_start, q=q_start)
 
         extras = {}
         for key in self.extra_outputs:
@@ -333,7 +330,7 @@ class _CapeCinComp:
                 extras["parcel_path"] = ParcelPath(
                     p=p,
                     t=t_parcel,
-                    r=r_parcel,
+                    q=q_parcel,
                     tv=tv_parcel,
                     tv_env=tv_env,
                     lcl=lcl,
@@ -345,12 +342,12 @@ class _CapeCinComp:
 
 
 class _CapeCinSurface(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, layer_depth, p_sfc, t_sfc, r_sfc):
-        return p_sfc, t_sfc, r_sfc
+    def _determine_parcel(self, p, zh, t, q, layer_depth, p_sfc, t_sfc, q_sfc):
+        return p_sfc, t_sfc, q_sfc
 
 
 class _CapeCinMixed(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, layer_depth, p_sfc, t_sfc, r_sfc):
+    def _determine_parcel(self, p, zh, t, q, layer_depth, p_sfc, t_sfc, q_sfc):
         if layer_depth is None:
             layer_depth = 5000
 
@@ -364,18 +361,18 @@ class _CapeCinMixed(_CapeCinComp):
         theta_mean = np.nanmean(theta, axis=0)
         t_mixed = thermo.temperature_from_potential_temperature(theta_mean, p_bottom)
 
-        r_copy = np.copy(r)
-        r_copy[(p > p_bottom[None, ...]) | (p < p_top[None, ...])] = np.nan
-        r_mixed = np.nanmean(r_copy, axis=0)
+        q_copy = np.copy(q)
+        q_copy[(p > p_bottom[None, ...]) | (p < p_top[None, ...])] = np.nan
+        q_mixed = np.nanmean(q_copy, axis=0)
 
-        return p_bottom, t_mixed, r_mixed
+        return p_bottom, t_mixed, q_mixed
 
 
 class _CapeCinMostUnstable(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, layer_depth, p_sfc, t_sfc, r_sfc):
+    def _determine_parcel(self, p, zh, t, q, layer_depth, p_sfc, t_sfc, q_sfc):
         t_shape = t.shape
 
-        theta_ep_env = _ept_from_mixing_ratio(t, p, r, method=self.ept_method)
+        theta_ep_env = thermo.ept_from_specific_humidity(t, q, p, method=self.ept_method)
         if layer_depth is None:
             layer_depth = 50000
 
@@ -409,10 +406,10 @@ class _CapeCinMostUnstable(_CapeCinComp):
             start_level_indices = localmaxarg[k_candidate, ...]
             p_start_candidate = np.take_along_axis(p, start_level_indices[None, ...], axis=0).squeeze(0)
             t_start_candidate = np.take_along_axis(t, start_level_indices[None, ...], axis=0).squeeze(0)
-            r_start_candidate = np.take_along_axis(r, start_level_indices[None, ...], axis=0).squeeze(0)
+            q_start_candidate = np.take_along_axis(q, start_level_indices[None, ...], axis=0).squeeze(0)
 
             buoyancy, _, _, _, _, _, _, _, _, _, _ = self._lift_parcel(
-                p_start_candidate, t_start_candidate, r_start_candidate, p, t, r
+                p_start_candidate, t_start_candidate, q_start_candidate, p, t, q
             )
 
             dcape = constants.g * ((buoyancy[:-1, :] + buoyancy[1:, :]) / 2) * layer_thickness
@@ -428,8 +425,8 @@ class _CapeCinMostUnstable(_CapeCinComp):
 
         p_start = np.take_along_axis(p, start_index_max[None, ...], axis=0).squeeze(0)
         t_start = np.take_along_axis(t, start_index_max[None, ...], axis=0).squeeze(0)
-        r_start = np.take_along_axis(r, start_index_max[None, ...], axis=0).squeeze(0)
-        return p_start, t_start, r_start
+        q_start = np.take_along_axis(q, start_index_max[None, ...], axis=0).squeeze(0)
+        return p_start, t_start, q_start
 
 
 _PARCEL_CLASSES = {
@@ -443,11 +440,11 @@ def cape_cin(
     p: "ArrayLike",
     zh: "ArrayLike",
     t: "ArrayLike",
-    r: "ArrayLike",
+    q: "ArrayLike",
     p_sfc: "ArrayLike",
     zh_sfc: "ArrayLike",
     t_sfc: "ArrayLike",
-    r_sfc: "ArrayLike",
+    q_sfc: "ArrayLike",
     parcel_type: str,
     layer_depth: float | None = None,
     extra_outputs: list | None = None,
@@ -471,16 +468,16 @@ def cape_cin(
         Geopotential height on model/pressure levels (m), same shape as ``p``.
     t : array-like
         Temperature on model/pressure levels (K), same shape as ``p``.
-    r : array-like
-        Mixing ratio on model/pressure levels (kg/kg), same shape as ``p``.
+    q : array-like
+        Specific humidity on model/pressure levels (kg/kg), same shape as ``p``.
     p_sfc : array-like
         Surface pressure (Pa), shape ``(...)`` (horizontal dimensions only).
     zh_sfc : array-like
         Surface geopotential height (m), same shape as ``p_sfc``.
     t_sfc : array-like
         Surface temperature (K), same shape as ``p_sfc``.
-    r_sfc : array-like
-        Surface mixing ratio (kg/kg), same shape as ``p_sfc``.
+    q_sfc : array-like
+        Surface specific humidity (kg/kg), same shape as ``p_sfc``.
     parcel_type : str
         Method used to define the lifted parcel. One of:
 
@@ -539,11 +536,11 @@ def cape_cin(
     p = np.asarray(p, dtype=float)
     zh = np.asarray(zh, dtype=float)
     t = np.asarray(t, dtype=float)
-    r = np.asarray(r, dtype=float)
+    q = np.asarray(q, dtype=float)
     p_sfc = np.asarray(p_sfc, dtype=float)
     zh_sfc = np.asarray(zh_sfc, dtype=float)
     t_sfc = np.asarray(t_sfc, dtype=float)
-    r_sfc = np.asarray(r_sfc, dtype=float)
+    q_sfc = np.asarray(q_sfc, dtype=float)
 
     if vertical_axis != 0:
         if vertical_axis == -1:
@@ -554,11 +551,11 @@ def cape_cin(
         p = np.swapaxes(p, 0, vertical_axis)
         zh = np.swapaxes(zh, 0, vertical_axis)
         t = np.swapaxes(t, 0, vertical_axis)
-        r = np.swapaxes(r, 0, vertical_axis)
+        q = np.swapaxes(q, 0, vertical_axis)
 
     result = _PARCEL_CLASSES[parcel_type](
         layer_depth=layer_depth, extra_outputs=extra_outputs, lcl_method=lcl_method, ept_method=ept_method
-    )._cape_cin(p, zh, t, r, p_sfc, zh_sfc, t_sfc, r_sfc)
+    )._cape_cin(p, zh, t, q, p_sfc, zh_sfc, t_sfc, q_sfc)
 
     # Swap the vertical axis of profile arrays back to match caller's layout.
     if vertical_axis != 0 and len(result) == 3:
@@ -568,7 +565,7 @@ def cape_cin(
             extras["parcel_path"] = ParcelPath(
                 p=np.swapaxes(path.p, 0, vertical_axis),
                 t=np.swapaxes(path.t, 0, vertical_axis),
-                r=np.swapaxes(path.r, 0, vertical_axis),
+                q=np.swapaxes(path.q, 0, vertical_axis),
                 tv=np.swapaxes(path.tv, 0, vertical_axis),
                 tv_env=np.swapaxes(path.tv_env, 0, vertical_axis),
                 lcl=path.lcl,
