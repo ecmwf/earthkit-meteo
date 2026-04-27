@@ -730,7 +730,7 @@ def test_lcl(t, td, p, t_ref, p_ref, method, xp, device):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("method", ["ifs", "bolton35", "bolton39"])
+@pytest.mark.parametrize("method", ["ifs", "bolton35", "bolton39", "bolton43"])
 def test_ept(method, xp, device):
     data = ThermoInputData(xp, device)
 
