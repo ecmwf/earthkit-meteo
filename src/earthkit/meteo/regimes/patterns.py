@@ -90,16 +90,23 @@ class Patterns(abc.ABC):
         """
         import xarray as xr
 
+        xp = self.xp
         # Extra coordinate dims, in order of reference dims
         extra_dims = [dim for dim in reference_da.dims if dim in patterns_extra_coords.values()]
         # Output dimensions and coordinates of the patterns
         dims = [*extra_dims, *reference_da.dims[-self.ndim :]]
         coords = {dim: reference_da.coords[dim] for dim in dims}
+        # Lazy and chunked pattern generation: if the reference dataset is
+        # chunked, transfer its chunking to the coordinates and use the chunk-
+        # enabled array namespace in the next step
+        if reference_da.chunksizes:
+            xp = array_namespace(reference_da.data)
+            coords = {dim: xp.asarray(values).rechunk(reference_da.chunksizes[dim]) for dim, values in coords.items()}
         # Cartesian product of coordinates for patterns generator
         extra_coords_arrs = dict(
             zip(
                 extra_dims,
-                self.xp.meshgrid(*(coords[dim] for dim in extra_dims), indexing="ij"),
+                xp.meshgrid(*(coords[dim] for dim in extra_dims), indexing="ij"),
             )
         )
         # Rearrange to match provided kwarg-coord mapping
