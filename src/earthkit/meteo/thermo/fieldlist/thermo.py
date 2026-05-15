@@ -42,6 +42,14 @@ def specific_humidity_from_mixing_ratio(w: FieldList) -> FieldList:
     FieldList
         Specific humidity (kg/kg)
 
+
+    The result is the specific humidity in kg/kg units. The computation is based on
+    the following definition [Wallace2006]_:
+
+    .. math::
+
+        q = \frac {w}{1+w}
+
     """
     fieldlist_ufunc_kwargs = {"default": "q"}
     return fieldlist_ufunc(array.specific_humidity_from_mixing_ratio, w, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
@@ -59,6 +67,14 @@ def mixing_ratio_from_specific_humidity(q: FieldList) -> FieldList:
     -------
     FieldList
         Mixing ratio (kg/kg)
+
+
+    The result is the mixing ratio in kg/kg units. The computation is based on
+    the following definition [Wallace2006]_:
+
+    .. math::
+
+        w = \frac {q}{1-q}
 
     """
     fieldlist_ufunc_kwargs = {"default": "w"}
@@ -79,6 +95,15 @@ def vapour_pressure_from_specific_humidity(q: FieldList, p: FieldList) -> FieldL
     -------
     FieldList
         Vapour pressure (Pa)
+
+
+    The computation is based on the following formula [Wallace2006]_:
+
+    .. math::
+
+        e = \frac{pq}{\epsilon (1 + q(\frac{1}{\epsilon} -1 ))}
+
+    with :math:`\epsilon =  R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
     fieldlist_ufunc_kwargs = {"default": "e", "param_unit": "Pa"}
@@ -105,6 +130,15 @@ def vapour_pressure_from_mixing_ratio(w: FieldList, p: FieldList) -> FieldList:
     FieldList
         Vapour pressure (Pa)
 
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        e = \frac{pw}{\epsilon + w}
+
+    with :math:`\epsilon =  R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
+
     """
     fieldlist_ufunc_kwargs = {"default": "e", "param_unit": "Pa"}
     if p is None:
@@ -129,6 +163,15 @@ def specific_humidity_from_vapour_pressure(e: FieldList, p: FieldList, eps: floa
     -------
     FieldList
         Specific humidity (kg/kg)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+       q = \frac{\epsilon e}{p + e(\epsilon-1)}
+
+    with :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
     fieldlist_ufunc_kwargs = {"default": "q", "param_unit": "kg/kg"}
@@ -161,6 +204,15 @@ def mixing_ratio_from_vapour_pressure(e: FieldList, p: FieldList, eps: float = 1
     FieldList
         Mixing ratio (kg/kg)
 
+
+    The computation is based on the following formula:
+
+    .. math::
+
+       w = \frac{\epsilon e}{p - e}
+
+    with :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
+
     """
     fieldlist_ufunc_kwargs = {"default": "w", "param_unit": "kg/kg"}
     if p is None:
@@ -187,6 +239,31 @@ def saturation_vapour_pressure(t: FieldList, phase: str = "mixed") -> FieldList:
     FieldList
         Saturation vapour pressure (Pa)
 
+
+    The algorithm was taken from the IFS model [IFS-CY47R3-PhysicalProcesses]_ (see Chapter 12).
+    It uses the following formula when ``phase`` is "water" or "ice":
+
+    .. math::
+
+        e_{sat} = a_{1} exp \left(a_{3}\frac{t-273.16}{t-a_{4}}\right)
+
+    where the parameters are set as follows:
+
+    * ``phase`` = "water": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =17.502 and :math:`a_{4}` =32.19 K
+    * ``phase`` = "ice": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =22.587 and :math:`a_{4}` =-0.7 K
+
+    When ``phase`` is "mixed" the formula is based on the value of ``t``:
+
+    * if :math:`t <= t_{i}`: the formula for ``phase`` = "ice" is used (:math:`t_{i} = 250.16 K`)
+    * if :math:`t >= t_{0}`: the formula for ``phase`` = "water" is used (:math:`t_{0} = 273.16 K`)
+    * for the range :math:`t_{i} < t < t_{0}` an interpolation is used between the "ice" and "water" phases:
+
+    .. math::
+
+        \alpha(t) e_{wsat}(t) + (1 - \alpha(t)) e_{isat}(t)
+
+    with :math:`\alpha(t) = (\frac{t-t_{i}}{t_{0}-t_{i}})^2`.
+
     """
     fieldlist_ufunc_kwargs = {"default": "es", "param_unit": "Pa"}
     return fieldlist_ufunc(
@@ -204,13 +281,21 @@ def saturation_mixing_ratio(t: FieldList, p: FieldList, phase: str = "mixed") ->
     p : FieldList
         Pressure (Pa)
     phase : str, optional
-        Define the phase with respect to the saturation vapour pressure is computed.
+        Define the phase with respect to the :func:`saturation_vapour_pressure` is computed.
         It is either "water", "ice" or "mixed".
 
     Returns
     -------
     FieldList
         Saturation mixing ratio (kg/kg)
+
+
+    Equivalent to the following code:
+
+    .. code-block:: python
+
+        e = saturation_vapour_pressure(t, phase=phase)
+        return mixing_ratio_from_vapour_pressure(e, p)
 
     """
     fieldlist_ufunc_kwargs = {"default": "ws", "param_unit": "kg/kg"}
@@ -233,13 +318,21 @@ def saturation_specific_humidity(t: FieldList, p: FieldList, phase: str = "mixed
     p : FieldList
         Pressure (Pa)
     phase : str, optional
-        Define the phase with respect to the saturation vapour pressure is computed.
+        Define the phase with respect to the :func:`saturation_vapour_pressure` is computed.
         It is either "water", "ice" or "mixed".
 
     Returns
     -------
     FieldList
         Saturation specific humidity (kg/kg)
+
+
+    Equivalent to the following code:
+
+    .. code-block:: python
+
+        e = saturation_vapour_pressure(t, phase=phase)
+        return specific_humidity_from_vapour_pressure(e, p)
 
     """
     fieldlist_ufunc_kwargs = {"default": "qs", "param_unit": "kg/kg"}
@@ -259,7 +352,8 @@ def saturation_vapour_pressure_slope(t: FieldList, phase: str = "mixed") -> Fiel
         Temperature (K)
     phase : str, optional
         Define the phase with respect to the computation will be performed.
-        It is either "water", "ice" or "mixed".
+        It is either "water", "ice" or "mixed". See :func:`saturation_vapour_pressure`
+        for details.
 
     Returns
     -------
@@ -297,6 +391,18 @@ def saturation_mixing_ratio_slope(
     -------
     FieldList
         Slope of saturation mixing ratio (kg kg-1 K-1)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        \frac{\partial w_{s}}{\partial t} = \frac{\epsilon  p}{(p-e_{s})^{2}} \frac{d e_{s}}{d t}
+
+    where
+
+        * :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
+        * :math:`e_{s}` is the :func:`saturation_vapour_pressure` for the given ``phase``
 
     """
     fieldlist_ufunc_kwargs = {"default": "ws_slope", "param_unit": "kg kg-1 K-1"}
@@ -337,6 +443,19 @@ def saturation_specific_humidity_slope(
     FieldList
         Slope of saturation specific humidity (kg kg-1 K-1)
 
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        \frac{\partial q_{s}}{\partial t} =
+        \frac{\epsilon  p}{(p+e_{s}(\epsilon - 1))^{2}} \frac{d e_{s}}{d t}
+
+    where
+
+        * :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
+        * :math:`e_{s}` is the :func:`saturation_vapour_pressure` for the given ``phase``
+
     """
     fieldlist_ufunc_kwargs = {"default": "qs_slope", "param_unit": "kg kg-1 K-1"}
     if p is None:
@@ -357,12 +476,17 @@ def temperature_from_saturation_vapour_pressure(es: FieldList) -> FieldList:
     Parameters
     ----------
     es : FieldList
-        Saturation vapour pressure (Pa)
+        :func:`saturation_vapour_pressure` (Pa)
 
     Returns
     -------
     FieldList
-        Temperature (K)
+        Temperature (K). For zero ``es`` values returns nan.
+
+
+    The computation is always based on the "water" phase of
+    the :func:`saturation_vapour_pressure` formulation irrespective of the
+    phase ``es`` was computed to.
 
     """
     fieldlist_ufunc_kwargs = {"default": "t", "param_unit": "K"}
@@ -386,6 +510,15 @@ def relative_humidity_from_dewpoint(t: FieldList, td: FieldList) -> FieldList:
     FieldList
         Relative humidity (%)
 
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        r = 100 \frac {e_{wsat}(td)}{e_{wsat}(t)}
+
+    where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
+
     """
     fieldlist_ufunc_kwargs = {"default": "r", "param_unit": "%"}
     return fieldlist_ufunc(array.relative_humidity_from_dewpoint, t, td, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
@@ -407,6 +540,18 @@ def relative_humidity_from_specific_humidity(t: FieldList, q: FieldList, p: Fiel
     -------
     FieldList
         Relative humidity (%)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        r = 100 \frac {e(q, p)}{e_{msat}(t)}
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_specific_humidity`)
+        * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
 
     """
     fieldlist_ufunc_kwargs = {"default": "r", "param_unit": "%"}
@@ -432,6 +577,21 @@ def specific_humidity_from_dewpoint(td: FieldList, p: FieldList) -> FieldList:
     FieldList
         Specific humidity (kg/kg)
 
+
+    The computation starts with determining the vapour pressure:
+
+    .. math::
+
+        e(q, p) = e_{wsat}(td)
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_specific_humidity`)
+        * :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water
+        * :math:`q` is the specific humidity
+
+    Then `q` is computed from :math:`e` using :func:`specific_humidity_from_vapour_pressure`.
+
     """
     fieldlist_ufunc_kwargs = {"default": "q", "param_unit": "kg/kg"}
     if p is None:
@@ -453,6 +613,21 @@ def mixing_ratio_from_dewpoint(td: FieldList, p: FieldList) -> FieldList:
     -------
     FieldList
         Mixing ratio (kg/kg)
+
+
+    The computation starts with determining the vapour pressure:
+
+    .. math::
+
+        e(w, p) = e_{wsat}(td)
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_mixing_ratio`)
+        * :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water
+        * :math:`w` is the mixing ratio
+
+    Then `w` is computed from :math:`e` using :func:`mixing_ratio_from_vapour_pressure`.
 
     """
     fieldlist_ufunc_kwargs = {"default": "w", "param_unit": "kg/kg"}
@@ -478,6 +653,21 @@ def specific_humidity_from_relative_humidity(t: FieldList, r: FieldList, p: Fiel
     FieldList
         Specific humidity (kg/kg)
 
+
+    The computation starts with determining the vapour pressure:
+
+    .. math::
+
+        e(q, p) = r  \frac{e_{msat}(t)}{100}
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure`)
+        * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
+        * :math:`q` is the specific humidity
+
+    Then :math:`q` is computed from :math:`e` using :func:`specific_humidity_from_vapour_pressure`.
+
     """
     fieldlist_ufunc_kwargs = {"default": "q", "param_unit": "kg/kg"}
     if p is None:
@@ -500,7 +690,23 @@ def dewpoint_from_relative_humidity(t: FieldList, r: FieldList) -> FieldList:
     Returns
     -------
     FieldList
-        Dewpoint temperature (K)
+        Dewpoint temperature (K). For zero ``r`` values returns nan.
+
+
+    The computation starts with determining the saturation vapour pressure over
+    water at the dewpoint temperature:
+
+    .. math::
+
+        e_{wsat}(td) = \frac{r  e_{wsat}(t)}{100}
+
+    where:
+
+    * :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water
+    * :math:`td` is the dewpoint.
+
+    Then :math:`td` is computed from :math:`e_{wsat}(td)` by inverting the
+    equations used in :func:`saturation_vapour_pressure`.
 
     """
     fieldlist_ufunc_kwargs = {"default": "td"}
@@ -520,7 +726,24 @@ def dewpoint_from_specific_humidity(q: FieldList, p: FieldList) -> FieldList:
     Returns
     -------
     FieldList
-        Dewpoint temperature (K)
+        Dewpoint temperature (K). For zero ``q`` values returns nan.
+
+
+    The computation starts with determining the saturation vapour pressure over
+    water at the dewpoint temperature:
+
+    .. math::
+
+        e_{wsat}(td) = e(q, p)
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_specific_humidity`)
+        * :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water
+        * :math:`td` is the dewpoint
+
+    Then :math:`td` is computed from :math:`e_{wsat}(td)` by inverting the equations
+    used in :func:`saturation_vapour_pressure`.
 
     """
     fieldlist_ufunc_kwargs = {"default": "td", "param_unit": "K"}
@@ -544,6 +767,15 @@ def virtual_temperature(t: FieldList, q: FieldList) -> FieldList:
     FieldList
         Virtual temperature (K)
 
+
+    The computation is based on the following formula [Wallace2006]_:
+
+    .. math::
+
+        t_{v} = t (1 + \frac{1 - \epsilon}{\epsilon} q)
+
+    with :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
+
     """
     fieldlist_ufunc_kwargs = {"default": "tv"}
     return fieldlist_ufunc(array.virtual_temperature, t, q, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
@@ -565,6 +797,18 @@ def virtual_potential_temperature(t: FieldList, q: FieldList, p: FieldList) -> F
     -------
     FieldList
         Virtual potential temperature (K)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        \Theta_{v} = \theta (1 + \frac{1 - \epsilon}{\epsilon} q)
+
+    where:
+
+        * :math:`\Theta` is the :func:`potential_temperature`
+        * :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
     fieldlist_ufunc_kwargs = {"default": "thv"}
@@ -623,6 +867,15 @@ def temperature_from_potential_temperature(th: FieldList, p: FieldList | Iterabl
     FieldList
         Temperature (K)
 
+
+    The computation is based on the following formula:
+
+    .. math::
+
+       t = \theta (\frac{p}{10^{5}})^{\kappa}
+
+    with :math:`\kappa = R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
+
     """
     fieldlist_ufunc_kwargs = {"default": "t"}
 
@@ -651,6 +904,15 @@ def pressure_on_dry_adiabat(t: FieldList, t_def: FieldList, p_def: FieldList) ->
     FieldList
         Pressure on the dry adiabat (Pa)
 
+
+    The computation is based on the following formula:
+
+    .. math::
+
+       p = p_{def} (\frac{t}{t_{def}})^{\frac{1}{\kappa}}
+
+    with :math:`\kappa =  R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
+
     """
     fieldlist_ufunc_kwargs = {"default": "p", "param_unit": "Pa"}
     return fieldlist_ufunc(
@@ -675,6 +937,15 @@ def temperature_on_dry_adiabat(p: FieldList, t_def: FieldList, p_def: FieldList)
     FieldList
         Temperature on the dry adiabat (K)
 
+
+    The computation is based on the following formula:
+
+    .. math::
+
+       t = t_{def} (\frac{p}{p_{def}})^{\kappa}
+
+    with :math:`\kappa =  R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
+
     """
     fieldlist_ufunc_kwargs = {"default": "t", "param_unit": "K"}
     return fieldlist_ufunc(
@@ -698,6 +969,24 @@ def lcl_temperature(t: FieldList, td: FieldList, method: str = "davies") -> Fiel
     -------
     FieldList
         Temperature of the LCL (K)
+
+
+    The actual computation is based on the ``method``:
+
+    * "davies": the formula by [DaviesJones1983]_ is used (it is also used by the IFS model):
+
+        .. math::
+
+            t_{LCL} =
+            td - (0.212 + 1.571\times 10^{-3} (td - t_{0}) - 4.36\times 10^{-4} (t - t_{0})) (t - td)
+
+      where :math:`t_{0}` is the triple point of water (see :data:`earthkit.meteo.constants.T0`).
+
+    * "bolton": the formula by [Bolton1980]_ is used:
+
+        .. math::
+
+            t_{LCL} = 56.0 +  \frac{1}{\frac{1}{td - 56} + \frac{log(\frac{t}{td})}{800}}
 
     """
     fieldlist_ufunc_kwargs = {"default": "t_lcl"}
@@ -724,6 +1013,10 @@ def lcl(t: FieldList, td: FieldList, p: FieldList, method: str = "davies") -> tu
         Temperature of the LCL (K)
     FieldList
         Pressure of the LCL (Pa)
+
+
+    The LCL temperature is determined by :func:`lcl_temperature` with the given ``method``
+    and the pressure is computed with :math:`t_{LCL}` using :func:`pressure_on_dry_adiabat`.
 
     """
     import earthkit.data as ekd
@@ -752,12 +1045,62 @@ def ept_from_dewpoint(t: FieldList, td: FieldList, p: FieldList, method: str = "
     p : FieldList
         Pressure (Pa)
     method : str, optional
-        Computation method: "ifs", "bolton35", "bolton39", "bolton43".
+        Specify the computation method. The possible values are: "ifs", "bolton35", "bolton39", "bolton43".
 
     Returns
     -------
     FieldList
         Equivalent potential temperature (K)
+
+
+    The actual computation is based on the value of ``method``:
+
+    * "ifs": the formula from the IFS model [IFS-CY47R3-PhysicalProcesses]_ (Chapter 6.11) is used:
+
+        .. math::
+
+            \Theta_{e} = \Theta  exp(\frac{L_{v}  q}{c_{pd}  t_{LCL}})
+
+    * "bolton35": Eq (35) from [Bolton1980]_ is used:
+
+
+        .. math::
+
+            \Theta_{e} = \Theta (\frac{10^{5}}{p})^{\kappa 0.28 w} exp(\frac{2675 w}{t_{LCL}})
+
+    * "bolton39": Eq (39) from [Bolton1980]_ is used:
+
+        .. math::
+
+            \Theta_{e} =
+            t (\frac{10^{5}}{p-e})^{\kappa} (\frac{t}{t_{LCL}})^{0.28 w} exp[(\frac{3036}{t_{LCL}} -
+            1.78)w(1+0.448  w)]
+
+    * "bolton43": Eq (43) from [Bolton1980]_ is used:
+
+        .. math::
+
+            \Theta_{e} =
+            t (\frac{10^{5}}{p})^{\kappa (1-0.28\; 10^{-3}w)} exp[(\frac{3376}{t_{LCL}} -
+            2.54)w(1+0.81w)]
+
+    where:
+
+        * :math:`\Theta` is the :func:`potential_temperature`
+        * :math:`t` is the temperature at the start level
+        * :math:`t_{LCL}` is the temperature at the Lifting Condensation Level computed
+          with :func:`lcl_temperature` using option:
+
+            * method="davis" when ``method`` is "ifs"
+            * method="bolton" when ``method`` is "bolton35", "bolton39", or "bolton43"
+        * :math:`q` is the specific humidity computed with :func:`specific_humidity_from_dewpoint`
+        * :math:`w`: is the mixing ratio computed with :func:`mixing_ratio_from_dewpoint`
+        * :math:`e` is the vapour pressure computed with :func:`vapour_pressure_from_mixing_ratio`
+        * :math:`L_{v}`: is the latent heat of vaporisation
+          (see :data:`earthkit.meteo.constants.Lv`)
+        * :math:`c_{pd}` is the specific heat of dry air on constant pressure
+          (see :data:`earthkit.meteo.constants.c_pd`)
+        * :math:`\kappa = R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`)
 
     """
     fieldlist_ufunc_kwargs = {"default": "ept"}
@@ -782,12 +1125,17 @@ def ept_from_specific_humidity(t: FieldList, q: FieldList, p: FieldList, method:
     p : FieldList
         Pressure (Pa)
     method : str, optional
-        Computation method: "ifs", "bolton35", "bolton39", "bolton43".
+        Specify the computation method. The possible values are: "ifs",
+        "bolton35", "bolton39", "bolton43". See :func:`ept_from_dewpoint` for details.
 
     Returns
     -------
     FieldList
         Equivalent potential temperature (K)
+
+
+    The computations are the same as in :func:`ept_from_dewpoint`
+    (the dewpoint is computed from q with :func:`dewpoint_from_specific_humidity`).
 
     """
     fieldlist_ufunc_kwargs = {"default": "ept"}
@@ -815,12 +1163,45 @@ def saturation_ept(t: FieldList, p: FieldList, method: str = "ifs") -> FieldList
     p : FieldList
         Pressure (Pa)
     method : str, optional
-        Computation method: "ifs", "bolton35", "bolton39".
+        Specifies the computation method. The possible values are: "ifs", "bolton35", "bolton39".
 
     Returns
     -------
     FieldList
         Saturation equivalent potential temperature (K)
+
+
+    The actual computation is based on the ``method``:
+
+    * "ifs": The formula is based on the equivalent potential temperature definition used
+       in the IFS model [IFS-CY47R3-PhysicalProcesses]_ (see Chapter 6.11) :
+
+        .. math::
+
+            \Theta_{esat} = \Theta  exp(\frac{L_{v}  q_{sat}}{c_{pd}  t})
+
+    * "bolton35": Eq (35) from [Bolton1980]_ is used:
+
+        .. math::
+
+            \Theta_{e} = \Theta (\frac{10^{5}}{p})^{\kappa 0.28 w_{sat}}  exp(\frac{2675  w_{sat}}{t})
+
+    * "bolton39": Eq (39) from [Bolton1980]_ is used:
+
+        .. math::
+
+            \Theta_{e} =
+            t (\frac{10^{5}}{p-e_{sat}})^{\kappa} exp[(\frac{3036}{t} - 1.78)w_{sat}(1+0.448  w_{sat})]
+
+    where:
+
+        * :math:`\Theta` is the :func:`potential_temperature`
+        * :math:`e_{sat}` is the :func:`saturation_vapor_pressure`
+        * :math:`q_{sat}` is the :func:`saturation_specific_humidity`
+        * :math:`w_{sat}` is the :func:`saturation_mixing_ratio`
+        * :math:`L_{v}` is the specific latent heat of vaporization (see :data:`earthkit.meteo.constants.Lv`)
+        * :math:`c_{pd}` is the specific heat of dry air on constant pressure
+          (see :data:`earthkit.meteo.constants.c_pd`)
 
     """
     fieldlist_ufunc_kwargs = {"default": "ept_sat"}
@@ -844,14 +1225,25 @@ def temperature_on_moist_adiabat(
     p : FieldList
         Pressure on the moist adiabat (Pa)
     ept_method : str, optional
-        Computation method used to compute ``ept``: "ifs", "bolton35", "bolton39".
+        Specifies the computation method that was used to compute ``ept``. The possible
+        values are: "ifs", "bolton35", "bolton39".
+        (See :func:`ept_from_dewpoint` for details.)
     t_method : str, optional
-        Iteration method: "bisect" or "newton".
+        Specifies the iteration method along the moist adiabat to find the temperature
+        for the given ``p`` pressure. The possible values are as follows:
+
+        * "bisect": a bisection method is used as defined in [Stipanuk1973]_
+        * "newton": Newtons's method is used as defined by Eq (2.6) in [DaviesJones2008]_.
+          For extremely hot and humid conditions (``ept`` > 800 K) depending on
+          ``ept_method`` the computation might not be carried out
+          and nan will be returned.
+
 
     Returns
     -------
     FieldList
-        Temperature on the moist adiabat (K)
+        Temperature on the moist adiabat (K). For values where the computation cannot
+        be carried out nan is returned.
 
     """
     fieldlist_ufunc_kwargs = {"default": "t"}
@@ -885,14 +1277,28 @@ def wet_bulb_temperature_from_dewpoint(
     p : FieldList
         Pressure (Pa)
     ept_method : str, optional
-        Computation method for equivalent potential temperature: "ifs", "bolton35", "bolton39".
+        Specifies the computation method for the equivalent potential temperature.
+        The possible values are: "ifs", "bolton35", "bolton39".
+        (See :func:`ept_from_dewpoint` for details.)
     t_method : str, optional
-        Iteration method: "bisect" or "newton".
+        Specifies the method to find the temperature along the moist adiabat defined
+        by the equivalent potential temperature. The possible values are as follows:
+
+        * "bisect": :func:`temperature_on_moist_adiabat` with ``t_method`` = "bisect" is used
+        * "newton": :func:`temperature_on_moist_adiabat` with ``t_method`` = "newton" is used
 
     Returns
     -------
     FieldList
         Wet bulb temperature (K)
+
+
+    The computation is based on Normand's rule [Wallace2006]_ (Chapter 3.5.6):
+
+    * first the equivalent potential temperature is computed with the given
+      ``ept_method`` (using :func:`ept_from_dewpoint`). This defines the moist adiabat.
+    * then the wet bulb potential temperature is determined as the temperature at
+      pressure ``p`` on the moist adiabat with the given ``t_method``.
 
     """
     fieldlist_ufunc_kwargs = {"default": "wbt"}
@@ -927,14 +1333,29 @@ def wet_bulb_temperature_from_specific_humidity(
     p : FieldList
         Pressure (Pa)
     ept_method : str, optional
-        Computation method for equivalent potential temperature: "ifs", "bolton35", "bolton39".
+        Specifies the computation method for the equivalent potential temperature.
+        The possible values are: "ifs", "bolton35", "bolton39".
+        (See :func:`ept_from_dewpoint` for details.)
     t_method : str, optional
-        Iteration method: "bisect" or "newton".
+        Specifies the method to find the temperature along the moist adiabat
+        defined by the equivalent potential temperature. The possible values are
+        as follows:
+
+        * "bisect": :func:`temperature_on_moist_adiabat` with ``t_method`` = "bisect" is used
+        * "newton": :func:`temperature_on_moist_adiabat` with ``t_method`` = "newton" is used
 
     Returns
     -------
     FieldList
         Wet bulb temperature (K)
+
+
+    The computation is based on Normand's rule [Wallace2006]_ (Chapter 3.5.6):
+
+    * first the equivalent potential temperature is computed with the given
+      ``ept_method`` (using :func:`ept_from_dewpoint`). This defines the moist adiabat.
+    * then the wet bulb potential temperature is determined as the temperature at
+      pressure ``p`` on the moist adiabat with the given ``t_method``.
 
     """
     fieldlist_ufunc_kwargs = {"default": "wbt"}
@@ -969,14 +1390,29 @@ def wet_bulb_potential_temperature_from_dewpoint(
     p : FieldList
         Pressure (Pa)
     ept_method : str, optional
-        Computation method for equivalent potential temperature: "ifs", "bolton35", "bolton39".
+        Specifies the computation method for the equivalent potential temperature.
+        The possible values are: "ifs", "bolton35", "bolton39".
+        (See :func:`ept_from_dewpoint` for details.)
     t_method : str, optional
-        Iteration method: "direct", "bisect", or "newton".
+        Specifies the method to find the temperature along the moist adiabat defined
+        by the equivalent potential temperature. The possible values are as follows:
+
+        * "direct": the rational formula defined by Eq (3.8) in [DaviesJones2008]_ is used
+        * "bisect": :func:`temperature_on_moist_adiabat` with ``t_method`` = "bisect" is used
+        * "newton": :func:`temperature_on_moist_adiabat` with ``t_method`` = "newton" is used
 
     Returns
     -------
     FieldList
         Wet bulb potential temperature (K)
+
+
+    The computation is based on Normand's rule [Wallace2006]_ (Chapter 3.5.6):
+
+    * first the equivalent potential temperature is computed with the given
+      ``ept_method`` (using :func:`ept_from_dewpoint`). This defines the moist adiabat.
+    * then the wet bulb potential temperature is determined as the temperature at
+      pressure :math:`10^{5}` Pa on the moist adiabat with the given ``t_method``.
 
     """
     fieldlist_ufunc_kwargs = {"default": "wbpt"}
@@ -1011,14 +1447,26 @@ def wet_bulb_potential_temperature_from_specific_humidity(
     p : FieldList
         Pressure (Pa)
     ept_method : str, optional
-        Computation method for equivalent potential temperature: "ifs", "bolton35", "bolton39".
+        Specifies the computation method for the equivalent potential temperature.
+        The possible values are: "ifs", "bolton35", "bolton39".
+        (See :func:`ept_from_dewpoint` for details.)
     t_method : str, optional
-        Iteration method: "direct", "bisect", or "newton".
+        Specifies the method to find the temperature along the moist adiabat
+        defined by the equivalent potential temperature. The possible values are as follows:
+
+        * "direct": the rational formula defined by Eq (3.8) in [DaviesJones2008]_ is used
+        * "bisect": :func:`temperature_on_moist_adiabat` with ``t_method`` = "bisect" is used
+        * "newton": :func:`temperature_on_moist_adiabat` with ``t_method`` = "newton" is used
 
     Returns
     -------
     FieldList
         Wet bulb potential temperature (K)
+
+
+    The computations are the same as in
+    :func:`wet_bulb_potential_temperature_from_dewpoint`
+    (the dewpoint is computed from q with :func:`dewpoint_from_specific_humidity`).
 
     """
     fieldlist_ufunc_kwargs = {"default": "wbpt"}
@@ -1038,6 +1486,8 @@ def wet_bulb_potential_temperature_from_specific_humidity(
 def specific_gas_constant(q: FieldList) -> FieldList:
     r"""Compute the specific gas constant of moist air.
 
+    Specific content of cloud particles and hydrometeors are neglected.
+
     Parameters
     ----------
     q : FieldList
@@ -1047,6 +1497,18 @@ def specific_gas_constant(q: FieldList) -> FieldList:
     -------
     FieldList
         Specific gas constant of moist air (J kg-1 K-1)
+
+
+    The computation is based on the following formula:
+
+    .. math::
+
+        R = R_{d} + (R_{v} - R_{d}) q
+
+    where:
+
+        * :math:`R_{d}` is the gas constant for dry air (see :data:`earthkit.meteo.constants.Rd`)
+        * :math:`R_{v}` is the gas constant for water vapour (see :data:`earthkit.meteo.constants.Rv`)
 
     """
     fieldlist_ufunc_kwargs = {"default": "R", "param_unit": "J kg-1 K-1"}
