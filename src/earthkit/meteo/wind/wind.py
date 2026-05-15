@@ -62,7 +62,7 @@ def speed(
     The function returns an object of the same type as the input arguments.
 
     """
-    dispatched = dispatch(speed, fieldlist=False, array=True)
+    dispatched = dispatch(speed, array=True)
     return dispatched(u, v)
 
 
@@ -137,7 +137,7 @@ def direction(
     The function returns an object of the same type as the input arguments.
 
     """
-    dispatched = dispatch(direction, fieldlist=False, array=True)
+    dispatched = dispatch(direction, array=True)
     return dispatched(u, v, convention=convention, to_positive=to_positive)
 
 
@@ -199,7 +199,7 @@ def xy_to_polar(
 
 
     """
-    dispatched = dispatch(xy_to_polar, fieldlist=False, array=True)
+    dispatched = dispatch(xy_to_polar, array=True)
     return dispatched(x, y, convention=convention)
 
 
@@ -267,7 +267,7 @@ def polar_to_xy(
     The function returns an object of the same type as the input arguments.
 
     """
-    dispatched = dispatch(polar_to_xy, fieldlist=False, array=True)
+    dispatched = dispatch(polar_to_xy, array=True)
     return dispatched(magnitude, direction, convention=convention)
 
 
@@ -333,7 +333,7 @@ def w_from_omega(
     The function returns an object of the same type as the input arguments.
 
     """
-    dispatched = dispatch(w_from_omega, fieldlist=False, array=True)
+    dispatched = dispatch(w_from_omega, array=True)
     return dispatched(omega, t, p)
 
 
@@ -381,7 +381,7 @@ def coriolis(lat: "xarray.DataArray" | "ArrayLike") -> "xarray.DataArray" | "Arr
     The function returns an object of the same type as the input arguments.
 
     """
-    dispatched = dispatch(coriolis, fieldlist=False, array=True)
+    dispatched = dispatch(coriolis, array=True)
     return dispatched(lat)
 
 

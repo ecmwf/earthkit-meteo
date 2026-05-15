@@ -1519,7 +1519,7 @@ def potential_temperature(
 
     The function returns an object of the same type as the input arguments.
     """
-    dispatched = dispatch(potential_temperature, fieldlist=False, array=True)
+    dispatched = dispatch(potential_temperature, array=True)
     return dispatched(t, p)
 
 
