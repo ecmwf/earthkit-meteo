@@ -81,15 +81,15 @@ def mixing_ratio_from_specific_humidity(q: FieldList) -> FieldList:
     return fieldlist_ufunc(array.mixing_ratio_from_specific_humidity, q, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
-def vapour_pressure_from_specific_humidity(q: FieldList, p: FieldList) -> FieldList:
+def vapour_pressure_from_specific_humidity(q: FieldList, p: FieldList | Iterable[float] | None = None) -> FieldList:
     r"""Compute the vapour pressure from specific humidity.
 
     Parameters
     ----------
     q : FieldList
         Specific humidity (kg/kg)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``q``.
 
     Returns
     -------
@@ -106,7 +106,7 @@ def vapour_pressure_from_specific_humidity(q: FieldList, p: FieldList) -> FieldL
     with :math:`\epsilon =  R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "e", "param_unit": "Pa"}
+    fieldlist_ufunc_kwargs = {"default": "vapp", "param_unit": "Pa"}
     if p is None:
         p = _pressure_from_metadata(q)  # convert to Pa
 
@@ -115,15 +115,15 @@ def vapour_pressure_from_specific_humidity(q: FieldList, p: FieldList) -> FieldL
     )
 
 
-def vapour_pressure_from_mixing_ratio(w: FieldList, p: FieldList) -> FieldList:
+def vapour_pressure_from_mixing_ratio(w: FieldList, p: FieldList | Iterable[float] | None = None) -> FieldList:
     r"""Compute the vapour pressure from mixing ratio.
 
     Parameters
     ----------
     w : FieldList
         Mixing ratio (kg/kg)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``w``.
 
     Returns
     -------
@@ -140,22 +140,24 @@ def vapour_pressure_from_mixing_ratio(w: FieldList, p: FieldList) -> FieldList:
     with :math:`\epsilon =  R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "e", "param_unit": "Pa"}
+    fieldlist_ufunc_kwargs = {"default": "vapp", "param_unit": "Pa"}
     if p is None:
         p = _pressure_from_metadata(w)  # convert to Pa
 
     return fieldlist_ufunc(array.vapour_pressure_from_mixing_ratio, w, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
-def specific_humidity_from_vapour_pressure(e: FieldList, p: FieldList, eps: float = 1e-4) -> FieldList:
+def specific_humidity_from_vapour_pressure(
+    e: FieldList, p: FieldList | Iterable[float] | None = None, eps: float = 1e-4
+) -> FieldList:
     r"""Compute the specific humidity from vapour pressure.
 
     Parameters
     ----------
     e : FieldList
         Vapour pressure (Pa)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``e``.
     eps : float, optional
         Where p - e < ``eps`` nan is returned.
 
@@ -187,15 +189,17 @@ def specific_humidity_from_vapour_pressure(e: FieldList, p: FieldList, eps: floa
     )
 
 
-def mixing_ratio_from_vapour_pressure(e: FieldList, p: FieldList, eps: float = 1e-4) -> FieldList:
+def mixing_ratio_from_vapour_pressure(
+    e: FieldList, p: FieldList | Iterable[float] | None = None, eps: float = 1e-4
+) -> FieldList:
     r"""Compute the mixing ratio from vapour pressure.
 
     Parameters
     ----------
     e : FieldList
         Vapour pressure (Pa)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``e``.
     eps : float, optional
         Where p - e < ``eps`` nan is returned.
 
@@ -265,21 +269,23 @@ def saturation_vapour_pressure(t: FieldList, phase: str = "mixed") -> FieldList:
     with :math:`\alpha(t) = (\frac{t-t_{i}}{t_{0}-t_{i}})^2`.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "es", "param_unit": "Pa"}
+    fieldlist_ufunc_kwargs = {"default": "swvp", "param_unit": "Pa"}
     return fieldlist_ufunc(
         array.saturation_vapour_pressure, t, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs, phase=phase
     )
 
 
-def saturation_mixing_ratio(t: FieldList, p: FieldList, phase: str = "mixed") -> FieldList:
+def saturation_mixing_ratio(
+    t: FieldList, p: FieldList | Iterable[float] | None = None, phase: str = "mixed"
+) -> FieldList:
     r"""Compute the saturation mixing ratio from temperature with respect to a phase.
 
     Parameters
     ----------
     t : FieldList
         Temperature (K)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
     phase : str, optional
         Define the phase with respect to the :func:`saturation_vapour_pressure` is computed.
         It is either "water", "ice" or "mixed".
@@ -308,15 +314,17 @@ def saturation_mixing_ratio(t: FieldList, p: FieldList, phase: str = "mixed") ->
     )
 
 
-def saturation_specific_humidity(t: FieldList, p: FieldList, phase: str = "mixed") -> FieldList:
+def saturation_specific_humidity(
+    t: FieldList, p: FieldList | Iterable[float] | None = None, phase: str = "mixed"
+) -> FieldList:
     r"""Compute the saturation specific humidity from temperature with respect to a phase.
 
     Parameters
     ----------
     t : FieldList
         Temperature (K)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
     phase : str, optional
         Define the phase with respect to the :func:`saturation_vapour_pressure` is computed.
         It is either "water", "ice" or "mixed".
@@ -335,7 +343,7 @@ def saturation_specific_humidity(t: FieldList, p: FieldList, phase: str = "mixed
         return specific_humidity_from_vapour_pressure(e, p)
 
     """
-    fieldlist_ufunc_kwargs = {"default": "qs", "param_unit": "kg/kg"}
+    fieldlist_ufunc_kwargs = {"default": "sqw", "param_unit": "kg/kg"}
     if p is None:
         p = _pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -369,7 +377,7 @@ def saturation_vapour_pressure_slope(t: FieldList, phase: str = "mixed") -> Fiel
 
 def saturation_mixing_ratio_slope(
     t: FieldList,
-    p: FieldList,
+    p: FieldList | Iterable[float] | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
 ) -> FieldList:
@@ -379,8 +387,8 @@ def saturation_mixing_ratio_slope(
     ----------
     t : FieldList
         Temperature (K)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
     phase : str, optional
         Define the phase with respect to the computation will be performed.
         It is either "water", "ice" or "mixed".
@@ -420,7 +428,7 @@ def saturation_mixing_ratio_slope(
 
 def saturation_specific_humidity_slope(
     t: FieldList,
-    p: FieldList,
+    p: FieldList | Iterable[float] | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
 ) -> FieldList:
@@ -430,8 +438,8 @@ def saturation_specific_humidity_slope(
     ----------
     t : FieldList
         Temperature (K)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
     phase : str, optional
         Define the phase with respect to the computation will be performed.
         It is either "water", "ice" or "mixed".
@@ -457,7 +465,7 @@ def saturation_specific_humidity_slope(
         * :math:`e_{s}` is the :func:`saturation_vapour_pressure` for the given ``phase``
 
     """
-    fieldlist_ufunc_kwargs = {"default": "qs_slope", "param_unit": "kg kg-1 K-1"}
+    fieldlist_ufunc_kwargs = {"default": "sqw_slope", "param_unit": "kg kg-1 K-1"}
     if p is None:
         p = _pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -524,7 +532,9 @@ def relative_humidity_from_dewpoint(t: FieldList, td: FieldList) -> FieldList:
     return fieldlist_ufunc(array.relative_humidity_from_dewpoint, t, td, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
-def relative_humidity_from_specific_humidity(t: FieldList, q: FieldList, p: FieldList) -> FieldList:
+def relative_humidity_from_specific_humidity(
+    t: FieldList, q: FieldList, p: FieldList | Iterable[float] | None = None
+) -> FieldList:
     r"""Compute the relative humidity from specific humidity.
 
     Parameters
@@ -533,8 +543,8 @@ def relative_humidity_from_specific_humidity(t: FieldList, q: FieldList, p: Fiel
         Temperature (K)
     q : FieldList
         Specific humidity (kg/kg)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
 
     Returns
     -------
@@ -562,15 +572,15 @@ def relative_humidity_from_specific_humidity(t: FieldList, q: FieldList, p: Fiel
     )
 
 
-def specific_humidity_from_dewpoint(td: FieldList, p: FieldList) -> FieldList:
+def specific_humidity_from_dewpoint(td: FieldList, p: FieldList | Iterable[float] | None = None) -> FieldList:
     r"""Compute the specific humidity from dewpoint.
 
     Parameters
     ----------
     td : FieldList
         Dewpoint (K)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``td``.
 
     Returns
     -------
@@ -599,15 +609,15 @@ def specific_humidity_from_dewpoint(td: FieldList, p: FieldList) -> FieldList:
     return fieldlist_ufunc(array.specific_humidity_from_dewpoint, td, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
-def mixing_ratio_from_dewpoint(td: FieldList, p: FieldList) -> FieldList:
+def mixing_ratio_from_dewpoint(td: FieldList, p: FieldList | Iterable[float] | None = None) -> FieldList:
     r"""Compute the mixing ratio from dewpoint.
 
     Parameters
     ----------
     td : FieldList
         Dewpoint (K)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``td``.
 
     Returns
     -------
@@ -636,7 +646,9 @@ def mixing_ratio_from_dewpoint(td: FieldList, p: FieldList) -> FieldList:
     return fieldlist_ufunc(array.mixing_ratio_from_dewpoint, td, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
-def specific_humidity_from_relative_humidity(t: FieldList, r: FieldList, p: FieldList) -> FieldList:
+def specific_humidity_from_relative_humidity(
+    t: FieldList, r: FieldList, p: FieldList | Iterable[float] | None = None
+) -> FieldList:
     r"""Compute the specific humidity from relative humidity.
 
     Parameters
@@ -645,8 +657,8 @@ def specific_humidity_from_relative_humidity(t: FieldList, r: FieldList, p: Fiel
         Temperature (K)
     r : FieldList
         Relative humidity (%)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata.
 
     Returns
     -------
@@ -709,19 +721,29 @@ def dewpoint_from_relative_humidity(t: FieldList, r: FieldList) -> FieldList:
     equations used in :func:`saturation_vapour_pressure`.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "td"}
+    param_ids = {
+        # 130: "td",  # atmospheric dewpoint, paramId=?
+        167: "2d",  # 2m dewpoint, paramId=168
+    }
+
+    variables = {
+        # "t": "td",  # atmospheric dewpoint
+        "2t": "2d",  # 2m dewpoint
+    }
+
+    fieldlist_ufunc_kwargs = {"param_ids": param_ids, "variables": variables, "default": "td"}
     return fieldlist_ufunc(array.dewpoint_from_relative_humidity, t, r, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
-def dewpoint_from_specific_humidity(q: FieldList, p: FieldList) -> FieldList:
+def dewpoint_from_specific_humidity(q: FieldList, p: FieldList | Iterable[float] | None = None) -> FieldList:
     r"""Compute the dewpoint temperature from specific humidity.
 
     Parameters
     ----------
     q : FieldList
         Specific humidity (kg/kg)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``q``.
 
     Returns
     -------
@@ -746,7 +768,23 @@ def dewpoint_from_specific_humidity(q: FieldList, p: FieldList) -> FieldList:
     used in :func:`saturation_vapour_pressure`.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "td", "param_unit": "K"}
+    param_ids = {
+        # 133: "td",  # atmospheric dewpoint, paramId=?
+        174096: "2d",  # 2m dewpoint, paramId=168
+    }
+
+    variables = {
+        # "q": "td",  # atmospheric dewpoint
+        "2sh": "2d",  # 2m dewpoint
+    }
+
+    fieldlist_ufunc_kwargs = {
+        "param_ids": param_ids,
+        "variables": variables,
+        "default": "td",
+        "param_unit": "K",
+    }
+
     if p is None:
         p = _pressure_from_metadata(q)  # convert to Pa
     return fieldlist_ufunc(array.dewpoint_from_specific_humidity, q, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
@@ -777,11 +815,13 @@ def virtual_temperature(t: FieldList, q: FieldList) -> FieldList:
     with :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "tv"}
+    fieldlist_ufunc_kwargs = {"default": "vtmp"}
     return fieldlist_ufunc(array.virtual_temperature, t, q, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
-def virtual_potential_temperature(t: FieldList, q: FieldList, p: FieldList) -> FieldList:
+def virtual_potential_temperature(
+    t: FieldList, q: FieldList, p: FieldList | Iterable[float] | None = None
+) -> FieldList:
     r"""Compute the virtual potential temperature from temperature and specific humidity.
 
     Parameters
@@ -790,8 +830,8 @@ def virtual_potential_temperature(t: FieldList, q: FieldList, p: FieldList) -> F
         Temperature (K)
     q : FieldList
         Specific humidity (kg/kg)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
 
     Returns
     -------
@@ -811,7 +851,7 @@ def virtual_potential_temperature(t: FieldList, q: FieldList, p: FieldList) -> F
         * :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "thv"}
+    fieldlist_ufunc_kwargs = {"default": "vptmp"}
 
     if p is None:
         p = _pressure_from_metadata(t)  # convert to Pa
@@ -827,7 +867,7 @@ def potential_temperature(t: FieldList, p: FieldList | Iterable[float] | None = 
     t : FieldList
         Temperature (K)
     p : FieldList, Iterable[float], or None
-        Pressure (Pa). If None, inferred from the field metadata.
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
 
     Returns
     -------
@@ -860,7 +900,7 @@ def temperature_from_potential_temperature(th: FieldList, p: FieldList | Iterabl
     th : FieldList
         Potential temperature (K)
     p : FieldList, Iterable[float], or None
-        Pressure (Pa). If None, inferred from the field metadata.
+        Pressure (Pa). If None, inferred from the field metadata of ``th``.
 
     Returns
     -------
@@ -887,7 +927,9 @@ def temperature_from_potential_temperature(th: FieldList, p: FieldList | Iterabl
     )
 
 
-def pressure_on_dry_adiabat(t: FieldList, t_def: FieldList, p_def: FieldList) -> FieldList:
+def pressure_on_dry_adiabat(
+    t: FieldList, t_def: FieldList, p_def: FieldList | Iterable[float] | None = None
+) -> FieldList:
     r"""Compute the pressure on a dry adiabat.
 
     Parameters
@@ -896,8 +938,9 @@ def pressure_on_dry_adiabat(t: FieldList, t_def: FieldList, p_def: FieldList) ->
         Temperature on the dry adiabat (K)
     t_def : FieldList
         Temperature defining the dry adiabat (K)
-    p_def : FieldList
-        Pressure defining the dry adiabat (Pa)
+    p_def : FieldList, Iterable[float], or None
+        Pressure defining the dry adiabat (Pa). If None, inferred from the field metadata of ``t_def``.
+
 
     Returns
     -------
@@ -914,13 +957,19 @@ def pressure_on_dry_adiabat(t: FieldList, t_def: FieldList, p_def: FieldList) ->
     with :math:`\kappa =  R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "p", "param_unit": "Pa"}
+    fieldlist_ufunc_kwargs = {"default": "pres", "param_unit": "Pa"}
+
+    if p_def is None:
+        p_def = _pressure_from_metadata(t_def)
+
     return fieldlist_ufunc(
         array.pressure_on_dry_adiabat, t, t_def, p_def, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs
     )
 
 
-def temperature_on_dry_adiabat(p: FieldList, t_def: FieldList, p_def: FieldList) -> FieldList:
+def temperature_on_dry_adiabat(
+    p: FieldList, t_def: FieldList, p_def: FieldList | Iterable[float] | None = None
+) -> FieldList:
     r"""Compute the temperature on a dry adiabat.
 
     Parameters
@@ -929,8 +978,9 @@ def temperature_on_dry_adiabat(p: FieldList, t_def: FieldList, p_def: FieldList)
         Pressure on the dry adiabat (Pa)
     t_def : FieldList
         Temperature defining the dry adiabat (K)
-    p_def : FieldList
-        Pressure defining the dry adiabat (Pa)
+    p_def : FieldList, Iterable[float], or None
+        Pressure defining the dry adiabat (Pa). If None, inferred from the field metadata of ``t_def``.
+
 
     Returns
     -------
@@ -948,6 +998,10 @@ def temperature_on_dry_adiabat(p: FieldList, t_def: FieldList, p_def: FieldList)
 
     """
     fieldlist_ufunc_kwargs = {"default": "t", "param_unit": "K"}
+
+    if p_def is None:
+        p_def = _pressure_from_metadata(t_def)
+
     return fieldlist_ufunc(
         array.temperature_on_dry_adiabat, p, t_def, p_def, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs
     )
@@ -993,7 +1047,9 @@ def lcl_temperature(t: FieldList, td: FieldList, method: str = "davies") -> Fiel
     return fieldlist_ufunc(array.lcl_temperature, t, td, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs, method=method)
 
 
-def lcl(t: FieldList, td: FieldList, p: FieldList, method: str = "davies") -> tuple[FieldList, FieldList]:
+def lcl(
+    t: FieldList, td: FieldList, p: FieldList | Iterable[float] | None = None, method: str = "davies"
+) -> tuple[FieldList, FieldList]:
     r"""Compute the temperature and pressure of the Lifting Condensation Level (LCL) from dewpoint.
 
     Parameters
@@ -1002,8 +1058,8 @@ def lcl(t: FieldList, td: FieldList, p: FieldList, method: str = "davies") -> tu
         Temperature at the start level (K)
     td : FieldList
         Dewpoint at the start level (K)
-    p : FieldList
-        Pressure at the start level (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure at the start level (Pa). If None, inferred from the field metadata of ``t``.
     method : str, optional
         The computation method: "davies" or "bolton".
 
@@ -1033,7 +1089,9 @@ def lcl(t: FieldList, td: FieldList, p: FieldList, method: str = "davies") -> tu
     return ekd.FieldList.from_fields(t_result), ekd.FieldList.from_fields(p_result)
 
 
-def ept_from_dewpoint(t: FieldList, td: FieldList, p: FieldList, method: str = "ifs") -> FieldList:
+def ept_from_dewpoint(
+    t: FieldList, td: FieldList, p: FieldList | Iterable[float] | None = None, method: str = "ifs"
+) -> FieldList:
     r"""Compute the equivalent potential temperature from dewpoint.
 
     Parameters
@@ -1042,8 +1100,8 @@ def ept_from_dewpoint(t: FieldList, td: FieldList, p: FieldList, method: str = "
         Temperature (K)
     td : FieldList
         Dewpoint (K)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
     method : str, optional
         Specify the computation method. The possible values are: "ifs", "bolton35", "bolton39", "bolton43".
 
@@ -1103,17 +1161,19 @@ def ept_from_dewpoint(t: FieldList, td: FieldList, p: FieldList, method: str = "
         * :math:`\kappa = R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`)
 
     """
-    fieldlist_ufunc_kwargs = {"default": "ept"}
+    fieldlist_ufunc_kwargs = {"default": "eqpt"}
 
     if p is None:
         p = _pressure_from_metadata(t)  # convert to Pa
 
-        return fieldlist_ufunc(
-            array.ept_from_dewpoint, t, td, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs, method=method
-        )
+    return fieldlist_ufunc(
+        array.ept_from_dewpoint, t, td, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs, method=method
+    )
 
 
-def ept_from_specific_humidity(t: FieldList, q: FieldList, p: FieldList, method: str = "ifs") -> FieldList:
+def ept_from_specific_humidity(
+    t: FieldList, q: FieldList, p: FieldList | Iterable[float] | None = None, method: str = "ifs"
+) -> FieldList:
     r"""Compute the equivalent potential temperature from specific humidity.
 
     Parameters
@@ -1122,8 +1182,8 @@ def ept_from_specific_humidity(t: FieldList, q: FieldList, p: FieldList, method:
         Temperature (K)
     q : FieldList
         Specific humidity (kg/kg)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
     method : str, optional
         Specify the computation method. The possible values are: "ifs",
         "bolton35", "bolton39", "bolton43". See :func:`ept_from_dewpoint` for details.
@@ -1138,7 +1198,7 @@ def ept_from_specific_humidity(t: FieldList, q: FieldList, p: FieldList, method:
     (the dewpoint is computed from q with :func:`dewpoint_from_specific_humidity`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "ept"}
+    fieldlist_ufunc_kwargs = {"default": "eqpt"}
 
     if p is None:
         p = _pressure_from_metadata(t)  # convert to Pa
@@ -1153,15 +1213,15 @@ def ept_from_specific_humidity(t: FieldList, q: FieldList, p: FieldList, method:
     )
 
 
-def saturation_ept(t: FieldList, p: FieldList, method: str = "ifs") -> FieldList:
+def saturation_ept(t: FieldList, p: FieldList | Iterable[float] | None = None, method: str = "ifs") -> FieldList:
     r"""Compute the saturation equivalent potential temperature.
 
     Parameters
     ----------
     t : FieldList
         Temperature (K)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
     method : str, optional
         Specifies the computation method. The possible values are: "ifs", "bolton35", "bolton39".
 
@@ -1204,7 +1264,7 @@ def saturation_ept(t: FieldList, p: FieldList, method: str = "ifs") -> FieldList
           (see :data:`earthkit.meteo.constants.c_pd`)
 
     """
-    fieldlist_ufunc_kwargs = {"default": "ept_sat"}
+    fieldlist_ufunc_kwargs = {"default": "sept"}
     if p is None:
         p = _pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(array.saturation_ept, t, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs, method=method)
@@ -1212,7 +1272,7 @@ def saturation_ept(t: FieldList, p: FieldList, method: str = "ifs") -> FieldList
 
 def temperature_on_moist_adiabat(
     ept: FieldList,
-    p: FieldList,
+    p: FieldList | Iterable[float] | None = None,
     ept_method: str = "ifs",
     t_method: str = "bisect",
 ) -> FieldList:
@@ -1222,8 +1282,8 @@ def temperature_on_moist_adiabat(
     ----------
     ept : FieldList
         Equivalent potential temperature defining the moist adiabat (K)
-    p : FieldList
-        Pressure on the moist adiabat (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure on the moist adiabat (Pa). If None, inferred from the field metadata of ``ept``.
     ept_method : str, optional
         Specifies the computation method that was used to compute ``ept``. The possible
         values are: "ifs", "bolton35", "bolton39".
@@ -1262,7 +1322,7 @@ def temperature_on_moist_adiabat(
 def wet_bulb_temperature_from_dewpoint(
     t: FieldList,
     td: FieldList,
-    p: FieldList,
+    p: FieldList | Iterable[float] | None = None,
     ept_method: str = "ifs",
     t_method: str = "bisect",
 ) -> FieldList:
@@ -1274,8 +1334,8 @@ def wet_bulb_temperature_from_dewpoint(
         Temperature (K)
     td : FieldList
         Dewpoint (K)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
     ept_method : str, optional
         Specifies the computation method for the equivalent potential temperature.
         The possible values are: "ifs", "bolton35", "bolton39".
@@ -1301,7 +1361,7 @@ def wet_bulb_temperature_from_dewpoint(
       pressure ``p`` on the moist adiabat with the given ``t_method``.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "wbt"}
+    fieldlist_ufunc_kwargs = {"default": "wbgt"}
     if p is None:
         p = _pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -1318,7 +1378,7 @@ def wet_bulb_temperature_from_dewpoint(
 def wet_bulb_temperature_from_specific_humidity(
     t: FieldList,
     q: FieldList,
-    p: FieldList,
+    p: FieldList | Iterable[float] | None = None,
     ept_method: str = "ifs",
     t_method: str = "bisect",
 ) -> FieldList:
@@ -1330,8 +1390,8 @@ def wet_bulb_temperature_from_specific_humidity(
         Temperature (K)
     q : FieldList
         Specific humidity (kg/kg)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
     ept_method : str, optional
         Specifies the computation method for the equivalent potential temperature.
         The possible values are: "ifs", "bolton35", "bolton39".
@@ -1358,7 +1418,7 @@ def wet_bulb_temperature_from_specific_humidity(
       pressure ``p`` on the moist adiabat with the given ``t_method``.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "wbt"}
+    fieldlist_ufunc_kwargs = {"default": "wbgt"}
     if p is None:
         p = _pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -1375,7 +1435,7 @@ def wet_bulb_temperature_from_specific_humidity(
 def wet_bulb_potential_temperature_from_dewpoint(
     t: FieldList,
     td: FieldList,
-    p: FieldList,
+    p: FieldList | Iterable[float] | None = None,
     ept_method: str = "ifs",
     t_method: str = "direct",
 ) -> FieldList:
@@ -1387,8 +1447,8 @@ def wet_bulb_potential_temperature_from_dewpoint(
         Temperature (K)
     td : FieldList
         Dewpoint (K)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
     ept_method : str, optional
         Specifies the computation method for the equivalent potential temperature.
         The possible values are: "ifs", "bolton35", "bolton39".
@@ -1415,7 +1475,7 @@ def wet_bulb_potential_temperature_from_dewpoint(
       pressure :math:`10^{5}` Pa on the moist adiabat with the given ``t_method``.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "wbpt"}
+    fieldlist_ufunc_kwargs = {"default": "wbgpt"}
     if p is None:
         p = _pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -1432,7 +1492,7 @@ def wet_bulb_potential_temperature_from_dewpoint(
 def wet_bulb_potential_temperature_from_specific_humidity(
     t: FieldList,
     q: FieldList,
-    p: FieldList,
+    p: FieldList | Iterable[float] | None = None,
     ept_method: str = "ifs",
     t_method: str = "direct",
 ) -> FieldList:
@@ -1444,8 +1504,8 @@ def wet_bulb_potential_temperature_from_specific_humidity(
         Temperature (K)
     q : FieldList
         Specific humidity (kg/kg)
-    p : FieldList
-        Pressure (Pa)
+    p : FieldList, Iterable[float], or None
+        Pressure (Pa). If None, inferred from the field metadata of ``t``.
     ept_method : str, optional
         Specifies the computation method for the equivalent potential temperature.
         The possible values are: "ifs", "bolton35", "bolton39".
@@ -1469,7 +1529,7 @@ def wet_bulb_potential_temperature_from_specific_humidity(
     (the dewpoint is computed from q with :func:`dewpoint_from_specific_humidity`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "wbpt"}
+    fieldlist_ufunc_kwargs = {"default": "wbgpt"}
     if p is None:
         p = _pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(

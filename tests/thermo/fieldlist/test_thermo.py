@@ -153,7 +153,7 @@ def test_fieldlist_vapour_pressure_from_specific_humidity():
     for i, (q_vals, p_val) in enumerate(zip(specific_humidities, pressures)):
         ref = array.vapour_pressure_from_specific_humidity(np.array(q_vals), np.array([p_val]))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "e").all()
+    assert (np.array(out.get("parameter.variable")) == "vapp").all()
     assert (np.array(out.get("parameter.units")) == "Pa").all()
 
 
@@ -168,7 +168,7 @@ def test_fieldlist_vapour_pressure_from_mixing_ratio():
     for i, (w_vals, p_val) in enumerate(zip(mixing_ratios, pressures)):
         ref = array.vapour_pressure_from_mixing_ratio(np.array(w_vals), np.array([p_val]))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "e").all()
+    assert (np.array(out.get("parameter.variable")) == "vapp").all()
     assert (np.array(out.get("parameter.units")) == "Pa").all()
 
 
@@ -214,7 +214,7 @@ def test_fieldlist_saturation_vapour_pressure():
     for i, t_vals in enumerate(temperatures):
         ref = array.saturation_vapour_pressure(np.array(t_vals))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "es").all()
+    assert (np.array(out.get("parameter.variable")) == "swvp").all()
     assert (np.array(out.get("parameter.units")) == "Pa").all()
 
 
@@ -256,7 +256,7 @@ def test_fieldlist_saturation_specific_humidity():
     for i, (t_vals, p_val) in enumerate(zip(temperatures, pressures)):
         ref = array.saturation_specific_humidity(np.array(t_vals), np.array([p_val]))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "qs").all()
+    assert (np.array(out.get("parameter.variable")) == "sqw").all()
     assert (np.array(out.get("parameter.units")) == "kg/kg").all()
 
 
@@ -298,7 +298,7 @@ def test_fieldlist_saturation_specific_humidity_slope():
     for i, (t_vals, p_val) in enumerate(zip(temperatures, pressures)):
         ref = array.saturation_specific_humidity_slope(np.array(t_vals), np.array([p_val]))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "qs_slope").all()
+    assert (np.array(out.get("parameter.variable")) == "sqw_slope").all()
 
 
 def test_fieldlist_temperature_from_saturation_vapour_pressure():
@@ -433,7 +433,7 @@ def test_fieldlist_virtual_temperature():
     for i, (t_vals, q_vals) in enumerate(zip(temperatures, specific_humidities)):
         ref = array.virtual_temperature(np.array(t_vals), np.array(q_vals))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "tv").all()
+    assert (np.array(out.get("parameter.variable")) == "vtmp").all()
 
 
 def test_fieldlist_virtual_potential_temperature():
@@ -448,7 +448,7 @@ def test_fieldlist_virtual_potential_temperature():
     for i, (t_vals, q_vals, p_val) in enumerate(zip(temperatures, specific_humidities, pressures)):
         ref = array.virtual_potential_temperature(np.array(t_vals), np.array(q_vals), np.array([p_val]))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "thv").all()
+    assert (np.array(out.get("parameter.variable")) == "vptmp").all()
 
 
 def test_fieldlist_temperature_from_potential_temperature():
@@ -492,7 +492,7 @@ def test_fieldlist_pressure_on_dry_adiabat():
     for i, t_vals in enumerate(temperatures):
         ref = array.pressure_on_dry_adiabat(np.array(t_vals), np.array([300.0, 295.0]), np.array([100000.0, 100000.0]))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "p").all()
+    assert (np.array(out.get("parameter.variable")) == "pres").all()
     assert (np.array(out.get("parameter.units")) == "Pa").all()
 
 
@@ -557,7 +557,7 @@ def test_fieldlist_ept_from_dewpoint():
     for i, (t_vals, td_vals, p_val) in enumerate(zip(temperatures, dewpoints, pressures)):
         ref = array.ept_from_dewpoint(np.array(t_vals), np.array(td_vals), np.array([p_val, p_val]))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "ept").all()
+    assert (np.array(out.get("parameter.variable")) == "eqpt").all()
 
 
 def test_fieldlist_ept_from_specific_humidity():
@@ -572,7 +572,7 @@ def test_fieldlist_ept_from_specific_humidity():
     for i, (t_vals, q_vals, p_val) in enumerate(zip(temperatures, specific_humidities, pressures)):
         ref = array.ept_from_specific_humidity(np.array(t_vals), np.array(q_vals), np.array([p_val]))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "ept").all()
+    assert (np.array(out.get("parameter.variable")) == "eqpt").all()
 
 
 def test_fieldlist_saturation_ept():
@@ -586,7 +586,7 @@ def test_fieldlist_saturation_ept():
     for i, (t_vals, p_val) in enumerate(zip(temperatures, pressures)):
         ref = array.saturation_ept(np.array(t_vals), np.array([p_val]))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "ept_sat").all()
+    assert (np.array(out.get("parameter.variable")) == "sept").all()
 
 
 def test_fieldlist_temperature_on_moist_adiabat():
@@ -616,7 +616,7 @@ def test_fieldlist_wet_bulb_temperature_from_dewpoint():
     for i, (t_vals, td_vals, p_val) in enumerate(zip(temperatures, dewpoints, pressures)):
         ref = array.wet_bulb_temperature_from_dewpoint(np.array(t_vals), np.array(td_vals), np.array([p_val, p_val]))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "wbt").all()
+    assert (np.array(out.get("parameter.variable")) == "wbgt").all()
 
 
 def test_fieldlist_wet_bulb_temperature_from_specific_humidity():
@@ -631,7 +631,7 @@ def test_fieldlist_wet_bulb_temperature_from_specific_humidity():
     for i, (t_vals, q_vals, p_val) in enumerate(zip(temperatures, specific_humidities, pressures)):
         ref = array.wet_bulb_temperature_from_specific_humidity(np.array(t_vals), np.array(q_vals), np.array([p_val]))
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "wbt").all()
+    assert (np.array(out.get("parameter.variable")) == "wbgt").all()
 
 
 def test_fieldlist_wet_bulb_potential_temperature_from_dewpoint():
@@ -648,7 +648,7 @@ def test_fieldlist_wet_bulb_potential_temperature_from_dewpoint():
             np.array(t_vals), np.array(td_vals), np.array([p_val, p_val])
         )
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "wbpt").all()
+    assert (np.array(out.get("parameter.variable")) == "wbgpt").all()
 
 
 def test_fieldlist_wet_bulb_potential_temperature_from_specific_humidity():
@@ -665,7 +665,7 @@ def test_fieldlist_wet_bulb_potential_temperature_from_specific_humidity():
             np.array(t_vals), np.array(q_vals), np.array([p_val])
         )
         np.testing.assert_allclose(out[i].values, ref)
-    assert (np.array(out.get("parameter.variable")) == "wbpt").all()
+    assert (np.array(out.get("parameter.variable")) == "wbgpt").all()
 
 
 def test_fieldlist_specific_gas_constant():
