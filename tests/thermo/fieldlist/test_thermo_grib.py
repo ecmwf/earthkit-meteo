@@ -18,7 +18,7 @@ np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 pytestmark = pytest.mark.skipif(NO_EKD, reason="EKD is not installed")
 
 THERMO_PL_FILE = "thermo_850_pl.grib1"
-THERMO_2M_FILE = "thermo_2M.grib1"
+THERMO_2M_FILE = "thermo_2m.grib1"
 
 
 def _make_input_fieldlist(filename, param, input_type="fieldlist", level_type="pressure"):
