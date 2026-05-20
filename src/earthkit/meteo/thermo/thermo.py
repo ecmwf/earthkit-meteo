@@ -886,7 +886,7 @@ def saturation_specific_humidity_slope(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(saturation_specific_humidity_slope, array=True)
-    return dispatched(t, p, es, es_slope, phase=phase, eps=eps)
+    return dispatched(t, p, es=es, es_slope=es_slope, phase=phase, eps=eps)
 
 
 @overload
@@ -1613,13 +1613,13 @@ def potential_temperature(
 @overload
 def potential_temperature(
     t: "FieldList",
-    p: "FieldList",
+    p: "FieldList" | None = None,
 ) -> "FieldList": ...
 
 
 def potential_temperature(
     t: "ArrayLike" | "xarray.DataArray" | "FieldList",
-    p: "ArrayLike" | "xarray.DataArray" | "FieldList",
+    p: "ArrayLike" | "xarray.DataArray" | "FieldList" | None = None,
 ) -> "ArrayLike" | "xarray.DataArray" | "FieldList":
     r"""Compute the potential temperature.
 
@@ -1679,13 +1679,13 @@ def temperature_from_potential_temperature(
 @overload
 def temperature_from_potential_temperature(
     th: "FieldList",
-    p: "FieldList",
+    p: "FieldList" | None = None,
 ) -> "FieldList": ...
 
 
 def temperature_from_potential_temperature(
     th: "ArrayLike" | "xarray.DataArray" | "FieldList",
-    p: "ArrayLike" | "xarray.DataArray" | "FieldList",
+    p: "ArrayLike" | "xarray.DataArray" | "FieldList" | None = None,
 ) -> "ArrayLike" | "xarray.DataArray" | "FieldList":
     r"""Compute the temperature from potential temperature.
 

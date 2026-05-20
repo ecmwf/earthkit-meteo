@@ -355,10 +355,14 @@ def saturation_mixing_ratio_slope(
         Temperature (K)
     p: array-like
         Pressure (Pa)
-    es: array-like or None, optional
-        :func:`saturation_vapour_pressure` pre-computed for the given ``phase`` (Pa)
-    es_slope: array-like or None, optional
-        :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` (Pa/K)
+    es: array-like|None, optional
+        :func:`saturation_vapour_pressure` pre-computed for the given ``phase`` (Pa).
+        When specified, it is used in the computation instead of being computed from
+        ``t`` and ``phase`` using :func:`saturation_vapour_pressure`.
+    es_slope: array-like|None, optional
+        :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` (Pa/K).
+        When specified, it is used in the computation instead of being computed from
+        ``t`` and ``phase`` using :func:`saturation_vapour_pressure_slope`.
     phase: str, optional
         Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
@@ -413,10 +417,14 @@ def saturation_specific_humidity_slope(
         Temperature (K)
     p: array-like
         Pressure (Pa)
-    es: array-like or None, optional
-        :func:`saturation_vapour_pressure` pre-computed for the given ``phase`` (Pa)
-    es_slope: array-like or None, optional
-        :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` (Pa/K)
+    es: array-like|None, optional
+        :func:`saturation_vapour_pressure` pre-computed for the given ``phase`` (Pa).
+        When specified, it is used in the computation instead of being computed from
+        ``t`` and ``phase`` using :func:`saturation_vapour_pressure`.
+    es_slope: array-like|None, optional
+        :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` (Pa/K).
+        When specified, it is used in the computation instead of being computed from
+        ``t`` and ``phase`` using :func:`saturation_vapour_pressure_slope`.
     phase: str, optional
         Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`

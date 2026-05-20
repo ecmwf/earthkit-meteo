@@ -9,33 +9,34 @@
 
 from __future__ import annotations
 
-from typing import Any, TypeAlias
+from typing import Any, Iterable, TypeAlias
 
-from earthkit.data import FieldList  # type: ignore[import]
-from earthkit.utils.array import array_namespace
-from earthkit.utils.units import Units
+from earthkit.data import Field, FieldList  # type: ignore[import]
 
 from earthkit.meteo.utils.decorators import fieldlist_ufunc
+from earthkit.meteo.utils.fieldlist import pressure_from_metadata
 
 from .. import array
 
 ArrayLike: TypeAlias = Any
 
 
-def speed(u: FieldList, v: FieldList) -> FieldList:
+def speed(u: FieldList | Field, v: FieldList | Field) -> FieldList | Field:
     r"""Compute the wind speed/vector magnitude.
 
     Parameters
     ----------
-    u: FieldList
-        u wind/x vector component
-    v: FieldList
-        v wind/y vector component (same units as ``u``)
+    u: FieldList|Field
+        u wind/x vector component.
+    v: FieldList|Field
+        v wind/y vector component (same units as ``u``). Must be of the same type as ``u`` (FieldList or Field) and
+        have the same number of fields as ``u``.
 
     Returns
     -------
-    FieldList
-        Wind speed/magnitude (same units as ``u`` and ``v``)
+    FieldList|Field
+        Wind speed/magnitude (same units as ``u`` and ``v``). The result has
+        the same type as the input (FieldList or Field).
     """
     param_ids = {
         131: "ws",  # atmospheric wind, paramId=10
@@ -59,15 +60,16 @@ def speed(u: FieldList, v: FieldList) -> FieldList:
     return fieldlist_ufunc(array.speed, u, v, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
-def direction(u: FieldList, v: FieldList, convention="meteo", to_positive=True) -> FieldList:
+def direction(u: FieldList | Field, v: FieldList | Field, convention="meteo", to_positive=True) -> FieldList | Field:
     r"""Compute the direction/angle of a vector quantity.
 
     Parameters
     ----------
-    u: FieldList
-        u wind/x vector component
-    v: FieldList
-        v wind/y vector component (same units as ``u``)
+    u: FieldList|Field
+        u wind/x vector component.
+    v: FieldList|Field
+        v wind/y vector component (same units as ``u``). Must be of the same type as ``u`` (FieldList or Field) and
+        have the same number of fields as ``u``.
     convention: str, optional
         Specify how the direction/angle is interpreted. The possible values are as follows:
 
@@ -81,8 +83,9 @@ def direction(u: FieldList, v: FieldList, convention="meteo", to_positive=True) 
 
     Returns
     -------
-    FieldList
-        Direction/angle (degrees)
+    FieldList|Field
+        Direction/angle (degrees). The result has the same type as the input
+        (FieldList or Field).
 
 
     Notes
@@ -110,15 +113,18 @@ def direction(u: FieldList, v: FieldList, convention="meteo", to_positive=True) 
     )
 
 
-def xy_to_polar(x: FieldList, y: FieldList, convention: str = "meteo") -> tuple[FieldList, FieldList]:
+def xy_to_polar(
+    x: FieldList | Field, y: FieldList | Field, convention: str = "meteo"
+) -> tuple[FieldList | Field, FieldList | Field]:
     r"""Convert wind/vector data from xy representation to polar representation.
 
     Parameters
     ----------
-    x: FieldList
-        u wind/x vector component
-    y: FieldList
-        v wind/y vector component (same units as ``u``)
+    x: FieldList|Field
+        u wind/x vector component.
+    y: FieldList|Field
+        v wind/y vector component (same units as ``u``). Must be of the same type as ``u`` (FieldList or Field) and
+        have the same number of fields as ``u``.
     convention: str
         Specify how the direction/angle component of the target polar coordinate
         system is interpreted. The possible values are as follows:
@@ -129,10 +135,12 @@ def xy_to_polar(x: FieldList, y: FieldList, convention: str = "meteo") -> tuple[
 
     Returns
     -------
-    FieldList
-        Magnitude (same units as ``u``)
-    FieldList
-        Direction (degrees)
+    FieldList|Field
+        Magnitude (same units as ``u``). The result has the same type as the
+        input (FieldList or Field).
+    FieldList|Field
+        Direction (degrees). The result has the same type as the input
+        (FieldList or Field).
 
     Notes
     -----
@@ -143,18 +151,19 @@ def xy_to_polar(x: FieldList, y: FieldList, convention: str = "meteo") -> tuple[
 
 
 def polar_to_xy(
-    magnitude: FieldList,
-    direction: FieldList,
+    magnitude: FieldList | Field,
+    direction: FieldList | Field,
     convention: str = "meteo",
-) -> tuple[FieldList, FieldList]:
+) -> tuple[FieldList | Field, FieldList | Field]:
     r"""Convert wind/vector data from polar representation to xy representation.
 
     Parameters
     ----------
-    magnitude: FieldList
-        Speed/magnitude of the vector
-    direction: FieldList
-        Direction of the vector (degrees)
+    magnitude: FieldList|Field
+        Speed/magnitude of the vector.
+    direction: FieldList|Field
+        Direction of the vector (degrees). Must be of the same type as ``magnitude`` (FieldList or Field) and
+        have the same number of fields as ``magnitude``.
     convention: str
         Specify how ``direction`` is interpreted. The possible values are as follows:
 
@@ -165,10 +174,12 @@ def polar_to_xy(
 
     Returns
     -------
-    FieldList
-        X vector component (same units as ``magnitude``)
-    FieldList
-        Y vector component (same units as ``magnitude``)
+    FieldList|Field
+        X vector component (same units as ``magnitude``). The result has the
+        same type as the input (FieldList or Field).
+    FieldList|Field
+        Y vector component (same units as ``magnitude``). The result has the
+        same type as the input (FieldList or Field).
 
 
     Notes
@@ -188,26 +199,33 @@ def polar_to_xy(
     return magnitude.from_fields(result_1), magnitude.from_fields(result_2)
 
 
-def w_from_omega(omega: FieldList, t: FieldList, p: FieldList | ArrayLike | None) -> FieldList:
+def w_from_omega(
+    omega: FieldList | Field,
+    t: FieldList | Field,
+    p: FieldList | Field | Iterable[float] | float | None = None,
+) -> FieldList | Field:
     r"""Compute the hydrostatic vertical velocity from pressure velocity, temperature and pressure.
 
     Parameters
     ----------
-    omega : FieldList
-        Hydrostatic pressure velocity (Pa/s)
-    t : FieldList
-        Temperature (K). Must have the same number of fields as ``omega``.
-    p : FieldList, array-like, None
-        Pressure (Pa). If a FieldList is provided, it must have the same number of fields as ``omega``.
-        If an array-like is provided, it must have the same number of elements
-        as the number of fields in ``omega``.
-        If None, the pressure is taken from the level information of each field in ``omega``. Only isobaric
-        levels are supported in this case.
+    omega : FieldList|Field
+        Hydrostatic pressure velocity (Pa/s).
+    t : FieldList|Field
+        Temperature (K). Must have the same number of fields as ``omega`` and be of the same
+        type (FieldList or Field).
+    p : FieldList|Field|Iterable[float]|float|None
+        Pressure (Pa). If None, inferred from the
+        field metadata of ``omega``. Otherwise, if ``omega``
+        is a FieldList ``p`` must be a FieldList or an
+        array-like of the same length as ``omega``. If ``omega``
+        is a Field, ``p`` must be a single Field or a float.
+
 
     Returns
     -------
-    FieldList
-        Hydrostatic vertical velocity (m/s)
+    FieldList|Field
+        Hydrostatic vertical velocity (m/s). The result has the same type as
+        the input (FieldList or Field).
 
     Notes
     -----
@@ -223,27 +241,33 @@ def w_from_omega(omega: FieldList, t: FieldList, p: FieldList | ArrayLike | None
         * :math:`g` is the gravitational acceleration (see :data:`earthkit.meteo.constants.g`)
 
     """
-    if len(omega) != len(t):
-        raise ValueError(f"omega and t must have the same number of fields ({len(omega)} != {len(t)})")
+    if isinstance(omega, FieldList) and isinstance(t, FieldList):
+        if len(omega) != len(t):
+            raise ValueError(f"omega and t must have the same number of fields ({len(omega)} != {len(t)})")
 
-    if isinstance(p, FieldList):
-        if len(omega) != len(p):
-            raise ValueError(f"omega and p must have the same number of fields ({len(omega)} != {len(p)})")
-    elif p is None:
-        p = [
-            (f.get("vertical.level") * ((f.get("vertical.units", Units.from_any("hPa"))).to_pint())).to("Pa").magnitude
-            for f in omega
-        ]
-    else:
-        xp = array_namespace(p)
-        p = xp.asarray(p)
-        if len(p.shape) == 0:
-            p = [p.item()] * len(omega)
-        if len(omega) != len(p):
-            raise ValueError(
-                "When p is array-like, it must have the same number elements "
-                f"as the number of fields in omega({len(p)} != {len(omega)})"
-            )
+    if p is None:
+        p = pressure_from_metadata(omega)  # convert to Pa
+
+    # if isinstance(p, FieldList):
+    #     if len(omega) != len(p):
+    #         raise ValueError(f"omega and p must have the same number of fields ({len(omega)} != {len(p)})")
+    # elif p is None:
+    #     p = [
+    #         (f.get("vertical.level") * ((f.get("vertical.units", Units.from_any("hPa"))).to_pint()))
+    #         .to("Pa")
+    #         .magnitude
+    #         for f in omega
+    #     ]
+    # else:
+    #     xp = array_namespace(p)
+    #     p = xp.asarray(p)
+    #     if len(p.shape) == 0:
+    #         p = [p.item()] * len(omega)
+    #     if len(omega) != len(p):
+    #         raise ValueError(
+    #             "When p is array-like, it must have the same number elements "
+    #             f"as the number of fields in omega({len(p)} != {len(omega)})"
+    #         )
 
     fieldlist_ufunc_kwargs = {
         "default": "wz",
@@ -253,19 +277,20 @@ def w_from_omega(omega: FieldList, t: FieldList, p: FieldList | ArrayLike | None
     return fieldlist_ufunc(array.w_from_omega, omega, t, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
-def coriolis(data: FieldList) -> FieldList:
+def coriolis(data: FieldList | Field) -> FieldList | Field:
     r"""Compute the Coriolis parameter.
 
     Parameters
     ----------
-    data : FieldList
-        FieldList for which to compute the Coriolis parameter. The
+    data : FieldList|Field
+        FieldList or Field for which to compute the Coriolis parameter. The
         latitude values are taken from the latitude/longitude representation of each field.
 
     Returns
     -------
-    FieldList
-        The Coriolis parameter (:math:`s^{-1}`)
+    FieldList|Field
+        The Coriolis parameter (:math:`s^{-1}`). The result has the same type
+        as the input (FieldList or Field).
 
     Notes
     -----
@@ -280,9 +305,14 @@ def coriolis(data: FieldList) -> FieldList:
 
     """
     result = []
-    for field in data:
-        lat = field.geography.latitudes()
+    if isinstance(data, Field):
+        lat = data.geography.latitudes()
         c = array.coriolis(lat)
-        result.append(field.set({"values": c, "parameter.variable": "fc", "parameter.units": "1/s"}))
+        return data.set({"values": c, "parameter.variable": "fc", "parameter.units": "1/s"})
+    else:
+        for field in data:
+            lat = field.geography.latitudes()
+            c = array.coriolis(lat)
+            result.append(field.set({"values": c, "parameter.variable": "fc", "parameter.units": "1/s"}))
 
-    return FieldList.from_fields(result)
+        return FieldList.from_fields(result)

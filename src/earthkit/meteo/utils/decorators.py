@@ -12,6 +12,7 @@ from abc import ABCMeta, abstractmethod
 from functools import wraps
 from importlib import import_module
 from inspect import signature
+from itertools import repeat
 from typing import TYPE_CHECKING, Any
 
 from earthkit.utils.array import array_namespace
@@ -48,6 +49,20 @@ def _is_fieldlist(obj: Any) -> bool:
         return False
 
 
+def _is_field(obj: Any) -> bool:
+    from earthkit.meteo.utils import is_module_loaded
+
+    if not is_module_loaded("earthkit.data"):
+        return False
+
+    try:
+        from earthkit.data import Field
+
+        return isinstance(obj, Field)
+    except ImportError:
+        return False
+
+
 class DataDispatcher(metaclass=ABCMeta):
     """A dispatcher class to route function calls based on input data types."""
 
@@ -74,7 +89,7 @@ class XArrayDispatcher(DataDispatcher):
 class FieldListDispatcher(DataDispatcher):
     @staticmethod
     def match(obj: Any) -> bool:
-        return _is_fieldlist(obj)
+        return _is_fieldlist(obj) or _is_field(obj)
 
     def dispatch(self, func, module, *args, **kwargs):
         module = import_module(module + ".fieldlist")
@@ -232,7 +247,7 @@ def xarray_ufunc(func, *args, **kwargs):
     )
 
 
-def fieldlist_ufunc(func, *args, **kwargs):
+def field_ufunc(func, *args, **kwargs):
     import earthkit.data as ekd
 
     fieldlist_ufunc_kwargs = kwargs.pop("fieldlist_ufunc_kwargs", None) or {}
@@ -241,32 +256,63 @@ def fieldlist_ufunc(func, *args, **kwargs):
     default = fieldlist_ufunc_kwargs.get("default")
     unit = fieldlist_ufunc_kwargs.get("param_unit")
 
-    result = []
-    for fields in zip(*args):
-        u0 = fields[0]
-        assert isinstance(u0, ekd.Field), "fieldlist_ufunc first argument must be a FieldList"
-        v = func(*(field.values if isinstance(field, ekd.Field) else field for field in fields), **kwargs)
+    fields = args
+    u0 = fields[0]
+    assert isinstance(u0, ekd.Field), "field_ufunc first argument must be a Field"
+    v = func(*(field.values if isinstance(field, ekd.Field) else field for field in fields), **kwargs)
 
-        name = None
-        var_u = u0.get("parameter.variable", default=None)
+    name = None
+    var_u = u0.get("parameter.variable", default=None)
+    if var_u is not None:
+        name = variables.get(var_u)
+    else:
+        var_u = u0.get("metadata.paramId", default=None)
         if var_u is not None:
-            name = variables.get(var_u)
+            name = param_ids.get(var_u)
         else:
-            var_u = u0.get("metadata.paramId", default=None)
-            if var_u is not None:
-                name = param_ids.get(var_u)
-            else:
-                var_u = "unknown"
+            var_u = "unknown"
 
-        if default is None:
-            default = var_u
+    if default is None:
+        default = var_u
 
-        if name is None:
-            name = default
+    if name is None:
+        name = default
 
-        if unit is None:
-            unit = u0.get("parameter.units")
+    if unit is None:
+        unit = u0.get("parameter.units")
 
-        result.append(u0.set({"values": v, "parameter.variable": name, "parameter.units": unit}))
+    result = u0.set({"values": v, "parameter.variable": name, "parameter.units": unit})
+
+    return result
+
+
+def fieldlist_ufunc(func, *args, **kwargs):
+    import earthkit.data as ekd
+
+    if args:
+        if isinstance(args[0], ekd.Field):
+            return field_ufunc(func, *args, **kwargs)
+        elif not (isinstance(args[0], ekd.FieldList)):
+            raise TypeError(
+                "fieldlist_ufunc arguments must be Field or FieldList instances. Found unsupported type: "
+                + str(type(args[0]))
+                + " in args"
+            )
+    else:
+        raise ValueError("fieldlist_ufunc requires at least one argument")
+
+    # an argument that is None is replaced with an infinite repeat of None to allow zipping without worrying
+    # about lengths
+    safe_args = [arg if arg is not None else repeat(None) for arg in args]
+
+    result = []
+    for fields in zip(*safe_args):
+        result.append(
+            field_ufunc(
+                func,
+                *fields,
+                **kwargs,
+            )
+        )
 
     return ekd.FieldList.from_fields(result)
