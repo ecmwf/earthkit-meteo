@@ -84,7 +84,7 @@ def _get_fieldlist(name, sample=False):
 
 
 @pytest.mark.parametrize("input_type", ["fieldlist", "field"])
-def test_fieldlist_wind_speed(input_type):
+def test_fieldlist_grib_wind_speed(input_type):
     import earthkit.data as ekd
 
     import earthkit.meteo.wind.fieldlist as wind
@@ -142,7 +142,7 @@ def test_fieldlist_wind_speed(input_type):
 
 
 @pytest.mark.parametrize("input_type", ["fieldlist", "field"])
-def test_fieldlist_wind_direction(input_type):
+def test_fieldlist_grib_wind_direction(input_type):
     import earthkit.data as ekd
 
     import earthkit.meteo.wind.fieldlist as wind
@@ -205,7 +205,7 @@ def test_fieldlist_wind_direction(input_type):
 
 @pytest.mark.parametrize("input_type", ["fieldlist", "field"])
 @pytest.mark.parametrize("pres_type", ["fl", "value", None])
-def test_fieldlist_w_from_omega(input_type, pres_type):
+def test_fieldlist_grib_w_from_omega(input_type, pres_type):
     import earthkit.data as ekd
 
     import earthkit.meteo.wind.fieldlist as wind
@@ -267,7 +267,7 @@ def test_fieldlist_w_from_omega(input_type, pres_type):
 
 
 @pytest.mark.parametrize("input_type", ["fieldlist", "field"])
-def test_fieldlist_coriolis(input_type):
+def test_fieldlist_grib_coriolis(input_type):
     import earthkit.meteo.wind.fieldlist as wind
 
     data = _make_input_fieldlist(WIND_GRIB_FILE, "t", input_type=input_type)
