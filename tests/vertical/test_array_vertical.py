@@ -190,7 +190,7 @@ def test_pressure_on_hybrid_levels_core(index, xp, device):
     ref_alpha = ref_alpha[index]
 
     p_full, p_half, delta, alpha = vertical.pressure_on_hybrid_levels(
-        A, B, sp, alpha_top="ifs", output=["full", "half", "delta", "alpha"]
+        sp, A=A, B=B, alpha_top="ifs", output=["full", "half", "delta", "alpha"]
     )
 
     # print("p_full", repr(p_full))
@@ -256,9 +256,9 @@ def test_pressure_on_hybrid_levels_axis(index, xp, device):
     ref_alpha = ref_alpha[index]
 
     p_full, p_half, delta, alpha = vertical.pressure_on_hybrid_levels(
-        A,
-        B,
         sp,
+        A=A,
+        B=B,
         alpha_top="ifs",
         output=["full", "half", "delta", "alpha"],
         vertical_dim=vertical_dim,
@@ -373,7 +373,7 @@ def test_pressure_on_hybrid_levels_output(index, levels, output, xp, device):
             else:
                 ref[key] = ref[key][levels_idx]
 
-    res = vertical.pressure_on_hybrid_levels(A, B, sp, levels=levels, alpha_top="ifs", output=output)
+    res = vertical.pressure_on_hybrid_levels(sp, levels=levels, A=A, B=B, alpha_top="ifs", output=output)
 
     # atol and rtol for different outputs, due to different precisions in backends
     tolerance = Tolerance({
@@ -439,14 +439,14 @@ def test_relative_geopotential_thickness_on_hybrid_levels_ab(index, xp, device):
     q = DATA_HYBRID_CORE.q
     z_ref = DATA_HYBRID_CORE.z
 
-    z_ref, t, q, A, B, sp = (xp.asarray(x, device=device) for x in [z_ref, t, q, A, B, sp])
+    z_ref, t, q, sp, A, B = (xp.asarray(x, device=device) for x in [z_ref, t, q, sp, A, B])
 
     sp = sp[index[1]]
     t = t[index]
     q = q[index]
     z_ref = z_ref[index]
 
-    z = vertical.relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp)
+    z = vertical.relative_geopotential_thickness_on_hybrid_levels(t, q, sp, A, B)
 
     tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
     atol, rtol = tolerance.get(dtype=t.dtype)
@@ -467,7 +467,7 @@ def test_relative_geopotential_thickness_on_hybrid_levels_part(index, xp, device
     q = DATA_HYBRID_CORE.q
     z_ref = DATA_HYBRID_CORE.z
 
-    z_ref, t, q, A, B, sp = (xp.asarray(x, device=device) for x in [z_ref, t, q, A, B, sp])
+    z_ref, t, q, sp, A, B = (xp.asarray(x, device=device) for x in [z_ref, t, q, sp, A, B])
 
     part_index = (part, index[1])
 
@@ -476,7 +476,7 @@ def test_relative_geopotential_thickness_on_hybrid_levels_part(index, xp, device
     q = q[part_index]
     z_ref = z_ref[part_index]
 
-    z = vertical.relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp)
+    z = vertical.relative_geopotential_thickness_on_hybrid_levels(t, q, sp, A, B)
 
     tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
     atol, rtol = tolerance.get(dtype=t.dtype)
@@ -496,7 +496,7 @@ def test_geopotential_on_hybrid_levels(index, xp, device):
     z_ref = DATA_HYBRID_CORE.z
     zs = [0.0] * len(t[0])  # surface geopotential is zero in test data
 
-    z_ref, t, q, zs, A, B, sp = (xp.asarray(x, device=device) for x in [z_ref, t, q, zs, A, B, sp])
+    z_ref, t, q, zs, sp, A, B = (xp.asarray(x, device=device) for x in [z_ref, t, q, zs, sp, A, B])
 
     sp = sp[index[1]]
     t = t[index]
@@ -504,7 +504,7 @@ def test_geopotential_on_hybrid_levels(index, xp, device):
     z_ref = z_ref[index]
     zs = zs[index[1]]
 
-    z = vertical.geopotential_on_hybrid_levels(t, q, zs, A, B, sp)
+    z = vertical.geopotential_on_hybrid_levels(t, q, zs, sp, A, B)
 
     tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
     atol, rtol = tolerance.get(dtype=t.dtype)
@@ -538,7 +538,7 @@ def test_height_on_hybrid_levels(index, xp, device, h_type, h_reference):
     zs = zs[index[1]]
     sp = sp[index[1]]
 
-    h = vertical.height_on_hybrid_levels(t, q, zs, A, B, sp, h_type=h_type, h_reference=h_reference)
+    h = vertical.height_on_hybrid_levels(t, q, zs, sp, A, B, h_type=h_type, h_reference=h_reference)
 
     tolerance = Tolerance({64: (1e-8, 1e-6), 32: (10, 1e-6)})
     atol, rtol = tolerance.get(dtype=t.dtype)

@@ -7,7 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import Any, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -39,20 +41,20 @@ def _read_conf():
 _CONF = _read_conf()
 
 
-def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> Tuple[NDArray[Any], NDArray[Any]]:
+def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> tuple[NDArray[Any], NDArray[Any]]:
     r"""Get the A and B parameters of hybrid levels for a given configuration.
 
     Parameters
     ----------
-        n_levels: int
-            Number of (full) hybrid levels. Currently, only ``n_levels`` 91 and 137 are supported.
-        model : str
-            Model name. Default is "ifs". Currently, only ``model="ifs"`` are supported.
+    n_levels : int
+        Number of (full) hybrid levels. Currently, only ``n_levels`` 91 and 137 are supported.
+    model : str
+        Model name. Default is "ifs". Currently, only ``model="ifs"`` are supported.
 
     Returns
     -------
-    NDArray, NDArray
-        A tuple containing the A and B parameters on the hybrid half-levels See details below. Both are
+    tuple[NDArray, NDArray]
+        A tuple containing the A and B parameters on the hybrid half-levels. See details below. Both are
         1D numpy arrays of length ``n_levels + 1``.
 
 
@@ -100,3 +102,27 @@ def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> Tuple[NDArray[
             raise ValueError(f"Hybrid level parameters not available for {n_levels} levels in model '{model}'.")
     else:
         raise ValueError(f"Model '{model}' not recognised for hybrid level parameters.")
+
+
+def _hybrid_level_parameters_from_fieldlist(*args) -> tuple[NDArray[Any], NDArray[Any]]:
+    import earthkit.data as ekd
+
+    for fl in args:
+        if isinstance(fl, ekd.Field):
+            fl = [fl]
+        elif not isinstance(fl, ekd.FieldList):
+            continue
+
+        for field in fl:
+            if field.get("vertical.level_type") == "hybrid":
+                n_coeff = field.get("metadata.NV")
+                try:
+                    if n_coeff is not None and n_coeff > 2:
+                        pv = field.get("metadata.pv")
+                        if pv and len(pv) == n_coeff:
+                            A = np.array(pv[: n_coeff + 1])
+                            B = np.array(pv[n_coeff + 1 :])
+                            return A, B
+                except Exception:
+                    pass
+    return None, None

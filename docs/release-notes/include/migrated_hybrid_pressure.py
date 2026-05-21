@@ -9,5 +9,5 @@ A, B = vertical.hybrid_level_parameters(137, model="ifs")
 sp = np.array([100000.0, 90000.0])
 
 p_full, p_half, delta, alpha = vertical.pressure_on_hybrid_levels(
-    A, B, sp, alpha_top="ifs", output=["full", "half", "delta", "alpha"]
+    sp, A=A, B=B, alpha_top="ifs", output=["full", "half", "delta", "alpha"]
 )

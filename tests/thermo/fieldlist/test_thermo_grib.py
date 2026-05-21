@@ -355,7 +355,7 @@ def test_fieldlist_grib_saturation_vapour_pressure_slope_pl(input_type):
     assert isinstance(out, type(t))
     if input_type == "fieldlist":
         assert len(out) == len(t)
-        assert (np.array(out.get("parameter.variable")) == "es_slope").all()
+        assert (np.array(out.get("parameter.variable")) == "swvp_slope").all()
 
     # field metadata
     if input_type == "field":
@@ -363,8 +363,8 @@ def test_fieldlist_grib_saturation_vapour_pressure_slope_pl(input_type):
     else:
         f = out[0]
     ref_metadata = {
-        "parameter.variable": "es_slope",
-        # "metadata.shortName": "es_slope",
+        "parameter.variable": "swvp_slope",
+        # "metadata.shortName": "swvp_slope",
         "vertical.level": 850,
         # "metadata.levelist": 850,
         "vertical.level_type": "pressure",

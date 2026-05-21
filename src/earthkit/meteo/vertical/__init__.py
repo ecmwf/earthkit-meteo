@@ -13,6 +13,7 @@ Vertical computation functions.
 The API is organised in layers:
 
 - Core numerical routines live in the ``array`` submodule.
+- FieldList support is provided by the ``fieldlist`` submodule.
 - Functions exposed from this module provide the high-level entry points for the
   vertical API.
 

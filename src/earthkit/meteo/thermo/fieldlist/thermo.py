@@ -389,7 +389,7 @@ def saturation_vapour_pressure_slope(t: FieldList | Field, phase: str = "mixed")
         The result has the same type as the input ``t`` (FieldList or Field).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "es_slope", "param_unit": "Pa/K"}
+    fieldlist_ufunc_kwargs = {"default": "swvp_slope", "param_unit": "Pa/K"}
     return fieldlist_ufunc(
         array.saturation_vapour_pressure_slope, t, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs, phase=phase
     )

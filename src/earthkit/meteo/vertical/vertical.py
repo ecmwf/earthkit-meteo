@@ -61,22 +61,22 @@ def hybrid_level_parameters(*args, **kwargs):
 
 
 def pressure_on_hybrid_levels(
-    A,
-    B,
     sp,
+    A=None,
+    B=None,
     levels=None,
     alpha_top="ifs",
     output="full",
     vertical_dim=0,
 ):
     return dispatch(pressure_on_hybrid_levels, xarray=False, fieldlist=False, array=True)(
-        A, B, sp, levels=levels, alpha_top=alpha_top, output=output, vertical_dim=vertical_dim
+        sp, A=A, B=B, levels=levels, alpha_top=alpha_top, output=output, vertical_dim=vertical_dim
     )
 
 
-def relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, ap, alpha_top="ifs", vertical_dim=0):
+def relative_geopotential_thickness_on_hybrid_levels(t, q, sp, A, B, alpha_top="ifs", vertical_dim=0):
     return dispatch(relative_geopotential_thickness_on_hybrid_levels, xarray=False, fieldlist=False, array=True)(
-        t, q, A, B, ap, alpha_top=alpha_top, vertical_dim=vertical_dim
+        t, q, sp, A, B, alpha_top=alpha_top, vertical_dim=vertical_dim
     )
 
 
@@ -89,22 +89,22 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alph
     )(t, q, alpha, delta, vertical_dim=vertical_dim)
 
 
-def geopotential_on_hybrid_levels(t, q, zs, A, B, sp, alpha_top="ifs", vertical_dim=0):
+def geopotential_on_hybrid_levels(t, q, zs, sp, A, B, alpha_top="ifs", vertical_dim=0):
     return dispatch(geopotential_on_hybrid_levels, xarray=False, fieldlist=False, array=True)(
-        t, q, zs, A, B, sp, alpha_top=alpha_top, vertical_dim=vertical_dim
+        t, q, zs, sp, A, B, alpha_top=alpha_top, vertical_dim=vertical_dim
     )
 
 
 def height_on_hybrid_levels(
-    t, q, zs, A, B, sp, alpha_top="ifs", h_type="geometrics", h_reference="ground", vertical_dim=0
+    t, q, zs, sp, A, B, alpha_top="ifs", h_type="geometrics", h_reference="ground", vertical_dim=0
 ):
     return dispatch(height_on_hybrid_levels, xarray=False, fieldlist=False, array=True)(
         t,
         q,
         zs,
+        sp,
         A,
         B,
-        sp,
         alpha_top=alpha_top,
         h_type=h_type,
         h_reference=h_reference,
@@ -115,9 +115,9 @@ def height_on_hybrid_levels(
 def interpolate_hybrid_to_pressure_levels(
     data,
     target_p,
+    sp,
     A,
     B,
-    sp,
     alpha_top="ifs",
     interpolation: str = "linear",
     aux_bottom_data=None,
@@ -129,9 +129,9 @@ def interpolate_hybrid_to_pressure_levels(
     return dispatch(interpolate_hybrid_to_pressure_levels, xarray=False, fieldlist=False, array=True)(
         data,
         target_p,
+        sp,
         A,
         B,
-        sp,
         alpha_top=alpha_top,
         interpolation=interpolation,
         aux_bottom_data=aux_bottom_data,
@@ -148,9 +148,9 @@ def interpolate_hybrid_to_height_levels(
     t,
     q,
     za,
+    sp,
     A,
     B,
-    sp,
     alpha_top="ifs",
     h_type: str = "geometric",
     h_reference: str = "ground",
@@ -167,9 +167,9 @@ def interpolate_hybrid_to_height_levels(
         t,
         q,
         za,
+        sp,
         A,
         B,
-        sp,
         alpha_top=alpha_top,
         h_type=h_type,
         h_reference=h_reference,

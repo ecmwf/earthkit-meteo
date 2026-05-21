@@ -16,4 +16,4 @@ q = DATA.q
 
 
 # compute the relative geopotential thickness
-z_thickness = vertical.relative_geopotential_thickness_on_hybrid_levels(t, q, A, B, sp, alpha_top="ifs")
+z_thickness = vertical.relative_geopotential_thickness_on_hybrid_levels(t, q, sp, A, B, alpha_top="ifs")

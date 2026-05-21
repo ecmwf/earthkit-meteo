@@ -8,14 +8,7 @@
 #
 
 """
-Thermodynamic functions.
-
-The API is split into two layers:
-
-- Low-level implementations are in the ``array``, ``xarray`` and ``fieldlist`` submodules.
-- High-level functions are in this module and dispatch to backend implementations
-  based on input type.
+Solar computation functions operating on earthkit.data FieldList objects.
 """
 
-from . import array as array
-from .thermo import *  # noqa
+from .solar import *  # noqa

@@ -397,9 +397,9 @@ def test_array_interpolate_hybrid_to_pressure_levels(_kwargs, expected_values, p
     r = vertical.interpolate_hybrid_to_pressure_levels(
         t,  # data to interpolate
         target_p,
+        sp,
         A,
         B,
-        sp,
         **_kwargs,
     )
 
@@ -528,9 +528,9 @@ def test_array_interpolate_hybrid_to_height_levels(_kwargs, expected_values, par
         t,
         q,
         zs,
+        sp,
         A,
         B,
-        sp,
         **_kwargs,
     )
 

@@ -7,16 +7,12 @@
 # nor does it submit to any jurisdiction.
 #
 
+from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-)
-
-if TYPE_CHECKING:
-    from earthkit.data import Field, FieldList  # type: ignore[import]
+from earthkit.data import Field, FieldList  # type: ignore[import]
 
 
-def field_pressure_in_pa(field: "Field") -> float:
+def field_pressure_in_pa(field: Field) -> float:
     from earthkit.utils.units import Units
 
     level = field.get("vertical.level")
@@ -24,7 +20,7 @@ def field_pressure_in_pa(field: "Field") -> float:
     return (level * unit.to_pint()).to("Pa").magnitude
 
 
-def pressure_from_metadata(fields: "Field | FieldList") -> float | list[float]:
+def pressure_from_metadata(fields: Field | FieldList) -> float | list[float]:
     """Infer pressure in Pa from field metadata.
 
     Parameters

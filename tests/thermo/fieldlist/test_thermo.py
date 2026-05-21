@@ -414,12 +414,12 @@ def test_fieldlist_saturation_vapour_pressure_slope(input_type):
 
     if input_type == "fieldlist":
         assert len(out) == len(t)
-        assert out.get("parameter.variable") == ["es_slope"] * len(t)
+        assert out.get("parameter.variable") == ["swvp_slope"] * len(t)
         for f, vals in zip(out, TEMPERATURES):
             ref = array.saturation_vapour_pressure_slope(np.array(vals))
             np.testing.assert_allclose(f.values, ref)
     elif input_type == "field":
-        assert out.get("parameter.variable") == "es_slope"
+        assert out.get("parameter.variable") == "swvp_slope"
         ref = array.saturation_vapour_pressure_slope(np.array(TEMPERATURES[0]))
         np.testing.assert_allclose(out.values, ref)
 

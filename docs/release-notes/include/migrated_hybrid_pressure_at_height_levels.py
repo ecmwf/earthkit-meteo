@@ -17,7 +17,7 @@ q = DATA.q
 # Option 1
 
 # compute the pressure on full hybrid levels
-p_full = vertical.pressure_on_hybrid_levels(A, B, sp, alpha_top="ifs", output="full")
+p_full = vertical.pressure_on_hybrid_levels(sp, A=A, B=B, alpha_top="ifs", output="full")
 
 # interpolate the pressure to geopotential height levels above the ground
 # using linear interpolation
@@ -28,9 +28,9 @@ p_h = vertical.interpolate_hybrid_to_height_levels(
     t,
     q,
     0,
+    sp,
     A,
     B,
-    sp,
     h_type="geopotential",
     h_reference="ground",
     interpolation="linear",
@@ -40,7 +40,9 @@ p_h = vertical.interpolate_hybrid_to_height_levels(
 # Option 2
 
 # compute the pressure on full hybrid levels
-p_full, alpha, delta = vertical.pressure_on_hybrid_levels(A, B, sp, alpha_top="ifs", output=("full", "alpha", "delta"))
+p_full, alpha, delta = vertical.pressure_on_hybrid_levels(
+    sp, A=A, B=B, alpha_top="ifs", output=("full", "alpha", "delta")
+)
 
 z = vertical.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta)
 h = vertical.geopotential_height_from_geopotential(z)
