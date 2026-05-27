@@ -293,7 +293,20 @@ def test_fieldlist_grib_height_on_hybrid_levels(sort_mode):
 
 
 @pytest.mark.parametrize("sort_mode", [None, "ascending", "descending"])
-def test_fieldlist_grib_interpolate_hybrid_to_pressure_levels(sort_mode):
+@pytest.mark.parametrize(
+    "target_p, ref_values",
+    [
+        (
+            [50000.0, 1000000.0, 85000.0],
+            np.array([
+                [[256.84623176888516, 253.75744555161938], [268.90648252133036, 268.83196698107815]],
+                [[np.nan, np.nan], [np.nan, np.nan]],
+                [[279.2465996835962, 277.5093980166771], [291.93205593367657, 294.0204548739655]],
+            ]),
+        ),
+    ],
+)
+def test_fieldlist_grib_interpolate_hybrid_to_pressure_levels(sort_mode, target_p, ref_values):
     from earthkit.data import FieldList
 
     import earthkit.meteo.vertical.fieldlist as vertical
@@ -307,8 +320,6 @@ def test_fieldlist_grib_interpolate_hybrid_to_pressure_levels(sort_mode):
     if sort_mode is not None:
         t = t.order_by({"vertical.level": sort_mode})
 
-    target_p = [50000.0, 1000000.0, 85000.0]
-
     out = vertical.interpolate_hybrid_to_pressure_levels(t, target_p, sp)
 
     assert isinstance(out, FieldList)
@@ -318,28 +329,25 @@ def test_fieldlist_grib_interpolate_hybrid_to_pressure_levels(sort_mode):
     assert out.get("parameter.variable") == ["t"] * len(target_p)
     assert out.get("parameter.units") == ["K"] * len(target_p)
 
-    # 50000 Pa (500 hPa)
-    np.testing.assert_allclose(
-        out[0].to_numpy()[:2, :2],
-        [[256.84623176888516, 253.75744555161938], [268.90648252133036, 268.83196698107815]],
-        atol=1e-8,
-        rtol=1e-6,
-    )
-
-    # 1000000 Pa (10 hPa) is above the top of the atmosphere, so all values are NaN
-    assert np.all(np.isnan(out[1].to_numpy()[:2, :2]))
-
-    # 85000 Pa (850 hPa)
-    np.testing.assert_allclose(
-        out[2].to_numpy()[:2, :2],
-        [[279.2465996835962, 277.5093980166771], [291.93205593367657, 294.0204548739655]],
-        atol=1e-8,
-        rtol=1e-6,
-    )
+    actual = out.to_numpy()[:, :2, :2]
+    np.testing.assert_allclose(actual, ref_values, atol=1e-8, rtol=1e-6, equal_nan=True)
 
 
-@pytest.mark.parametrize("sort_mode", [(None, None)])
-def test_fieldlist_grib_interpolate_hybrid_to_height_levels(sort_mode):
+@pytest.mark.parametrize("sort_mode", [(None, None), ("ascending", "descending"), ("descending", "ascending")])
+@pytest.mark.parametrize(
+    "target_h, ref_values",
+    [
+        (
+            [10000.0, -2000.0, 5000.0],
+            np.array([
+                [[222.80249991296523, 223.3624981324529], [240.17321676165847, 230.05516258566286]],
+                [[np.nan, np.nan], [np.nan, np.nan]],
+                [[261.09944396779997, 257.4088919626445], [273.74894013310427, 266.7762235885782]],
+            ]),
+        ),
+    ],
+)
+def test_fieldlist_grib_interpolate_hybrid_to_height_levels(sort_mode, target_h, ref_values):
     from earthkit.data import FieldList
 
     import earthkit.meteo.vertical.fieldlist as vertical
@@ -359,8 +367,6 @@ def test_fieldlist_grib_interpolate_hybrid_to_height_levels(sort_mode):
 
     zs = ds.sel({"parameter.variable": "z", "vertical.level": 1})[0]
 
-    target_h = [10000.0, -2000.0, 5000.0]
-
     out = vertical.interpolate_hybrid_to_height_levels(t, target_h, t, q, zs, sp)
 
     assert isinstance(out, FieldList)
@@ -370,21 +376,160 @@ def test_fieldlist_grib_interpolate_hybrid_to_height_levels(sort_mode):
     assert out.get("parameter.variable") == ["t"] * len(target_h)
     assert out.get("parameter.units") == ["K"] * len(target_h)
 
-    # 10000 m
-    np.testing.assert_allclose(
-        out[0].to_numpy()[:2, :2],
-        [[222.80249991296523, 223.3624981324529], [240.17321676165847, 230.05516258566286]],
-        atol=1e-8,
-        rtol=1e-6,
-    )
+    actual = out.to_numpy()[:, :2, :2]
+    np.testing.assert_allclose(actual, ref_values, atol=1e-8, rtol=1e-6, equal_nan=True)
 
-    # -2000 m is below the surface, so all values are NaN
-    assert np.all(np.isnan(out[1].to_numpy()[:2, :2]))
 
-    # 5000 m
-    np.testing.assert_allclose(
-        out[2].to_numpy()[:2, :2],
-        [[261.09944396779997, 257.4088919626445], [273.74894013310427, 266.7762235885782]],
-        atol=1e-8,
-        rtol=1e-6,
-    )
+@pytest.mark.parametrize("sort_mode", [(None, None), ("ascending", "descending"), ("descending", "ascending")])
+@pytest.mark.parametrize(
+    "target_h, ref_values",
+    [
+        (
+            [10000.0, -2000.0, 5000.0],
+            np.array([
+                [[228.258349516436, 228.258349516436], [228.66183646999937, 228.652909342945]],
+                [[np.nan, np.nan], [np.nan, np.nan]],
+                [[255.19437602531926, 255.19437602531926], [258.4087786252097, 258.59473571612006]],
+            ]),
+        ),
+    ],
+)
+def test_fieldlist_grib_interpolate_pressure_to_height_levels(sort_mode, target_h, ref_values):
+    from earthkit.data import FieldList
+
+    import earthkit.meteo.vertical.fieldlist as vertical
+
+    ds = _get_fieldlist("tz_pl.grib1")
+
+    zs = ds.sel({"parameter.variable": "z", "vertical.level_type": "surface"})[0]
+
+    t = ds.sel({"parameter.variable": "t", "vertical.level_type": "pressure"})
+    if sort_mode[0] is not None:
+        t = t.order_by({"vertical.level": sort_mode[0]})
+
+    z = ds.sel({"parameter.variable": "z", "vertical.level_type": "pressure"})
+    if sort_mode[1] is not None:
+        z = z.order_by({"vertical.level": sort_mode[1]})
+
+    out = vertical.interpolate_pressure_to_height_levels(t, target_h, z, zs=zs)
+
+    assert isinstance(out, FieldList)
+    assert len(out) == len(target_h)
+    assert out.get("vertical.level_type") == ["height"] * len(target_h)
+    assert out.get("vertical.level") == target_h
+    assert out.get("parameter.variable") == ["t"] * len(target_h)
+    assert out.get("parameter.units") == ["K"] * len(target_h)
+
+    actual = out.to_numpy()[:, :2, :2]
+    np.testing.assert_allclose(actual, ref_values, atol=1e-8, rtol=1e-6, equal_nan=True)
+
+
+@pytest.mark.parametrize("sort_mode", [("ascending", "descending")])
+@pytest.mark.parametrize(
+    "target_coord, ref_values",
+    [
+        (
+            [50000.0, 1000000.0, 85000.0],
+            np.array([
+                [[252.625839233398438, 252.625839233398438], [255.506698608398438, 255.624862670898438]],
+                [[np.nan, np.nan], [np.nan, np.nan]],
+                [[271.075210571289062, 271.075210571289062], [274.143569946289062, 273.864273071289062]],
+            ]),
+        ),
+        (
+            50000.0,
+            np.array([
+                [[252.625839233398438, 252.625839233398438], [255.506698608398438, 255.624862670898438]],
+            ]),
+        ),
+        (
+            [50000.0],
+            np.array([
+                [[252.625839233398438, 252.625839233398438], [255.506698608398438, 255.624862670898438]],
+            ]),
+        ),
+    ],
+)
+def test_fieldlist_grib_interpolate_monotonic_pl_to_pl_scalar(sort_mode, target_coord, ref_values):
+    from earthkit.data import FieldList
+
+    import earthkit.meteo.vertical.fieldlist as vertical
+
+    ds = _get_fieldlist("tz_pl.grib1")
+
+    t = ds.sel({"parameter.variable": "t", "vertical.level_type": "pressure"})
+    if sort_mode[0] is not None:
+        t = t.order_by({"vertical.level": sort_mode[0]})
+
+    out = vertical.interpolate_monotonic(t, coord=None, target_coord=target_coord, target_coord_type="pressure")
+
+    if isinstance(target_coord, (int, float)):
+        target_coord = [target_coord]
+
+    assert isinstance(out, FieldList)
+    assert len(out) == len(target_coord)
+    assert out.get("vertical.level_type") == ["pressure"] * len(target_coord)
+    assert np.allclose(np.array(out.get("vertical.level")), np.array(target_coord))
+    assert out.get("parameter.variable") == ["t"] * len(target_coord)
+    assert out.get("parameter.units") == ["K"] * len(target_coord)
+
+    actual = out.to_numpy()[:, :2, :2]
+    np.testing.assert_allclose(actual, ref_values, atol=1e-8, rtol=1e-6, equal_nan=True)
+
+
+@pytest.mark.parametrize("sort_mode", ["ascending", "descending"])
+@pytest.mark.parametrize(
+    "target_index,ref_values",
+    [
+        (
+            0,
+            np.array([[[252.8275077819, 252.8275077819], [255.7030556266, 255.8207520890]]]),
+        ),
+        (
+            [0],
+            np.array([[[252.8275077819, 252.8275077819], [255.7030556266, 255.8207520890]]]),
+        ),
+        (
+            [0, 1],
+            np.array([
+                [[252.8275077819, 252.8275077819], [255.7030556266, 255.8207520890]],
+                [[252.8270320025, 252.8270320025], [255.7024048907, 255.8200620057]],
+            ]),
+        ),
+    ],
+)
+def test_fieldlist_grib_interpolate_monotonic_pl_to_pl_field(sort_mode, target_index, ref_values):
+    from earthkit.data import Field, FieldList
+
+    import earthkit.meteo.vertical.fieldlist as vertical
+
+    ds = _get_fieldlist("tz_pl.grib1")
+
+    t = ds.sel({"parameter.variable": "t", "vertical.level_type": "pressure"})
+
+    # create target pressure field/fieldlist buy "perturbing"  50000 Pa
+    # with some temperature values
+    if isinstance(target_index, int):
+        target_coord = t[target_index] + 50000.0  # create a Field for target_coord with the same metadata as t
+    elif isinstance(target_index, list):
+        target_coord = FieldList.from_fields([t[idx] + 50000.0 for idx in target_index])
+    else:
+        raise ValueError("Invalid target_index type")
+
+    if sort_mode is not None:
+        t = t.order_by({"vertical.level": sort_mode})
+
+    out = vertical.interpolate_monotonic(t, coord=None, target_coord=target_coord, target_coord_type="pressure")
+
+    if isinstance(target_coord, Field):
+        target_coord = FieldList.from_fields([target_coord])
+
+    assert isinstance(out, FieldList)
+    assert len(out) == len(target_coord)
+    assert out.get("vertical.level_type") == ["pressure"] * len(target_coord)
+    # assert np.allclose(np.array(out.get("vertical.level")), np.array(target_coord))
+    assert out.get("parameter.variable") == ["t"] * len(target_coord)
+    assert out.get("parameter.units") == ["K"] * len(target_coord)
+
+    actual = out.to_numpy()[:, :2, :2]
+    np.testing.assert_allclose(actual, ref_values, atol=1e-8, rtol=1e-6, equal_nan=True)

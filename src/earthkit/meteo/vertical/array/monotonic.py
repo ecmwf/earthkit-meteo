@@ -101,6 +101,12 @@ class MonotonicInterpolator:
                 f"{coord.shape[0]}"
             )
 
+        if coord.ndim >= 2 and coord.shape[0] == nlev and all(s == 1 for s in coord.shape[1:]):
+            coord = xp.squeeze(coord, axis=1)
+
+        if target_coord.ndim >= 2 and all(s == 1 for s in target_coord.shape[1:]):
+            target_coord = xp.squeeze(target_coord, axis=1)
+
         self.data_is_scalar = data[0].ndim == 0
         self.coord_is_scalar = coord[0].ndim == 0
         self.target_is_scalar = target_coord[0].ndim == 0
@@ -142,7 +148,10 @@ class MonotonicInterpolator:
             #     coord = xp.broadcast_to(coord, (nlev,) + data.shape[1:]).T
 
             if not self.target_is_scalar:
-                coord = xp.broadcast_to(coord, (nlev,) + data.shape[1:]).T
+                coord = xp.broadcast_to(
+                    xp.reshape(coord, (nlev,) + (1,) * (data.ndim - 1)),
+                    (nlev,) + data.shape[1:],
+                )
 
         # assert data.shape == coord.shape, f"{data.shape=} != {coord.shape=}"
 

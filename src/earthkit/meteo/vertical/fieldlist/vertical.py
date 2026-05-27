@@ -424,19 +424,19 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     pressure_on_hybrid_levels
     earthkit.meteo.vertical.array.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta
     """
-    from .hybrid import _HybridInput
+    from .hybrid import HybridInputHandler
 
-    _hybrid = _HybridInput()
-    _hybrid.add_t(t)
-    _hybrid.add_q(q)
-    _hybrid.add_alpha(alpha)
-    _hybrid.add_delta(delta)
-    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    handler = HybridInputHandler()
+    handler.add_t(t)
+    handler.add_q(q)
+    handler.add_alpha(alpha)
+    handler.add_delta(delta)
+    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
 
-    t_arr = _hybrid.t.to_numpy(copy=False)
-    q_arr = _hybrid.q.to_numpy(copy=False)
-    alpha_arr = _hybrid.alpha.to_numpy(copy=False)
-    delta_arr = _hybrid.delta.to_numpy(copy=False)
+    t_arr = handler.t.to_numpy(copy=False)
+    q_arr = handler.q.to_numpy(copy=False)
+    alpha_arr = handler.alpha.to_numpy(copy=False)
+    delta_arr = handler.delta.to_numpy(copy=False)
 
     res_arr = array.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
         t=t_arr,
@@ -445,7 +445,7 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
         delta=delta_arr,
     )
 
-    return _hybrid.to_fieldlist(res_arr, template=t[0], param_name="relative_geopotential_thickness")
+    return handler.to_fieldlist(res_arr, template=t[0], param_name="relative_geopotential_thickness")
 
 
 def relative_geopotential_thickness_on_hybrid_levels(
@@ -493,20 +493,20 @@ def relative_geopotential_thickness_on_hybrid_levels(
     relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta
     earthkit.meteo.vertical.array.relative_geopotential_thickness_on_hybrid_levels
     """
-    from .hybrid import _HybridInput
+    from .hybrid import HybridInputHandler
 
-    _hybrid = _HybridInput()
-    _hybrid.add_t(t)
-    _hybrid.add_q(q)
-    _hybrid.add_sp(sp)
-    _hybrid.generate_AB(A, B)
-    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    handler = HybridInputHandler()
+    handler.add_t(t)
+    handler.add_q(q)
+    handler.add_sp(sp)
+    handler.generate_AB(A, B)
+    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
 
-    t_arr = _hybrid.t.to_numpy(copy=False)
-    q_arr = _hybrid.q.to_numpy(copy=False)
-    sp_arr = _hybrid.sp.to_numpy(copy=False)
-    A = _hybrid.A
-    B = _hybrid.B
+    t_arr = handler.t.to_numpy(copy=False)
+    q_arr = handler.q.to_numpy(copy=False)
+    sp_arr = handler.sp.to_numpy(copy=False)
+    A = handler.A
+    B = handler.B
 
     res_arr = array.relative_geopotential_thickness_on_hybrid_levels(
         t=t_arr,
@@ -517,7 +517,7 @@ def relative_geopotential_thickness_on_hybrid_levels(
         alpha_top=alpha_top,
     )
 
-    return _hybrid.to_fieldlist(res_arr, template=t[0], param_name="relative_geopotential_thickness")
+    return handler.to_fieldlist(res_arr, template=t[0], param_name="relative_geopotential_thickness")
 
 
 def geopotential_on_hybrid_levels(
@@ -567,26 +567,26 @@ def geopotential_on_hybrid_levels(
     relative_geopotential_thickness_on_hybrid_levels
     earthkit.meteo.vertical.array.geopotential_on_hybrid_levels
     """
-    from .hybrid import _HybridInput
+    from .hybrid import HybridInputHandler
 
-    _hybrid = _HybridInput()
-    _hybrid.add_sp(sp)
-    _hybrid.add_zs(zs)
-    _hybrid.add_t(t)
-    _hybrid.add_q(q)
-    _hybrid.generate_AB(A, B)
-    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    handler = HybridInputHandler()
+    handler.add_sp(sp)
+    handler.add_zs(zs)
+    handler.add_t(t)
+    handler.add_q(q)
+    handler.generate_AB(A, B)
+    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
 
-    t_arr = _hybrid.t.to_numpy(copy=False)
-    q_arr = _hybrid.q.to_numpy(copy=False)
-    zs_arr = _hybrid.zs.to_numpy(copy=False)
-    sp_arr = _hybrid.sp.to_numpy(copy=False)
-    A = _hybrid.A
-    B = _hybrid.B
+    t_arr = handler.t.to_numpy(copy=False)
+    q_arr = handler.q.to_numpy(copy=False)
+    zs_arr = handler.zs.to_numpy(copy=False)
+    sp_arr = handler.sp.to_numpy(copy=False)
+    A = handler.A
+    B = handler.B
 
     res = array.geopotential_on_hybrid_levels(t_arr, q_arr, zs_arr, sp_arr, A=A, B=B, alpha_top=alpha_top)
 
-    return _hybrid.to_fieldlist(res, template=t[0], param_name="geopotential")
+    return handler.to_fieldlist(res, template=t[0], param_name="geopotential")
 
 
 def height_on_hybrid_levels(
@@ -651,28 +651,28 @@ def height_on_hybrid_levels(
     relative_geopotential_thickness_on_hybrid_levels
     earthkit.meteo.vertical.array.height_on_hybrid_levels
     """
-    from .hybrid import _HybridInput
+    from .hybrid import HybridInputHandler
 
-    _hybrid = _HybridInput()
-    _hybrid.add_sp(sp)
-    _hybrid.add_zs(zs)
-    _hybrid.add_t(t)
-    _hybrid.add_q(q)
-    _hybrid.generate_AB(A, B)
-    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    handler = HybridInputHandler()
+    handler.add_sp(sp)
+    handler.add_zs(zs)
+    handler.add_t(t)
+    handler.add_q(q)
+    handler.generate_AB(A, B)
+    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
 
-    t_arr = _hybrid.t.to_numpy(copy=False)
-    q_arr = _hybrid.q.to_numpy(copy=False)
-    zs_arr = _hybrid.zs.to_numpy(copy=False)
-    sp_arr = _hybrid.sp.to_numpy(copy=False)
-    A = _hybrid.A
-    B = _hybrid.B
+    t_arr = handler.t.to_numpy(copy=False)
+    q_arr = handler.q.to_numpy(copy=False)
+    zs_arr = handler.zs.to_numpy(copy=False)
+    sp_arr = handler.sp.to_numpy(copy=False)
+    A = handler.A
+    B = handler.B
 
     res = array.height_on_hybrid_levels(
         t_arr, q_arr, zs_arr, sp_arr, A=A, B=B, alpha_top=alpha_top, h_type=h_type, h_reference=h_reference
     )
 
-    return _hybrid.to_fieldlist(res, template=t[0], param_name="height")
+    return handler.to_fieldlist(res, template=t[0], param_name="height")
 
 
 def interpolate_hybrid_to_pressure_levels(
@@ -740,18 +740,18 @@ def interpolate_hybrid_to_pressure_levels(
     interpolate_monotonic
     earthkit.meteo.vertical.array.interpolate_hybrid_to_pressure_levels
     """
-    from .hybrid import _HybridInput, to_fieldlist
+    from .hybrid import HybridInputHandler
 
-    _hybrid = _HybridInput()
-    _hybrid.add_sp(sp)
-    _hybrid.add_profile(data, "data")
-    _hybrid.generate_AB(A, B)
-    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    handler = HybridInputHandler()
+    handler.add_sp(sp)
+    handler.add_profile(data, "data", "data")
+    handler.generate_AB(A, B)
+    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
 
-    data_arr = _hybrid.data.to_numpy(copy=False)
-    sp_arr = _hybrid.sp.to_numpy(copy=False)
-    A = _hybrid.A
-    B = _hybrid.B
+    data_arr = handler.data.to_numpy(copy=False)
+    sp_arr = handler.sp.to_numpy(copy=False)
+    A = handler.A
+    B = handler.B
 
     res_arr = array.interpolate_hybrid_to_pressure_levels(
         data_arr,
@@ -768,7 +768,7 @@ def interpolate_hybrid_to_pressure_levels(
         vertical_dim=0,
     )
 
-    return to_fieldlist(res_arr, template=data[0], levels=target_p, vertical={"level_type": "pressure"})
+    return handler.to_fieldlist(res_arr, template=data[0], levels=target_p, vertical={"level_type": "pressure"})
 
 
 def interpolate_hybrid_to_height_levels(
@@ -863,24 +863,24 @@ def interpolate_hybrid_to_height_levels(
     height_on_hybrid_levels
     earthkit.meteo.vertical.array.interpolate_hybrid_to_height_levels
     """
-    from .hybrid import _HybridInput, to_fieldlist
+    from .hybrid import HybridInputHandler
 
-    _hybrid = _HybridInput()
-    _hybrid.add_sp(sp)
-    _hybrid.add_zs(zs)
-    _hybrid.add_t(t)
-    _hybrid.add_q(q)
-    _hybrid.add_profile(data, "data")
-    _hybrid.generate_AB(A, B)
-    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    handler = HybridInputHandler()
+    handler.add_sp(sp)
+    handler.add_zs(zs)
+    handler.add_t(t)
+    handler.add_q(q)
+    handler.add_profile(data, "data", "data")
+    handler.generate_AB(A, B)
+    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
 
-    data_arr = _hybrid.data.to_numpy(copy=False)
-    t_arr = _hybrid.t.to_numpy(copy=False)
-    q_arr = _hybrid.q.to_numpy(copy=False)
-    zs_arr = _hybrid.zs.to_numpy(copy=False)
-    sp_arr = _hybrid.sp.to_numpy(copy=False)
-    A = _hybrid.A
-    B = _hybrid.B
+    data_arr = handler.data.to_numpy(copy=False)
+    t_arr = handler.t.to_numpy(copy=False)
+    q_arr = handler.q.to_numpy(copy=False)
+    zs_arr = handler.zs.to_numpy(copy=False)
+    sp_arr = handler.sp.to_numpy(copy=False)
+    A = handler.A
+    B = handler.B
 
     res_arr = array.interpolate_hybrid_to_height_levels(
         data_arr,
@@ -902,7 +902,7 @@ def interpolate_hybrid_to_height_levels(
         vertical_dim=0,
     )
 
-    return to_fieldlist(res_arr, template=data[0], levels=target_h, vertical={"level_type": "height"})
+    return handler.to_fieldlist(res_arr, template=data[0], levels=target_h, vertical={"level_type": "height"})
 
 
 def interpolate_pressure_to_height_levels(
@@ -974,13 +974,42 @@ def interpolate_pressure_to_height_levels(
     interpolate_monotonic
     earthkit.meteo.vertical.array.interpolate_pressure_to_height_levels
     """
-    pass
+    from .hybrid import MonotonicInputHandler
+
+    handler = MonotonicInputHandler(level_type="pressure", sort_direction="ascending")
+    if zs is not None:
+        handler.add_surface(zs, "zs", "Surface geopotential")
+    handler.add_profile(data, "data", "Data")
+    handler.add_profile(z, "z", "Geopotential")
+    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
+
+    data_arr = handler.data.to_numpy(copy=False)
+    z_arr = handler.z.to_numpy(copy=False)
+    zs_arr = handler.zs.to_numpy(copy=False) if zs is not None else None
+
+    res_arr = array.interpolate_pressure_to_height_levels(
+        data_arr,
+        target_h,
+        z_arr,
+        zs=zs_arr,
+        h_type=h_type,
+        h_reference=h_reference,
+        interpolation=interpolation,
+        aux_bottom_data=aux_bottom_data,
+        aux_bottom_h=aux_bottom_h,
+        aux_top_data=aux_top_data,
+        aux_top_h=aux_top_h,
+        vertical_dim=0,
+    )
+
+    return handler.to_fieldlist(res_arr, template=data[0], levels=target_h, vertical={"level_type": "height"})
 
 
 def interpolate_monotonic(
     data: FieldList,
-    coord: FieldList,
-    target_coord: ArrayLike,
+    coord: FieldList | ArrayLike | list | tuple | float | int = None,
+    target_coord: FieldList | ArrayLike | list | tuple | float | int = None,
+    target_coord_type: str | None = None,
     interpolation: str = "linear",
     aux_min_level_data: FieldList | Field | None = None,
     aux_min_level_coord: ArrayLike | None = None,
@@ -997,7 +1026,7 @@ def interpolate_monotonic(
     coord: FieldList
         Vertical coordinates related to ``data``. Must have the same number
         of fields as ``data``. Must be monotonic along the vertical axis.
-    target_coord: ArrayLike
+    target_coord: FieldList | ArrayLike | list | tuple | float | int
         Target coordinate levels to which ``data`` will be interpolated.
     interpolation: str
         Interpolation mode. Default is ``"linear"``. Possible values:
@@ -1028,4 +1057,36 @@ def interpolate_monotonic(
     --------
     earthkit.meteo.vertical.array.interpolate_monotonic
     """
-    pass
+    from .hybrid import MonotonicInputHandler, TargetCoordItem
+
+    handler = MonotonicInputHandler(level_type=None, sort_direction="descending")
+
+    handler.add_profile(data, "data", "Data")
+    handler.add_coord(coord, "coord", "Coordinate", source=handler.data)
+    target_coord = TargetCoordItem(
+        target_coord,
+        "target_coord",
+        "Target coordinate",
+        source_data=handler.data,
+        source_coord=handler.coord,
+        level_type=target_coord_type,
+    )
+
+    data_arr = handler.data.to_numpy(copy=False)
+    coord_arr = handler.coord.to_numpy(copy=False)
+    target_coord_arr = target_coord.fl.to_numpy(copy=False)
+
+    res_arr = array.interpolate_monotonic(
+        data_arr,
+        coord_arr,
+        target_coord_arr,
+        interpolation=interpolation,
+        aux_min_level_data=aux_min_level_data,
+        aux_min_level_coord=aux_min_level_coord,
+        aux_max_level_data=aux_max_level_data,
+        aux_max_level_coord=aux_max_level_coord,
+        vertical_dim=0,
+    )
+
+    levels = target_coord.levels()
+    return handler.to_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": target_coord_type})

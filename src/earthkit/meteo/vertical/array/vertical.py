@@ -1675,7 +1675,7 @@ def interpolate_pressure_to_height_levels(
 
 def interpolate_monotonic(
     data: ArrayLike,
-    coord: ArrayLike | list | tuple | float | int,
+    coord: ArrayLike | list | tuple,
     target_coord: ArrayLike | list | tuple | float | int,
     interpolation: str = "linear",
     aux_min_level_data: ArrayLike | None = None,
