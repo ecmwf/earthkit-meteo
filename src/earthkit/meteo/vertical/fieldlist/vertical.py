@@ -14,6 +14,8 @@ from numpy.typing import ArrayLike
 
 from earthkit.meteo import constants
 from earthkit.meteo.utils.decorators import fieldlist_ufunc
+from earthkit.meteo.utils.fieldlist import get_hybrid_level_parameters, surface_pressure_values
+from earthkit.meteo.utils.param import FIELD_PARAMS
 
 from .. import array
 
@@ -121,7 +123,7 @@ def geopotential_height_from_geometric_height(
     return fieldlist_ufunc(
         array.geopotential_height_from_geometric_height,
         h,
-        R_earth,
+        R_earth=R_earth,
         fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs,
     )
 
@@ -163,7 +165,10 @@ def geopotential_from_geometric_height(
     fieldlist_ufunc_kwargs = {"default": "z", "param_unit": "m2/s2"}
 
     return fieldlist_ufunc(
-        array.geopotential_from_geometric_height, h, R_earth, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs
+        array.geopotential_from_geometric_height,
+        h,
+        R_earth=R_earth,
+        fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs,
     )
 
 
@@ -202,7 +207,7 @@ def geometric_height_from_geopotential_height(
     return fieldlist_ufunc(
         array.geometric_height_from_geopotential_height,
         gh,
-        R_earth,
+        R_earth=R_earth,
         fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs,
     )
 
@@ -244,7 +249,10 @@ def geometric_height_from_geopotential(
     fieldlist_ufunc_kwargs = {"default": "h", "param_unit": "m"}
 
     return fieldlist_ufunc(
-        array.geometric_height_from_geopotential, z, R_earth, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs
+        array.geometric_height_from_geopotential,
+        z,
+        R_earth=R_earth,
+        fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs,
     )
 
 
@@ -280,9 +288,20 @@ def pressure_on_hybrid_levels(
         Option to initialise the alpha parameter on the top of the model
         atmosphere. See :func:`earthkit.meteo.vertical.array.pressure_on_hybrid_levels`
         for details.
-    output: str|list|tuple[str]|None
-        Which outputs to return. Possible values are ``"full"``, ``"half"``,
-        ``"delta"`` and ``"alpha"``. Default is ``"full"``.
+    output : str|list|tuple
+        Specify which outputs to return. Possible values are "full", "half", "delta" and "alpha".
+        Can be a single string or a list/tuple of strings. Default is "full". The outputs are:
+
+        - "full": pressure (Pa) on full-levels
+        - "half": pressure (Pa) on half-levels. When ``levels`` is None, returns all the
+          half-levels. When ``levels`` is not None, only returns the half-levels below
+          the requested full-levels.
+        - "delta": logarithm of pressure difference between two adjacent half-levels. Uses
+          the same indexing as the full-levels.
+        - "alpha": alpha parameter defined for layers (i.e. for full-levels). Uses the same
+          indexing as the full-levels. Used for the calculation of the relative geopotential
+          thickness on full-levels. See
+          :func:`relative_geopotential_thickness_on_hybrid_levels` for details..
 
     Returns
     -------
@@ -290,40 +309,83 @@ def pressure_on_hybrid_levels(
         Pressure and/or related parameters on hybrid levels. When a single
         output type is requested, a single FieldList is returned. When
         multiple output types are requested, a tuple of FieldLists is
-        returned.
+        returned, one for each requested output type, in the same order
+        as specified in the input.
 
     See Also
     --------
     earthkit.meteo.vertical.array.pressure_on_hybrid_levels
     """
-    fieldlist_ufunc_kwargs = {"default": "pres", "param_unit": "Pa"}
+    if isinstance(sp, FieldList):
+        if len(sp) != 1:
+            raise ValueError(f"Expected exactly one surface pressure field, but found {len(sp)}.")
+        sp = sp[0]
+    if not isinstance(sp, Field):
+        raise ValueError("Surface pressure must be a Field or a FieldList containing exactly one Field.")
 
-    if A is not None and B is None:
-        raise ValueError("When A is provided, B must also be provided.")
-    if A is None and B is not None:
-        raise ValueError("When B is provided, A must also be provided.")
-    if A is None or B is None:
-        from ..array.hybrid import _hybrid_level_parameters_from_fieldlist
+    A, B = get_hybrid_level_parameters(sp, A=A, B=B)
 
-        A, B = _hybrid_level_parameters_from_fieldlist(sp, levels)
-        if A is None or B is None:
-            raise ValueError("A and B parameters could not be inferred from the input fields.")
+    if isinstance(output, str):
+        output = [
+            output,
+        ]
+    else:
+        output = list(output)
 
-    assert A is not None and B is not None, "A and B parameters must be provided or inferred from the input fields."
+    if "level" in output:
+        raise ValueError("Output type 'level' is not supported for the fieldlist version of pressure_on_hybrid_levels.")
 
-    if len(A) != len(B):
-        raise ValueError("A and B must have the same length.")
+    output.append("level")
+    output = tuple(output)
 
-    return fieldlist_ufunc(
-        array.pressure_on_hybrid_levels,
-        sp,
-        levels,
-        A=A,
-        B=B,
-        alpha_top=alpha_top,
-        output=output,
-        fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs,
-    )
+    params = {
+        "full": FIELD_PARAMS.get("pressure_full_level"),
+        "half": FIELD_PARAMS.get("pressure_half_level"),
+        "delta": FIELD_PARAMS.get("hybrid_delta"),
+        "alpha": FIELD_PARAMS.get("hybrid_alpha"),
+    }
+
+    def _output(template, fl_values, fl_levels, name):
+        for rv, rl in zip(fl_values, fl_levels):
+            yield template.set(
+                values=rv,
+                parameter=params[name],
+                vertical={"level": rl, "level_type": "hybrid"},
+            )
+
+    res_keys = output[:-1]  # all output types except "level"
+    results = [[] for _ in res_keys]
+
+    sp = [sp] if isinstance(sp, Field) else sp
+
+    for field in sp:
+        sp_values = surface_pressure_values(field)
+        res_values = array.pressure_on_hybrid_levels(
+            sp_values,
+            levels=levels,
+            A=A,
+            B=B,
+            alpha_top=alpha_top,
+            output=output,
+        )
+
+        if len(results) == 1:
+            res_values = [res_values]
+
+        res_levels = res_values[-1]
+        res_values = res_values[:-1]
+
+        for i in range(len(res_keys)):
+            if res_keys[i] in ["full", "delta", "alpha"]:
+                fl_levels = res_levels["full"]
+            elif res_keys[i] == "half":
+                fl_levels = res_levels["half"]
+            results[i].extend(_output(field, res_values[i], fl_levels, res_keys[i]))
+
+    if len(results) == 1:
+        return FieldList.from_fields(results[0])
+    else:
+        return tuple(FieldList.from_fields(r) for r in results)
 
 
 def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
@@ -362,15 +424,36 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     pressure_on_hybrid_levels
     earthkit.meteo.vertical.array.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta
     """
-    pass
+    from .hybrid import _HybridInput
+
+    _hybrid = _HybridInput()
+    _hybrid.add_t(t)
+    _hybrid.add_q(q)
+    _hybrid.add_alpha(alpha)
+    _hybrid.add_delta(delta)
+    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+
+    t_arr = _hybrid.t.to_numpy(copy=False)
+    q_arr = _hybrid.q.to_numpy(copy=False)
+    alpha_arr = _hybrid.alpha.to_numpy(copy=False)
+    delta_arr = _hybrid.delta.to_numpy(copy=False)
+
+    res_arr = array.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
+        t=t_arr,
+        q=q_arr,
+        alpha=alpha_arr,
+        delta=delta_arr,
+    )
+
+    return _hybrid.to_fieldlist(res_arr, template=t[0], param_name="relative_geopotential_thickness")
 
 
 def relative_geopotential_thickness_on_hybrid_levels(
     t: FieldList,
     q: FieldList,
-    A: ArrayLike,
-    B: ArrayLike,
     sp: FieldList | Field,
+    A: ArrayLike | None = None,
+    B: ArrayLike | None = None,
     alpha_top: str = "ifs",
 ) -> FieldList:
     r"""Compute the geopotential thickness between the surface and hybrid full-levels.
@@ -384,6 +467,8 @@ def relative_geopotential_thickness_on_hybrid_levels(
     q: FieldList
         Specific humidity on hybrid full-levels (kg/kg). Must have the same
         number of fields and level ordering as ``t``.
+    sp: FieldList|Field
+        Surface pressure (Pa).
     A: ArrayLike
         A-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
@@ -391,8 +476,6 @@ def relative_geopotential_thickness_on_hybrid_levels(
         B-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
         Must have the same size as ``A``.
-    sp: FieldList|Field
-        Surface pressure (Pa).
     alpha_top: str
         Option to initialise the alpha parameter on the top of the model
         atmosphere. See :func:`earthkit.meteo.vertical.array.pressure_on_hybrid_levels`
@@ -410,16 +493,40 @@ def relative_geopotential_thickness_on_hybrid_levels(
     relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta
     earthkit.meteo.vertical.array.relative_geopotential_thickness_on_hybrid_levels
     """
-    pass
+    from .hybrid import _HybridInput
+
+    _hybrid = _HybridInput()
+    _hybrid.add_t(t)
+    _hybrid.add_q(q)
+    _hybrid.add_sp(sp)
+    _hybrid.generate_AB(A, B)
+    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+
+    t_arr = _hybrid.t.to_numpy(copy=False)
+    q_arr = _hybrid.q.to_numpy(copy=False)
+    sp_arr = _hybrid.sp.to_numpy(copy=False)
+    A = _hybrid.A
+    B = _hybrid.B
+
+    res_arr = array.relative_geopotential_thickness_on_hybrid_levels(
+        t=t_arr,
+        q=q_arr,
+        sp=sp_arr,
+        A=A,
+        B=B,
+        alpha_top=alpha_top,
+    )
+
+    return _hybrid.to_fieldlist(res_arr, template=t[0], param_name="relative_geopotential_thickness")
 
 
 def geopotential_on_hybrid_levels(
     t: FieldList,
     q: FieldList,
     zs: FieldList | Field,
-    A: ArrayLike,
-    B: ArrayLike,
     sp: FieldList | Field,
+    A: ArrayLike | None = None,
+    B: ArrayLike | None = None,
     alpha_top: str = "ifs",
 ) -> FieldList:
     r"""Compute geopotential on hybrid (IFS model) full-levels.
@@ -460,16 +567,35 @@ def geopotential_on_hybrid_levels(
     relative_geopotential_thickness_on_hybrid_levels
     earthkit.meteo.vertical.array.geopotential_on_hybrid_levels
     """
-    pass
+    from .hybrid import _HybridInput
+
+    _hybrid = _HybridInput()
+    _hybrid.add_sp(sp)
+    _hybrid.add_zs(zs)
+    _hybrid.add_t(t)
+    _hybrid.add_q(q)
+    _hybrid.generate_AB(A, B)
+    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+
+    t_arr = _hybrid.t.to_numpy(copy=False)
+    q_arr = _hybrid.q.to_numpy(copy=False)
+    zs_arr = _hybrid.zs.to_numpy(copy=False)
+    sp_arr = _hybrid.sp.to_numpy(copy=False)
+    A = _hybrid.A
+    B = _hybrid.B
+
+    res = array.geopotential_on_hybrid_levels(t_arr, q_arr, zs_arr, sp_arr, A=A, B=B, alpha_top=alpha_top)
+
+    return _hybrid.to_fieldlist(res, template=t[0], param_name="geopotential")
 
 
 def height_on_hybrid_levels(
     t: FieldList,
     q: FieldList,
     zs: FieldList | Field,
-    A: ArrayLike,
-    B: ArrayLike,
     sp: FieldList | Field,
+    A: ArrayLike | None = None,
+    B: ArrayLike | None = None,
     alpha_top: str = "ifs",
     h_type: str = "geometric",
     h_reference: str = "ground",
@@ -525,15 +651,36 @@ def height_on_hybrid_levels(
     relative_geopotential_thickness_on_hybrid_levels
     earthkit.meteo.vertical.array.height_on_hybrid_levels
     """
-    pass
+    from .hybrid import _HybridInput
+
+    _hybrid = _HybridInput()
+    _hybrid.add_sp(sp)
+    _hybrid.add_zs(zs)
+    _hybrid.add_t(t)
+    _hybrid.add_q(q)
+    _hybrid.generate_AB(A, B)
+    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+
+    t_arr = _hybrid.t.to_numpy(copy=False)
+    q_arr = _hybrid.q.to_numpy(copy=False)
+    zs_arr = _hybrid.zs.to_numpy(copy=False)
+    sp_arr = _hybrid.sp.to_numpy(copy=False)
+    A = _hybrid.A
+    B = _hybrid.B
+
+    res = array.height_on_hybrid_levels(
+        t_arr, q_arr, zs_arr, sp_arr, A=A, B=B, alpha_top=alpha_top, h_type=h_type, h_reference=h_reference
+    )
+
+    return _hybrid.to_fieldlist(res, template=t[0], param_name="height")
 
 
 def interpolate_hybrid_to_pressure_levels(
     data: FieldList,
     target_p: ArrayLike,
-    A: ArrayLike,
-    B: ArrayLike,
     sp: FieldList | Field,
+    A: ArrayLike | None = None,
+    B: ArrayLike | None = None,
     alpha_top: str = "ifs",
     interpolation: str = "linear",
     aux_bottom_data: FieldList | Field | None = None,
@@ -547,14 +694,15 @@ def interpolate_hybrid_to_pressure_levels(
     ----------
     data: FieldList
         Data to be interpolated. Each field corresponds to one hybrid
-        full-level. Levels must be in ascending order with respect to the model
-        level number.
+        full-level. For a given model level only one field is allowed. The fields do not
+        need to sorted in any particular order. When the resulting fields are created, their
+        metadata is copied from the field with the lowest model level number.
     target_p: ArrayLike
         Target pressure levels (Pa).
-    A: ArrayLike
+    A: ArrayLike | None
         A-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
-    B: ArrayLike
+    B: ArrayLike | None
         B-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
         Must have the same size as ``A``.
@@ -592,7 +740,35 @@ def interpolate_hybrid_to_pressure_levels(
     interpolate_monotonic
     earthkit.meteo.vertical.array.interpolate_hybrid_to_pressure_levels
     """
-    pass
+    from .hybrid import _HybridInput, to_fieldlist
+
+    _hybrid = _HybridInput()
+    _hybrid.add_sp(sp)
+    _hybrid.add_profile(data, "data")
+    _hybrid.generate_AB(A, B)
+    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+
+    data_arr = _hybrid.data.to_numpy(copy=False)
+    sp_arr = _hybrid.sp.to_numpy(copy=False)
+    A = _hybrid.A
+    B = _hybrid.B
+
+    res_arr = array.interpolate_hybrid_to_pressure_levels(
+        data_arr,
+        target_p,
+        sp_arr,
+        A,
+        B,
+        alpha_top,
+        interpolation,
+        aux_bottom_data,
+        aux_bottom_p,
+        aux_top_data,
+        aux_top_p,
+        vertical_dim=0,
+    )
+
+    return to_fieldlist(res_arr, template=data[0], levels=target_p, vertical={"level_type": "pressure"})
 
 
 def interpolate_hybrid_to_height_levels(
@@ -601,9 +777,9 @@ def interpolate_hybrid_to_height_levels(
     t: FieldList,
     q: FieldList,
     zs: FieldList | Field,
-    A: ArrayLike,
-    B: ArrayLike,
     sp: FieldList | Field,
+    A: ArrayLike | None = None,
+    B: ArrayLike | None = None,
     alpha_top: str = "ifs",
     h_type: str = "geometric",
     h_reference: str = "ground",
@@ -687,14 +863,53 @@ def interpolate_hybrid_to_height_levels(
     height_on_hybrid_levels
     earthkit.meteo.vertical.array.interpolate_hybrid_to_height_levels
     """
-    pass
+    from .hybrid import _HybridInput, to_fieldlist
+
+    _hybrid = _HybridInput()
+    _hybrid.add_sp(sp)
+    _hybrid.add_zs(zs)
+    _hybrid.add_t(t)
+    _hybrid.add_q(q)
+    _hybrid.add_profile(data, "data")
+    _hybrid.generate_AB(A, B)
+    _hybrid.check_levels()  # check that all input FieldLists have the same levels and return the levels
+
+    data_arr = _hybrid.data.to_numpy(copy=False)
+    t_arr = _hybrid.t.to_numpy(copy=False)
+    q_arr = _hybrid.q.to_numpy(copy=False)
+    zs_arr = _hybrid.zs.to_numpy(copy=False)
+    sp_arr = _hybrid.sp.to_numpy(copy=False)
+    A = _hybrid.A
+    B = _hybrid.B
+
+    res_arr = array.interpolate_hybrid_to_height_levels(
+        data_arr,
+        target_h,
+        t_arr,
+        q_arr,
+        zs_arr,
+        sp_arr,
+        A,
+        B,
+        alpha_top=alpha_top,
+        interpolation=interpolation,
+        h_type=h_type,
+        h_reference=h_reference,
+        aux_bottom_data=aux_bottom_data,
+        aux_bottom_h=aux_bottom_h,
+        aux_top_data=aux_top_data,
+        aux_top_h=aux_top_h,
+        vertical_dim=0,
+    )
+
+    return to_fieldlist(res_arr, template=data[0], levels=target_h, vertical={"level_type": "height"})
 
 
 def interpolate_pressure_to_height_levels(
     data: FieldList,
     target_h: ArrayLike,
     z: FieldList,
-    zs: FieldList | Field,
+    zs: FieldList | Field = None,
     h_type: str = "geometric",
     h_reference: str = "ground",
     interpolation: str = "linear",
