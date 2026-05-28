@@ -399,24 +399,27 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     Parameters
     ----------
     t: FieldList
-        Temperature on hybrid full-levels (K). Each field corresponds to one
-        model level.
+        Temperature on hybrid full-levels (K). Fields must correspond to a distinct
+        set of levels in arbitrary order. Not
+        all the levels must be present, but a contiguous level range including the bottom-most
+        level must be used. E.g. if the vertical coordinate system has 137 model levels using
+        only a subset of levels between e.g. 137-96 is allowed.
     q: FieldList
         Specific humidity on hybrid full-levels (kg/kg). Must have the same
-        number of fields and level ordering as ``t``.
+        number of fields and levels as ``t``, the level ordering can be different.
     alpha: FieldList
         Alpha parameter computed using
         :func:`pressure_on_hybrid_levels`. Must have the same number of
-        fields and level ordering as ``t``.
+        fields and levels as ``t``, the level ordering can be different.
     delta: FieldList
         Delta parameter computed using
         :func:`pressure_on_hybrid_levels`. Must have the same number of
-        fields and level ordering as ``t``.
+        fields and levels as ``t``, the level ordering can be different.
 
     Returns
     -------
     FieldList
-        Geopotential thickness (m2/s2) between the surface and hybrid
+        Geopotential thickness (m2/s2) between the surface and hybrids
         full-levels.
 
     See Also
@@ -424,19 +427,19 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     pressure_on_hybrid_levels
     earthkit.meteo.vertical.array.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta
     """
-    from .hybrid import HybridInputHandler
+    from .utils import HybridData
 
-    handler = HybridInputHandler()
-    handler.add_t(t)
-    handler.add_q(q)
-    handler.add_alpha(alpha)
-    handler.add_delta(delta)
-    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    source = HybridData()
+    source.add_t(t)
+    source.add_q(q)
+    source.add_alpha(alpha)
+    source.add_delta(delta)
+    source.check_levels()  # check that all input FieldLists have the same levels and return the levels
 
-    t_arr = handler.t.to_numpy(copy=False)
-    q_arr = handler.q.to_numpy(copy=False)
-    alpha_arr = handler.alpha.to_numpy(copy=False)
-    delta_arr = handler.delta.to_numpy(copy=False)
+    t_arr = source.t.to_numpy(copy=False)
+    q_arr = source.q.to_numpy(copy=False)
+    alpha_arr = source.alpha.to_numpy(copy=False)
+    delta_arr = source.delta.to_numpy(copy=False)
 
     res_arr = array.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
         t=t_arr,
@@ -445,7 +448,7 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
         delta=delta_arr,
     )
 
-    return handler.to_fieldlist(res_arr, template=t[0], param_name="relative_geopotential_thickness")
+    return source.to_fieldlist(res_arr, template=t[0], param_name="relative_geopotential_thickness")
 
 
 def relative_geopotential_thickness_on_hybrid_levels(
@@ -461,21 +464,28 @@ def relative_geopotential_thickness_on_hybrid_levels(
     Parameters
     ----------
     t: FieldList
-        Temperature on hybrid full-levels (K). Each field corresponds to one
-        model level. Levels must be in ascending order with respect to the model
-        level number.
+        Temperature on hybrid full-levels (K). Fields must correspond to a
+        distinct set of levels in arbitrary order. Not
+        all the levels must be present, but a contiguous level range including the bottom-most
+        level must be used. E.g. if the vertical coordinate system has 137 model levels using
+        only a subset of levels between e.g. 137-96 is allowed.
     q: FieldList
         Specific humidity on hybrid full-levels (kg/kg). Must have the same
-        number of fields and level ordering as ``t``.
+        number of fields and levels as ``t``, the level ordering can be different.
     sp: FieldList|Field
-        Surface pressure (Pa).
+        Surface pressure (Pa). Can be a single Field or a FieldList. If a FieldList
+        is provided, it must contain exactly one Field.
     A: ArrayLike
         A-coefficients defining the hybrid levels. Must contain all the
-        half-levels in ascending order with respect to the model level number.
+        half-levels in ascending order with respect to the model level number. If None,
+        the A and B coefficients will be inferred from the metadata of the input fields
+        ``sp``, ``t`` and ``q`` (tried in this order).
     B: ArrayLike
         B-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
-        Must have the same size as ``A``.
+        Must be defined when ``A`` is provided and have the same size as ``A``.
+        If None, the A and B coefficients will be inferred from the metadata of the input fields
+        ``sp``, ``t`` and ``q`` (tried in this order).
     alpha_top: str
         Option to initialise the alpha parameter on the top of the model
         atmosphere. See :func:`earthkit.meteo.vertical.array.pressure_on_hybrid_levels`
@@ -485,28 +495,36 @@ def relative_geopotential_thickness_on_hybrid_levels(
     -------
     FieldList
         Geopotential thickness (m2/s2) between the surface and hybrid
-        full-levels.
+        full-levels. The fields in the output FieldList are sorted by
+        their hybrid level number in ascending order (from the top of the atmosphere
+        towards the surface).
 
     See Also
     --------
     pressure_on_hybrid_levels
     relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta
     earthkit.meteo.vertical.array.relative_geopotential_thickness_on_hybrid_levels
+
+    Notes
+    -----
+    ``alpha`` and ``delta`` can be calculated using :func:`pressure_on_hybrid_levels`.
+
+    The computations are described in [IFS-CY49R1-Dynamics]_ Chapter 2, Section 2.2.1.
     """
-    from .hybrid import HybridInputHandler
+    from .utils import HybridData
 
-    handler = HybridInputHandler()
-    handler.add_t(t)
-    handler.add_q(q)
-    handler.add_sp(sp)
-    handler.generate_AB(A, B)
-    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    source = HybridData()
+    source.add_t(t)
+    source.add_q(q)
+    source.add_sp(sp)
+    source.generate_AB(A, B)
+    source.check_levels()  # check that all input FieldLists have the same levels and return the levels
 
-    t_arr = handler.t.to_numpy(copy=False)
-    q_arr = handler.q.to_numpy(copy=False)
-    sp_arr = handler.sp.to_numpy(copy=False)
-    A = handler.A
-    B = handler.B
+    t_arr = source.t.to_numpy(copy=False)
+    q_arr = source.q.to_numpy(copy=False)
+    sp_arr = source.sp.to_numpy(copy=False)
+    A = source.A
+    B = source.B
 
     res_arr = array.relative_geopotential_thickness_on_hybrid_levels(
         t=t_arr,
@@ -517,7 +535,7 @@ def relative_geopotential_thickness_on_hybrid_levels(
         alpha_top=alpha_top,
     )
 
-    return handler.to_fieldlist(res_arr, template=t[0], param_name="relative_geopotential_thickness")
+    return source.to_fieldlist(res_arr, template=t[0], param_name="relative_geopotential_thickness")
 
 
 def geopotential_on_hybrid_levels(
@@ -534,23 +552,32 @@ def geopotential_on_hybrid_levels(
     Parameters
     ----------
     t: FieldList
-        Temperature on hybrid full-levels (K). Each field corresponds to one
-        model level. Levels must be in ascending order with respect to the model
-        level number.
+        Temperature on hybrid full-levels (K). Fields must correspond to a
+        distinct set of hybrid full-levels in arbitrary order. Not
+        all the levels must be present, but a contiguous level range including the bottom-most
+        level must be used. E.g. if the vertical coordinate system has 137 model levels using
+        only a subset of levels between e.g. 137-96 is allowed.
     q: FieldList
         Specific humidity on hybrid full-levels (kg/kg). Must have the same
-        number of fields and level ordering as ``t``.
+        number of fields and level levels as ``t``, the level ordering can be different.
     zs: FieldList|Field
-        Surface geopotential (m2/s2).
+        Surface geopotential (m2/s2). Can be a single Field or a FieldList. If a FieldList
+        is provided, it must contain exactly one Field.
+        Only used when ``reference_level`` is "sea".
+    sp: FieldList|Field
+        Surface pressure (Pa). Can be a single Field or a FieldList. If a FieldList
+        is provided, it must contain exactly one Field.
     A: ArrayLike
         A-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
+        When None, the A and B coefficients will be inferred from the metadata of the input fields
+        ``sp``, ``zs``, ``t`` and ``q`` (tried in this order).
     B: ArrayLike
         B-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
-        Must have the same size as ``A``.
-    sp: FieldList|Field
-        Surface pressure (Pa).
+        Must be defined when ``A`` is provided and have the same size as ``A``.
+        When None, the A and B coefficients will be inferred from the metadata of the input fields
+        ``sp``, ``zs``, ``t`` and ``q`` (tried in this order).
     alpha_top: str
         Option to initialise the alpha parameter on the top of the model
         atmosphere. See :func:`earthkit.meteo.vertical.array.pressure_on_hybrid_levels`
@@ -559,34 +586,42 @@ def geopotential_on_hybrid_levels(
     Returns
     -------
     FieldList
-        Geopotential (m2/s2) on hybrid full-levels.
+        Geopotential (m2/s2) on hybrid full-levels. The fields in the output FieldList are sorted by
+        their hybrid level number in ascending order (from the top of the atmosphere
+        towards the surface).
 
     See Also
     --------
     pressure_on_hybrid_levels
     relative_geopotential_thickness_on_hybrid_levels
     earthkit.meteo.vertical.array.geopotential_on_hybrid_levels
+
+
+    Notes
+    -----
+    The computations are described in [IFS-CY49R1-Dynamics]_ Chapter 2, Section 2.2.1.
+
     """
-    from .hybrid import HybridInputHandler
+    from .utils import HybridData
 
-    handler = HybridInputHandler()
-    handler.add_sp(sp)
-    handler.add_zs(zs)
-    handler.add_t(t)
-    handler.add_q(q)
-    handler.generate_AB(A, B)
-    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    source = HybridData()
+    source.add_sp(sp)
+    source.add_zs(zs)
+    source.add_t(t)
+    source.add_q(q)
+    source.generate_AB(A, B)
+    source.check_levels()  # check that all input FieldLists have the same levels and return the levels
 
-    t_arr = handler.t.to_numpy(copy=False)
-    q_arr = handler.q.to_numpy(copy=False)
-    zs_arr = handler.zs.to_numpy(copy=False)
-    sp_arr = handler.sp.to_numpy(copy=False)
-    A = handler.A
-    B = handler.B
+    t_arr = source.t.to_numpy(copy=False)
+    q_arr = source.q.to_numpy(copy=False)
+    zs_arr = source.zs.to_numpy(copy=False)
+    sp_arr = source.sp.to_numpy(copy=False)
+    A = source.A
+    B = source.B
 
     res = array.geopotential_on_hybrid_levels(t_arr, q_arr, zs_arr, sp_arr, A=A, B=B, alpha_top=alpha_top)
 
-    return handler.to_fieldlist(res, template=t[0], param_name="geopotential")
+    return source.to_fieldlist(res, template=t[0], param_name="geopotential")
 
 
 def height_on_hybrid_levels(
@@ -605,24 +640,32 @@ def height_on_hybrid_levels(
     Parameters
     ----------
     t: FieldList
-        Temperature on hybrid full-levels (K). Each field corresponds to one
-        model level. Levels must be in ascending order with respect to the model
-        level number.
+        Temperature on hybrid full-levels (K). Fields must correspond to a
+        distinct set of hybrid full-levels in arbitrary order. Not
+        all the levels must be present, but a contiguous level range including the bottom-most
+        level must be used. E.g. if the vertical coordinate system has 137 model levels using
+        only a subset of levels between e.g. 137-96 is allowed.
     q: FieldList
         Specific humidity on hybrid full-levels (kg/kg). Must have the same
-        number of fields and level ordering as ``t``.
+        number of fields and levels as ``t``, the level ordering can be different.
     zs: FieldList|Field
-        Surface geopotential (m2/s2). Not used when ``h_type`` is
-        ``"geopotential"`` and ``h_reference`` is ``"ground"``.
+        Surface geopotential (m2/s2). Can be a single Field or a FieldList. If a FieldList
+        is provided, it must contain exactly one Field.
+        Not used when ``h_type`` is ``"geopotential"`` and ``h_reference`` is ``"ground"``.
+    sp: FieldList|Field
+        Surface pressure (Pa). Can be a single Field or a FieldList. If a FieldList
+        is provided, it must contain exactly one Field.
     A: ArrayLike
         A-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
+        When None, the A and B coefficients will be inferred from the metadata of the input fields
+        ``sp``, ``zs``, ``t`` and ``q`` (tried in this order).
     B: ArrayLike
         B-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
-        Must have the same size as ``A``.
-    sp: FieldList|Field
-        Surface pressure (Pa).
+        Must be defined when ``A`` is provided and have the same size as ``A``. When None, the
+        A and B coefficients will be inferred from the metadata of the input fields
+        ``sp``, ``zs``, ``t`` and ``q`` (tried in this order).
     alpha_top: str
         Option to initialise the alpha parameter on the top of the model
         atmosphere. See :func:`earthkit.meteo.vertical.array.pressure_on_hybrid_levels`
@@ -650,29 +693,37 @@ def height_on_hybrid_levels(
     geopotential_on_hybrid_levels
     relative_geopotential_thickness_on_hybrid_levels
     earthkit.meteo.vertical.array.height_on_hybrid_levels
+
+    Notes
+    -----
+    The height is calculated from the geopotential on hybrid levels, which is computed
+    from the ``t``, ``q``, ``zs`` and the hybrid
+    level definition (``A``, ``B``  or ``sp``). The
+    computations are described in [IFS-CY49R1-Dynamics]_ Chapter 2, Section 2.2.1.
+
     """
-    from .hybrid import HybridInputHandler
+    from .utils import HybridData
 
-    handler = HybridInputHandler()
-    handler.add_sp(sp)
-    handler.add_zs(zs)
-    handler.add_t(t)
-    handler.add_q(q)
-    handler.generate_AB(A, B)
-    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    source = HybridData()
+    source.add_sp(sp)
+    source.add_zs(zs)
+    source.add_t(t)
+    source.add_q(q)
+    source.generate_AB(A, B)
+    source.check_levels()  # check that all input FieldLists have the same levels and return the levels
 
-    t_arr = handler.t.to_numpy(copy=False)
-    q_arr = handler.q.to_numpy(copy=False)
-    zs_arr = handler.zs.to_numpy(copy=False)
-    sp_arr = handler.sp.to_numpy(copy=False)
-    A = handler.A
-    B = handler.B
+    t_arr = source.t.to_numpy(copy=False)
+    q_arr = source.q.to_numpy(copy=False)
+    zs_arr = source.zs.to_numpy(copy=False)
+    sp_arr = source.sp.to_numpy(copy=False)
+    A = source.A
+    B = source.B
 
     res = array.height_on_hybrid_levels(
         t_arr, q_arr, zs_arr, sp_arr, A=A, B=B, alpha_top=alpha_top, h_type=h_type, h_reference=h_reference
     )
 
-    return handler.to_fieldlist(res, template=t[0], param_name="height")
+    return source.to_fieldlist(res, template=t[0], param_name="height")
 
 
 def interpolate_hybrid_to_pressure_levels(
@@ -683,31 +734,38 @@ def interpolate_hybrid_to_pressure_levels(
     B: ArrayLike | None = None,
     alpha_top: str = "ifs",
     interpolation: str = "linear",
-    aux_bottom_data: FieldList | Field | None = None,
-    aux_bottom_p: ArrayLike | None = None,
-    aux_top_data: FieldList | Field | None = None,
-    aux_top_p: ArrayLike | None = None,
+    aux_bottom_data: FieldList | Field | float | None = None,
+    aux_bottom_p: FieldList | Field | float | None = None,
+    aux_top_data: FieldList | Field | float | None = None,
+    aux_top_p: FieldList | Field | float | None = None,
 ) -> FieldList:
     r"""Interpolate data from hybrid full-levels to pressure levels.
 
     Parameters
     ----------
     data: FieldList
-        Data to be interpolated. Each field corresponds to one hybrid
-        full-level. For a given model level only one field is allowed. The fields do not
-        need to sorted in any particular order. When the resulting fields are created, their
-        metadata is copied from the field with the lowest model level number.
+        Data on hybrid full-levels to be interpolated. Fields must correspond to a
+        distinct set of hybrid full-levels in arbitrary order. Not
+        all the levels must be present, but a contiguous level range including the bottom-most
+        level must be used. E.g. if the vertical coordinate system has 137 model levels using
+        only a subset of levels between e.g. 137-96 is allowed.
+        Must have at least two fields.
     target_p: ArrayLike
-        Target pressure levels (Pa).
+        Target pressure level(s) (Pa).
+    sp: FieldList|Field
+        Surface pressure (Pa). Can be a single Field or a FieldList. If a FieldList
+        is provided, it must contain exactly one Field.
     A: ArrayLike | None
         A-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
+        When None, the A and B coefficients will be inferred from the metadata of the input fields
+        ``sp`` and ``data`` (tried in this order).
     B: ArrayLike | None
         B-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
-        Must have the same size as ``A``.
-    sp: FieldList|Field
-        Surface pressure (Pa).
+        Must be defined when ``A`` is provided and have the same size as ``A``. When None, the
+        A and B coefficients will be inferred from the metadata of the input fields
+        ``sp`` and ``data`` (tried in this order).
     alpha_top: str
         Option to initialise the alpha parameter on the top of the model
         atmosphere. See :func:`earthkit.meteo.vertical.array.pressure_on_hybrid_levels`
@@ -719,14 +777,20 @@ def interpolate_hybrid_to_pressure_levels(
         - ``"log"``: linear interpolation in log-pressure
         - ``"nearest"``: nearest level interpolation
 
-    aux_bottom_data: FieldList|Field|None, optional
-        Auxiliary data for interpolation below the bottom hybrid full-level.
-    aux_bottom_p: ArrayLike|None, optional
-        Pressures (Pa) of ``aux_bottom_data``.
-    aux_top_data: FieldList|Field|None, optional
-        Auxiliary data for interpolation above the top hybrid full-level.
-    aux_top_p: ArrayLike|None, optional
-        Pressures (Pa) of ``aux_top_data``.
+    aux_bottom_data: FieldList|Field|float|None
+        Auxiliary data for interpolation to targets below the bottom hybrid full-level
+        and above the level specified by ``aux_bottom_p``. Can be a number, a single Field
+        or a FieldList containing exactly one Field.  Must be provided together with ``aux_bottom_p``.
+    aux_bottom_p: FieldList | Field | float | None
+        Pressure(s) (Pa) of ``aux_bottom_data``. Can be a number, a single Field, or a FieldList
+        containing exactly one Field.
+    aux_top_data: FieldList | Field | float | None
+        Auxiliary data for interpolation to targets above the top hybrid full-level
+        and below the level specified by ``aux_top_p``. Can be a number, a single Field or a
+        FieldList containing exactly one Field.  Must be provided together with ``aux_top_p``.
+    aux_top_p: FieldList | Field | float | None
+        Pressure(s) (Pa) of ``aux_top_data``. Can be a number, a single Field, or a FieldList
+        containing exactly one Field.
 
     Returns
     -------
@@ -740,35 +804,62 @@ def interpolate_hybrid_to_pressure_levels(
     interpolate_monotonic
     earthkit.meteo.vertical.array.interpolate_hybrid_to_pressure_levels
     """
-    from .hybrid import HybridInputHandler
+    from .utils import HybridData, SingleVariable, TargetVariable, to_resulting_fieldlist
 
-    handler = HybridInputHandler()
-    handler.add_sp(sp)
-    handler.add_profile(data, "data", "data")
-    handler.generate_AB(A, B)
-    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    if aux_bottom_data is not None or aux_bottom_p is not None:
+        if aux_bottom_data is None or aux_bottom_p is None:
+            raise ValueError("Both aux_bottom_data and aux_bottom_p must be provided together.")
 
-    data_arr = handler.data.to_numpy(copy=False)
-    sp_arr = handler.sp.to_numpy(copy=False)
-    A = handler.A
-    B = handler.B
+    if aux_top_data is not None or aux_top_p is not None:
+        if aux_top_data is None or aux_top_p is None:
+            raise ValueError("Both aux_top_data and aux_top_p must be provided together.")
+
+    # prepare input data
+    source = HybridData()
+    source.add_sp(sp)
+    source.add_profile(key="data", fl=data)
+    source.generate_AB(A, B)
+    source.check_levels()  # check that all input FieldLists have the same levels and return the levels
+
+    # prepare target data
+    target = TargetVariable.build(
+        key="target_coord",
+        fl=target_p,
+    )
+
+    # get arrays
+    data_arr = source.data.to_numpy(copy=False)
+    sp_arr = source.sp.to_numpy(copy=False)
+    A = source.A
+    B = source.B
+
+    target_p_arr = target.fl.to_numpy(copy=False)
+
+    aux = {
+        "aux_bottom_data": aux_bottom_data,
+        "aux_bottom_p": aux_bottom_p,
+        "aux_top_data": aux_top_data,
+        "aux_top_p": aux_top_p,
+    }
+    for key in aux:
+        if aux[key] is not None:
+            v = SingleVariable.build(key=key, fl=aux[key], fl_template=source.sp).fl.to_numpy(copy=False)
+            aux[key] = v
 
     res_arr = array.interpolate_hybrid_to_pressure_levels(
         data_arr,
-        target_p,
+        target_p_arr,
         sp_arr,
-        A,
-        B,
-        alpha_top,
-        interpolation,
-        aux_bottom_data,
-        aux_bottom_p,
-        aux_top_data,
-        aux_top_p,
+        A=A,
+        B=B,
+        alpha_top=alpha_top,
+        interpolation=interpolation,
+        **aux,
         vertical_dim=0,
     )
 
-    return handler.to_fieldlist(res_arr, template=data[0], levels=target_p, vertical={"level_type": "pressure"})
+    levels = target.first_field_values()
+    return to_resulting_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": "pressure"})
 
 
 def interpolate_hybrid_to_height_levels(
@@ -776,7 +867,7 @@ def interpolate_hybrid_to_height_levels(
     target_h: ArrayLike,
     t: FieldList,
     q: FieldList,
-    zs: FieldList | Field,
+    zs: FieldList | Field | None,
     sp: FieldList | Field,
     A: ArrayLike | None = None,
     B: ArrayLike | None = None,
@@ -784,39 +875,49 @@ def interpolate_hybrid_to_height_levels(
     h_type: str = "geometric",
     h_reference: str = "ground",
     interpolation: str = "linear",
-    aux_bottom_data: FieldList | Field | None = None,
-    aux_bottom_h: ArrayLike | None = None,
-    aux_top_data: FieldList | Field | None = None,
-    aux_top_h: ArrayLike | None = None,
+    aux_bottom_data: FieldList | Field | float | None = None,
+    aux_bottom_h: FieldList | Field | float | None = None,
+    aux_top_data: FieldList | Field | float | None = None,
+    aux_top_h: FieldList | Field | float | None = None,
 ) -> FieldList:
     r"""Interpolate data from hybrid full-levels to height levels.
 
     Parameters
     ----------
     data: FieldList
-        Data to be interpolated. Each field corresponds to one hybrid
-        full-level. Levels must be in ascending order with respect to the model
-        level number.
+        Data to be interpolated. Fields must correspond to a
+        distinct set of hybrid full-levels in arbitrary order.
+        Not all the levels must be present, but a contiguous level range including the bottom-most
+        level must be used. E.g. if the vertical coordinate system has 137 model levels using
+        only a subset of levels between e.g. 137-96 is allowed.
+        Must have at least two fields.
     target_h: ArrayLike
         Target height levels (m). The type and reference of the height are
         defined by ``h_type`` and ``h_reference``.
     t: FieldList
         Temperature on hybrid full-levels (K). Must have the same number of
-        fields and level ordering as ``data``.
+        fields and levels as ``data``, the level ordering can be different.
     q: FieldList
         Specific humidity on hybrid full-levels (kg/kg). Must have the same
-        number of fields and level ordering as ``data``.
-    zs: FieldList|Field
-        Surface geopotential (m2/s2).
-    A: ArrayLike
+        number of fields and levels as ``data``, the level ordering can be different.
+    zs: FieldList|Field|None
+        Surface geopotential (m2/s2). Can be a single Field or a FieldList. If a FieldList
+        is provided, it must contain exactly one Field. Not used  when ``h_type`` is
+        "geopotential" and ``h_reference`` is "ground".
+    sp: FieldList|Field
+        Surface pressure (Pa). Can be a single Field or a FieldList. If a FieldList
+        is provided, it must contain exactly one Field.
+    A: ArrayLike|None
         A-coefficients defining the hybrid levels. Must contain all the
-        half-levels in ascending order with respect to the model level number.
-    B: ArrayLike
+        half-levels in ascending order with respect to the model level number. When None,
+        the A and B coefficients will be inferred from the metadata of the input fields
+        ``sp``, ``zs``, ``t`` and ``q`` (tried in this order).
+    B: ArrayLike|None
         B-coefficients defining the hybrid levels. Must contain all the
         half-levels in ascending order with respect to the model level number.
-        Must have the same size as ``A``.
-    sp: FieldList|Field
-        Surface pressure (Pa).
+        Must be defined when ``A`` is provided and have the same size as ``A``. When None, the
+        A and B coefficients will be inferred from the metadata of the input fields
+        ``sp``, ``zs``, ``t`` and ``q`` (tried in this order).
     alpha_top: str
         Option to initialise the alpha parameter on the top of the model
         atmosphere. See :func:`earthkit.meteo.vertical.array.pressure_on_hybrid_levels`
@@ -841,14 +942,21 @@ def interpolate_hybrid_to_height_levels(
         - ``"log"``: linear interpolation in log-height
         - ``"nearest"``: nearest level interpolation
 
-    aux_bottom_data: FieldList|Field|None, optional
-        Auxiliary data for interpolation below the bottom hybrid full-level.
-    aux_bottom_h: ArrayLike|None, optional
-        Heights (m) of ``aux_bottom_data``.
-    aux_top_data: FieldList|Field|None, optional
-        Auxiliary data for interpolation above the top hybrid full-level.
-    aux_top_h: ArrayLike|None, optional
-        Heights (m) of ``aux_top_data``.
+    aux_bottom_data: FieldList|Field|float|None
+        Auxiliary data for interpolation to heights between the bottom hybrid full-level
+        and ``aux_bottom_h`.
+        Can be a number, a single Field or a FieldList containing exactly one Field.
+        Must be provided together with ``aux_bottom_h``.
+    aux_bottom_h: FieldList|Field|float|None
+        Heights (m) of ``aux_bottom_data``. Can be a number, a single Field or a FieldList
+        containing exactly one Field.
+    aux_top_data: FieldList|Field|float|None
+        Auxiliary data for interpolation to heights above the top hybrid full-level
+        and below ``aux_top_h``. Can be a number, a single Field or a FieldList containing
+        exactly one Field. Must be provided together with ``aux_top_h``.
+    aux_top_h: FieldList|Field|float|None
+        Heights (m) of ``aux_top_data``. Can be a number, a single Field or a FieldList
+        containing exactly one Field.
 
     Returns
     -------
@@ -863,28 +971,57 @@ def interpolate_hybrid_to_height_levels(
     height_on_hybrid_levels
     earthkit.meteo.vertical.array.interpolate_hybrid_to_height_levels
     """
-    from .hybrid import HybridInputHandler
+    from .utils import HybridData, SingleVariable, TargetVariable, to_resulting_fieldlist
 
-    handler = HybridInputHandler()
-    handler.add_sp(sp)
-    handler.add_zs(zs)
-    handler.add_t(t)
-    handler.add_q(q)
-    handler.add_profile(data, "data", "data")
-    handler.generate_AB(A, B)
-    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
+    if aux_bottom_data is not None or aux_bottom_h is not None:
+        if aux_bottom_data is None or aux_bottom_h is None:
+            raise ValueError("Both aux_bottom_data and aux_bottom_h must be provided together.")
 
-    data_arr = handler.data.to_numpy(copy=False)
-    t_arr = handler.t.to_numpy(copy=False)
-    q_arr = handler.q.to_numpy(copy=False)
-    zs_arr = handler.zs.to_numpy(copy=False)
-    sp_arr = handler.sp.to_numpy(copy=False)
-    A = handler.A
-    B = handler.B
+    if aux_top_data is not None or aux_top_h is not None:
+        if aux_top_data is None or aux_top_h is None:
+            raise ValueError("Both aux_top_data and aux_top_h must be provided together.")
+
+    # prepare input data
+    source = HybridData()
+    source.add_sp(sp)
+    source.add_zs(zs)
+    source.add_t(t)
+    source.add_q(q)
+    source.add_profile(key="data", fl=data)
+    source.generate_AB(A, B)
+    source.check_levels()  # check that all input FieldLists have the same levels and return the levels
+
+    # prepare target
+    target = TargetVariable.build(
+        key="target_coord",
+        fl=target_h,
+    )
+
+    # get arrays
+    data_arr = source.data.to_numpy(copy=False)
+    t_arr = source.t.to_numpy(copy=False)
+    q_arr = source.q.to_numpy(copy=False)
+    zs_arr = source.zs.to_numpy(copy=False)
+    sp_arr = source.sp.to_numpy(copy=False)
+    A = source.A
+    B = source.B
+
+    target_h_arr = target.fl.to_numpy(copy=False)
+
+    aux = {
+        "aux_bottom_data": aux_bottom_data,
+        "aux_bottom_h": aux_bottom_h,
+        "aux_top_data": aux_top_data,
+        "aux_top_h": aux_top_h,
+    }
+    for key in aux:
+        if aux[key] is not None:
+            v = SingleVariable.build(key=key, fl=aux[key], fl_template=source.sp).fl.to_numpy(copy=False)
+            aux[key] = v
 
     res_arr = array.interpolate_hybrid_to_height_levels(
         data_arr,
-        target_h,
+        target_h_arr,
         t_arr,
         q_arr,
         zs_arr,
@@ -895,44 +1032,44 @@ def interpolate_hybrid_to_height_levels(
         interpolation=interpolation,
         h_type=h_type,
         h_reference=h_reference,
-        aux_bottom_data=aux_bottom_data,
-        aux_bottom_h=aux_bottom_h,
-        aux_top_data=aux_top_data,
-        aux_top_h=aux_top_h,
+        **aux,
         vertical_dim=0,
     )
 
-    return handler.to_fieldlist(res_arr, template=data[0], levels=target_h, vertical={"level_type": "height"})
+    levels = target.first_field_values()
+    return to_resulting_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": "height"})
 
 
 def interpolate_pressure_to_height_levels(
     data: FieldList,
     target_h: ArrayLike,
     z: FieldList,
-    zs: FieldList | Field = None,
+    zs: FieldList | Field | None = None,
     h_type: str = "geometric",
     h_reference: str = "ground",
     interpolation: str = "linear",
-    aux_bottom_data: FieldList | Field | None = None,
-    aux_bottom_h: ArrayLike | None = None,
-    aux_top_data: FieldList | Field | None = None,
-    aux_top_h: ArrayLike | None = None,
+    aux_bottom_data: FieldList | Field | float | None = None,
+    aux_bottom_h: FieldList | Field | float | None = None,
+    aux_top_data: FieldList | Field | float | None = None,
+    aux_top_h: FieldList | Field | float | None = None,
 ) -> FieldList:
     r"""Interpolate data from pressure levels to height levels.
 
     Parameters
     ----------
     data: FieldList
-        Data to be interpolated. Each field corresponds to one pressure level.
-        Levels must be monotonically ordered with respect to pressure.
+        Data on pressure levels to be interpolated. Fields must correspond to a
+        distinct set of pressure levels in arbitrary order. Must have at least two fields.
     target_h: ArrayLike
         Target height levels (m). The type and reference of the height are
         defined by ``h_type`` and ``h_reference``.
     z: FieldList
-        Geopotential (m2/s2) on the same pressure levels as ``data``.
-    zs: FieldList|Field
-        Surface geopotential (m2/s2). Only used when ``h_reference`` is
-        ``"ground"``.
+        Geopotential (m2/s2) on the same pressure levels as ``data``. The number of fields
+        and levels must be the same as in ``data``, but the level ordering can be different.
+    zs: FieldList|Field|None
+        Surface geopotential (m2/s2). Can be a single Field or a FieldList. If a FieldList
+        is provided, it must contain exactly one Field.
+        Only used when ``h_reference`` is "ground".
     h_type: str
         Type of height to compute. Default is ``"geometric"``. Possible values:
 
@@ -953,13 +1090,13 @@ def interpolate_pressure_to_height_levels(
         - ``"log"``: linear interpolation in log-height
         - ``"nearest"``: nearest level interpolation
 
-    aux_bottom_data: FieldList|Field|None, optional
+    aux_bottom_data: FieldList|Field|float|None
         Auxiliary data for interpolation below the bottom pressure level.
-    aux_bottom_h: ArrayLike|None, optional
+    aux_bottom_h: FieldList|Field|float|None, optional
         Heights (m) of ``aux_bottom_data``.
-    aux_top_data: FieldList|Field|None, optional
+    aux_top_data: FieldList|Field|float|None, optional
         Auxiliary data for interpolation above the top pressure level.
-    aux_top_h: ArrayLike|None, optional
+    aux_top_h: FieldList|Field|float|None, optional
         Heights (m) of ``aux_top_data``.
 
     Returns
@@ -974,60 +1111,104 @@ def interpolate_pressure_to_height_levels(
     interpolate_monotonic
     earthkit.meteo.vertical.array.interpolate_pressure_to_height_levels
     """
-    from .hybrid import MonotonicInputHandler
+    from .utils import MonotonicData, SingleVariable, TargetVariable, to_resulting_fieldlist
 
-    handler = MonotonicInputHandler(level_type="pressure", sort_direction="ascending")
+    if aux_bottom_data is not None or aux_bottom_h is not None:
+        if aux_bottom_data is None or aux_bottom_h is None:
+            raise ValueError("Both aux_bottom_data and aux_bottom_h must be provided together.")
+
+    if aux_top_data is not None or aux_top_h is not None:
+        if aux_top_data is None or aux_top_h is None:
+            raise ValueError("Both aux_top_data and aux_top_h must be provided together.")
+
+    # prepare input data
+    source = MonotonicData(level_type="pressure", sort="ascending")
     if zs is not None:
-        handler.add_surface(zs, "zs", "Surface geopotential")
-    handler.add_profile(data, "data", "Data")
-    handler.add_profile(z, "z", "Geopotential")
-    handler.check_levels()  # check that all input FieldLists have the same levels and return the levels
+        source.add_single(key="zs", name="Surface geopotential", fl=zs)
+    source.add_profile(key="data", name="Data", fl=data)
+    source.add_profile(key="z", name="Geopotential", fl=z)
+    source.check_levels()  # check that all input FieldLists have the same levels and return the levels
 
-    data_arr = handler.data.to_numpy(copy=False)
-    z_arr = handler.z.to_numpy(copy=False)
-    zs_arr = handler.zs.to_numpy(copy=False) if zs is not None else None
+    # prepare target
+    target = TargetVariable.build(
+        key="target_coord",
+        fl=target_h,
+    )
+
+    # get arrays
+    data_arr = source.data.to_numpy(copy=False)
+    z_arr = source.z.to_numpy(copy=False)
+    zs_arr = source.zs.to_numpy(copy=False) if zs is not None else None
+
+    target_h_arr = target.fl.to_numpy(copy=False)
+
+    aux = {
+        "aux_bottom_data": aux_bottom_data,
+        "aux_bottom_h": aux_bottom_h,
+        "aux_top_data": aux_top_data,
+        "aux_top_h": aux_top_h,
+    }
+    aux_template = source.data[0]
+    for key in aux:
+        if aux[key] is not None:
+            v = SingleVariable.build(key=key, fl=aux[key], fl_template=aux_template).fl.to_numpy(copy=False)
+            aux[key] = v
 
     res_arr = array.interpolate_pressure_to_height_levels(
         data_arr,
-        target_h,
+        target_h_arr,
         z_arr,
         zs=zs_arr,
         h_type=h_type,
         h_reference=h_reference,
         interpolation=interpolation,
-        aux_bottom_data=aux_bottom_data,
-        aux_bottom_h=aux_bottom_h,
-        aux_top_data=aux_top_data,
-        aux_top_h=aux_top_h,
+        **aux,
         vertical_dim=0,
     )
 
-    return handler.to_fieldlist(res_arr, template=data[0], levels=target_h, vertical={"level_type": "height"})
+    levels = target.first_field_values()
+    return to_resulting_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": "height"})
 
 
 def interpolate_monotonic(
     data: FieldList,
-    coord: FieldList | ArrayLike | list | tuple | float | int = None,
-    target_coord: FieldList | ArrayLike | list | tuple | float | int = None,
+    coord: FieldList | ArrayLike | None = None,
+    target_coord: FieldList | Field | ArrayLike | None = None,
     target_coord_type: str | None = None,
     interpolation: str = "linear",
-    aux_min_level_data: FieldList | Field | None = None,
-    aux_min_level_coord: ArrayLike | None = None,
-    aux_max_level_data: FieldList | Field | None = None,
-    aux_max_level_coord: ArrayLike | None = None,
+    aux_min_level_data: FieldList | Field | float | None = None,
+    aux_min_level_coord: FieldList | Field | float | None = None,
+    aux_max_level_data: FieldList | Field | float | None = None,
+    aux_max_level_coord: FieldList | Field | float | None = None,
 ) -> FieldList:
     r"""Interpolate data between the same type of monotonic coordinate levels.
 
     Parameters
     ----------
     data: FieldList
-        Data to be interpolated. Each field corresponds to one level.
-        Must have at least two fields.
-    coord: FieldList
-        Vertical coordinates related to ``data``. Must have the same number
-        of fields as ``data``. Must be monotonic along the vertical axis.
-    target_coord: FieldList | ArrayLike | list | tuple | float | int
-        Target coordinate levels to which ``data`` will be interpolated.
+        Data to be interpolated. Must have at least two fields.
+    coord: FieldList|ArrayLike|None
+        Vertical coordinates related to ``data``. If None, the coordinates are
+        extracted from the metadata of the input fields in ``data``. When provided
+        as a FieldList, it must have the same number of fields and levels as ``data``,
+        but the level ordering can be different. In this case the field values define
+        the coordinate values for each field value in ``data`` and the level metadata
+        is only used to pair up the fields in ``coord`` and ``data``.  The coordinate
+        values defined in this way must be monotonic along the vertical
+        axis when sorted by the level (either ascending or descending).
+        When provided as an ArrayLike, it must be a 1D array with each value
+        corresponding to the field at the same position in ``data``.
+    target_coord: FieldList | Field | ArrayLike | None
+        Target coordinate levels to which ``data`` will be interpolated. When it is a
+        FieldList or Field each field value provide the coordinate values the `data``
+        will be interpolated to. When provided as an ArrayLike, it must be a 1D array of
+        coordinate values each defining a constant target
+        level. Must always be specified together with ``target_coord_type``.
+    target_coord_type: str | None
+        Type of the target coordinate levels, related to the values in ``target_coord``.
+        The possible values are the same as the level types supported in earthkit.data
+        for a Field. See: :py::func:`earthkit.data.field.component.level_type` for details.
+        Must always be specified together with ``target_coord``.
     interpolation: str
         Interpolation mode. Default is ``"linear"``. Possible values:
 
@@ -1035,58 +1216,83 @@ def interpolate_monotonic(
         - ``"log"``: linear interpolation in logarithm of coordinate
         - ``"nearest"``: nearest level interpolation
 
-    aux_min_level_data: FieldList|Field|None, optional
-        Auxiliary data for interpolation to target levels below the minimum
-        coordinate level.
-    aux_min_level_coord: ArrayLike|None, optional
-        Coordinates of ``aux_min_level_data``.
-    aux_max_level_data: FieldList|Field|None, optional
-        Auxiliary data for interpolation to target levels above the maximum
-        coordinate level.
-    aux_max_level_coord: ArrayLike|None, optional
-        Coordinates of ``aux_max_level_data``.
+    aux_min_level_data: FieldList|Field|float|None
+        Auxiliary data for interpolation to target levels below the minimum level
+        of ``coord`` and above `aux_min_level_coord`. Can be a number, a single Field or
+        a FieldList containing exactly one Field. Must be provided together
+        with ``aux_min_level_coord``.
+    aux_min_level_coord: ArrayLike|None
+        Coordinates of ``aux_min_level_data``. Can be a number, a single Field or
+        a FieldList containing exactly one Field. Must be provided together
+        with ``aux_min_level_data``.
+    aux_max_level_data: FieldList|Field|None
+        Auxiliary data for interpolation to target levels above the maximum level
+        of ``coord`` and below `aux_max_level_coord`. Can be a number, a single Field or
+        a FieldList containing exactly one Field. Must be provided together
+        with ``aux_max_level_coord``.
+    aux_max_level_coord: ArrayLike|None
+        Coordinates of ``aux_max_level_data``. Can be a number, a single Field or
+        a FieldList containing exactly one Field. Must be provided together
+        with ``aux_max_level_data``.
 
     Returns
     -------
     FieldList
         Data interpolated to the target levels. When interpolation is not
         possible for a given target level, the corresponding output values
-        are set to NaN.
+        are set to NaN. The metadata of the output fields are copied from the
+        first field in ``data`` and updated with the target level type and value.
 
     See Also
     --------
     earthkit.meteo.vertical.array.interpolate_monotonic
     """
-    from .hybrid import MonotonicInputHandler, TargetCoordItem
+    from .utils import MonotonicData, SingleVariable, TargetVariable, to_resulting_fieldlist
 
-    handler = MonotonicInputHandler(level_type=None, sort_direction="descending")
+    if aux_min_level_data is not None or aux_min_level_coord is not None:
+        if aux_min_level_data is None or aux_min_level_coord is None:
+            raise ValueError("Both aux_min_level_data and aux_min_level_coord must be provided together.")
 
-    handler.add_profile(data, "data", "Data")
-    handler.add_coord(coord, "coord", "Coordinate", source=handler.data)
-    target_coord = TargetCoordItem(
-        target_coord,
-        "target_coord",
-        "Target coordinate",
-        source_data=handler.data,
-        source_coord=handler.coord,
-        level_type=target_coord_type,
+    if aux_max_level_data is not None or aux_max_level_coord is not None:
+        if aux_max_level_data is None or aux_max_level_coord is None:
+            raise ValueError("Both aux_max_level_data and aux_max_level_coord must be provided together.")
+
+    # prepare input data
+    source = MonotonicData(level_type=None, sort="descending")
+    source.add_profile(key="data", fl=data)
+    source.add_profile(key="coord", fl=coord, fl_template=source.data, coord=True)
+
+    # prepare target
+    target = TargetVariable.build(
+        key="target_coord",
+        fl=target_coord,
     )
 
-    data_arr = handler.data.to_numpy(copy=False)
-    coord_arr = handler.coord.to_numpy(copy=False)
-    target_coord_arr = target_coord.fl.to_numpy(copy=False)
+    # get arrays
+    data_arr = source.data.to_numpy(copy=False)
+    coord_arr = source.coord.to_numpy(copy=False)
+    target_coord_arr = target.fl.to_numpy(copy=False)
+
+    aux = {
+        "aux_min_level_data": aux_min_level_data,
+        "aux_min_level_coord": aux_min_level_coord,
+        "aux_max_level_data": aux_max_level_data,
+        "aux_max_level_coord": aux_max_level_coord,
+    }
+
+    for key in aux:
+        if aux[key] is not None:
+            v = SingleVariable.build(key=key, fl=aux[key]).fl.to_numpy(copy=False)
+            aux[key] = v
 
     res_arr = array.interpolate_monotonic(
         data_arr,
         coord_arr,
         target_coord_arr,
         interpolation=interpolation,
-        aux_min_level_data=aux_min_level_data,
-        aux_min_level_coord=aux_min_level_coord,
-        aux_max_level_data=aux_max_level_data,
-        aux_max_level_coord=aux_max_level_coord,
+        **aux,
         vertical_dim=0,
     )
 
-    levels = target_coord.levels()
-    return handler.to_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": target_coord_type})
+    levels = target.first_field_values()
+    return to_resulting_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": target_coord_type})
