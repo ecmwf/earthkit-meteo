@@ -1174,7 +1174,7 @@ def interpolate_monotonic(
     data: FieldList,
     coord: FieldList | ArrayLike | None = None,
     target_coord: FieldList | Field | ArrayLike | None = None,
-    target_coord_type: str | None = None,
+    coord_type: str | None = None,
     interpolation: str = "linear",
     aux_min_level_data: FieldList | Field | float | None = None,
     aux_min_level_coord: FieldList | Field | float | None = None,
@@ -1203,12 +1203,12 @@ def interpolate_monotonic(
         FieldList or Field each field value provide the coordinate values the `data``
         will be interpolated to. When provided as an ArrayLike, it must be a 1D array of
         coordinate values each defining a constant target
-        level. Must always be specified together with ``target_coord_type``.
-    target_coord_type: str | None
-        Type of the target coordinate levels, related to the values in ``target_coord``.
-        The possible values are the same as the level types supported in earthkit.data
+        level. Must be of the same type and units as ``coord``.
+    coord_type: str | None
+        Type of the coordinate levels in ``coord`` and ``target_coord``. If None, the coordinate type is
+        inferred from the metadata of the input fields in ``coord``. The possible values are the same as
+        the level types supported in earthkit.data
         for a Field. See: :py::func:`earthkit.data.field.component.level_type` for details.
-        Must always be specified together with ``target_coord``.
     interpolation: str
         Interpolation mode. Default is ``"linear"``. Possible values:
 
@@ -1262,6 +1262,11 @@ def interpolate_monotonic(
     source.add_profile(key="data", fl=data)
     source.add_profile(key="coord", fl=coord, fl_template=source.data, coord=True)
 
+    if coord_type is None and coord is None:
+        coord_type = source.coord[0].get("vertical.level_type")
+        if coord_type is None:
+            raise ValueError("Cannot infer the coordinate type. Please specify coord_type explicitly.")
+
     # prepare target
     target = TargetVariable.build(
         key="target_coord",
@@ -1295,4 +1300,4 @@ def interpolate_monotonic(
     )
 
     levels = target.first_field_values()
-    return to_resulting_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": target_coord_type})
+    return to_resulting_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": coord_type})
