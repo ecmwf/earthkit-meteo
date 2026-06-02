@@ -108,7 +108,6 @@ def to_resulting_fieldlist(arr, template=None, levels=None, vertical=None, metad
         level_type = vertical.get("level_type")
     elif isinstance(vertical, dict):
         level_type = vertical.get("level_type")
-
     if level_type is None:
         raise ValueError(
             "Level type could not be determined from input. Please provide 'vertical' metadata with a 'level_type' key."

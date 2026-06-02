@@ -1,6 +1,6 @@
 import numpy as np
 
-import earthkit.meteo.vertical as vertical
+import earthkit.meteo.vertical.array as vertical
 
 # get hybrid (IFS model) level definition
 A, B = vertical.hybrid_level_parameters(137, model="ifs")

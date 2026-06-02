@@ -12,8 +12,6 @@ Thermo related functions operating on xarray objects.
 """
 
 from .thermo import (
-    _celsius_to_kelvin,
-    _kelvin_to_celsius,
     dewpoint_from_relative_humidity,
     dewpoint_from_specific_humidity,
     ept_from_dewpoint,

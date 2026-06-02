@@ -190,7 +190,7 @@ def test_pressure_on_hybrid_levels_core(index, xp, device):
     ref_alpha = ref_alpha[index]
 
     p_full, p_half, delta, alpha, res_levels = vertical.pressure_on_hybrid_levels(
-        sp, A=A, B=B, alpha_top="ifs", output=["full", "half", "delta", "alpha", "level"]
+        sp, A, B, alpha_top="ifs", output=["full", "half", "delta", "alpha", "level"]
     )
 
     assert xp.allclose(res_levels["full"], xp.arange(1, len(A), dtype=int))
@@ -260,8 +260,8 @@ def test_pressure_on_hybrid_levels_axis(index, xp, device):
 
     p_full, p_half, delta, alpha, res_levels = vertical.pressure_on_hybrid_levels(
         sp,
-        A=A,
-        B=B,
+        A,
+        B,
         alpha_top="ifs",
         output=["full", "half", "delta", "alpha", "level"],
         vertical_dim=vertical_dim,
@@ -395,7 +395,7 @@ def test_pressure_on_hybrid_levels_output_generic(index, levels, ref_levels, out
         else:
             ref[key] = ref[key][ref_levels["full"] - 1]
 
-    res = vertical.pressure_on_hybrid_levels(sp, levels=levels, A=A, B=B, alpha_top="ifs", output=output)
+    res = vertical.pressure_on_hybrid_levels(sp, A, B, levels=levels, alpha_top="ifs", output=output)
 
     if isinstance(output, str):
         output = [output]
@@ -483,7 +483,7 @@ def test_pressure_on_hybrid_levels_output_half_only(index, levels, ref_levels, x
     ref_levels = {k: xp.asarray(v, device=device, dtype=int) for k, v in ref_levels.items()}
     ref_vals = ref_p_half[ref_levels["half"]]
 
-    res = vertical.pressure_on_hybrid_levels(sp, levels=levels, A=A, B=B, alpha_top="ifs", output=["half", "level"])
+    res = vertical.pressure_on_hybrid_levels(sp, A, B, levels=levels, alpha_top="ifs", output=["half", "level"])
 
     assert isinstance(res, tuple)
     assert len(res) == 2

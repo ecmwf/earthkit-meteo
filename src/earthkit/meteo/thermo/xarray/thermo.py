@@ -16,46 +16,6 @@ from earthkit.meteo.utils.decorators import xarray_ufunc
 from .. import array
 
 
-def _celsius_to_kelvin(t: xr.DataArray) -> xr.DataArray:
-    r"""Convert temperature values from Celsius to Kelvin.
-
-    Parameters
-    ----------
-    t : xarray.DataArray
-        Temperature in Celsius units
-
-    Returns
-    -------
-    xarray.DataArray
-        Temperature in Kelvin units
-
-    """
-    return xarray_ufunc(array._celsius_to_kelvin, t).assign_attrs({
-        "standard_name": "air_temperature",
-        "units": "K",
-    })
-
-
-def _kelvin_to_celsius(t: xr.DataArray) -> xr.DataArray:
-    r"""Convert temperature values from Kelvin to Celsius.
-
-    Parameters
-    ----------
-    t : xarray.DataArray
-        Temperature in Kelvin units
-
-    Returns
-    -------
-    xarray.DataArray
-        Temperature in Celsius units
-
-    """
-    return xarray_ufunc(array._kelvin_to_celsius, t).assign_attrs({
-        "standard_name": "air_temperature",
-        "units": "degC",
-    })
-
-
 def specific_humidity_from_mixing_ratio(w: xr.DataArray) -> xr.DataArray:
     r"""Compute the specific humidity from mixing ratio.
 

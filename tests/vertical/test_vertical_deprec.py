@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 from earthkit.utils.array.namespace import _NUMPY_NAMESPACE
 
-from earthkit.meteo import vertical
+from earthkit.meteo.vertical.array import vertical
 
 np.set_printoptions(formatter={"float_kind": "{:.15f}".format})
 

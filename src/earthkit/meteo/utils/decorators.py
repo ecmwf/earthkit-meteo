@@ -93,7 +93,10 @@ class FieldListDispatcher(DataDispatcher):
 
     def dispatch(self, func, module, *args, **kwargs):
         module = import_module(module + ".fieldlist")
-        return getattr(module, func)(*args, **kwargs)
+        func = getattr(module, func, None)
+        sig = signature(func)
+        _kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
+        return getattr(module, func)(*args, **_kwargs)
 
 
 class ArrayDispatcher(DataDispatcher):
