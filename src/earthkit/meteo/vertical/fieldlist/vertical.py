@@ -351,7 +351,7 @@ def pressure_on_hybrid_levels(
         - :math:`A_{k+1/2}` and :math:`B_{k+1/2}` are the A- and B-coefficients defining
           the model levels.
 
-    For more details see [IFS-CY49R3-Dynamics]_ Chapter 2, Section 2.2.1.
+    For more details see [IFS-CY49R1-Dynamics]_ Chapter 2, Section 2.2.1.
 
     """
     if isinstance(sp, FieldList):

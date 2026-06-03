@@ -213,6 +213,10 @@ docs/how-tos/*.tar
 docs/how-tos/*.zip
 docs/how-tos/_*
 docs/how-tos/*/_*
+docs/tutorials/*.tar
+docs/tutorials/*.zip
+docs/tutorials/_*
+docs/tutorials/*/_*
 docs/autoapi/
 
 # PyBuilder
