@@ -1216,8 +1216,13 @@ def interpolate_pressure_to_height_levels(
         vertical_dim=0,
     )
 
+    if h_reference == "ground":
+        vertical = {"level_type": "height_above_ground_level"}
+    else:
+        vertical = {"level_type": "height_above_mean_sea_level"}
+
     levels = target.first_field_values()
-    return to_resulting_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": "height"})
+    return to_resulting_fieldlist(res_arr, template=data[0], levels=levels, vertical=vertical)
 
 
 def interpolate_monotonic(

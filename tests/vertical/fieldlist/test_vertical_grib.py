@@ -514,7 +514,7 @@ def test_fieldlist_grib_interpolate_hybrid_to_height_levels_core(sort_mode, targ
 
     assert isinstance(out, FieldList)
     assert len(out) == len(target_h)
-    assert out.get("vertical.level_type") == ["height"] * len(target_h)
+    assert out.get("vertical.level_type") == ["height_above_ground_level"] * len(target_h)
     assert out.get("vertical.level") == target_h
     assert out.get("parameter.variable") == ["t"] * len(target_h)
     assert out.get("parameter.units") == ["K"] * len(target_h)
@@ -601,7 +601,7 @@ def test_fieldlist_grib_interpolate_hybrid_to_height_levels_aux(sort_mode, aux_t
 
     assert isinstance(out, FieldList)
     assert len(out) == len(target_h)
-    assert out.get("vertical.level_type") == ["height"] * len(target_h)
+    assert out.get("vertical.level_type") == ["height_above_ground_level"] * len(target_h)
     assert out.get("vertical.level") == target_h
     assert out.get("parameter.variable") == ["t"] * len(target_h)
     assert out.get("parameter.units") == ["K"] * len(target_h)
@@ -667,7 +667,7 @@ def test_fieldlist_grib_interpolate_hybrid_to_height_levels_field(sort_mode, tar
 
     assert isinstance(out, FieldList)
     assert len(out) == len(target_h)
-    assert out.get("vertical.level_type") == ["height"] * len(target_h)
+    assert out.get("vertical.level_type") == ["height_above_ground_level"] * len(target_h)
     assert np.allclose(np.array(out.get("vertical.level")), ref_levels)
     assert out.get("parameter.variable") == ["t"] * len(target_h)
     assert out.get("parameter.units") == ["K"] * len(target_h)
@@ -711,7 +711,7 @@ def test_fieldlist_grib_interpolate_pressure_to_height_levels_core(sort_mode, ta
 
     assert isinstance(out, FieldList)
     assert len(out) == len(target_h)
-    assert out.get("vertical.level_type") == ["height"] * len(target_h)
+    assert out.get("vertical.level_type") == ["height_above_ground_level"] * len(target_h)
     assert out.get("vertical.level") == target_h
     assert out.get("parameter.variable") == ["t"] * len(target_h)
     assert out.get("parameter.units") == ["K"] * len(target_h)
@@ -769,7 +769,7 @@ def test_fieldlist_grib_interpolate_pressure_to_height_levels_aux(sort_mode, aux
 
     assert isinstance(out, FieldList)
     assert len(out) == len(target_h)
-    assert out.get("vertical.level_type") == ["height"] * len(target_h)
+    assert out.get("vertical.level_type") == ["height_above_ground_level"] * len(target_h)
     assert out.get("vertical.level") == target_h
     assert out.get("parameter.variable") == ["t"] * len(target_h)
     assert out.get("parameter.units") == ["K"] * len(target_h)
@@ -833,7 +833,7 @@ def test_fieldlist_grib_interpolate_pressure_to_height_levels_field(sort_mode, t
 
     assert isinstance(out, FieldList)
     assert len(out) == len(target_h)
-    assert out.get("vertical.level_type") == ["height"] * len(target_h)
+    assert out.get("vertical.level_type") == ["height_above_ground_level"] * len(target_h)
     assert np.allclose(np.array(out.get("vertical.level")), ref_levels)
     assert out.get("parameter.variable") == ["t"] * len(target_h)
     assert out.get("parameter.units") == ["K"] * len(target_h)
