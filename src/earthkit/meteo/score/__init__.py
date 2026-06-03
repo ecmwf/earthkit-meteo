@@ -7,19 +7,22 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .deterministic import (
-    abs_error,
-    cosine_similarity,
-    error,
-    mean_abs_error,
-    mean_error,
-    mean_squared_error,
-    pearson_correlation,
-    root_mean_squared_error,
-    squared_error,
-    standard_deviation_of_error,
-)
-from .ensemble import crps_from_cdf, crps_from_ensemble, crps_from_gaussian, quantile_score, spread
+from .deterministic import abs_error
+from .deterministic import cosine_similarity
+from .deterministic import error
+from .deterministic import mean_abs_error
+from .deterministic import mean_error
+from .deterministic import mean_squared_error
+from .deterministic import pearson_correlation
+from .deterministic import root_mean_squared_error
+from .deterministic import squared_error
+from .deterministic import standard_deviation_of_error
+from .deterministic import kge
+from .ensemble import crps_from_cdf
+from .ensemble import crps_from_ensemble
+from .ensemble import crps_from_gaussian
+from .ensemble import quantile_score
+from .ensemble import spread
 
 __all__ = [
     "abs_error",
@@ -37,4 +40,5 @@ __all__ = [
     "spread",
     "squared_error",
     "standard_deviation_of_error",
+    "kge",
 ]
