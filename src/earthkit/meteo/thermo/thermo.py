@@ -2526,11 +2526,11 @@ def cape_cin(
     p: "ArrayLike",
     zh: "ArrayLike",
     t: "ArrayLike",
-    q: "ArrayLike",
+    r: "ArrayLike",
     p_sfc: "ArrayLike",
     zh_sfc: "ArrayLike",
     t_sfc: "ArrayLike",
-    q_sfc: "ArrayLike",
+    r_sfc: "ArrayLike",
     parcel_type: str,
     layer_depth: float | None = None,
     extra_outputs: list | None = None,
@@ -2554,16 +2554,16 @@ def cape_cin(
         Geopotential height on model/pressure levels (m), same shape as ``p``.
     t : array-like
         Temperature on model/pressure levels (K), same shape as ``p``.
-    q : array-like
-        Specific humidity on model/pressure levels (kg/kg), same shape as ``p``.
+    r : array-like
+        Mixing ratio on model/pressure levels (kg/kg), same shape as ``p``.
     p_sfc : array-like
         Surface pressure (Pa), shape ``(...)`` (horizontal dimensions only).
     zh_sfc : array-like
         Surface geopotential height (m), same shape as ``p_sfc``.
     t_sfc : array-like
         Surface temperature (K), same shape as ``p_sfc``.
-    q_sfc : array-like
-        Surface specific humidity (kg/kg), same shape as ``p_sfc``.
+    r_sfc : array-like
+        Surface mixing ratio (kg/kg), same shape as ``p_sfc``.
     parcel_type : str
         Method used to define the lifted parcel. One of:
 
@@ -2613,11 +2613,11 @@ def cape_cin(
         p,
         zh,
         t,
-        q,
+        r,
         p_sfc,
         zh_sfc,
         t_sfc,
-        q_sfc,
+        r_sfc,
         parcel_type,
         layer_depth=layer_depth,
         extra_outputs=extra_outputs,
