@@ -6,12 +6,9 @@ Vertical
 .. toctree::
     :maxdepth: 1
 
-    hybrid_levels.ipynb
-    hybrid_levels_grib.ipynb
-    interpolate_hybrid_to_pl
-    interpolate_hybrid_to_pl_grib.ipynb
-    interpolate_hybrid_to_hl
-    interpolate_pl_to_hl
-    interpolate_pl_to_hl_grib.ipynb
-    interpolate_pl_to_pl
-    interpolate_pl_to_pl_grib
+    hybrid_levels_array
+    hybrid_levels_fieldlist
+    interpolate_hybrid_to_pl_array
+    interpolate_hybrid_to_hl_array
+    interpolate_pl_to_hl_array
+    interpolate_pl_to_pl_array
