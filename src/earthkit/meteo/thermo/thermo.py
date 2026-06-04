@@ -2537,18 +2537,20 @@ def cape_cin(
     Parameters
     ----------
     p : array-like
-        Pressure (Pa). The vertical axis must be the first axis (axis=0) unless
-        ``vertical_axis`` is set.
+        Pressure (Pa) on pressure levels only — the surface must NOT be included
+        here; pass it via ``p_sfc``. The vertical axis must be the first axis
+        (axis=0) unless ``vertical_axis`` is set.
     zh : array-like
-        Geopotential height (m), same shape as ``p``.
+        Geopotential height (m) on pressure levels, same shape as ``p``.
     t : array-like
-        Temperature (K), same shape as ``p``.
+        Temperature (K) on pressure levels, same shape as ``p``.
     r : array-like
-        Mixing ratio (kg/kg), same shape as ``p``.
+        Mixing ratio (kg/kg) on pressure levels, same shape as ``p``.
     p_sfc : array-like
         Surface pressure (Pa), shape equal to the horizontal dimensions of ``p``.
-        Levels in ``p`` with pressure greater than ``p_sfc`` are treated as
-        sub-ground and excluded from all computations.
+        The surface is included as an additional level in the computation. Any
+        pressure level in ``p`` with ``p > p_sfc`` is treated as sub-ground and
+        excluded.
     t_sfc : array-like
         Surface temperature (K), same horizontal shape as ``p_sfc``.
     r_sfc : array-like

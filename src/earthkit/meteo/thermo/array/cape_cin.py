@@ -414,18 +414,26 @@ class _CapeCinComp:
         raise NotImplementedError("This method should be implemented in the subclass")
 
     def _cape_cin(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc):
-        # Shapes of all arrays should be (n_vertical_levels, ...) where the vertical axis is the first axis (axis=0)
+        # Profile arrays have shape (n_pressure_levels, ...) with the vertical axis
+        # as axis=0. Surface arrays have the horizontal-only shape (...). Internally
+        # the surface is concatenated as an additional level.
+        p = np.concatenate([p_sfc[None], p], axis=0)
+        zh = np.concatenate([zh_sfc[None], zh], axis=0)
+        t = np.concatenate([t_sfc[None], t], axis=0)
+        r = np.concatenate([r_sfc[None], r], axis=0)
 
-        # Identify above-ground levels for unexpected NaN detection, before sub-ground masking.
-        # A NaN at a sub-ground level is expected and must not invalidate the output.
-        above_ground = np.isfinite(p) & (p <= p_sfc[None])
-        unexpected_nan = np.any(
-            above_ground & (np.isnan(t) | np.isnan(r) | np.isnan(zh)),
-            axis=0,
-        ) | np.isnan(p_sfc)
+        # Identify subground levels using height
+        subground = zh < zh_sfc[None, ...]
 
-        # Mask sub-ground levels (p > p_sfc) to NaN so they are excluded from all computations
-        subground = np.isfinite(p) & (p > p_sfc[None])
+        # Detect bad-data NaN: NaN at above-ground grid positions or NaN in the surface inputs.
+        #    NaN at subground positions (which may already be present in the input) is expected
+        #    and should NOT be treated as bad data.
+        nan_in_grid = np.isnan(p) | np.isnan(t) | np.isnan(r) | np.isnan(zh)
+        bad_data_in_grid = nan_in_grid & ~subground
+        bad_data_in_sfc = np.isnan(p_sfc) | np.isnan(t_sfc) | np.isnan(r_sfc) | np.isnan(zh_sfc)
+        unexpected_nan = np.any(bad_data_in_grid, axis=0) | bad_data_in_sfc
+
+        # Mask sub-ground levels to NaN so they are excluded from all computations
         p = np.where(subground, np.nan, p)
         t = np.where(subground, np.nan, t)
         r = np.where(subground, np.nan, r)
@@ -590,18 +598,17 @@ def cape_cin(
     Parameters
     ----------
     p : array-like
-        Pressure (Pa). The vertical axis must be the first axis (axis=0) unless
-        ``vertical_axis`` is set.
+        Pressure (Pa) on pressure levels. The vertical axis must be the first axis
+        (axis=0) unless ``vertical_axis`` is set.
     zh : array-like
-        Geopotential height (m), same shape as ``p``.
+        Geopotential height (m) on pressure levels, same shape as ``p``.
     t : array-like
-        Temperature (K), same shape as ``p``.
+        Temperature (K) on pressure levels, same shape as ``p``.
     r : array-like
-        Mixing ratio (kg/kg), same shape as ``p``.
+        Mixing ratio (kg/kg) on pressure levels, same shape as ``p``.
     p_sfc : array-like
         Surface pressure (Pa), shape equal to the horizontal dimensions of ``p``.
-        Levels in ``p`` with pressure greater than ``p_sfc`` are treated as
-        sub-ground and excluded from all computations.
+        The surface is included as an additional level in the computation.
     t_sfc : array-like
         Surface temperature (K), same horizontal shape as ``p_sfc``.
     r_sfc : array-like
