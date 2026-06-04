@@ -457,3 +457,204 @@ class TestLfcIndex:
         result = _lfc_index(z, b, z_lcl, min_depth=1.0)
         assert result[0] == 0
 
+# extra_outputs tests
+# ---------------------------------------------------------------------------
+
+
+def _unstable_1col():
+    """Return (p, zh, t, r) for the 'unstable' case as (nz, 1) arrays."""
+    data = CapeCinData()
+    return (
+        data.p["unstable"][:, None],
+        data.zh["unstable"][:, None],
+        data.t["unstable"][:, None],
+        data.r["unstable"][:, None],
+    )
+
+
+def test_extra_outputs_none_returns_two_tuple():
+    """When extra_outputs is not set the return value must be a 2-tuple."""
+    p, zh, t, r = _unstable_1col()
+    result = thermo.cape_cin(p, zh, t, r, "surface")
+    assert len(result) == 2, "Expected (cape, cin) 2-tuple when extra_outputs is None"
+    cape, cin = result
+    assert cape.shape == (1,)
+    assert cin.shape == (1,)
+
+
+def test_extra_outputs_empty_list_returns_two_tuple():
+    """An empty extra_outputs list must behave the same as None."""
+    p, zh, t, r = _unstable_1col()
+    result = thermo.cape_cin(p, zh, t, r, "surface", extra_outputs=[])
+    assert len(result) == 2
+
+
+def test_extra_outputs_parcel_path_shape():
+    """parcel_path arrays must have (nz, ...) shape; key levels must have (...) shape."""
+    from earthkit.meteo.thermo.array.cape_cin import ParcelPath
+
+    p, zh, t, r = _unstable_1col()
+    nz = p.shape[0]
+    horizontal_shape = (1,)
+
+    cape, cin, extras = thermo.cape_cin(p, zh, t, r, "surface", extra_outputs=["parcel_path"])
+    path = extras["parcel_path"]
+
+    assert isinstance(path, ParcelPath)
+
+    # Profile arrays
+    for attr in ("p", "zh", "t", "r", "tv", "tv_env"):
+        arr = getattr(path, attr)
+        assert arr.shape == (nz,) + horizontal_shape, (
+            f"parcel_path.{attr}: expected shape {(nz,) + horizontal_shape}, got {arr.shape}"
+        )
+
+    # Key-level arrays (horizontal only)
+    for level_attr in ("lcl", "lfc", "el"):
+        level = getattr(path, level_attr)
+        assert level.p.shape == horizontal_shape, (
+            f"parcel_path.{level_attr}.p: expected shape {horizontal_shape}, got {level.p.shape}"
+        )
+        assert level.t.shape == horizontal_shape, (
+            f"parcel_path.{level_attr}.t: expected shape {horizontal_shape}, got {level.t.shape}"
+        )
+        assert level.zh.shape == horizontal_shape, (
+            f"parcel_path.{level_attr}.zh: expected shape {horizontal_shape}, got {level.zh.shape}"
+        )
+
+    # Parcel origin
+    assert path.origin.p.shape == horizontal_shape
+    assert path.origin.t.shape == horizontal_shape
+    assert path.origin.r.shape == horizontal_shape
+
+
+def test_extra_outputs_parcel_path_nd_shape():
+    """parcel_path shapes must generalise to arbitrary horizontal dimensions."""
+    from earthkit.meteo.thermo.array.cape_cin import ParcelPath
+
+    data = CapeCinData()
+    nz = data.p_stacked.shape[0]
+    ny, nx = 2, 2
+    p = data.p_stacked.reshape(nz, ny, nx)
+    t = data.t_stacked.reshape(nz, ny, nx)
+    r = data.r_stacked.reshape(nz, ny, nx)
+    zh = data.zh_stacked.reshape(nz, ny, nx)
+
+    cape, cin, extras = thermo.cape_cin(p, zh, t, r, "surface", extra_outputs=["parcel_path"])
+    path = extras["parcel_path"]
+
+    assert isinstance(path, ParcelPath)
+    for attr in ("p", "zh", "t", "r", "tv", "tv_env"):
+        assert getattr(path, attr).shape == (nz, ny, nx), f"profile array {attr} wrong shape"
+    for level_attr in ("lcl", "lfc", "el"):
+        assert getattr(path, level_attr).p.shape == (ny, nx), f"key level {level_attr}.p wrong shape"
+        assert getattr(path, level_attr).zh.shape == (ny, nx), f"key level {level_attr}.zh wrong shape"
+
+
+def test_extra_outputs_standalone_key_levels():
+    """Requesting 'lcl', 'lfc', 'el', 'parcel' individually returns the right objects."""
+    from earthkit.meteo.thermo.array.cape_cin import ParcelOrigin, PressureLevel
+
+    p, zh, t, r = _unstable_1col()
+    cape, cin, extras = thermo.cape_cin(p, zh, t, r, "surface", extra_outputs=["lcl", "lfc", "el", "parcel"])
+    assert set(extras.keys()) == {"lcl", "lfc", "el", "parcel"}
+
+    for key in ("lcl", "lfc", "el"):
+        assert isinstance(extras[key], PressureLevel), f"extras['{key}'] should be a PressureLevel"
+        assert extras[key].p.shape == (1,)
+        assert extras[key].t.shape == (1,)
+        assert extras[key].zh.shape == (1,)
+
+    assert isinstance(extras["parcel"], ParcelOrigin)
+    assert extras["parcel"].p.shape == (1,)
+    assert extras["parcel"].t.shape == (1,)
+    assert extras["parcel"].r.shape == (1,)
+
+
+def test_extra_outputs_key_levels_consistent_with_parcel_path():
+    """Standalone lcl/lfc/el must match those embedded in parcel_path."""
+    p, zh, t, r = _unstable_1col()
+    cape, cin, extras = thermo.cape_cin(
+        p, zh, t, r, "surface", extra_outputs=["lcl", "lfc", "el", "parcel", "parcel_path"]
+    )
+    path = extras["parcel_path"]
+
+    np.testing.assert_array_equal(extras["lcl"].p, path.lcl.p)
+    np.testing.assert_array_equal(extras["lcl"].t, path.lcl.t)
+    np.testing.assert_array_equal(extras["lcl"].zh, path.lcl.zh)
+    np.testing.assert_array_equal(extras["lfc"].p, path.lfc.p)
+    np.testing.assert_array_equal(extras["lfc"].zh, path.lfc.zh)
+    np.testing.assert_array_equal(extras["el"].p, path.el.p)
+    np.testing.assert_array_equal(extras["el"].zh, path.el.zh)
+    np.testing.assert_array_equal(extras["parcel"].p, path.origin.p)
+    np.testing.assert_array_equal(extras["parcel"].r, path.origin.r)
+
+
+def test_extra_outputs_cape_cin_values_unchanged():
+    """extra_outputs must not alter the cape/cin values."""
+    p, zh, t, r = _unstable_1col()
+    cape_base, cin_base = thermo.cape_cin(p, zh, t, r, "surface")
+    cape_ext, cin_ext, _ = thermo.cape_cin(p, zh, t, r, "surface", extra_outputs=["parcel_path"])
+    np.testing.assert_array_equal(cape_base, cape_ext)
+    np.testing.assert_array_equal(cin_base, cin_ext)
+
+
+def test_extra_outputs_invalid_key_raises():
+    """An unrecognised key in extra_outputs must raise ValueError."""
+    p, zh, t, r = _unstable_1col()
+    with pytest.raises(ValueError, match="extra_outputs"):
+        thermo.cape_cin(p, zh, t, r, "surface", extra_outputs=["parcel_path", "not_a_real_key"])
+
+
+def test_extra_outputs_parcel_path_pressure_sorted():
+    """parcel_path.p must be in ascending order even when input is descending."""
+    p, zh, t, r = _unstable_1col()
+    p_flip = np.flip(p, axis=0)
+    t_flip = np.flip(t, axis=0)
+    zh_flip = np.flip(zh, axis=0)
+    r_flip = np.flip(r, axis=0)
+
+    _, _, extras = thermo.cape_cin(p_flip, zh_flip, t_flip, r_flip, "surface", extra_outputs=["parcel_path"])
+    path_p = extras["parcel_path"].p[:, 0]
+    assert np.all(np.diff(path_p) >= 0), "parcel_path.p must be sorted ascending"
+
+
+def test_extra_outputs_vertical_axis_minus_1():
+    """parcel_path profile arrays must have the vertical axis restored to the caller's position."""
+    p, zh, t, r = _unstable_1col()
+    # transpose to (1, nz) — vertical axis is now axis 1 (== -1)
+    p_T, zh_T, t_T, r_T = p.T, zh.T, t.T, r.T
+
+    cape, cin, extras = thermo.cape_cin(p_T, zh_T, t_T, r_T, "surface", vertical_axis=-1, extra_outputs=["parcel_path"])
+    # profile arrays must mirror the caller's shape: (1, nz)
+    nz = p.shape[0]
+    for attr in ("p", "zh", "t", "r", "tv", "tv_env"):
+        arr = getattr(extras["parcel_path"], attr)
+        assert arr.shape == (1, nz), f"parcel_path.{attr}: expected (1, {nz}), got {arr.shape}"
+
+
+def test_extra_outputs_vertical_axis_arbitrary():
+    """parcel_path profile arrays must restore any non-zero vertical_axis."""
+    data = CapeCinData()
+    nz = data.p_stacked.shape[0]
+    ny, nx = 2, 2
+    # build (ny, nx, nz) input — vertical axis is 2
+    p = data.p_stacked.reshape(nz, ny, nx)
+    t = data.t_stacked.reshape(nz, ny, nx)
+    r = data.r_stacked.reshape(nz, ny, nx)
+    zh = data.zh_stacked.reshape(nz, ny, nx)
+    # move vertical axis to position 2: shape becomes (ny, nx, nz)
+    p_v2 = np.moveaxis(p, 0, 2)
+    t_v2 = np.moveaxis(t, 0, 2)
+    r_v2 = np.moveaxis(r, 0, 2)
+    zh_v2 = np.moveaxis(zh, 0, 2)
+
+    cape, cin, extras = thermo.cape_cin(
+        p_v2, zh_v2, t_v2, r_v2, "surface", vertical_axis=2, extra_outputs=["parcel_path"]
+    )
+    # profile arrays must have shape (ny, nx, nz)
+    for attr in ("p", "zh", "t", "r", "tv", "tv_env"):
+        arr = getattr(extras["parcel_path"], attr)
+        assert arr.shape == (ny, nx, nz), f"parcel_path.{attr}: expected {(ny, nx, nz)}, got {arr.shape}"
+    # horizontal outputs are unaffected
+    assert extras["parcel_path"].lcl.p.shape == (ny, nx)

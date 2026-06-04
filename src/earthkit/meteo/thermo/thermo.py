@@ -2521,7 +2521,7 @@ def cape_cin(
     r: "ArrayLike",
     parcel_type: str,
     layer_depth: float | None = None,
-    output: str = "cape_cin",
+    extra_outputs: list | None = None,
     vertical_axis: int = 0,
     ept_method: str = "bolton39",
     lcl_method: str = "davies",
@@ -2550,8 +2550,11 @@ def cape_cin(
     layer_depth : number, optional
         Depth (Pa) of the layer used to define the mixed-layer or most-unstable
         parcel. Defaults to 5000 Pa for ``"mixed"`` and 50000 Pa for ``"mu"``.
-    output : str, optional
-        Output selection. Currently only ``"cape_cin"`` is supported.
+    extra_outputs : list of str, optional
+        Optional diagnostics to compute and return as a third element.
+        Allowed keys: ``"lcl"``, ``"lfc"``, ``"el"``, ``"parcel"``,
+        ``"parcel_path"``. When ``None`` or empty the function returns only
+        ``(cape, cin)``.
     vertical_axis : int, optional
         Axis of the input arrays that corresponds to the vertical dimension.
         Defaults to ``0``. ``-1`` may also be used to indicate the last axis.
@@ -2569,6 +2572,9 @@ def cape_cin(
         CAPE (J/kg), shape equal to the horizontal dimensions of the input arrays.
     array-like
         CIN (J/kg), shape equal to the horizontal dimensions of the input arrays.
+    dict, optional
+        Only present when ``extra_outputs`` is non-empty. Keys are a subset of
+        the strings listed in the ``extra_outputs`` parameter description.
 
 
     Implementations
@@ -2585,7 +2591,7 @@ def cape_cin(
         r,
         parcel_type,
         layer_depth=layer_depth,
-        output=output,
+        extra_outputs=extra_outputs,
         vertical_axis=vertical_axis,
         ept_method=ept_method,
         lcl_method=lcl_method,

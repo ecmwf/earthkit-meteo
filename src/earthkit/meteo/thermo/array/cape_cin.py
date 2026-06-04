@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import dataclasses as dc
+
 import numpy as np
 from scipy import interpolate
 
@@ -14,6 +16,78 @@ from earthkit.meteo import thermo
 from earthkit.meteo.constants import constants
 
 C_pl = 4218.0
+
+
+@dc.dataclass(frozen=True)
+class PressureLevel:
+    """Pressure, temperature and height at a single key level.
+
+    All arrays have the shape of the horizontal dimensions of the input
+    (i.e. the vertical axis is absent).  Values are NaN where the level does
+    not exist (e.g. no LFC in a stable profile).
+    """
+
+    p: np.ndarray
+    """Pressure (Pa)."""
+    t: np.ndarray
+    """Temperature (K)."""
+    zh: np.ndarray
+    """Geopotential height above ground (m)."""
+
+
+@dc.dataclass(frozen=True)
+class ParcelOrigin:
+    """Properties of the lifted parcel at its launch level.
+
+    All arrays have the shape of the horizontal dimensions of the input.
+    """
+
+    p: np.ndarray
+    """Pressure (Pa)."""
+    t: np.ndarray
+    """Temperature (K)."""
+    r: np.ndarray
+    """Mixing ratio (kg/kg)."""
+
+
+@dc.dataclass(frozen=True)
+class ParcelPath:
+    """Temperature profile of the lifted parcel and its environment.
+
+    Profile arrays (``p``, ``t``, ``r``, ``tv``, ``tv_env``) have shape
+    ``(n_levels, ...)``, where the levels are sorted in ascending pressure
+    order regardless of the order supplied by the caller.
+
+    The key diagnostic levels (``lcl``, ``lfc``, ``el``) and the parcel
+    ``origin`` have shape ``(...)`` (horizontal dimensions only) so that the
+    object is self-contained for skew-T / parcel-path plots.
+    """
+
+    # Profile arrays — shape (n_levels, ...)
+    p: np.ndarray
+    """Pressure grid, sorted ascending (Pa)."""
+    zh: np.ndarray
+    """Geopotential height above ground, sorted ascending in pressure (m)."""
+    t: np.ndarray
+    """Parcel temperature (K)."""
+    r: np.ndarray
+    """Parcel mixing ratio (kg/kg)."""
+    tv: np.ndarray
+    """Parcel virtual temperature (K)."""
+    tv_env: np.ndarray
+    """Environment virtual temperature (K)."""
+
+    # Key levels — shape (...) i.e. horizontal dims only
+    lcl: PressureLevel
+    """Lifted Condensation Level."""
+    lfc: PressureLevel
+    """Level of Free Convection (NaN where no convection)."""
+    el: PressureLevel
+    """Equilibrium Level (NaN where no convection)."""
+
+    # Parcel origin
+    origin: ParcelOrigin
+    """Parcel properties at the launch level."""
 
 
 def _ept_from_mixing_ratio(t, p, r, method="bolton39"):
@@ -185,12 +259,15 @@ def _moist_ascent_lookup_table(ept_method):
     return {"temperature": t_lookup, "theta_ep": theta_ep_range, "pressure": pressure_levels}
 
 
+_VALID_EXTRA_OUTPUTS = frozenset(["lcl", "lfc", "el", "parcel", "parcel_path"])
+
+
 class _CapeCinComp:
-    def __init__(self, h_bottom=None, h_top=None, layer_depth=None, output="cape_cin", lcl_method="davies", ept_method="bolton39"):
+    def __init__(self, h_bottom=None, h_top=None, layer_depth=None, extra_outputs=None, lcl_method="davies", ept_method="bolton39"):
         self.h_bottom = h_bottom
         self.h_top = h_top
         self.layer_depth = layer_depth
-        self.output = output
+        self.extra_outputs = extra_outputs or []
         self.lcl_method = lcl_method
         self.ept_method = ept_method
 
@@ -286,13 +363,21 @@ class _CapeCinComp:
         z_lfc[lfc_below_lcl] = z_lcl[lfc_below_lcl]
         p_lfc[lfc_below_lcl] = p_lcl[lfc_below_lcl]
 
+        # Temperatures at LFC: interpolate t_parcel to where dtv crosses zero
+        t_lfc = _where_is_param_zero(idx_lfc_level, t_parcel, dtv)
+        t_lfc[idx_lfc_level == -1] = np.nan
+        t_lfc[lfc_below_lcl] = t_lcl[lfc_below_lcl]
+
         # Equilibrium Level (EL)
         # -------------------------
         el_level = dtv.shape[0] - np.argmax(dtv[::-1] > 0, axis=0) # finds index of first layer (going from top to bottom through profile) for which b > 0
         z_el = _where_is_param_zero(el_level, zh, dtv)
         p_el = _where_is_param_zero(el_level, p, dtv)
 
-        return buoyancy, p_lcl, z_lcl, p_lfc, z_lfc, p_el, z_el, tv_parcel, tv_env
+        # Temperature at EL: interpolate t_parcel to where dtv crosses zero
+        t_el = _where_is_param_zero(el_level, t_parcel, dtv)
+
+        return buoyancy, p_lcl, z_lcl, t_lcl, p_lfc, z_lfc, t_lfc, p_el, z_el, t_el, t_parcel, r_parcel, tv_parcel, tv_env
 
     def _sort_pressure_levels(self, p, t, r, zh):
         is_sorted = (np.diff(p, axis=0) >= 0).all()
@@ -345,7 +430,7 @@ class _CapeCinComp:
         )
 
 
-        buoyancy, p_lcl, z_lcl, p_lfc, z_lfc, p_el, z_el, tv_parcel, tv_env = self._lift_parcel(
+        buoyancy, p_lcl, z_lcl, t_lcl, p_lfc, z_lfc, t_lfc, p_el, z_el, t_el, t_parcel, r_parcel, tv_parcel, tv_env = self._lift_parcel(
             p_start, t_start, r_start, zh_start, p, t, r, zh
         )
         cape, cin = self._integrate_buoyancy(buoyancy, p, zh, p_lfc)
@@ -359,25 +444,38 @@ class _CapeCinComp:
         # LI = -LI
         # LI[np.isnan(LI)] = 0
 
-        if self.output == "full":
-            # TODO return structured output instead of tuple?
-            return (
-                cape,
-                cin,
-                p_start,
-                t_start,
-                r_start,
-                zh_start,
-                p_lcl,
-                z_lcl,
-                p_lfc,
-                z_lfc,
-                p_el,
-                z_el,
-                tv_parcel,
-                tv_env,
-            )
-        return cape, cin
+        if not self.extra_outputs:
+            return cape, cin
+
+        lcl = PressureLevel(p=p_lcl, t=t_lcl, zh=z_lcl)
+        lfc = PressureLevel(p=p_lfc, t=t_lfc, zh=z_lfc)
+        el = PressureLevel(p=p_el, t=t_el, zh=z_el)
+        origin = ParcelOrigin(p=p_start, t=t_start, r=r_start)
+
+        extras = {}
+        for key in self.extra_outputs:
+            if key == "lcl":
+                extras["lcl"] = lcl
+            elif key == "lfc":
+                extras["lfc"] = lfc
+            elif key == "el":
+                extras["el"] = el
+            elif key == "parcel":
+                extras["parcel"] = origin
+            elif key == "parcel_path":
+                extras["parcel_path"] = ParcelPath(
+                    p=p,
+                    zh=zh,
+                    t=t_parcel,
+                    r=r_parcel,
+                    tv=tv_parcel,
+                    tv_env=tv_env,
+                    lcl=lcl,
+                    lfc=lfc,
+                    el=el,
+                    origin=origin,
+                )
+        return cape, cin, extras
 
 
 class _CapeCinSurface(_CapeCinComp):
@@ -465,7 +563,7 @@ def cape_cin(
     h_bottom=None,
     h_top=None,
     layer_depth=None,
-    output="cape_cin",
+    extra_outputs=None,
     vertical_axis=0,
     ept_method="bolton39",
     lcl_method="davies",
@@ -498,8 +596,18 @@ def cape_cin(
     layer_depth : number, optional
         Depth (Pa) of the layer used to define the mixed-layer or most-unstable
         parcel. Defaults to 5000 Pa for ``"mixed"`` and 50000 Pa for ``"mu"``.
-    output : str, optional
-        Output selection. Currently only ``"cape_cin"`` is supported.
+    extra_outputs : list of str, optional
+        Optional diagnostics to compute and return as a third element.
+        Allowed keys:
+
+        * ``"lcl"`` — :class:`PressureLevel` for the Lifted Condensation Level.
+        * ``"lfc"`` — :class:`PressureLevel` for the Level of Free Convection.
+        * ``"el"``  — :class:`PressureLevel` for the Equilibrium Level.
+        * ``"parcel"`` — :class:`ParcelOrigin` with the parcel launch properties.
+        * ``"parcel_path"`` — :class:`ParcelPath` with the full parcel profile
+          and all key levels bundled together.
+
+        When ``None`` or an empty list the function returns only ``(cape, cin)``.
     vertical_axis : int, optional
         Axis of the input arrays that corresponds to the vertical dimension.
         Defaults to ``0``. ``-1`` may also be used to indicate the last axis.
@@ -517,15 +625,17 @@ def cape_cin(
         CAPE (J/kg), shape equal to the horizontal dimensions of the input arrays.
     cin : array-like
         CIN (J/kg), shape equal to the horizontal dimensions of the input arrays.
+    extras : dict, optional
+        Only present when ``extra_outputs`` is non-empty. Keys are a subset of
+        the strings listed in the ``extra_outputs`` parameter description.
 
     """
-    # TODO add options for output: "cape_cin", "cape_cin_li", "full"
-    # where full includes parcel_path and intermediate variables for debugging/validation
-    # For full output, we need to decide on a format for the output,
-    # e.g. a dictionary or a structured array,
-    # and we need to handle the case where vertical_axis is not 0
-    if output not in ["cape_cin"]:
-        raise ValueError(f"Invalid output option '{output}'")
+    if extra_outputs is not None:
+        unknown = set(extra_outputs) - _VALID_EXTRA_OUTPUTS
+        if unknown:
+            raise ValueError(
+                f"Invalid extra_outputs keys: {sorted(unknown)}. Allowed values are: {sorted(_VALID_EXTRA_OUTPUTS)}"
+            )
 
     if parcel_type not in _PARCEL_CLASSES:
         raise ValueError(f"Invalid parcel_type '{parcel_type}'. Must be one of {list(_PARCEL_CLASSES)}")
@@ -541,13 +651,33 @@ def cape_cin(
         t = np.swapaxes(t, 0, vertical_axis)
         r = np.swapaxes(r, 0, vertical_axis)
 
+
     if h_bottom is None:
         h_bottom = 0
     if h_top is None:
         h_top = 3000
 
-    parcel = _PARCEL_CLASSES[parcel_type](
-        h_bottom=h_bottom, h_top=h_top, layer_depth=layer_depth, output=output, lcl_method=lcl_method, ept_method=ept_method
-    )
+    result = _PARCEL_CLASSES[parcel_type](
+        h_bottom=h_bottom, h_top=h_top, layer_depth=layer_depth, extra_outputs=extra_outputs, lcl_method=lcl_method, ept_method=ept_method
+    )._cape_cin(p, zh, t, r)
 
-    return parcel._cape_cin(p, zh, t, r)
+    # Swap the vertical axis of profile arrays back to match caller's layout.
+    if vertical_axis != 0 and len(result) == 3:
+        cape, cin, extras = result
+        if "parcel_path" in extras:
+            path = extras["parcel_path"]
+            extras["parcel_path"] = ParcelPath(
+                p=np.swapaxes(path.p, 0, vertical_axis),
+                zh=np.swapaxes(path.zh, 0, vertical_axis),
+                t=np.swapaxes(path.t, 0, vertical_axis),
+                r=np.swapaxes(path.r, 0, vertical_axis),
+                tv=np.swapaxes(path.tv, 0, vertical_axis),
+                tv_env=np.swapaxes(path.tv_env, 0, vertical_axis),
+                lcl=path.lcl,
+                lfc=path.lfc,
+                el=path.el,
+                origin=path.origin,
+            )
+        result = cape, cin, extras
+
+    return result
