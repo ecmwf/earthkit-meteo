@@ -102,27 +102,3 @@ def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> tuple[NDArray[
             raise ValueError(f"Hybrid level parameters not available for {n_levels} levels in model '{model}'.")
     else:
         raise ValueError(f"Model '{model}' not recognised for hybrid level parameters.")
-
-
-def _hybrid_level_parameters_from_fieldlist(*args) -> tuple[NDArray[Any], NDArray[Any]]:
-    import earthkit.data as ekd
-
-    for fl in args:
-        if isinstance(fl, ekd.Field):
-            fl = [fl]
-        elif not isinstance(fl, ekd.FieldList):
-            continue
-
-        for field in fl:
-            if field.get("vertical.level_type") == "hybrid":
-                n_coeff = field.get("metadata.NV")
-                try:
-                    if n_coeff is not None and n_coeff > 2:
-                        pv = field.get("metadata.pv")
-                        if pv and len(pv) == n_coeff:
-                            A = np.array(pv[: n_coeff + 1])
-                            B = np.array(pv[n_coeff + 1 :])
-                            return A, B
-                except Exception:
-                    pass
-    return None, None
