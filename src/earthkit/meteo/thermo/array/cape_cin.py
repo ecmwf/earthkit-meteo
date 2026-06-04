@@ -380,9 +380,11 @@ class _CapeCinComp:
         return buoyancy, p_lcl, z_lcl, t_lcl, p_lfc, z_lfc, t_lfc, p_el, z_el, t_el, t_parcel, r_parcel, tv_parcel, tv_env
 
     def _sort_pressure_levels(self, p, t, r, zh):
-        is_sorted = (np.diff(p, axis=0) >= 0).all()
+        # NaN values (sub-ground levels) should sort to the end (treated as infinity)
+        p_sort_key = np.where(np.isnan(p), np.inf, p)
+        is_sorted = (np.diff(p_sort_key, axis=0) >= 0).all()
         if not is_sorted:
-            sorted_inds = np.argsort(p, axis=0)
+            sorted_inds = np.argsort(p_sort_key, axis=0, kind="stable")
             p = np.take_along_axis(p, sorted_inds, axis=0)
             t = np.take_along_axis(t, sorted_inds, axis=0)
             r = np.take_along_axis(r, sorted_inds, axis=0)
@@ -408,25 +410,36 @@ class _CapeCinComp:
         cin[~pos_cape] = 0
         return cape, cin
 
-    def _determine_parcel(self, p, zh, t, r, h_bottom, h_top, layer_depth):
+    def _determine_parcel(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, h_bottom, h_top, layer_depth):
         raise NotImplementedError("This method should be implemented in the subclass")
 
-    def _cape_cin(self, p, zh, t, r):
+    def _cape_cin(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc):
         # Shapes of all arrays should be (n_vertical_levels, ...) where the vertical axis is the first axis (axis=0)
 
-        # Make sure pressure levels are in ascending order
+        # Identify above-ground levels for unexpected NaN detection, before sub-ground masking.
+        # A NaN at a sub-ground level is expected and must not invalidate the output.
+        above_ground = np.isfinite(p) & (p <= p_sfc[None])
+        unexpected_nan = np.any(
+            above_ground & (np.isnan(t) | np.isnan(r) | np.isnan(zh)),
+            axis=0,
+        ) | np.isnan(p_sfc)
+
+        # Mask sub-ground levels (p > p_sfc) to NaN so they are excluded from all computations
+        subground = np.isfinite(p) & (p > p_sfc[None])
+        p = np.where(subground, np.nan, p)
+        t = np.where(subground, np.nan, t)
+        r = np.where(subground, np.nan, r)
+        zh = np.where(subground, np.nan, zh)
+
+        # Sort ascending by pressure; NaN (sub-ground) levels sort to the end
         p, t, r, zh = self._sort_pressure_levels(p, t, r, zh)
 
-        # heights relative to the ground
-        zh -= zh[-1]
+        # Heights relative to the surface
+        zh = zh - zh_sfc[None]
+        zh_sfc_rel = np.zeros_like(p_sfc)
 
-        # Check for NaN values in the input arrays and mask them out in the output
-        # If any input value for a vertical profile is NaN, the output for that profile will be NaN
-        nan_mask = np.any(np.isnan(p) | np.isnan(t) | np.isnan(r) | np.isnan(zh), axis=0)
-
-        
         p_start, t_start, r_start, zh_start = self._determine_parcel(
-            p, zh, t, r, self.h_bottom, self.h_top, self.layer_depth
+            p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc_rel, self.h_bottom, self.h_top, self.layer_depth
         )
 
 
@@ -435,8 +448,8 @@ class _CapeCinComp:
         )
         cape, cin = self._integrate_buoyancy(buoyancy, p, zh, p_lfc)
 
-        cape[nan_mask] = np.nan
-        cin[nan_mask] = np.nan
+        cape[unexpected_nan] = np.nan
+        cin[unexpected_nan] = np.nan
 
         # TODO include LI calculation and see if we can use earthkit's vertical interpolation function
         # instead of the custom Interpolate function from the reference implementation
@@ -479,12 +492,12 @@ class _CapeCinComp:
 
 
 class _CapeCinSurface(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, h_bottom, h_top, layer_depth):
-        return p[-1], t[-1], r[-1], zh[-1]
+    def _determine_parcel(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, h_bottom, h_top, layer_depth):
+        return p_sfc, t_sfc, r_sfc, zh_sfc
 
 
 class _CapeCinMixed(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, h_bottom, h_top, layer_depth=None):
+    def _determine_parcel(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, h_bottom, h_top, layer_depth=None):
         """
         Compute mixed-layer parameters
         :param p: pressure array in Pa
@@ -498,8 +511,8 @@ class _CapeCinMixed(_CapeCinComp):
         if layer_depth is None:
             layer_depth = 5000
 
-        p_bottom = p[-1]
-        zh_bottom = zh[-1]
+        p_bottom = p_sfc
+        zh_bottom = zh_sfc
         # p_bound = p_bottom - layer_depth
         # indx = (np.abs(p - p_bound)).argmin(axis=0)
         # p_top = np.take_along_axis(p, indx[None, ...], axis=0).squeeze(0)
@@ -521,7 +534,7 @@ class _CapeCinMixed(_CapeCinComp):
 
 
 class _CapeCinMostUnstable(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, h_bottom=None, h_top=None, layer_depth=None):
+    def _determine_parcel(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, h_bottom=None, h_top=None, layer_depth=None):
         t_shape = t.shape
 
         if h_bottom is None:
@@ -559,6 +572,10 @@ def cape_cin(
     zh,
     t,
     r,
+    p_sfc,
+    t_sfc,
+    r_sfc,
+    zh_sfc,
     parcel_type,
     h_bottom=None,
     h_top=None,
@@ -581,21 +598,35 @@ def cape_cin(
         Temperature (K), same shape as ``p``.
     r : array-like
         Mixing ratio (kg/kg), same shape as ``p``.
+    p_sfc : array-like
+        Surface pressure (Pa), shape equal to the horizontal dimensions of ``p``.
+        Levels in ``p`` with pressure greater than ``p_sfc`` are treated as
+        sub-ground and excluded from all computations.
+    t_sfc : array-like
+        Surface temperature (K), same horizontal shape as ``p_sfc``.
+    r_sfc : array-like
+        Surface mixing ratio (kg/kg), same horizontal shape as ``p_sfc``.
+    zh_sfc : array-like
+        Surface geopotential height (m), same horizontal shape as ``p_sfc``.
+        Used as the height reference: all profile heights are expressed relative
+        to ``zh_sfc`` internally.
     parcel_type : str
         Method used to define the lifted parcel. One of:
 
-        * ``"surface"`` — parcel taken from the lowest level.
+        * ``"surface"`` — parcel taken from ``p_sfc``/``t_sfc``/``r_sfc``.
         * ``"mixed"`` — parcel properties averaged over a mixed layer of depth
           ``layer_depth`` (Pa) above the surface.
-        * ``"mu"`` — most-unstable parcel: the level within ``layer_depth`` (Pa)
-          of the surface that maximises CAPE.
+        * ``"mu"`` — most-unstable parcel: the level within the height range
+          ``[h_bottom, h_top]`` (m) that maximises equivalent potential temperature.
     h_bottom : number, optional
-        Height in (m) of the bottom layer above which the most-unstable parcel will be considered
+        Height (m above surface) of the bottom of the search range used by the
+        most-unstable parcel. Defaults to ``0``.
     h_top : number, optional
-        Height in (m) of the top layer to which the most-unstable parcel will be considered
+        Height (m above surface) of the top of the search range used by the
+        most-unstable parcel. Defaults to ``3000``.
     layer_depth : number, optional
-        Depth (Pa) of the layer used to define the mixed-layer or most-unstable
-        parcel. Defaults to 5000 Pa for ``"mixed"`` and 50000 Pa for ``"mu"``.
+        Depth (Pa) of the layer used to define the mixed-layer parcel.
+        Defaults to 5000 Pa for ``"mixed"``.
     extra_outputs : list of str, optional
         Optional diagnostics to compute and return as a third element.
         Allowed keys:
@@ -611,6 +642,8 @@ def cape_cin(
     vertical_axis : int, optional
         Axis of the input arrays that corresponds to the vertical dimension.
         Defaults to ``0``. ``-1`` may also be used to indicate the last axis.
+        Surface arrays (``p_sfc``, ``t_sfc``, ``r_sfc``, ``zh_sfc``) have no
+        vertical axis and are not affected by this parameter.
     ept_method : str, optional
         Method used to compute equivalent potential temperature. Passed to
         :func:`earthkit.meteo.thermo.array.ept_from_specific_humidity`.
@@ -651,15 +684,19 @@ def cape_cin(
         t = np.swapaxes(t, 0, vertical_axis)
         r = np.swapaxes(r, 0, vertical_axis)
 
-
     if h_bottom is None:
         h_bottom = 0
     if h_top is None:
         h_top = 3000
 
+    p_sfc = np.asarray(p_sfc, dtype=float)
+    t_sfc = np.asarray(t_sfc, dtype=float)
+    r_sfc = np.asarray(r_sfc, dtype=float)
+    zh_sfc = np.asarray(zh_sfc, dtype=float)
+
     result = _PARCEL_CLASSES[parcel_type](
         h_bottom=h_bottom, h_top=h_top, layer_depth=layer_depth, extra_outputs=extra_outputs, lcl_method=lcl_method, ept_method=ept_method
-    )._cape_cin(p, zh, t, r)
+    )._cape_cin(p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc)
 
     # Swap the vertical axis of profile arrays back to match caller's layout.
     if vertical_axis != 0 and len(result) == 3:

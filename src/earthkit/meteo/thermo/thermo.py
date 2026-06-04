@@ -2519,7 +2519,13 @@ def cape_cin(
     zh: "ArrayLike",
     t: "ArrayLike",
     r: "ArrayLike",
+    p_sfc: "ArrayLike",
+    t_sfc: "ArrayLike",
+    r_sfc: "ArrayLike",
+    zh_sfc: "ArrayLike",
     parcel_type: str,
+    h_bottom: float | None = None,
+    h_top: float | None = None,
     layer_depth: float | None = None,
     extra_outputs: list | None = None,
     vertical_axis: int = 0,
@@ -2539,17 +2545,33 @@ def cape_cin(
         Temperature (K), same shape as ``p``.
     r : array-like
         Mixing ratio (kg/kg), same shape as ``p``.
+    p_sfc : array-like
+        Surface pressure (Pa), shape equal to the horizontal dimensions of ``p``.
+        Levels in ``p`` with pressure greater than ``p_sfc`` are treated as
+        sub-ground and excluded from all computations.
+    t_sfc : array-like
+        Surface temperature (K), same horizontal shape as ``p_sfc``.
+    r_sfc : array-like
+        Surface mixing ratio (kg/kg), same horizontal shape as ``p_sfc``.
+    zh_sfc : array-like
+        Surface geopotential height (m), same horizontal shape as ``p_sfc``.
     parcel_type : str
         Method used to define the lifted parcel. One of:
 
-        * ``"surface"`` — parcel taken from the lowest level.
+        * ``"surface"`` — parcel taken from ``p_sfc``/``t_sfc``/``r_sfc``.
         * ``"mixed"`` — parcel properties averaged over a mixed layer of depth
           ``layer_depth`` (Pa) above the surface.
-        * ``"mu"`` — most-unstable parcel: the level within ``layer_depth`` (Pa)
-          of the surface that maximises CAPE.
+        * ``"mu"`` — most-unstable parcel: the level within the height range
+          ``[h_bottom, h_top]`` (m) that maximises equivalent potential temperature.
+    h_bottom : number, optional
+        Height (m above surface) of the bottom of the search range for the
+        most-unstable parcel. Defaults to ``0``.
+    h_top : number, optional
+        Height (m above surface) of the top of the search range for the
+        most-unstable parcel. Defaults to ``3000``.
     layer_depth : number, optional
-        Depth (Pa) of the layer used to define the mixed-layer or most-unstable
-        parcel. Defaults to 5000 Pa for ``"mixed"`` and 50000 Pa for ``"mu"``.
+        Depth (Pa) of the layer used to define the mixed-layer parcel.
+        Defaults to 5000 Pa for ``"mixed"``.
     extra_outputs : list of str, optional
         Optional diagnostics to compute and return as a third element.
         Allowed keys: ``"lcl"``, ``"lfc"``, ``"el"``, ``"parcel"``,
@@ -2558,6 +2580,7 @@ def cape_cin(
     vertical_axis : int, optional
         Axis of the input arrays that corresponds to the vertical dimension.
         Defaults to ``0``. ``-1`` may also be used to indicate the last axis.
+        Surface arrays are not affected by this parameter.
     ept_method : str, optional
         Method used to compute equivalent potential temperature. Passed to
         :func:`earthkit.meteo.thermo.array.ept_from_specific_humidity`.
@@ -2589,7 +2612,13 @@ def cape_cin(
         zh,
         t,
         r,
+        p_sfc,
+        t_sfc,
+        r_sfc,
+        zh_sfc,
         parcel_type,
+        h_bottom=h_bottom,
+        h_top=h_top,
         layer_depth=layer_depth,
         extra_outputs=extra_outputs,
         vertical_axis=vertical_axis,
