@@ -226,7 +226,9 @@ def test_cape_cin_options_forwarded():
 
     # Default layer_depth (5000 Pa) vs a wider mixed layer (15000 Pa) must differ.
     cape_default, _ = thermo.cape_cin(*_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "mixed")
-    cape_wide, _ = thermo.cape_cin(*_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "mixed", layer_depth=15000)
+    cape_wide, _ = thermo.cape_cin(
+        *_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "mixed", layer_depth=15000
+    )
     assert not np.isclose(cape_default, cape_wide, atol=1), (
         "layer_depth option was not forwarded to the mixed-layer parcel computation"
     )
@@ -524,6 +526,7 @@ class TestLfcIndex:
         result = _lfc_index(z, b, z_lcl, min_depth=1.0)
         assert result[0] == 0
 
+
 # extra_outputs tests
 # ---------------------------------------------------------------------------
 
@@ -558,7 +561,8 @@ def test_extra_outputs_empty_list_returns_two_tuple():
 
 def test_extra_outputs_parcel_path_shape():
     """parcel_path arrays must have (nz_pl+1, ...) shape (PL + surface);
-    key levels must have (...) shape."""
+    key levels must have (...) shape.
+    """
     from earthkit.meteo.thermo.array.cape_cin import ParcelPath
 
     p, zh, t, r = _unstable_1col()
@@ -566,7 +570,9 @@ def test_extra_outputs_parcel_path_shape():
     nz_path = nz_pl + 1  # parcel_path includes the surface as an additional level
     horizontal_shape = (1,)
 
-    cape, cin, extras = thermo.cape_cin(*_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "surface", extra_outputs=["parcel_path"])
+    cape, cin, extras = thermo.cape_cin(
+        *_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "surface", extra_outputs=["parcel_path"]
+    )
     path = extras["parcel_path"]
 
     assert isinstance(path, ParcelPath)
@@ -609,7 +615,9 @@ def test_extra_outputs_parcel_path_nd_shape():
     r = data.r_stacked.reshape(nz, ny, nx)
     zh = data.zh_stacked.reshape(nz, ny, nx)
 
-    cape, cin, extras = thermo.cape_cin(*_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "surface", extra_outputs=["parcel_path"])
+    cape, cin, extras = thermo.cape_cin(
+        *_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "surface", extra_outputs=["parcel_path"]
+    )
     path = extras["parcel_path"]
 
     # PL inputs have nz-1 levels; parcel_path includes the surface so it has nz levels.
@@ -628,7 +636,12 @@ def test_extra_outputs_standalone_key_levels():
     from earthkit.meteo.thermo.array.cape_cin import ParcelOrigin, PressureLevel
 
     p, zh, t, r = _unstable_1col()
-    cape, cin, extras = thermo.cape_cin(*_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "surface", extra_outputs=["lcl", "lfc", "el", "parcel"])
+    cape, cin, extras = thermo.cape_cin(
+        *_strip_sfc(p, zh, t, r),
+        *_sfc_from_profile(p, t, r, zh),
+        "surface",
+        extra_outputs=["lcl", "lfc", "el", "parcel"],
+    )
     assert set(extras.keys()) == {"lcl", "lfc", "el", "parcel"}
 
     for key in ("lcl", "lfc", "el"):
@@ -647,8 +660,10 @@ def test_extra_outputs_key_levels_consistent_with_parcel_path():
     """Standalone lcl/lfc/el must match those embedded in parcel_path."""
     p, zh, t, r = _unstable_1col()
     cape, cin, extras = thermo.cape_cin(
-        *_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "surface",
-        extra_outputs=["lcl", "lfc", "el", "parcel", "parcel_path"]
+        *_strip_sfc(p, zh, t, r),
+        *_sfc_from_profile(p, t, r, zh),
+        "surface",
+        extra_outputs=["lcl", "lfc", "el", "parcel", "parcel_path"],
     )
     path = extras["parcel_path"]
 
@@ -667,7 +682,9 @@ def test_extra_outputs_cape_cin_values_unchanged():
     """extra_outputs must not alter the cape/cin values."""
     p, zh, t, r = _unstable_1col()
     cape_base, cin_base = thermo.cape_cin(*_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "surface")
-    cape_ext, cin_ext, _ = thermo.cape_cin(*_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "surface", extra_outputs=["parcel_path"])
+    cape_ext, cin_ext, _ = thermo.cape_cin(
+        *_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "surface", extra_outputs=["parcel_path"]
+    )
     np.testing.assert_array_equal(cape_base, cape_ext)
     np.testing.assert_array_equal(cin_base, cin_ext)
 
@@ -676,7 +693,12 @@ def test_extra_outputs_invalid_key_raises():
     """An unrecognised key in extra_outputs must raise ValueError."""
     p, zh, t, r = _unstable_1col()
     with pytest.raises(ValueError, match="extra_outputs"):
-        thermo.cape_cin(*_strip_sfc(p, zh, t, r), *_sfc_from_profile(p, t, r, zh), "surface", extra_outputs=["parcel_path", "not_a_real_key"])
+        thermo.cape_cin(
+            *_strip_sfc(p, zh, t, r),
+            *_sfc_from_profile(p, t, r, zh),
+            "surface",
+            extra_outputs=["parcel_path", "not_a_real_key"],
+        )
 
 
 def test_extra_outputs_parcel_path_pressure_sorted():
@@ -689,13 +711,19 @@ def test_extra_outputs_parcel_path_pressure_sorted():
     r_flip = np.flip(r_pl, axis=0)
 
     _, _, extras = thermo.cape_cin(
-        p_flip, zh_flip, t_flip, r_flip,
+        p_flip,
+        zh_flip,
+        t_flip,
+        r_flip,
         *_sfc_from_profile(p, t, r, zh),  # surface from original
-        "surface", extra_outputs=["parcel_path"]
+        "surface",
+        extra_outputs=["parcel_path"],
     )
     path_p = extras["parcel_path"].p[:, 0]
     finite_p = path_p[np.isfinite(path_p)]
-    assert np.all(np.diff(finite_p) >= 0), "parcel_path.p must be sorted ascending (NaN sub-ground levels at end are excluded)"
+    assert np.all(np.diff(finite_p) >= 0), (
+        "parcel_path.p must be sorted ascending (NaN sub-ground levels at end are excluded)"
+    )
 
 
 def test_extra_outputs_vertical_axis_minus_1():
@@ -708,8 +736,7 @@ def test_extra_outputs_vertical_axis_minus_1():
     p_sfc, t_sfc, r_sfc, zh_sfc = _sfc_from_profile(p, t, r, zh)
 
     cape, cin, extras = thermo.cape_cin(
-        p_T, zh_T, t_T, r_T, p_sfc, t_sfc, r_sfc, zh_sfc, "surface",
-        vertical_axis=-1, extra_outputs=["parcel_path"]
+        p_T, zh_T, t_T, r_T, p_sfc, t_sfc, r_sfc, zh_sfc, "surface", vertical_axis=-1, extra_outputs=["parcel_path"]
     )
     # profile arrays must mirror the caller's shape: (1, nz_pl + 1)
     nz_path = p_pl.shape[0] + 1
@@ -740,9 +767,17 @@ def test_extra_outputs_vertical_axis_arbitrary():
     zh_v2 = np.moveaxis(zh, 0, 2)
 
     cape, cin, extras = thermo.cape_cin(
-        p_v2, zh_v2, t_v2, r_v2,
-        p_full[-1], t_full[-1], r_full[-1], zh_full[-1],
-        "surface", vertical_axis=2, extra_outputs=["parcel_path"]
+        p_v2,
+        zh_v2,
+        t_v2,
+        r_v2,
+        p_full[-1],
+        t_full[-1],
+        r_full[-1],
+        zh_full[-1],
+        "surface",
+        vertical_axis=2,
+        extra_outputs=["parcel_path"],
     )
     # parcel_path includes the surface, so along the vertical axis it has nz_pl + 1 = nz levels
     for attr in ("p", "zh", "t", "r", "tv", "tv_env"):
@@ -787,11 +822,15 @@ def test_subground_levels_ignored():
         cape_base, cin_base = thermo.cape_cin(p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, parcel_type)
         cape_ext, cin_ext = thermo.cape_cin(p_ext, zh_ext, t_ext, r_ext, p_sfc, t_sfc, r_sfc, zh_sfc, parcel_type)
         np.testing.assert_allclose(
-            cape_ext, cape_base, atol=1,
+            cape_ext,
+            cape_base,
+            atol=1,
             err_msg=f"{parcel_type}: CAPE differs when sub-ground levels are present",
         )
         np.testing.assert_allclose(
-            cin_ext, cin_base, atol=1,
+            cin_ext,
+            cin_base,
+            atol=1,
             err_msg=f"{parcel_type}: CIN differs when sub-ground levels are present",
         )
 
@@ -845,6 +884,4 @@ def test_surface_parcel_uses_sfc_values():
     cape_default, _ = thermo.cape_cin(p, zh, t, r, p_sfc, t_sfc_default, r_sfc, zh_sfc, "surface")
     cape_warm, _ = thermo.cape_cin(p, zh, t, r, p_sfc, t_sfc_warm, r_sfc, zh_sfc, "surface")
 
-    assert cape_warm[0] > cape_default[0], (
-        "Warmer surface temperature should produce more CAPE for the surface parcel"
-    )
+    assert cape_warm[0] > cape_default[0], "Warmer surface temperature should produce more CAPE for the surface parcel"

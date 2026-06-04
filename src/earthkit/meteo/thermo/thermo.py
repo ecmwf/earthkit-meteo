@@ -2534,11 +2534,14 @@ def cape_cin(
 ) -> tuple["ArrayLike", "ArrayLike"]:
     r"""Compute Convective Available Potential Energy (CAPE) and Convective Inhibition (CIN).
 
+    The surface level must be provided separately from the pressure-level grid.
+    Grid levels below the surface (sub-ground) are automatically masked
+    using geopotential height and do not affect the result.
+    
     Parameters
     ----------
     p : array-like
-        Pressure (Pa) on pressure levels only — the surface must NOT be included
-        here; pass it via ``p_sfc``. The vertical axis must be the first axis
+        Pressure (Pa) on pressure levels. The vertical axis must be the first axis
         (axis=0) unless ``vertical_axis`` is set.
     zh : array-like
         Geopotential height (m) on pressure levels, same shape as ``p``.
@@ -2548,9 +2551,7 @@ def cape_cin(
         Mixing ratio (kg/kg) on pressure levels, same shape as ``p``.
     p_sfc : array-like
         Surface pressure (Pa), shape equal to the horizontal dimensions of ``p``.
-        The surface is included as an additional level in the computation. Any
-        pressure level in ``p`` with ``p > p_sfc`` is treated as sub-ground and
-        excluded.
+        The surface is included as an additional level in the computation.
     t_sfc : array-like
         Surface temperature (K), same horizontal shape as ``p_sfc``.
     r_sfc : array-like

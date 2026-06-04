@@ -91,11 +91,9 @@ class ParcelPath:
 
 
 def _ept_from_mixing_ratio(t, p, r, method="bolton39"):
-    # TODO add option to use the method "bolton43" for ept calculation,
-    # which is the method used in the reference implementation.
-    # Use "bolton39" for now, the difference is small.
     specific_humidity = thermo.specific_humidity_from_mixing_ratio(r)
     return thermo.ept_from_specific_humidity(t, specific_humidity, p, method=method)
+
 
 def _where_is_param_zero(level, p, param):
 
@@ -103,9 +101,9 @@ def _where_is_param_zero(level, p, param):
 
     level = np.clip(level, 1, n_levels - 1)
 
-    p_above     = np.take_along_axis(p,     level[None],       axis=0).squeeze(0)
-    p_below     = np.take_along_axis(p,     (level - 1)[None], axis=0).squeeze(0)
-    param_above = np.take_along_axis(param, level[None],       axis=0).squeeze(0)
+    p_above = np.take_along_axis(p, level[None], axis=0).squeeze(0)
+    p_below = np.take_along_axis(p, (level - 1)[None], axis=0).squeeze(0)
+    param_above = np.take_along_axis(param, level[None], axis=0).squeeze(0)
     param_below = np.take_along_axis(param, (level - 1)[None], axis=0).squeeze(0)
 
     result = p_below + ((-param_below) / (param_above - param_below)) * (p_above - p_below)
@@ -122,7 +120,6 @@ def _vertical_weighted_mean(p, param, p_bottom, p_top):
 
     p_bottom > p_top
     """
-
     p = np.asarray(p)
     param = np.asarray(param)
 
@@ -130,10 +127,10 @@ def _vertical_weighted_mean(p, param, p_bottom, p_top):
     p_top = np.asarray(p_top)
 
     # Layer endpoints for ascending p
-    p0 = p[:-1]     # upper / lower-pressure side of layer
-    p1 = p[1:]      # lower / higher-pressure side of layer
+    p0 = p[:-1]  # upper / lower-pressure side of layer
+    p1 = p[1:]  # lower / higher-pressure side of layer
 
-    dp = p1 - p0       # positive for valid ascending layers
+    dp = p1 - p0  # positive for valid ascending layers
 
     valid = np.isfinite(dp) & (dp > 0.0)
 
@@ -163,6 +160,7 @@ def _vertical_weighted_mean(p, param, p_bottom, p_top):
 
     return weightedmean
 
+
 def _lfc_index(z, b, z_lcl, min_depth=1000.0, threshold=0.0):
     """
     LFC index for DESCENDING z.
@@ -174,7 +172,6 @@ def _lfc_index(z, b, z_lcl, min_depth=1000.0, threshold=0.0):
     min_depth : required contiguous buoyant depth in metres
     threshold : buoyancy threshold
     """
-
     n_levels = b.shape[0]
 
     # Above LCL and positively buoyant
@@ -186,13 +183,9 @@ def _lfc_index(z, b, z_lcl, min_depth=1000.0, threshold=0.0):
     # Start near the top and move downward.
     # For descending z, thickness between level i-1 and i is z[i-1] - z[i].
     for i in range(1, n_levels):
-        dz = z[i - 1] - z[i]   # positive for descending z
+        dz = z[i - 1] - z[i]  # positive for descending z
 
-        contig_depth[i] = np.where(
-            is_buoyant[i],
-            contig_depth[i - 1] + dz,
-            0.0
-        )
+        contig_depth[i] = np.where(is_buoyant[i], contig_depth[i - 1] + dz, 0.0)
 
     has_deep_buoyancy = contig_depth >= min_depth
 
@@ -206,6 +199,7 @@ def _lfc_index(z, b, z_lcl, min_depth=1000.0, threshold=0.0):
     idx_lfc = np.where(exists, idx_lfc, 0)
 
     return idx_lfc
+
 
 def _moist_ascent_lookup_table(ept_method):
     def dt_dp_moist(t_parcel, p):
@@ -263,7 +257,15 @@ _VALID_EXTRA_OUTPUTS = frozenset(["lcl", "lfc", "el", "parcel", "parcel_path"])
 
 
 class _CapeCinComp:
-    def __init__(self, h_bottom=None, h_top=None, layer_depth=None, extra_outputs=None, lcl_method="davies", ept_method="bolton39"):
+    def __init__(
+        self,
+        h_bottom=None,
+        h_top=None,
+        layer_depth=None,
+        extra_outputs=None,
+        lcl_method="davies",
+        ept_method="bolton39",
+    ):
         self.h_bottom = h_bottom
         self.h_top = h_top
         self.layer_depth = layer_depth
@@ -290,12 +292,12 @@ class _CapeCinComp:
 
         has_lcl = cond.any(axis=0)
 
+        # find index of first layer for which p <= p_lcl
         idx_lcl_level = np.where(
             has_lcl,
             p.shape[0] - 1 - np.argmax(cond[::-1], axis=0),
             -1,
         )
-        # idx_lcl_level = np.argmax(np.logical_and(p < p_start, p < p_lcl), axis=0) # finds index of first layer for which p <= p_lcl
         z_lcl = _where_is_param_zero(idx_lcl_level, zh, p - p_lcl)
 
         theta_parcel = thermo.potential_temperature(t_start, p_start)
@@ -315,10 +317,11 @@ class _CapeCinComp:
             lookup_table["pressure"],
         )
         # t_interp = interpolate.RectBivariateSpline(p_range, theta_ep_range, t_moist_adiabat)
-        t_interp = interpolate.RegularGridInterpolator((theta_ep_range, p_range), t_moist_adiabat.T, \
-                    method='linear', bounds_error=False, fill_value=np.nan)
-        t_parcel = t_interp(points)[:,None].reshape((p_shape))
-        
+        t_interp = interpolate.RegularGridInterpolator(
+            (theta_ep_range, p_range), t_moist_adiabat.T, method="linear", bounds_error=False, fill_value=np.nan
+        )
+        t_parcel = t_interp(points)[:, None].reshape((p_shape))
+
         es_t_parcel = thermo.saturation_vapour_pressure(t_parcel[above_lcl], phase="water")
         r_parcel[above_lcl] = constants.epsilon * es_t_parcel / (p_2d[above_lcl] - es_t_parcel)
 
@@ -327,9 +330,9 @@ class _CapeCinComp:
 
         # Dry adiabatic ascent to LCL
         between_start_and_lcl = (p > p_lcl[None, ...]) * (p <= p_start[None, ...])
-        t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(
-            theta_parcel[None, ...], p
-        )[between_start_and_lcl]
+        t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(theta_parcel[None, ...], p)[
+            between_start_and_lcl
+        ]
         r_parcel[between_start_and_lcl] = (r_start[None, ...] * np.ones(p_shape))[between_start_and_lcl]
 
         # Calculate buoyancy
@@ -342,10 +345,12 @@ class _CapeCinComp:
         buoyancy = dtv / tv_env
 
         # Level of Free Convection (LFC)
-        #---------------------------------
-        # LFC is calculated assuming by default min_depths of the layer with positive boyancy, threshold=0.1 K for buoyancy; 
+        # ---------------------------------
+        # LFC is calculated assuming by default min_depths of the layer with positive buoyancy,
+        # threshold=0.1 K for buoyancy;
         # min_depth and threshold could be changes as they are arguments of LFC_index func.
-        # min_depth and threshold parameters are determined to avoid fake LFC selection due to shallow buoyant layers or numerical errors.
+        # min_depth and threshold parameters are determined to avoid fake LFC selection
+        # due to shallow buoyant layers or numerical errors.
 
         idx_lfc_level = _lfc_index(zh, dtv, z_lcl)
         p_lfc = _where_is_param_zero(idx_lfc_level, p, dtv)
@@ -354,9 +359,7 @@ class _CapeCinComp:
         p_lfc[idx_lfc_level == -1] = np.nan
         z_lfc[idx_lfc_level == -1] = np.nan
 
-        # In cases where we tried to find the the LFC level based on where the buoyancy first exceeded 0,
-        # but actually b=0 was already exceeded at the bottom of the layer, but the p_LFC < p_LCL was not met
-        # erroneous values were found. So in cases where the LCL was not reached at the bottom, but was reached at the top
+        # In cases where the LCL was not reached at the bottom, but was reached at the top
         # set the p_LFC to p_LCL instead.
         p_at_lfc_minus1 = np.take_along_axis(p, np.maximum(idx_lfc_level - 1, 0)[None], axis=0).squeeze(0)
         lfc_below_lcl = p_at_lfc_minus1 >= p_lcl
@@ -370,14 +373,31 @@ class _CapeCinComp:
 
         # Equilibrium Level (EL)
         # -------------------------
-        el_level = dtv.shape[0] - np.argmax(dtv[::-1] > 0, axis=0) # finds index of first layer (going from top to bottom through profile) for which b > 0
+        el_level = dtv.shape[0] - np.argmax(
+            dtv[::-1] > 0, axis=0
+        )  # finds index of first layer (going from top to bottom through profile) for which b > 0
         z_el = _where_is_param_zero(el_level, zh, dtv)
         p_el = _where_is_param_zero(el_level, p, dtv)
 
         # Temperature at EL: interpolate t_parcel to where dtv crosses zero
         t_el = _where_is_param_zero(el_level, t_parcel, dtv)
 
-        return buoyancy, p_lcl, z_lcl, t_lcl, p_lfc, z_lfc, t_lfc, p_el, z_el, t_el, t_parcel, r_parcel, tv_parcel, tv_env
+        return (
+            buoyancy,
+            p_lcl,
+            z_lcl,
+            t_lcl,
+            p_lfc,
+            z_lfc,
+            t_lfc,
+            p_el,
+            z_el,
+            t_el,
+            t_parcel,
+            r_parcel,
+            tv_parcel,
+            tv_env,
+        )
 
     def _sort_pressure_levels(self, p, t, r, zh):
         # NaN values (sub-ground levels) should sort to the end (treated as infinity)
@@ -450,20 +470,15 @@ class _CapeCinComp:
             p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc_rel, self.h_bottom, self.h_top, self.layer_depth
         )
 
-
-        buoyancy, p_lcl, z_lcl, t_lcl, p_lfc, z_lfc, t_lfc, p_el, z_el, t_el, t_parcel, r_parcel, tv_parcel, tv_env = self._lift_parcel(
-            p_start, t_start, r_start, zh_start, p, t, r, zh
+        buoyancy, p_lcl, z_lcl, t_lcl, p_lfc, z_lfc, t_lfc, p_el, z_el, t_el, t_parcel, r_parcel, tv_parcel, tv_env = (
+            self._lift_parcel(p_start, t_start, r_start, zh_start, p, t, r, zh)
         )
         cape, cin = self._integrate_buoyancy(buoyancy, p, zh, p_lfc)
 
         cape[unexpected_nan] = np.nan
         cin[unexpected_nan] = np.nan
 
-        # TODO include LI calculation and see if we can use earthkit's vertical interpolation function
-        # instead of the custom Interpolate function from the reference implementation
-        # [LI] = Interpolate(pressure_arr, [dTv], 500)
-        # LI = -LI
-        # LI[np.isnan(LI)] = 0
+        # TODO include LI calculation here and add to extra outputs if requested
 
         if not self.extra_outputs:
             return cape, cin
@@ -507,32 +522,21 @@ class _CapeCinSurface(_CapeCinComp):
 class _CapeCinMixed(_CapeCinComp):
     def _determine_parcel(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, h_bottom, h_top, layer_depth=None):
         """
-        Compute mixed-layer parameters
+        Compute mixed-layer parameters.
+
         :param p: pressure array in Pa
         :param t: temperature array in K
         :param r: mixing ratio array in kg/kg
         :param layer_depth: in Pa
-        :return:
-        bottom pressure, mixed-layer t, mixed_layer r, bottom_height
+        :return: bottom pressure, mixed-layer t, mixed_layer r, bottom_height
         """
-
         if layer_depth is None:
             layer_depth = 5000
 
         p_bottom = p_sfc
         zh_bottom = zh_sfc
-        # p_bound = p_bottom - layer_depth
-        # indx = (np.abs(p - p_bound)).argmin(axis=0)
-        # p_top = np.take_along_axis(p, indx[None, ...], axis=0).squeeze(0)
 
         theta = thermo.potential_temperature(t, p)
-        # theta[(p > p_bottom) | (p < p_top)] = np.nan
-        # theta_mean = np.nanmean(theta, axis=0)
-        # t_mixed = thermo.temperature_from_potential_temperature(theta_mean, p_bottom)
-
-        # r_copy = np.copy(r)
-        # r_copy[(p > p_bottom) | (p < p_top)] = np.nan
-        # r_mixed = np.nanmean(r_copy, axis=0)
 
         theta_mean = _vertical_weighted_mean(p, theta, p_bottom, p_bottom - layer_depth)
         t_mixed = thermo.temperature_from_potential_temperature(theta_mean, p_bottom)
@@ -543,8 +547,6 @@ class _CapeCinMixed(_CapeCinComp):
 
 class _CapeCinMostUnstable(_CapeCinComp):
     def _determine_parcel(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, h_bottom=None, h_top=None, layer_depth=None):
-        t_shape = t.shape
-
         if h_bottom is None:
             h_bottom = 0
         if h_top is None:
@@ -560,9 +562,9 @@ class _CapeCinMostUnstable(_CapeCinComp):
         theta_ep_safe = np.where(np.isnan(theta_ep_copy), -np.inf, theta_ep_copy)
         level_max_theta_ep = np.argmax(theta_ep_safe, axis=0)
 
-        t_start = np.take_along_axis(t,  level_max_theta_ep[None], axis=0).squeeze(0)
-        p_start = np.take_along_axis(p,  level_max_theta_ep[None], axis=0).squeeze(0)
-        r_start = np.take_along_axis(r,  level_max_theta_ep[None], axis=0).squeeze(0)
+        t_start = np.take_along_axis(t, level_max_theta_ep[None], axis=0).squeeze(0)
+        p_start = np.take_along_axis(p, level_max_theta_ep[None], axis=0).squeeze(0)
+        r_start = np.take_along_axis(r, level_max_theta_ep[None], axis=0).squeeze(0)
         z_start = np.take_along_axis(zh, level_max_theta_ep[None], axis=0).squeeze(0)
 
         return p_start, t_start, r_start, z_start
@@ -702,7 +704,12 @@ def cape_cin(
     zh_sfc = np.asarray(zh_sfc, dtype=float)
 
     result = _PARCEL_CLASSES[parcel_type](
-        h_bottom=h_bottom, h_top=h_top, layer_depth=layer_depth, extra_outputs=extra_outputs, lcl_method=lcl_method, ept_method=ept_method
+        h_bottom=h_bottom,
+        h_top=h_top,
+        layer_depth=layer_depth,
+        extra_outputs=extra_outputs,
+        lcl_method=lcl_method,
+        ept_method=ept_method,
     )._cape_cin(p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc)
 
     # Swap the vertical axis of profile arrays back to match caller's layout.
