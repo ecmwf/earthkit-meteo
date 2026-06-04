@@ -24,18 +24,17 @@ def _ept_from_mixing_ratio(t, p, r, method="bolton39"):
 
 def WhereIsParamZero(level, p, param):
 
-    n_points = p.shape[1]
     n_levels = p.shape[0]
 
-    level[level >= n_levels] = n_levels - 1
+    level = np.clip(level, 1, n_levels - 1)
 
-    p_above     = p     [level,     np.arange(n_points)]
-    p_below     = p     [level - 1, np.arange(n_points)]        
-    param_above = param [level,     np.arange(n_points)]
-    param_below = param [level - 1, np.arange(n_points)]   
-       
+    p_above     = np.take_along_axis(p,     level[None],       axis=0).squeeze(0)
+    p_below     = np.take_along_axis(p,     (level - 1)[None], axis=0).squeeze(0)
+    param_above = np.take_along_axis(param, level[None],       axis=0).squeeze(0)
+    param_below = np.take_along_axis(param, (level - 1)[None], axis=0).squeeze(0)
+
     result = p_below + ((-param_below) / (param_above - param_below)) * (p_above - p_below)
-    
+
     return result
 
 
@@ -52,30 +51,22 @@ def VerticalWeightedMean(p, param, p_bottom, p_top):
     p = np.asarray(p)
     param = np.asarray(param)
 
-    nlev, nprof = p.shape
-
     p_bottom = np.asarray(p_bottom)
     p_top = np.asarray(p_top)
 
-    if p_bottom.ndim == 0:
-        p_bottom = np.full(nprof, p_bottom, dtype=p.dtype)
-
-    if p_top.ndim == 0:
-        p_top = np.full(nprof, p_top, dtype=p.dtype)
-
     # Layer endpoints for ascending p
-    p0 = p[:-1, :]     # upper / lower-pressure side of layer
-    p1 = p[1:, :]      # lower / higher-pressure side of layer
+    p0 = p[:-1]     # upper / lower-pressure side of layer
+    p1 = p[1:]      # lower / higher-pressure side of layer
 
     dp = p1 - p0       # positive for valid ascending layers
 
     valid = np.isfinite(dp) & (dp > 0.0)
 
     # Layer-mean parameter
-    layer_param = 0.5 * (param[1:, :] + param[:-1, :])
+    layer_param = 0.5 * (param[1:] + param[:-1])
 
-    pb = p_bottom[None, :]
-    pt = p_top[None, :]
+    pb = np.expand_dims(p_bottom, 0)
+    pt = np.expand_dims(p_top, 0)
 
     b = np.zeros_like(dp, dtype=float)
     c = np.zeros_like(dp, dtype=float)
@@ -109,10 +100,10 @@ def LFC_index(z, b, z_lcl, min_depth=1000.0, threshold=0.0):
     threshold : buoyancy threshold
     """
 
-    n_levels, n_profiles = b.shape
+    n_levels = b.shape[0]
 
     # Above LCL and positively buoyant
-    is_buoyant = (z >= z_lcl[None, :]) & (b > threshold)
+    is_buoyant = (z >= z_lcl[None]) & (b > threshold)
 
     # contig_depth[i] = depth of contiguous buoyant layer above level i
     contig_depth = np.zeros_like(b, dtype=float)
@@ -120,11 +111,11 @@ def LFC_index(z, b, z_lcl, min_depth=1000.0, threshold=0.0):
     # Start near the top and move downward.
     # For descending z, thickness between level i-1 and i is z[i-1] - z[i].
     for i in range(1, n_levels):
-        dz = z[i - 1, :] - z[i, :]   # positive for descending z
+        dz = z[i - 1] - z[i]   # positive for descending z
 
-        contig_depth[i, :] = np.where(
-            is_buoyant[i, :],
-            contig_depth[i - 1, :] + dz,
+        contig_depth[i] = np.where(
+            is_buoyant[i],
+            contig_depth[i - 1] + dz,
             0.0
         )
 
@@ -134,7 +125,7 @@ def LFC_index(z, b, z_lcl, min_depth=1000.0, threshold=0.0):
 
     # For descending z, surface is at high index.
     # LFC = lowest/base index of sufficiently deep buoyant layer
-    idx_lfc = n_levels - 1 - np.argmax(has_deep_buoyancy[::-1, :], axis=0)
+    idx_lfc = n_levels - 1 - np.argmax(has_deep_buoyancy[::-1], axis=0)
 
     # Use 0 if no LFC exists, preserving your original convention
     idx_lfc = np.where(exists, idx_lfc, 0)
@@ -222,10 +213,10 @@ class _CapeCinComp:
 
         has_lcl = cond.any(axis=0)
 
-        idx_lcl_level = np.full(p.shape[1], -1, dtype=int)
-        idx_lcl_level[has_lcl] = (
-            p.shape[0] - 1
-            - np.argmax(cond[::-1, has_lcl], axis=0)
+        idx_lcl_level = np.where(
+            has_lcl,
+            p.shape[0] - 1 - np.argmax(cond[::-1], axis=0),
+            -1,
         )
         # idx_lcl_level = np.argmax(np.logical_and(p < p_start, p < p_lcl), axis=0) # finds index of first layer for which p <= p_lcl
         z_lcl = WhereIsParamZero(idx_lcl_level, zh, p - p_lcl)
@@ -290,12 +281,14 @@ class _CapeCinComp:
         # but actually b=0 was already exceeded at the bottom of the layer, but the p_LFC < p_LCL was not met
         # erroneous values were found. So in cases where the LCL was not reached at the bottom, but was reached at the top
         # set the p_LFC to p_LCL instead.
-        z_lfc[p[idx_lfc_level - 1, np.arange(p_shape[1])] >= p_lcl] = z_lcl[p[idx_lfc_level - 1, np.arange(p_shape[1])] >= p_lcl]
-        p_lfc[p[idx_lfc_level - 1, np.arange(p_shape[1])] >= p_lcl] = p_lcl[p[idx_lfc_level - 1, np.arange(p_shape[1])] >= p_lcl]
+        p_at_lfc_minus1 = np.take_along_axis(p, np.maximum(idx_lfc_level - 1, 0)[None], axis=0).squeeze(0)
+        lfc_below_lcl = p_at_lfc_minus1 >= p_lcl
+        z_lfc[lfc_below_lcl] = z_lcl[lfc_below_lcl]
+        p_lfc[lfc_below_lcl] = p_lcl[lfc_below_lcl]
 
         # Equilibrium Level (EL)
         # -------------------------
-        el_level = dtv.shape[0] - np.argmax(dtv[::-1, :] > 0, axis=0) # finds index of first layer (going from top to bottom through profile) for which b > 0
+        el_level = dtv.shape[0] - np.argmax(dtv[::-1] > 0, axis=0) # finds index of first layer (going from top to bottom through profile) for which b > 0
         z_el = WhereIsParamZero(el_level, zh, dtv)
         p_el = WhereIsParamZero(el_level, p, dtv)
 
@@ -317,7 +310,7 @@ class _CapeCinComp:
         dcin = np.copy(dcape)
 
         dcape[dcape < 0] = 0
-        above_lfc = p[1:, :] <= p_lfc[None, :]
+        above_lfc = p[1:] <= p_lfc[None]
         dcape[~above_lfc] = 0
         cape = np.nansum(dcape, axis=0)
         cape[np.isnan(p_lfc)] = 0
@@ -406,8 +399,8 @@ class _CapeCinMixed(_CapeCinComp):
         if layer_depth is None:
             layer_depth = 5000
 
-        p_bottom = p[-1, :]
-        zh_bottom = zh[-1,:]
+        p_bottom = p[-1]
+        zh_bottom = zh[-1]
         # p_bound = p_bottom - layer_depth
         # indx = (np.abs(p - p_bound)).argmin(axis=0)
         # p_top = np.take_along_axis(p, indx[None, ...], axis=0).squeeze(0)
@@ -444,12 +437,13 @@ class _CapeCinMostUnstable(_CapeCinComp):
         theta_ep_copy = np.copy(theta_ep_env)
         theta_ep_copy[condition] = np.nan
 
-        level_max_theta_ep  = np.nanargmax(theta_ep_copy, axis = 0)
+        theta_ep_safe = np.where(np.isnan(theta_ep_copy), -np.inf, theta_ep_copy)
+        level_max_theta_ep = np.argmax(theta_ep_safe, axis=0)
 
-        t_start = t[level_max_theta_ep, np.arange(t.shape[1])] # use indexing to find t, p, and z at most unstable level
-        p_start = p[level_max_theta_ep, np.arange(p.shape[1])]
-        r_start = r[level_max_theta_ep, np.arange(r.shape[1])]
-        z_start = zh[level_max_theta_ep, np.arange(zh.shape[1])]
+        t_start = np.take_along_axis(t,  level_max_theta_ep[None], axis=0).squeeze(0)
+        p_start = np.take_along_axis(p,  level_max_theta_ep[None], axis=0).squeeze(0)
+        r_start = np.take_along_axis(r,  level_max_theta_ep[None], axis=0).squeeze(0)
+        z_start = np.take_along_axis(zh, level_max_theta_ep[None], axis=0).squeeze(0)
 
         return p_start, t_start, r_start, z_start
 
@@ -544,7 +538,7 @@ def cape_cin(
         zh = np.swapaxes(zh, 0, vertical_axis)
         t = np.swapaxes(t, 0, vertical_axis)
         r = np.swapaxes(r, 0, vertical_axis)
-    
+
     if h_bottom is None:
         h_bottom = 0
     if h_top is None:
