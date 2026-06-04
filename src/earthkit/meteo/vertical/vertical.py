@@ -890,16 +890,16 @@ def height_on_hybrid_levels(
         geopotential_on_hybrid_levels
         relative_geopotential_thickness_on_hybrid_levels
 
-    s
-        Implementations
-        ---------------
-        :func:`height_on_hybrid_levels` calls one of the following implementations depending on
-        the type of the input arguments:
 
-        - :py:meth:`earthkit.meteo.vertical.array.height_on_hybrid_levels` for array-like
-        - :py:meth:`earthkit.meteo.vertical.fieldlist.height_on_hybrid_levels` for FieldList
+    Implementations
+    ---------------
+    :func:`height_on_hybrid_levels` calls one of the following implementations depending on
+    the type of the input arguments:
 
-        The function returns an object of the same type as the input arguments.
+    - :py:meth:`earthkit.meteo.vertical.array.height_on_hybrid_levels` for array-like
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.height_on_hybrid_levels` for FieldList
+
+    The function returns an object of the same type as the input arguments.
     """
     return dispatch(height_on_hybrid_levels, xarray=False, fieldlist=True, array=True)(
         t,

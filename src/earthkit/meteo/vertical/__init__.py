@@ -10,14 +10,11 @@
 """
 Vertical computation functions.
 
-The API is organised in layers:
+The API is split into two layers:
 
-- Core numerical routines live in the ``array`` submodule.
-- FieldList support is provided by the ``fieldlist`` submodule.
-- Functions exposed from this module provide the high-level entry points for the
-  vertical API.
-
-For xarray interpolation workflows, see :mod:`earthkit.meteo.vertical.interpolation`.
+- Low-level interfaces are in the ``array``, ``xarray`` and ``fieldlist`` submodules.
+- High-level functions are in this module and dispatch to backend implementations
+  based on input type.
 """
 
 import earthkit.meteo.vertical.array as array  # noqa
