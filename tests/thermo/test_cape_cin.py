@@ -21,6 +21,11 @@ import numpy as np
 import pytest
 
 from earthkit.meteo import thermo
+from earthkit.meteo.thermo.array.cape_cin import (
+    _lfc_index,
+    _vertical_weighted_mean,
+    _where_is_param_zero,
+)
 
 # ---------------------------------------------------------------------------
 # Data helpers
@@ -328,3 +333,131 @@ def test_cape_cin_very_dry():
             cape, 0.0, atol=1, err_msg=f"{parcel_type}: expected CAPE=0 for dry profile"
         )
         np.testing.assert_allclose(cin, 0.0, atol=1, err_msg=f"{parcel_type}: expected CIN=0 for dry profile")
+
+
+# ---------------------------------------------------------------------------
+# Unit tests for internal helper functions
+# ---------------------------------------------------------------------------
+
+
+class TestWhereIsParamZero:
+    """_where_is_param_zero: linear interpolation to find the pressure at which param==0."""
+
+    def test_exact_zero_at_level(self):
+        # param crosses zero between index 1 (below) and index 2 (above)
+        # p increases with index (ascending pressure)
+        p = np.array([[90000.0], [95000.0], [100000.0]])
+        param = np.array([[1.0], [0.0], [-1.0]])
+        level = np.array([2])  # zero crossing is between level 1 and 2
+        result = _where_is_param_zero(level, p, param)
+        np.testing.assert_allclose(result, [95000.0], atol=1e-6)
+
+    def test_midpoint_crossing(self):
+        # param goes from +2 at level 0 to -2 at level 1 → zero at midpoint pressure
+        p = np.array([[80000.0], [90000.0]])
+        param = np.array([[2.0], [-2.0]])
+        level = np.array([1])
+        result = _where_is_param_zero(level, p, param)
+        np.testing.assert_allclose(result, [85000.0], atol=1e-6)
+
+    def test_multiple_profiles(self):
+        # Two independent profiles
+        p = np.array([[80000.0, 80000.0], [90000.0, 90000.0]])
+        param = np.array([[2.0, 4.0], [-2.0, -1.0]])
+        level = np.array([1, 1])
+        result = _where_is_param_zero(level, p, param)
+        np.testing.assert_allclose(result, [85000.0, 88000.0], atol=1e-6)
+
+    def test_arbitrary_nd_shape(self):
+        # 2×2 horizontal grid, 3 vertical levels
+        p = np.broadcast_to(np.array([80000.0, 90000.0, 100000.0])[:, None, None], (3, 2, 2)).copy()
+        param = np.broadcast_to(np.array([2.0, 0.0, -2.0])[:, None, None], (3, 2, 2)).copy()
+        level = np.full((2, 2), 2)
+        result = _where_is_param_zero(level, p, param)
+        assert result.shape == (2, 2)
+        np.testing.assert_allclose(result, np.full((2, 2), 90000.0), atol=1e-6)
+
+
+class TestVerticalWeightedMean:
+    """_vertical_weighted_mean: pressure-weighted mean over a layer."""
+
+    def test_uniform_profile(self):
+        # Constant param → mean equals that constant regardless of layer
+        p = np.array([80000.0, 90000.0, 100000.0])[:, None]
+        param = np.full_like(p, 5.0)
+        result = _vertical_weighted_mean(p, param, np.array([100000.0]), np.array([80000.0]))
+        np.testing.assert_allclose(result, [5.0], rtol=1e-6)
+
+    def test_linear_profile(self):
+        # Linearly varying param, uniform dp layers → mean = midpoint value
+        p = np.array([80000.0, 90000.0, 100000.0])[:, None]
+        param = np.array([1.0, 2.0, 3.0])[:, None]
+        result = _vertical_weighted_mean(p, param, np.array([100000.0]), np.array([80000.0]))
+        np.testing.assert_allclose(result, [2.0], rtol=1e-6)
+
+    def test_partial_layer(self):
+        # Only the bottom layer (90000–100000 Pa) is inside the integration window
+        p = np.array([80000.0, 90000.0, 100000.0])[:, None]
+        param = np.array([0.0, 10.0, 20.0])[:, None]
+        result = _vertical_weighted_mean(p, param, np.array([100000.0]), np.array([90000.0]))
+        np.testing.assert_allclose(result, [15.0], rtol=1e-6)
+
+    def test_multiple_profiles(self):
+        # Two columns with identical pressures but different params
+        p = np.array([[80000.0, 80000.0], [90000.0, 90000.0], [100000.0, 100000.0]])
+        param = np.array([[1.0, 2.0], [2.0, 4.0], [3.0, 6.0]])
+        result = _vertical_weighted_mean(p, param, np.array([100000.0, 100000.0]), np.array([80000.0, 80000.0]))
+        np.testing.assert_allclose(result, [2.0, 4.0], rtol=1e-6)
+
+
+class TestLfcIndex:
+    """_lfc_index: find the index of the Level of Free Convection."""
+
+    def _make_inputs(self, buoyancy_at_levels, min_depth=0.0):
+        """Build z/b/z_lcl arrays from a list of (height, buoyancy) tuples (descending z)."""
+        z = np.array([h for h, _ in buoyancy_at_levels], dtype=float)[:, None]
+        b = np.array([bv for _, bv in buoyancy_at_levels], dtype=float)[:, None]
+        z_lcl = np.array([0.0])  # LCL at ground — no restriction
+        return z, b, z_lcl, min_depth
+
+    def test_no_buoyancy_returns_zero(self):
+        # All negative buoyancy → no LFC → index 0
+        z, b, z_lcl, _ = self._make_inputs([(5000, -1), (3000, -1), (1000, -1)])
+        result = _lfc_index(z, b, z_lcl)
+        assert result[0] == 0
+
+    def test_single_buoyant_layer(self):
+        # Buoyant only at index 0 (top level), no min_depth required
+        z = np.array([5000.0, 3000.0, 1000.0])[:, None]
+        b = np.array([1.0, -1.0, -1.0])[:, None]
+        z_lcl = np.array([0.0])
+        result = _lfc_index(z, b, z_lcl, min_depth=0.0)
+        # Buoyancy exists → result should be non-zero
+        assert result[0] != 0
+
+    def test_deep_buoyant_layer(self):
+        # Levels at 5000, 4000, 3000, 2000, 1000 m; buoyant at top four (depth = 3000 m)
+        z = np.array([5000.0, 4000.0, 3000.0, 2000.0, 1000.0])[:, None]
+        b = np.array([1.0, 1.0, 1.0, 1.0, -1.0])[:, None]
+        z_lcl = np.array([0.0])
+        # min_depth=2500: layer depth 3000 m qualifies → LFC should exist
+        result = _lfc_index(z, b, z_lcl, min_depth=2500.0)
+        assert result[0] != 0
+
+    def test_shallow_buoyancy_below_min_depth(self):
+        # Buoyant layer depth = 1000 m, min_depth = 1500 m → no LFC
+        z = np.array([5000.0, 4000.0, 3000.0, 2000.0])[:, None]
+        b = np.array([1.0, -1.0, -1.0, -1.0])[:, None]
+        z_lcl = np.array([0.0])
+        result = _lfc_index(z, b, z_lcl, min_depth=1500.0)
+        assert result[0] == 0
+
+    def test_lcl_mask(self):
+        # All levels buoyant, but LCL is above them all → no LFC
+        z = np.array([3000.0, 2000.0, 1000.0])[:, None]
+        b = np.array([1.0, 1.0, 1.0])[:, None]
+        z_lcl = np.array([4000.0])  # LCL above all levels
+        # min_depth=1 so contig_depth=0 (nothing above LCL) fails the threshold
+        result = _lfc_index(z, b, z_lcl, min_depth=1.0)
+        assert result[0] == 0
+

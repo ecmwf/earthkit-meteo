@@ -22,7 +22,7 @@ def _ept_from_mixing_ratio(t, p, r, method="bolton39"):
     specific_humidity = thermo.specific_humidity_from_mixing_ratio(r)
     return thermo.ept_from_specific_humidity(t, specific_humidity, p, method=method)
 
-def WhereIsParamZero(level, p, param):
+def _where_is_param_zero(level, p, param):
 
     n_levels = p.shape[0]
 
@@ -38,7 +38,7 @@ def WhereIsParamZero(level, p, param):
     return result
 
 
-def VerticalWeightedMean(p, param, p_bottom, p_top):
+def _vertical_weighted_mean(p, param, p_bottom, p_top):
     """
     Pressure-weighted mean for ASCENDING pressure.
 
@@ -88,7 +88,7 @@ def VerticalWeightedMean(p, param, p_bottom, p_top):
 
     return weightedmean
 
-def LFC_index(z, b, z_lcl, min_depth=1000.0, threshold=0.0):
+def _lfc_index(z, b, z_lcl, min_depth=1000.0, threshold=0.0):
     """
     LFC index for DESCENDING z.
 
@@ -219,7 +219,7 @@ class _CapeCinComp:
             -1,
         )
         # idx_lcl_level = np.argmax(np.logical_and(p < p_start, p < p_lcl), axis=0) # finds index of first layer for which p <= p_lcl
-        z_lcl = WhereIsParamZero(idx_lcl_level, zh, p - p_lcl)
+        z_lcl = _where_is_param_zero(idx_lcl_level, zh, p - p_lcl)
 
         theta_parcel = thermo.potential_temperature(t_start, p_start)
         theta_ep_parcel = _ept_from_mixing_ratio(t_start, p_start, r_start, method=self.ept_method)
@@ -270,9 +270,9 @@ class _CapeCinComp:
         # min_depth and threshold could be changes as they are arguments of LFC_index func.
         # min_depth and threshold parameters are determined to avoid fake LFC selection due to shallow buoyant layers or numerical errors.
 
-        idx_lfc_level = LFC_index(zh, dtv, z_lcl)
-        p_lfc = WhereIsParamZero(idx_lfc_level, p, dtv)
-        z_lfc = WhereIsParamZero(idx_lfc_level, zh, dtv)
+        idx_lfc_level = _lfc_index(zh, dtv, z_lcl)
+        p_lfc = _where_is_param_zero(idx_lfc_level, p, dtv)
+        z_lfc = _where_is_param_zero(idx_lfc_level, zh, dtv)
 
         p_lfc[idx_lfc_level == -1] = np.nan
         z_lfc[idx_lfc_level == -1] = np.nan
@@ -289,8 +289,8 @@ class _CapeCinComp:
         # Equilibrium Level (EL)
         # -------------------------
         el_level = dtv.shape[0] - np.argmax(dtv[::-1] > 0, axis=0) # finds index of first layer (going from top to bottom through profile) for which b > 0
-        z_el = WhereIsParamZero(el_level, zh, dtv)
-        p_el = WhereIsParamZero(el_level, p, dtv)
+        z_el = _where_is_param_zero(el_level, zh, dtv)
+        p_el = _where_is_param_zero(el_level, p, dtv)
 
         return buoyancy, p_lcl, z_lcl, p_lfc, z_lfc, p_el, z_el, tv_parcel, tv_env
 
@@ -414,9 +414,9 @@ class _CapeCinMixed(_CapeCinComp):
         # r_copy[(p > p_bottom) | (p < p_top)] = np.nan
         # r_mixed = np.nanmean(r_copy, axis=0)
 
-        theta_mean = VerticalWeightedMean(p, theta, p_bottom, p_bottom - layer_depth)
+        theta_mean = _vertical_weighted_mean(p, theta, p_bottom, p_bottom - layer_depth)
         t_mixed = thermo.temperature_from_potential_temperature(theta_mean, p_bottom)
-        r_mixed = VerticalWeightedMean(p, r, p_bottom, p_bottom - layer_depth)
+        r_mixed = _vertical_weighted_mean(p, r, p_bottom, p_bottom - layer_depth)
 
         return p_bottom, t_mixed, r_mixed, zh_bottom
 
