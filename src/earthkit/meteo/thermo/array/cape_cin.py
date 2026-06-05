@@ -31,7 +31,7 @@ class PressureLevel:
     """Pressure (Pa)."""
     t: np.ndarray
     """Temperature (K)."""
-    zh: np.ndarray
+    z: np.ndarray
     """Geopotential height above ground (m)."""
 
 
@@ -48,6 +48,8 @@ class ParcelOrigin:
     """Temperature (K)."""
     r: np.ndarray
     """Mixing ratio (kg/kg)."""
+    z: np.ndarray
+    """Geopotential height above ground (m)."""
 
 
 @dc.dataclass(frozen=True)
@@ -66,8 +68,8 @@ class ParcelPath:
     # Profile arrays — shape (n_levels, ...)
     p: np.ndarray
     """Pressure grid, sorted ascending (Pa)."""
-    zh: np.ndarray
-    """Geopotential height above ground, sorted ascending in pressure (m)."""
+    z: np.ndarray
+    """Geopotential height above ground (m)."""
     t: np.ndarray
     """Parcel temperature (K)."""
     r: np.ndarray
@@ -282,7 +284,7 @@ class _CapeCinComp:
     def _moist_ascent_lookup_table(self):
         return _moist_ascent_lookup_table(ept_method=self.ept_method)
 
-    def _lift_parcel(self, p_start, t_start, r_start, zh_start, p, t, r, zh):
+    def _lift_parcel(self, p_start, t_start, r_start, p, t, r, zh_agl):
         p_shape = p.shape
         t_parcel = np.zeros(p_shape) * np.nan
         r_parcel = np.zeros(p_shape) * np.nan
@@ -298,7 +300,7 @@ class _CapeCinComp:
             p.shape[0] - 1 - np.argmax(cond[::-1], axis=0),
             -1,
         )
-        z_lcl = _where_is_param_zero(idx_lcl_level, zh, p - p_lcl)
+        z_lcl = _where_is_param_zero(idx_lcl_level, zh_agl, p - p_lcl)
 
         theta_parcel = thermo.potential_temperature(t_start, p_start)
         theta_ep_parcel = _ept_from_mixing_ratio(t_start, p_start, r_start, method=self.ept_method)
@@ -352,9 +354,9 @@ class _CapeCinComp:
         # min_depth and threshold parameters are determined to avoid fake LFC selection
         # due to shallow buoyant layers or numerical errors.
 
-        idx_lfc_level = _lfc_index(zh, dtv, z_lcl)
+        idx_lfc_level = _lfc_index(zh_agl, dtv, z_lcl)
         p_lfc = _where_is_param_zero(idx_lfc_level, p, dtv)
-        z_lfc = _where_is_param_zero(idx_lfc_level, zh, dtv)
+        z_lfc = _where_is_param_zero(idx_lfc_level, zh_agl, dtv)
 
         p_lfc[idx_lfc_level == -1] = np.nan
         z_lfc[idx_lfc_level == -1] = np.nan
@@ -376,7 +378,7 @@ class _CapeCinComp:
         el_level = dtv.shape[0] - np.argmax(
             dtv[::-1] > 0, axis=0
         )  # finds index of first layer (going from top to bottom through profile) for which b > 0
-        z_el = _where_is_param_zero(el_level, zh, dtv)
+        z_el = _where_is_param_zero(el_level, zh_agl, dtv)
         p_el = _where_is_param_zero(el_level, p, dtv)
 
         # Temperature at EL: interpolate t_parcel to where dtv crosses zero
@@ -411,8 +413,8 @@ class _CapeCinComp:
             zh = np.take_along_axis(zh, sorted_inds, axis=0)
         return p, t, r, zh
 
-    def _integrate_buoyancy(self, buoyancy, p, zh, p_lfc):
-        layer_thickness = -np.diff(zh, axis=0)
+    def _integrate_buoyancy(self, buoyancy, p, zh_agl, p_lfc):
+        layer_thickness = -np.diff(zh_agl, axis=0)
         dcape = constants.g * ((buoyancy[:-1] + buoyancy[1:]) / 2) * layer_thickness
         dcin = np.copy(dcape)
 
@@ -430,7 +432,7 @@ class _CapeCinComp:
         cin[~pos_cape] = 0
         return cape, cin
 
-    def _determine_parcel(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, h_bottom, h_top, layer_depth):
+    def _determine_parcel(self, p, zh_agl, t, r, p_sfc, t_sfc, r_sfc, h_bottom, h_top, layer_depth):
         raise NotImplementedError("This method should be implemented in the subclass")
 
     def _cape_cin(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc):
@@ -462,18 +464,17 @@ class _CapeCinComp:
         # Sort ascending by pressure; NaN (sub-ground) levels sort to the end
         p, t, r, zh = self._sort_pressure_levels(p, t, r, zh)
 
-        # Heights relative to the surface
-        zh = zh - zh_sfc[None]
-        zh_sfc_rel = np.zeros_like(p_sfc)
+        # Heights relative to the surface, i.e. above ground level (AGL)
+        zh_agl = zh - zh_sfc[None]
 
-        p_start, t_start, r_start, zh_start = self._determine_parcel(
-            p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc_rel, self.h_bottom, self.h_top, self.layer_depth
+        p_start, t_start, r_start, z_start = self._determine_parcel(
+            p, zh_agl, t, r, p_sfc, t_sfc, r_sfc, self.h_bottom, self.h_top, self.layer_depth
         )
 
         buoyancy, p_lcl, z_lcl, t_lcl, p_lfc, z_lfc, t_lfc, p_el, z_el, t_el, t_parcel, r_parcel, tv_parcel, tv_env = (
-            self._lift_parcel(p_start, t_start, r_start, zh_start, p, t, r, zh)
+            self._lift_parcel(p_start, t_start, r_start, p, t, r, zh_agl)
         )
-        cape, cin = self._integrate_buoyancy(buoyancy, p, zh, p_lfc)
+        cape, cin = self._integrate_buoyancy(buoyancy, p, zh_agl, p_lfc)
 
         cape[unexpected_nan] = np.nan
         cin[unexpected_nan] = np.nan
@@ -483,10 +484,10 @@ class _CapeCinComp:
         if not self.extra_outputs:
             return cape, cin
 
-        lcl = PressureLevel(p=p_lcl, t=t_lcl, zh=z_lcl)
-        lfc = PressureLevel(p=p_lfc, t=t_lfc, zh=z_lfc)
-        el = PressureLevel(p=p_el, t=t_el, zh=z_el)
-        origin = ParcelOrigin(p=p_start, t=t_start, r=r_start)
+        lcl = PressureLevel(p=p_lcl, t=t_lcl, z=z_lcl)
+        lfc = PressureLevel(p=p_lfc, t=t_lfc, z=z_lfc)
+        el = PressureLevel(p=p_el, t=t_el, z=z_el)
+        origin = ParcelOrigin(p=p_start, t=t_start, r=r_start, z=z_start)
 
         extras = {}
         for key in self.extra_outputs:
@@ -501,7 +502,7 @@ class _CapeCinComp:
             elif key == "parcel_path":
                 extras["parcel_path"] = ParcelPath(
                     p=p,
-                    zh=zh,
+                    z=zh_agl,
                     t=t_parcel,
                     r=r_parcel,
                     tv=tv_parcel,
@@ -515,12 +516,13 @@ class _CapeCinComp:
 
 
 class _CapeCinSurface(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, h_bottom, h_top, layer_depth):
-        return p_sfc, t_sfc, r_sfc, zh_sfc
+    def _determine_parcel(self, p, zh_agl, t, r, p_sfc, t_sfc, r_sfc, h_bottom, h_top, layer_depth):
+        z_sfc = np.zeros_like(p_sfc)
+        return p_sfc, t_sfc, r_sfc, z_sfc
 
 
 class _CapeCinMixed(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, h_bottom, h_top, layer_depth=None):
+    def _determine_parcel(self, p, zh_agl, t, r, p_sfc, t_sfc, r_sfc, h_bottom, h_top, layer_depth=None):
         """
         Compute mixed-layer parameters.
 
@@ -534,19 +536,18 @@ class _CapeCinMixed(_CapeCinComp):
             layer_depth = 5000
 
         p_bottom = p_sfc
-        zh_bottom = zh_sfc
-
+        z_sfc = np.zeros_like(p_sfc)
         theta = thermo.potential_temperature(t, p)
 
         theta_mean = _vertical_weighted_mean(p, theta, p_bottom, p_bottom - layer_depth)
         t_mixed = thermo.temperature_from_potential_temperature(theta_mean, p_bottom)
         r_mixed = _vertical_weighted_mean(p, r, p_bottom, p_bottom - layer_depth)
 
-        return p_bottom, t_mixed, r_mixed, zh_bottom
+        return p_bottom, t_mixed, r_mixed, z_sfc
 
 
 class _CapeCinMostUnstable(_CapeCinComp):
-    def _determine_parcel(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, h_bottom=None, h_top=None, layer_depth=None):
+    def _determine_parcel(self, p, zh_agl, t, r, p_sfc, t_sfc, r_sfc, h_bottom=None, h_top=None, layer_depth=None):
         if h_bottom is None:
             h_bottom = 0
         if h_top is None:
@@ -555,7 +556,7 @@ class _CapeCinMostUnstable(_CapeCinComp):
         theta_ep_env = _ept_from_mixing_ratio(t, p, r, method=self.ept_method)
 
         # finding the most unstable parcel between h_bottom to h_top in [m]
-        condition = (zh < h_bottom) | (zh > h_top)
+        condition = (zh_agl < h_bottom) | (zh_agl > h_top)
         theta_ep_copy = np.copy(theta_ep_env)
         theta_ep_copy[condition] = np.nan
 
@@ -565,7 +566,7 @@ class _CapeCinMostUnstable(_CapeCinComp):
         t_start = np.take_along_axis(t, level_max_theta_ep[None], axis=0).squeeze(0)
         p_start = np.take_along_axis(p, level_max_theta_ep[None], axis=0).squeeze(0)
         r_start = np.take_along_axis(r, level_max_theta_ep[None], axis=0).squeeze(0)
-        z_start = np.take_along_axis(zh, level_max_theta_ep[None], axis=0).squeeze(0)
+        z_start = np.take_along_axis(zh_agl, level_max_theta_ep[None], axis=0).squeeze(0)
 
         return p_start, t_start, r_start, z_start
 
@@ -719,7 +720,7 @@ def cape_cin(
             path = extras["parcel_path"]
             extras["parcel_path"] = ParcelPath(
                 p=np.swapaxes(path.p, 0, vertical_axis),
-                zh=np.swapaxes(path.zh, 0, vertical_axis),
+                z=np.swapaxes(path.z, 0, vertical_axis),
                 t=np.swapaxes(path.t, 0, vertical_axis),
                 r=np.swapaxes(path.r, 0, vertical_axis),
                 tv=np.swapaxes(path.tv, 0, vertical_axis),

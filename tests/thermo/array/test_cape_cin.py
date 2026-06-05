@@ -578,7 +578,7 @@ def test_extra_outputs_parcel_path_shape():
     assert isinstance(path, ParcelPath)
 
     # Profile arrays
-    for attr in ("p", "zh", "t", "r", "tv", "tv_env"):
+    for attr in ("p", "z", "t", "r", "tv", "tv_env"):
         arr = getattr(path, attr)
         assert arr.shape == (nz_path,) + horizontal_shape, (
             f"parcel_path.{attr}: expected shape {(nz_path,) + horizontal_shape}, got {arr.shape}"
@@ -593,8 +593,8 @@ def test_extra_outputs_parcel_path_shape():
         assert level.t.shape == horizontal_shape, (
             f"parcel_path.{level_attr}.t: expected shape {horizontal_shape}, got {level.t.shape}"
         )
-        assert level.zh.shape == horizontal_shape, (
-            f"parcel_path.{level_attr}.zh: expected shape {horizontal_shape}, got {level.zh.shape}"
+        assert level.z.shape == horizontal_shape, (
+            f"parcel_path.{level_attr}.z: expected shape {horizontal_shape}, got {level.z.shape}"
         )
 
     # Parcel origin
@@ -624,11 +624,11 @@ def test_extra_outputs_parcel_path_nd_shape():
     nz_path = nz
 
     assert isinstance(path, ParcelPath)
-    for attr in ("p", "zh", "t", "r", "tv", "tv_env"):
+    for attr in ("p", "z", "t", "r", "tv", "tv_env"):
         assert getattr(path, attr).shape == (nz_path, ny, nx), f"profile array {attr} wrong shape"
     for level_attr in ("lcl", "lfc", "el"):
         assert getattr(path, level_attr).p.shape == (ny, nx), f"key level {level_attr}.p wrong shape"
-        assert getattr(path, level_attr).zh.shape == (ny, nx), f"key level {level_attr}.zh wrong shape"
+        assert getattr(path, level_attr).z.shape == (ny, nx), f"key level {level_attr}.z wrong shape"
 
 
 def test_extra_outputs_standalone_key_levels():
@@ -648,7 +648,7 @@ def test_extra_outputs_standalone_key_levels():
         assert isinstance(extras[key], PressureLevel), f"extras['{key}'] should be a PressureLevel"
         assert extras[key].p.shape == (1,)
         assert extras[key].t.shape == (1,)
-        assert extras[key].zh.shape == (1,)
+        assert extras[key].z.shape == (1,)
 
     assert isinstance(extras["parcel"], ParcelOrigin)
     assert extras["parcel"].p.shape == (1,)
@@ -669,11 +669,11 @@ def test_extra_outputs_key_levels_consistent_with_parcel_path():
 
     np.testing.assert_array_equal(extras["lcl"].p, path.lcl.p)
     np.testing.assert_array_equal(extras["lcl"].t, path.lcl.t)
-    np.testing.assert_array_equal(extras["lcl"].zh, path.lcl.zh)
+    np.testing.assert_array_equal(extras["lcl"].z, path.lcl.z)
     np.testing.assert_array_equal(extras["lfc"].p, path.lfc.p)
-    np.testing.assert_array_equal(extras["lfc"].zh, path.lfc.zh)
+    np.testing.assert_array_equal(extras["lfc"].z, path.lfc.z)
     np.testing.assert_array_equal(extras["el"].p, path.el.p)
-    np.testing.assert_array_equal(extras["el"].zh, path.el.zh)
+    np.testing.assert_array_equal(extras["el"].z, path.el.z)
     np.testing.assert_array_equal(extras["parcel"].p, path.origin.p)
     np.testing.assert_array_equal(extras["parcel"].r, path.origin.r)
 
@@ -740,7 +740,7 @@ def test_extra_outputs_vertical_axis_minus_1():
     )
     # profile arrays must mirror the caller's shape: (1, nz_pl + 1)
     nz_path = p_pl.shape[0] + 1
-    for attr in ("p", "zh", "t", "r", "tv", "tv_env"):
+    for attr in ("p", "z", "t", "r", "tv", "tv_env"):
         arr = getattr(extras["parcel_path"], attr)
         assert arr.shape == (1, nz_path), f"parcel_path.{attr}: expected (1, {nz_path}), got {arr.shape}"
 
@@ -780,7 +780,7 @@ def test_extra_outputs_vertical_axis_arbitrary():
         extra_outputs=["parcel_path"],
     )
     # parcel_path includes the surface, so along the vertical axis it has nz_pl + 1 = nz levels
-    for attr in ("p", "zh", "t", "r", "tv", "tv_env"):
+    for attr in ("p", "z", "t", "r", "tv", "tv_env"):
         arr = getattr(extras["parcel_path"], attr)
         assert arr.shape == (ny, nx, nz), f"parcel_path.{attr}: expected {(ny, nx, nz)}, got {arr.shape}"
     # horizontal outputs are unaffected
