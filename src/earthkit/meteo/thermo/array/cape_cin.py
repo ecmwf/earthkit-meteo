@@ -46,8 +46,8 @@ class ParcelOrigin:
     """Pressure (Pa)."""
     t: np.ndarray
     """Temperature (K)."""
-    r: np.ndarray
-    """Mixing ratio (kg/kg)."""
+    q: np.ndarray
+    """Specific humidity (kg/kg)."""
     z: np.ndarray
     """Geopotential height above ground (m)."""
 
@@ -56,7 +56,7 @@ class ParcelOrigin:
 class ParcelPath:
     """Temperature profile of the lifted parcel and its environment.
 
-    Profile arrays (``p``, ``t``, ``r``, ``tv``, ``tv_env``) have shape
+    Profile arrays (``p``, ``t``, ``q``, ``tv``, ``tv_env``) have shape
     ``(n_levels, ...)``, where the levels are sorted in ascending pressure
     order regardless of the order supplied by the caller.
 
@@ -72,8 +72,8 @@ class ParcelPath:
     """Geopotential height above ground (m)."""
     t: np.ndarray
     """Parcel temperature (K)."""
-    r: np.ndarray
-    """Parcel mixing ratio (kg/kg)."""
+    q: np.ndarray
+    """Parcel specific humidity (kg/kg)."""
     tv: np.ndarray
     """Parcel virtual temperature (K)."""
     tv_env: np.ndarray
@@ -284,21 +284,20 @@ class _CapeCinComp:
         self.lcl_method = lcl_method
         self.ept_method = ept_method
 
-    def _lifted_condensation_level_from_mixing_ratio(self, t_departure, p_departure, r_departure):
-        specific_humidity = thermo.specific_humidity_from_mixing_ratio(r_departure)
-        dewpoint = thermo.dewpoint_from_specific_humidity(specific_humidity, p_departure)
+    def _lifted_condensation_level_from_specific_humidity(self, t_departure, p_departure, q_departure):
+        dewpoint = thermo.dewpoint_from_specific_humidity(q_departure, p_departure)
         t_LCL, p_LCL = thermo.lcl(t_departure, dewpoint, p_departure, method=self.lcl_method)
         return p_LCL, t_LCL
 
     def _moist_ascent_lookup_table(self):
         return _moist_ascent_lookup_table(ept_method=self.ept_method)
 
-    def _lift_parcel(self, p_start, t_start, r_start, p, t, r, zh_agl):
+    def _lift_parcel(self, p_start, t_start, q_start, p, t, q, zh_agl):
         p_shape = p.shape
         t_parcel = np.zeros(p_shape) * np.nan
-        r_parcel = np.zeros(p_shape) * np.nan
+        q_parcel = np.zeros(p_shape) * np.nan
 
-        p_lcl, t_lcl = self._lifted_condensation_level_from_mixing_ratio(t_start, p_start, r_start)
+        p_lcl, t_lcl = self._lifted_condensation_level_from_specific_humidity(t_start, p_start, q_start)
         cond = (p <= p_start[None, :]) & (p <= p_lcl[None, :])
 
         has_lcl = cond.any(axis=0)
@@ -312,7 +311,7 @@ class _CapeCinComp:
         z_lcl = _where_is_param_zero(idx_lcl_level, zh_agl, p - p_lcl)
 
         theta_parcel = thermo.potential_temperature(t_start, p_start)
-        theta_ep_parcel = _ept_from_mixing_ratio(t_start, p_start, r_start, method=self.ept_method)
+        theta_ep_parcel = thermo.ept_from_specific_humidity(t_start, q_start, p_start, method=self.ept_method)
 
         # Moist adiabatic ascent
         above_lcl = p_lcl[None, ...] > p
@@ -333,25 +332,22 @@ class _CapeCinComp:
         )
         t_parcel = t_interp(points)[:, None].reshape((p_shape))
 
-        es_t_parcel = thermo.saturation_vapour_pressure(t_parcel[above_lcl], phase="water")
-        r_parcel[above_lcl] = constants.epsilon * es_t_parcel / (p_2d[above_lcl] - es_t_parcel)
+        # Above the LCL the parcel is saturated.
+        q_parcel[above_lcl] = thermo.saturation_specific_humidity(t_parcel[above_lcl], p_2d[above_lcl], phase="water")
 
         # Mask out t_parcel below parcel source
         t_parcel[p > p_start] = np.nan
 
-        # Dry adiabatic ascent to LCL
+        # Dry adiabatic ascent to LCL: specific humidity is conserved.
         between_start_and_lcl = (p > p_lcl[None, ...]) * (p <= p_start[None, ...])
         t_parcel[between_start_and_lcl] = thermo.temperature_from_potential_temperature(theta_parcel[None, ...], p)[
             between_start_and_lcl
         ]
-        r_parcel[between_start_and_lcl] = (r_start[None, ...] * np.ones(p_shape))[between_start_and_lcl]
+        q_parcel[between_start_and_lcl] = (q_start[None, ...] * np.ones(p_shape))[between_start_and_lcl]
 
         # Calculate buoyancy
-        specific_humidity_arr = thermo.specific_humidity_from_mixing_ratio(r)
-        tv_env = thermo.virtual_temperature(t, specific_humidity_arr)
-
-        specific_humidity_parcel = thermo.specific_humidity_from_mixing_ratio(r_parcel)
-        tv_parcel = thermo.virtual_temperature(t_parcel, specific_humidity_parcel)
+        tv_env = thermo.virtual_temperature(t, q)
+        tv_parcel = thermo.virtual_temperature(t_parcel, q_parcel)
         dtv = tv_parcel - tv_env
         buoyancy = dtv / tv_env
 
@@ -405,12 +401,12 @@ class _CapeCinComp:
             z_el,
             t_el,
             t_parcel,
-            r_parcel,
+            q_parcel,
             tv_parcel,
             tv_env,
         )
 
-    def _sort_pressure_levels(self, p, t, r, zh):
+    def _sort_pressure_levels(self, p, t, q, zh):
         # NaN values (sub-ground levels) should sort to the end (treated as infinity)
         p_sort_key = np.where(np.isnan(p), np.inf, p)
         is_sorted = (np.diff(p_sort_key, axis=0) >= 0).all()
@@ -418,9 +414,9 @@ class _CapeCinComp:
             sorted_inds = np.argsort(p_sort_key, axis=0, kind="stable")
             p = np.take_along_axis(p, sorted_inds, axis=0)
             t = np.take_along_axis(t, sorted_inds, axis=0)
-            r = np.take_along_axis(r, sorted_inds, axis=0)
+            q = np.take_along_axis(q, sorted_inds, axis=0)
             zh = np.take_along_axis(zh, sorted_inds, axis=0)
-        return p, t, r, zh
+        return p, t, q, zh
 
     def _integrate_buoyancy(self, buoyancy, p, zh_agl, p_lfc):
         layer_thickness = -np.diff(zh_agl, axis=0)
@@ -441,17 +437,17 @@ class _CapeCinComp:
         cin[~pos_cape] = 0
         return cape, cin
 
-    def _determine_parcel(self, p, zh_agl, t, r, p_sfc, t_sfc, r_sfc):
+    def _determine_parcel(self, p, zh_agl, t, q, p_sfc, t_sfc, q_sfc):
         raise NotImplementedError("This method should be implemented in the subclass")
 
-    def _cape_cin(self, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc):
+    def _cape_cin(self, p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc):
         # Profile arrays have shape (n_pressure_levels, ...) with the vertical axis
         # as axis=0. Surface arrays have the horizontal-only shape (...). Internally
         # the surface is concatenated as an additional level.
         p = np.concatenate([p_sfc[None], p], axis=0)
         zh = np.concatenate([zh_sfc[None], zh], axis=0)
         t = np.concatenate([t_sfc[None], t], axis=0)
-        r = np.concatenate([r_sfc[None], r], axis=0)
+        q = np.concatenate([q_sfc[None], q], axis=0)
 
         # Identify subground levels using height
         subground = zh < zh_sfc[None, ...]
@@ -459,27 +455,27 @@ class _CapeCinComp:
         # Detect bad-data NaN: NaN at above-ground grid positions or NaN in the surface inputs.
         #    NaN at subground positions (which may already be present in the input) is expected
         #    and should NOT be treated as bad data.
-        nan_in_grid = np.isnan(p) | np.isnan(t) | np.isnan(r) | np.isnan(zh)
+        nan_in_grid = np.isnan(p) | np.isnan(t) | np.isnan(q) | np.isnan(zh)
         bad_data_in_grid = nan_in_grid & ~subground
-        bad_data_in_sfc = np.isnan(p_sfc) | np.isnan(t_sfc) | np.isnan(r_sfc) | np.isnan(zh_sfc)
+        bad_data_in_sfc = np.isnan(p_sfc) | np.isnan(t_sfc) | np.isnan(q_sfc) | np.isnan(zh_sfc)
         unexpected_nan = np.any(bad_data_in_grid, axis=0) | bad_data_in_sfc
 
         # Mask sub-ground levels to NaN so they are excluded from all computations
         p = np.where(subground, np.nan, p)
         t = np.where(subground, np.nan, t)
-        r = np.where(subground, np.nan, r)
+        q = np.where(subground, np.nan, q)
         zh = np.where(subground, np.nan, zh)
 
         # Sort ascending by pressure; NaN (sub-ground) levels sort to the end
-        p, t, r, zh = self._sort_pressure_levels(p, t, r, zh)
+        p, t, q, zh = self._sort_pressure_levels(p, t, q, zh)
 
         # Heights relative to the surface, i.e. above ground level (AGL)
         zh_agl = zh - zh_sfc[None]
 
-        p_start, t_start, r_start, z_start = self._determine_parcel(p, zh_agl, t, r, p_sfc, t_sfc, r_sfc)
+        p_start, t_start, q_start, z_start = self._determine_parcel(p, zh_agl, t, q, p_sfc, t_sfc, q_sfc)
 
-        buoyancy, p_lcl, z_lcl, t_lcl, p_lfc, z_lfc, t_lfc, p_el, z_el, t_el, t_parcel, r_parcel, tv_parcel, tv_env = (
-            self._lift_parcel(p_start, t_start, r_start, p, t, r, zh_agl)
+        buoyancy, p_lcl, z_lcl, t_lcl, p_lfc, z_lfc, t_lfc, p_el, z_el, t_el, t_parcel, q_parcel, tv_parcel, tv_env = (
+            self._lift_parcel(p_start, t_start, q_start, p, t, q, zh_agl)
         )
         cape, cin = self._integrate_buoyancy(buoyancy, p, zh_agl, p_lfc)
 
@@ -491,12 +487,12 @@ class _CapeCinComp:
         lcl = PressureLevel(p=p_lcl, t=t_lcl, z=z_lcl)
         lfc = PressureLevel(p=p_lfc, t=t_lfc, z=z_lfc)
         el = PressureLevel(p=p_el, t=t_el, z=z_el)
-        origin = ParcelOrigin(p=p_start, t=t_start, r=r_start, z=z_start)
+        origin = ParcelOrigin(p=p_start, t=t_start, q=q_start, z=z_start)
         parcel_path = ParcelPath(
             p=p,
             z=zh_agl,
             t=t_parcel,
-            r=r_parcel,
+            q=q_parcel,
             tv=tv_parcel,
             tv_env=tv_env,
             lcl=lcl,
@@ -517,9 +513,9 @@ class _CapeCinComp:
 
 
 class _CapeCinSurface(_CapeCinComp):
-    def _determine_parcel(self, p, zh_agl, t, r, p_sfc, t_sfc, r_sfc):
+    def _determine_parcel(self, p, zh_agl, t, q, p_sfc, t_sfc, q_sfc):
         z_sfc = np.zeros_like(p_sfc)
-        return p_sfc, t_sfc, r_sfc, z_sfc
+        return p_sfc, t_sfc, q_sfc, z_sfc
 
 
 class _CapeCinMixed(_CapeCinComp):
@@ -527,7 +523,7 @@ class _CapeCinMixed(_CapeCinComp):
         super().__init__(lcl_method=lcl_method, ept_method=ept_method)
         self.layer_depth = layer_depth
 
-    def _determine_parcel(self, p, zh_agl, t, r, p_sfc, t_sfc, r_sfc):
+    def _determine_parcel(self, p, zh_agl, t, q, p_sfc, t_sfc, q_sfc):
         """Compute the mixed-layer parcel by pressure-weighted averaging over
         the bottom ``layer_depth`` Pa of the column.
         """
@@ -537,9 +533,9 @@ class _CapeCinMixed(_CapeCinComp):
 
         theta_mean = _vertical_weighted_mean(p, theta, p_bottom, p_bottom - self.layer_depth)
         t_mixed = thermo.temperature_from_potential_temperature(theta_mean, p_bottom)
-        r_mixed = _vertical_weighted_mean(p, r, p_bottom, p_bottom - self.layer_depth)
+        q_mixed = _vertical_weighted_mean(p, q, p_bottom, p_bottom - self.layer_depth)
 
-        return p_bottom, t_mixed, r_mixed, z_sfc
+        return p_bottom, t_mixed, q_mixed, z_sfc
 
 
 class _CapeCinMostUnstable(_CapeCinComp):
@@ -554,8 +550,8 @@ class _CapeCinMostUnstable(_CapeCinComp):
         self.exclude_surface_layer = exclude_surface_layer
         self.max_search_height = max_search_height
 
-    def _determine_parcel(self, p, zh_agl, t, r, p_sfc, t_sfc, r_sfc):
-        theta_ep_env = _ept_from_mixing_ratio(t, p, r, method=self.ept_method)
+    def _determine_parcel(self, p, zh_agl, t, q, p_sfc, t_sfc, q_sfc):
+        theta_ep_env = thermo.ept_from_specific_humidity(t, q, p, method=self.ept_method)
 
         # Mask out levels outside the search range
         condition = zh_agl > self.max_search_height
@@ -571,10 +567,10 @@ class _CapeCinMostUnstable(_CapeCinComp):
 
         t_start = np.take_along_axis(t, level_max_theta_ep[None], axis=0).squeeze(0)
         p_start = np.take_along_axis(p, level_max_theta_ep[None], axis=0).squeeze(0)
-        r_start = np.take_along_axis(r, level_max_theta_ep[None], axis=0).squeeze(0)
+        q_start = np.take_along_axis(q, level_max_theta_ep[None], axis=0).squeeze(0)
         z_start = np.take_along_axis(zh_agl, level_max_theta_ep[None], axis=0).squeeze(0)
 
-        return p_start, t_start, r_start, z_start
+        return p_start, t_start, q_start, z_start
 
 
 def _validate_extra_outputs(extra_outputs):
@@ -619,7 +615,7 @@ def _assemble_extras(result, extra_outputs, vertical_axis):
                     p=np.swapaxes(path.p, 0, vertical_axis),
                     z=np.swapaxes(path.z, 0, vertical_axis),
                     t=np.swapaxes(path.t, 0, vertical_axis),
-                    r=np.swapaxes(path.r, 0, vertical_axis),
+                    q=np.swapaxes(path.q, 0, vertical_axis),
                     tv=np.swapaxes(path.tv, 0, vertical_axis),
                     tv_env=np.swapaxes(path.tv_env, 0, vertical_axis),
                     lcl=path.lcl,
@@ -631,7 +627,7 @@ def _assemble_extras(result, extra_outputs, vertical_axis):
     return extras
 
 
-def _run_cape_cin(comp, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, *, extra_outputs, vertical_axis):
+def _run_cape_cin(comp, p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc, *, extra_outputs, vertical_axis):
     """Run a ``_CapeCinComp`` over the input arrays.
 
     Handles validation of ``extra_outputs``, ``vertical_axis`` reshaping of
@@ -645,14 +641,14 @@ def _run_cape_cin(comp, p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc, *, extra_outpu
         p = np.swapaxes(p, 0, vertical_axis)
         zh = np.swapaxes(zh, 0, vertical_axis)
         t = np.swapaxes(t, 0, vertical_axis)
-        r = np.swapaxes(r, 0, vertical_axis)
+        q = np.swapaxes(q, 0, vertical_axis)
 
     p_sfc = np.asarray(p_sfc, dtype=float)
     t_sfc = np.asarray(t_sfc, dtype=float)
-    r_sfc = np.asarray(r_sfc, dtype=float)
+    q_sfc = np.asarray(q_sfc, dtype=float)
     zh_sfc = np.asarray(zh_sfc, dtype=float)
 
-    result = comp._cape_cin(p, zh, t, r, p_sfc, t_sfc, r_sfc, zh_sfc)
+    result = comp._cape_cin(p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc)
 
     if not extra_outputs:
         return result.cape, result.cin
@@ -672,15 +668,15 @@ _CAPE_CIN_COMMON_DOCSTRING = """
         Geopotential height (m) on pressure levels, same shape as ``p``.
     t : array-like
         Temperature (K) on pressure levels, same shape as ``p``.
-    r : array-like
-        Mixing ratio (kg/kg) on pressure levels, same shape as ``p``.
+    q : array-like
+        Specific humidity (kg/kg) on pressure levels, same shape as ``p``.
     p_sfc : array-like
         Surface pressure (Pa), shape equal to the horizontal dimensions of ``p``.
         The surface is included as an additional level in the computation.
     t_sfc : array-like
         Surface temperature (K), same horizontal shape as ``p_sfc``.
-    r_sfc : array-like
-        Surface mixing ratio (kg/kg), same horizontal shape as ``p_sfc``.
+    q_sfc : array-like
+        Surface specific humidity (kg/kg), same horizontal shape as ``p_sfc``.
     zh_sfc : array-like
         Surface geopotential height (m), same horizontal shape as ``p_sfc``.
         Used as the height reference: all profile heights are expressed relative
@@ -692,7 +688,7 @@ _CAPE_CIN_COMMON_DOCSTRING = """
     vertical_axis : int, optional
         Axis of the input arrays that corresponds to the vertical dimension.
         Defaults to ``0``. ``-1`` may also be used to indicate the last axis.
-        Surface arrays (``p_sfc``, ``t_sfc``, ``r_sfc``, ``zh_sfc``) have no
+        Surface arrays (``p_sfc``, ``t_sfc``, ``q_sfc``, ``zh_sfc``) have no
         vertical axis and are not affected by this parameter.
     ept_method : str, optional
         Method used to compute equivalent potential temperature. Passed to
@@ -717,10 +713,10 @@ def surface_cape_cin(
     p,
     zh,
     t,
-    r,
+    q,
     p_sfc,
     t_sfc,
-    r_sfc,
+    q_sfc,
     zh_sfc,
     *,
     extra_outputs=None,
@@ -730,7 +726,7 @@ def surface_cape_cin(
 ):
     r"""Compute CAPE and CIN for a parcel lifted from the surface.
 
-    The parcel properties are taken directly from ``p_sfc``/``t_sfc``/``r_sfc``.
+    The parcel properties are taken directly from ``p_sfc``/``t_sfc``/``q_sfc``.
     """
     comp = _CapeCinSurface(lcl_method=lcl_method, ept_method=ept_method)
     return _run_cape_cin(
@@ -738,10 +734,10 @@ def surface_cape_cin(
         p,
         zh,
         t,
-        r,
+        q,
         p_sfc,
         t_sfc,
-        r_sfc,
+        q_sfc,
         zh_sfc,
         extra_outputs=extra_outputs,
         vertical_axis=vertical_axis,
@@ -755,10 +751,10 @@ def mixed_layer_cape_cin(
     p,
     zh,
     t,
-    r,
+    q,
     p_sfc,
     t_sfc,
-    r_sfc,
+    q_sfc,
     zh_sfc,
     *,
     layer_depth=5000.0,
@@ -769,7 +765,7 @@ def mixed_layer_cape_cin(
 ):
     r"""Compute CAPE and CIN for a parcel averaged over a mixed surface layer.
 
-    The parcel temperature and mixing ratio are pressure-weighted averages over
+    The parcel temperature and specific humidity are pressure-weighted averages over
     the bottom ``layer_depth`` (Pa) of the column. The parcel is launched from
     the surface pressure.
 
@@ -785,10 +781,10 @@ def mixed_layer_cape_cin(
         p,
         zh,
         t,
-        r,
+        q,
         p_sfc,
         t_sfc,
-        r_sfc,
+        q_sfc,
         zh_sfc,
         extra_outputs=extra_outputs,
         vertical_axis=vertical_axis,
@@ -802,10 +798,10 @@ def most_unstable_cape_cin(
     p,
     zh,
     t,
-    r,
+    q,
     p_sfc,
     t_sfc,
-    r_sfc,
+    q_sfc,
     zh_sfc,
     *,
     exclude_surface_layer=False,
@@ -841,10 +837,10 @@ def most_unstable_cape_cin(
         p,
         zh,
         t,
-        r,
+        q,
         p_sfc,
         t_sfc,
-        r_sfc,
+        q_sfc,
         zh_sfc,
         extra_outputs=extra_outputs,
         vertical_axis=vertical_axis,

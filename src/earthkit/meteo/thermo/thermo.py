@@ -2518,10 +2518,10 @@ def surface_cape_cin(
     p: "ArrayLike",
     zh: "ArrayLike",
     t: "ArrayLike",
-    r: "ArrayLike",
+    q: "ArrayLike",
     p_sfc: "ArrayLike",
     t_sfc: "ArrayLike",
-    r_sfc: "ArrayLike",
+    q_sfc: "ArrayLike",
     zh_sfc: "ArrayLike",
     *,
     extra_outputs: list | None = None,
@@ -2531,7 +2531,7 @@ def surface_cape_cin(
 ) -> tuple["ArrayLike", "ArrayLike"]:
     r"""Compute CAPE and CIN for a parcel lifted from the surface.
 
-    The parcel properties are taken directly from ``p_sfc``/``t_sfc``/``r_sfc``.
+    The parcel properties are taken directly from ``p_sfc``/``t_sfc``/``q_sfc``.
 
     See :func:`earthkit.meteo.thermo.array.surface_cape_cin` for the full
     parameter and return-value documentation.
@@ -2547,10 +2547,10 @@ def surface_cape_cin(
         p,
         zh,
         t,
-        r,
+        q,
         p_sfc,
         t_sfc,
-        r_sfc,
+        q_sfc,
         zh_sfc,
         extra_outputs=extra_outputs,
         vertical_axis=vertical_axis,
@@ -2563,10 +2563,10 @@ def mixed_layer_cape_cin(
     p: "ArrayLike",
     zh: "ArrayLike",
     t: "ArrayLike",
-    r: "ArrayLike",
+    q: "ArrayLike",
     p_sfc: "ArrayLike",
     t_sfc: "ArrayLike",
-    r_sfc: "ArrayLike",
+    q_sfc: "ArrayLike",
     zh_sfc: "ArrayLike",
     *,
     layer_depth: float = 5000.0,
@@ -2577,7 +2577,7 @@ def mixed_layer_cape_cin(
 ) -> tuple["ArrayLike", "ArrayLike"]:
     r"""Compute CAPE and CIN for a parcel averaged over a mixed surface layer.
 
-    The parcel temperature and mixing ratio are pressure-weighted averages over
+    The parcel temperature and specific humidity are pressure-weighted averages over
     the bottom ``layer_depth`` (Pa) of the column.
 
     See :func:`earthkit.meteo.thermo.array.mixed_layer_cape_cin` for the full
@@ -2594,10 +2594,10 @@ def mixed_layer_cape_cin(
         p,
         zh,
         t,
-        r,
+        q,
         p_sfc,
         t_sfc,
-        r_sfc,
+        q_sfc,
         zh_sfc,
         layer_depth=layer_depth,
         extra_outputs=extra_outputs,
@@ -2611,10 +2611,10 @@ def most_unstable_cape_cin(
     p: "ArrayLike",
     zh: "ArrayLike",
     t: "ArrayLike",
-    r: "ArrayLike",
+    q: "ArrayLike",
     p_sfc: "ArrayLike",
     t_sfc: "ArrayLike",
-    r_sfc: "ArrayLike",
+    q_sfc: "ArrayLike",
     zh_sfc: "ArrayLike",
     *,
     exclude_surface_layer: bool = False,
@@ -2645,10 +2645,10 @@ def most_unstable_cape_cin(
         p,
         zh,
         t,
-        r,
+        q,
         p_sfc,
         t_sfc,
-        r_sfc,
+        q_sfc,
         zh_sfc,
         exclude_surface_layer=exclude_surface_layer,
         max_search_height=max_search_height,
