@@ -22,7 +22,6 @@ def _skip_api_items(app, what, name, obj, skip, options):
         "earthkit.meteo.version",
         "earthkit.meteo.utils",
         "earthkit.meteo.vertical.array.monotonic",
-        "earthkit.meteo.wind.fieldlist",
     ]:
         skip = True
     elif what == "module" and ".array." in name:

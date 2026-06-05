@@ -25,12 +25,6 @@ def _da(x):
     return xr.DataArray(np.asarray(x))
 
 
-def _scalar_da(x):
-    import xarray as xr
-
-    return xr.DataArray(np.asarray(x))
-
-
 def _np(x):
     return np.asarray(x)
 
@@ -69,8 +63,8 @@ def _read_data_file(path):
     ],
 )
 def test_xr_vapour_pressure_from_specific_humidity(q, p):
-    q_da = _scalar_da(q) if np.isscalar(q) else _da(q)
-    p_da = _scalar_da(p) if np.isscalar(p) else _da(p)
+    q_da = _da(q)
+    p_da = _da(p)
     out = thermo.vapour_pressure_from_specific_humidity(q_da, p_da)
     ref = thermo.array.vapour_pressure_from_specific_humidity(_np(q), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -86,8 +80,8 @@ def test_xr_vapour_pressure_from_specific_humidity(q, p):
     ],
 )
 def test_xr_vapour_pressure_from_mixing_ratio(w, p):
-    w_da = _scalar_da(w) if np.isscalar(w) else _da(w)
-    p_da = _scalar_da(p) if np.isscalar(p) else _da(p)
+    w_da = _da(w)
+    p_da = _da(p)
     out = thermo.vapour_pressure_from_mixing_ratio(w_da, p_da)
     ref = thermo.array.vapour_pressure_from_mixing_ratio(_np(w), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -104,8 +98,8 @@ def test_xr_vapour_pressure_from_mixing_ratio(w, p):
     ],
 )
 def test_xr_specific_humidity_from_vapour_pressure(e, p):
-    e_da = _scalar_da(e) if np.isscalar(e) else _da(e)
-    p_da = _scalar_da(p) if np.isscalar(p) else _da(p)
+    e_da = _da(e)
+    p_da = _da(p)
     out = thermo.specific_humidity_from_vapour_pressure(e_da, p_da)
     ref = thermo.array.specific_humidity_from_vapour_pressure(_np(e), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -122,8 +116,8 @@ def test_xr_specific_humidity_from_vapour_pressure(e, p):
     ],
 )
 def test_xr_mixing_ratio_from_vapour_pressure(e, p):
-    e_da = _scalar_da(e) if np.isscalar(e) else _da(e)
-    p_da = _scalar_da(p) if np.isscalar(p) else _da(p)
+    e_da = _da(e)
+    p_da = _da(p)
     out = thermo.mixing_ratio_from_vapour_pressure(e_da, p_da)
     ref = thermo.array.mixing_ratio_from_vapour_pressure(_np(e), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -140,7 +134,7 @@ def test_xr_mixing_ratio_from_vapour_pressure(e, p):
     ],
 )
 def test_xr_saturation_vapour_pressure(t, phase):
-    t_da = _scalar_da(t)
+    t_da = _da(t)
     out = thermo.saturation_vapour_pressure(t_da, phase=phase)
     ref = thermo.array.saturation_vapour_pressure(_np(t), phase=phase)
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -154,8 +148,8 @@ def test_xr_saturation_vapour_pressure(t, phase):
     ],
 )
 def test_xr_saturation_mixing_ratio(t, p, phase):
-    t_da = _scalar_da(t)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    p_da = _da(p)
     out = thermo.saturation_mixing_ratio(t_da, p_da, phase=phase)
     ref = thermo.array.saturation_mixing_ratio(_np(t), _np(p), phase=phase)
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -169,8 +163,8 @@ def test_xr_saturation_mixing_ratio(t, p, phase):
     ],
 )
 def test_xr_saturation_specific_humidity(t, p, phase):
-    t_da = _scalar_da(t)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    p_da = _da(p)
     out = thermo.saturation_specific_humidity(t_da, p_da, phase=phase)
     ref = thermo.array.saturation_specific_humidity(_np(t), _np(p), phase=phase)
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -184,7 +178,7 @@ def test_xr_saturation_specific_humidity(t, p, phase):
     ],
 )
 def test_xr_saturation_vapour_pressure_slope(t, phase):
-    t_da = _scalar_da(t)
+    t_da = _da(t)
     out = thermo.saturation_vapour_pressure_slope(t_da, phase=phase)
     ref = thermo.array.saturation_vapour_pressure_slope(_np(t), phase=phase)
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -198,7 +192,7 @@ def test_xr_saturation_vapour_pressure_slope(t, phase):
     ],
 )
 def test_xr_temperature_from_saturation_vapour_pressure(es):
-    es_da = _scalar_da(es)
+    es_da = _da(es)
     out = thermo.temperature_from_saturation_vapour_pressure(es_da)
     ref = thermo.array.temperature_from_saturation_vapour_pressure(_np(es))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -212,8 +206,8 @@ def test_xr_temperature_from_saturation_vapour_pressure(es):
     ],
 )
 def test_xr_relative_humidity_from_dewpoint(t, td):
-    t_da = _scalar_da(t)
-    td_da = _scalar_da(td)
+    t_da = _da(t)
+    td_da = _da(td)
     out = thermo.relative_humidity_from_dewpoint(t_da, td_da)
     ref = thermo.array.relative_humidity_from_dewpoint(_np(t), _np(td))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -227,9 +221,9 @@ def test_xr_relative_humidity_from_dewpoint(t, td):
     ],
 )
 def test_xr_relative_humidity_from_specific_humidity(t, q, p):
-    t_da = _scalar_da(t)
-    q_da = _scalar_da(q)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    q_da = _da(q)
+    p_da = _da(p)
     out = thermo.relative_humidity_from_specific_humidity(t_da, q_da, p_da)
     ref = thermo.array.relative_humidity_from_specific_humidity(_np(t), _np(q), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -243,8 +237,8 @@ def test_xr_relative_humidity_from_specific_humidity(t, q, p):
     ],
 )
 def test_xr_specific_humidity_from_dewpoint(td, p):
-    td_da = _scalar_da(td)
-    p_da = _scalar_da(p)
+    td_da = _da(td)
+    p_da = _da(p)
     out = thermo.specific_humidity_from_dewpoint(td_da, p_da)
     ref = thermo.array.specific_humidity_from_dewpoint(_np(td), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -258,8 +252,8 @@ def test_xr_specific_humidity_from_dewpoint(td, p):
     ],
 )
 def test_xr_mixing_ratio_from_dewpoint(td, p):
-    td_da = _scalar_da(td)
-    p_da = _scalar_da(p)
+    td_da = _da(td)
+    p_da = _da(p)
     out = thermo.mixing_ratio_from_dewpoint(td_da, p_da)
     ref = thermo.array.mixing_ratio_from_dewpoint(_np(td), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -273,9 +267,9 @@ def test_xr_mixing_ratio_from_dewpoint(td, p):
     ],
 )
 def test_xr_specific_humidity_from_relative_humidity(t, r, p):
-    t_da = _scalar_da(t)
-    r_da = _scalar_da(r)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    r_da = _da(r)
+    p_da = _da(p)
     out = thermo.specific_humidity_from_relative_humidity(t_da, r_da, p_da)
     ref = thermo.array.specific_humidity_from_relative_humidity(_np(t), _np(r), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -289,8 +283,8 @@ def test_xr_specific_humidity_from_relative_humidity(t, r, p):
     ],
 )
 def test_xr_dewpoint_from_relative_humidity(t, r):
-    t_da = _scalar_da(t)
-    r_da = _scalar_da(r)
+    t_da = _da(t)
+    r_da = _da(r)
     out = thermo.dewpoint_from_relative_humidity(t_da, r_da)
     ref = thermo.array.dewpoint_from_relative_humidity(_np(t), _np(r))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -304,8 +298,8 @@ def test_xr_dewpoint_from_relative_humidity(t, r):
     ],
 )
 def test_xr_dewpoint_from_specific_humidity(q, p):
-    q_da = _scalar_da(q)
-    p_da = _scalar_da(p)
+    q_da = _da(q)
+    p_da = _da(p)
     out = thermo.dewpoint_from_specific_humidity(q_da, p_da)
     ref = thermo.array.dewpoint_from_specific_humidity(_np(q), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -319,8 +313,8 @@ def test_xr_dewpoint_from_specific_humidity(q, p):
     ],
 )
 def test_xr_virtual_temperature(t, q):
-    t_da = _scalar_da(t)
-    q_da = _scalar_da(q)
+    t_da = _da(t)
+    q_da = _da(q)
     out = thermo.virtual_temperature(t_da, q_da)
     ref = thermo.array.virtual_temperature(_np(t), _np(q))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -334,9 +328,9 @@ def test_xr_virtual_temperature(t, q):
     ],
 )
 def test_xr_virtual_potential_temperature(t, q, p):
-    t_da = _scalar_da(t)
-    q_da = _scalar_da(q)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    q_da = _da(q)
+    p_da = _da(p)
     out = thermo.virtual_potential_temperature(t_da, q_da, p_da)
     ref = thermo.array.virtual_potential_temperature(_np(t), _np(q), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -350,8 +344,8 @@ def test_xr_virtual_potential_temperature(t, q, p):
     ],
 )
 def test_xr_potential_temperature(t, p):
-    t_da = _scalar_da(t)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    p_da = _da(p)
     out = thermo.potential_temperature(t_da, p_da)
     ref = thermo.array.potential_temperature(_np(t), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -365,8 +359,8 @@ def test_xr_potential_temperature(t, p):
     ],
 )
 def test_xr_temperature_from_potential_temperature(theta, p):
-    theta_da = _scalar_da(theta)
-    p_da = _scalar_da(p)
+    theta_da = _da(theta)
+    p_da = _da(p)
     out = thermo.temperature_from_potential_temperature(theta_da, p_da)
     ref = thermo.array.temperature_from_potential_temperature(_np(theta), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -380,7 +374,7 @@ def test_xr_temperature_from_potential_temperature(theta, p):
     ],
 )
 def test_xr_pressure_on_dry_adiabat(t, t_def, p_def):
-    t_da = _scalar_da(t)
+    t_da = _da(t)
     out = thermo.pressure_on_dry_adiabat(t_da, t_def=t_def, p_def=p_def)
     ref = thermo.array.pressure_on_dry_adiabat(_np(t), t_def=t_def, p_def=p_def)
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -394,7 +388,7 @@ def test_xr_pressure_on_dry_adiabat(t, t_def, p_def):
     ],
 )
 def test_xr_temperature_on_dry_adiabat(p, t_def, p_def):
-    p_da = _scalar_da(p)
+    p_da = _da(p)
     out = thermo.temperature_on_dry_adiabat(p_da, t_def=t_def, p_def=p_def)
     ref = thermo.array.temperature_on_dry_adiabat(_np(p), t_def=t_def, p_def=p_def)
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -409,8 +403,8 @@ def test_xr_temperature_on_dry_adiabat(p, t_def, p_def):
     ],
 )
 def test_xr_lcl_temperature(t, td, method):
-    t_da = _scalar_da(t)
-    td_da = _scalar_da(td)
+    t_da = _da(t)
+    td_da = _da(td)
     out = thermo.lcl_temperature(t_da, td_da, method=method)
     ref = thermo.array.lcl_temperature(_np(t), _np(td), method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -424,9 +418,9 @@ def test_xr_lcl_temperature(t, td, method):
     ],
 )
 def test_xr_lcl(t, td, p, method):
-    t_da = _scalar_da(t)
-    td_da = _scalar_da(td)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    td_da = _da(td)
+    p_da = _da(p)
     t_lcl, p_lcl = thermo.lcl(t_da, td_da, p_da, method=method)
     t_ref, p_ref = thermo.array.lcl(_np(t), _np(td), _np(p), method=method)
     assert np.allclose(t_lcl.values, t_ref, equal_nan=True)
@@ -443,9 +437,9 @@ def test_xr_lcl(t, td, p, method):
     ],
 )
 def test_xr_ept_from_dewpoint(t, td, p, method):
-    t_da = _scalar_da(t)
-    td_da = _scalar_da(td)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    td_da = _da(td)
+    p_da = _da(p)
     out = thermo.ept_from_dewpoint(t_da, td_da, p_da, method=method)
     ref = thermo.array.ept_from_dewpoint(_np(t), _np(td), _np(p), method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -459,9 +453,9 @@ def test_xr_ept_from_dewpoint(t, td, p, method):
     ],
 )
 def test_xr_ept_from_specific_humidity(t, q, p, method):
-    t_da = _scalar_da(t)
-    q_da = _scalar_da(q)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    q_da = _da(q)
+    p_da = _da(p)
     out = thermo.ept_from_specific_humidity(t_da, q_da, p_da, method=method)
     ref = thermo.array.ept_from_specific_humidity(_np(t), _np(q), _np(p), method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -475,8 +469,8 @@ def test_xr_ept_from_specific_humidity(t, q, p, method):
     ],
 )
 def test_xr_saturation_ept(t, p, method):
-    t_da = _scalar_da(t)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    p_da = _da(p)
     out = thermo.saturation_ept(t_da, p_da, method=method)
     ref = thermo.array.saturation_ept(_np(t), _np(p), method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
@@ -559,9 +553,9 @@ def test_xr_wet_bulb_temperature_from_specific_humidity_vectorized(t, q, p, ept_
     ],
 )
 def test_xr_wet_bulb_potential_temperature_from_dewpoint(t, td, p, ept_method, t_method):
-    t_da = _scalar_da(t)
-    td_da = _scalar_da(td)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    td_da = _da(td)
+    p_da = _da(p)
 
     out = thermo.wet_bulb_potential_temperature_from_dewpoint(
         t_da, td_da, p_da, ept_method=ept_method, t_method=t_method
@@ -581,9 +575,9 @@ def test_xr_wet_bulb_potential_temperature_from_dewpoint(t, td, p, ept_method, t
     ],
 )
 def test_xr_wet_bulb_potential_temperature_from_specific_humidity(t, q, p, method):
-    t_da = _scalar_da(t)
-    q_da = _scalar_da(q)
-    p_da = _scalar_da(p)
+    t_da = _da(t)
+    q_da = _da(q)
+    p_da = _da(p)
 
     out = thermo.wet_bulb_potential_temperature_from_specific_humidity(t_da, q_da, p_da, ept_method=method)
     ref = thermo.array.wet_bulb_potential_temperature_from_specific_humidity(_np(t), _np(q), _np(p), ept_method=method)
@@ -594,7 +588,7 @@ def test_xr_wet_bulb_potential_temperature_from_specific_humidity(t, q, p, metho
 
 @pytest.mark.parametrize("q", [0.01])
 def test_xr_specific_gas_constant(q):
-    q_da = _scalar_da(q)
+    q_da = _da(q)
     out = thermo.specific_gas_constant(q_da)
     ref = thermo.array.specific_gas_constant(_np(q))
     assert np.allclose(out.values, ref, equal_nan=True)

@@ -4,7 +4,21 @@ Version 1.0.0 Release Candidate Updates
 ///////////////////////////////////////
 
 
-Version 1.0.0rc0
+Version 1.0.0rc3
+==================
+
+- Added option "bolton43" to compute the equivalent potential temperature using equation (43) from [Bolton1980]_ (:pr:`128`). See:
+
+  - :py:func:`~earthkit.meteo.thermo.ept_from_dewpoint`
+  - :py:func:`~earthkit.meteo.thermo.ept_from_specific_humidity`
+
+
+Version 1.0.0rc2
+==================
+
+- Added high level fieldlist interface to :py:mod:`earthkit.meteo.wind` module and also to the :py:meth:`earthkit.meteo.thermo.potential_temperature` method in :py:mod:`earthkit.meteo.thermo` (:pr:`147`).
+
+Version 1.0.0rc1
 ==================
 
 Deprecations

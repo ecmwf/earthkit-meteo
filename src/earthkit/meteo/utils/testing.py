@@ -135,6 +135,8 @@ class Tolerance:
         raise ValueError(f"No tolerances found for dtype={dtype}")
 
 
+IN_GITHUB = os.environ.get("GITHUB_WORKFLOW") is not None
+
 NO_XARRAY = not modules_installed("xarray")
 NO_EKD = not modules_installed("earthkit.data")
 NO_SCORES = not modules_installed("scores")
