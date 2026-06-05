@@ -2534,7 +2534,7 @@ def surface_cape_cin(
     *,
     extra_outputs: list | None = None,
     vertical_axis: int = 0,
-    ept_method: str = "bolton39",
+    ept_method: str = "bolton43",
     lcl_method: str = "davies",
 ) -> tuple["ArrayLike", "ArrayLike"]:
     r"""Compute CAPE and CIN for a parcel lifted from the surface.
@@ -2580,7 +2580,7 @@ def mixed_layer_cape_cin(
     layer_depth: float = 5000.0,
     extra_outputs: list | None = None,
     vertical_axis: int = 0,
-    ept_method: str = "bolton39",
+    ept_method: str = "bolton43",
     lcl_method: str = "davies",
 ) -> tuple["ArrayLike", "ArrayLike"]:
     r"""Compute CAPE and CIN for a parcel averaged over a mixed surface layer.
@@ -2629,7 +2629,7 @@ def most_unstable_cape_cin(
     max_search_height: float = 3000.0,
     extra_outputs: list | None = None,
     vertical_axis: int = 0,
-    ept_method: str = "bolton39",
+    ept_method: str = "bolton43",
     lcl_method: str = "davies",
 ) -> tuple["ArrayLike", "ArrayLike"]:
     r"""Compute CAPE and CIN for the most-unstable parcel.

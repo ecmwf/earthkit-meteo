@@ -92,7 +92,7 @@ class ParcelPath:
     """Parcel properties at the launch level."""
 
 
-def _ept_from_mixing_ratio(t, p, r, method="bolton39"):
+def _ept_from_mixing_ratio(t, p, r, method="bolton43"):
     specific_humidity = thermo.specific_humidity_from_mixing_ratio(r)
     return thermo.ept_from_specific_humidity(t, specific_humidity, p, method=method)
 
@@ -279,7 +279,7 @@ class _CapeCinComp:
     def __init__(
         self,
         lcl_method="davies",
-        ept_method="bolton39",
+        ept_method="bolton43",
     ):
         self.lcl_method = lcl_method
         self.ept_method = ept_method
@@ -519,7 +519,7 @@ class _CapeCinSurface(_CapeCinComp):
 
 
 class _CapeCinMixed(_CapeCinComp):
-    def __init__(self, layer_depth=5000.0, lcl_method="davies", ept_method="bolton39"):
+    def __init__(self, layer_depth=5000.0, lcl_method="davies", ept_method="bolton43"):
         super().__init__(lcl_method=lcl_method, ept_method=ept_method)
         self.layer_depth = layer_depth
 
@@ -544,7 +544,7 @@ class _CapeCinMostUnstable(_CapeCinComp):
         exclude_surface_layer=False,
         max_search_height=3000.0,
         lcl_method="davies",
-        ept_method="bolton39",
+        ept_method="bolton43",
     ):
         super().__init__(lcl_method=lcl_method, ept_method=ept_method)
         self.exclude_surface_layer = exclude_surface_layer
@@ -693,7 +693,7 @@ _CAPE_CIN_COMMON_DOCSTRING = """
     ept_method : str, optional
         Method used to compute equivalent potential temperature. Passed to
         :func:`earthkit.meteo.thermo.array.ept_from_specific_humidity`.
-        Defaults to ``"bolton39"``.
+        Defaults to ``"bolton43"``.
     lcl_method : str, optional
         Method used to compute the Lifted Condensation Level. Passed to
         :func:`earthkit.meteo.thermo.array.lcl`. Defaults to ``"davies"``.
@@ -721,7 +721,7 @@ def surface_cape_cin(
     *,
     extra_outputs=None,
     vertical_axis=0,
-    ept_method="bolton39",
+    ept_method="bolton43",
     lcl_method="davies",
 ):
     r"""Compute CAPE and CIN for a parcel lifted from the surface.
@@ -760,7 +760,7 @@ def mixed_layer_cape_cin(
     layer_depth=5000.0,
     extra_outputs=None,
     vertical_axis=0,
-    ept_method="bolton39",
+    ept_method="bolton43",
     lcl_method="davies",
 ):
     r"""Compute CAPE and CIN for a parcel averaged over a mixed surface layer.
@@ -808,7 +808,7 @@ def most_unstable_cape_cin(
     max_search_height=3000.0,
     extra_outputs=None,
     vertical_axis=0,
-    ept_method="bolton39",
+    ept_method="bolton43",
     lcl_method="davies",
 ):
     r"""Compute CAPE and CIN for the most-unstable parcel.
