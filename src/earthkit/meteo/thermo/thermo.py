@@ -2514,7 +2514,7 @@ def specific_gas_constant(q: "ArrayLike" | "xarray.DataArray") -> "ArrayLike" | 
     return dispatched(q)
 
 
-def cape_cin(
+def surface_cape_cin(
     p: "ArrayLike",
     zh: "ArrayLike",
     t: "ArrayLike",
@@ -2523,93 +2523,26 @@ def cape_cin(
     t_sfc: "ArrayLike",
     r_sfc: "ArrayLike",
     zh_sfc: "ArrayLike",
-    parcel_type: str,
-    h_bottom: float | None = None,
-    h_top: float | None = None,
-    layer_depth: float | None = None,
+    *,
     extra_outputs: list | None = None,
     vertical_axis: int = 0,
     ept_method: str = "bolton39",
     lcl_method: str = "davies",
 ) -> tuple["ArrayLike", "ArrayLike"]:
-    r"""Compute Convective Available Potential Energy (CAPE) and Convective Inhibition (CIN).
+    r"""Compute CAPE and CIN for a parcel lifted from the surface.
 
-    The surface level must be provided separately from the pressure-level grid.
-    Grid levels below the surface (sub-ground) are automatically masked
-    using geopotential height and do not affect the result.
-    
-    Parameters
-    ----------
-    p : array-like
-        Pressure (Pa) on pressure levels. The vertical axis must be the first axis
-        (axis=0) unless ``vertical_axis`` is set.
-    zh : array-like
-        Geopotential height (m) on pressure levels, same shape as ``p``.
-    t : array-like
-        Temperature (K) on pressure levels, same shape as ``p``.
-    r : array-like
-        Mixing ratio (kg/kg) on pressure levels, same shape as ``p``.
-    p_sfc : array-like
-        Surface pressure (Pa), shape equal to the horizontal dimensions of ``p``.
-        The surface is included as an additional level in the computation.
-    t_sfc : array-like
-        Surface temperature (K), same horizontal shape as ``p_sfc``.
-    r_sfc : array-like
-        Surface mixing ratio (kg/kg), same horizontal shape as ``p_sfc``.
-    zh_sfc : array-like
-        Surface geopotential height (m), same horizontal shape as ``p_sfc``.
-    parcel_type : str
-        Method used to define the lifted parcel. One of:
+    The parcel properties are taken directly from ``p_sfc``/``t_sfc``/``r_sfc``.
 
-        * ``"surface"`` — parcel taken from ``p_sfc``/``t_sfc``/``r_sfc``.
-        * ``"mixed"`` — parcel properties averaged over a mixed layer of depth
-          ``layer_depth`` (Pa) above the surface.
-        * ``"mu"`` — most-unstable parcel: the level within the height range
-          ``[h_bottom, h_top]`` (m) that maximises equivalent potential temperature.
-    h_bottom : number, optional
-        Height (m above surface) of the bottom of the search range for the
-        most-unstable parcel. Defaults to ``0``.
-    h_top : number, optional
-        Height (m above surface) of the top of the search range for the
-        most-unstable parcel. Defaults to ``3000``.
-    layer_depth : number, optional
-        Depth (Pa) of the layer used to define the mixed-layer parcel.
-        Defaults to 5000 Pa for ``"mixed"``.
-    extra_outputs : list of str, optional
-        Optional diagnostics to compute and return as a third element.
-        Allowed keys: ``"lcl"``, ``"lfc"``, ``"el"``, ``"parcel"``,
-        ``"parcel_path"``. When ``None`` or empty the function returns only
-        ``(cape, cin)``.
-    vertical_axis : int, optional
-        Axis of the input arrays that corresponds to the vertical dimension.
-        Defaults to ``0``. ``-1`` may also be used to indicate the last axis.
-        Surface arrays are not affected by this parameter.
-    ept_method : str, optional
-        Method used to compute equivalent potential temperature. Passed to
-        :func:`earthkit.meteo.thermo.array.ept_from_specific_humidity`.
-        Defaults to ``"bolton39"``.
-    lcl_method : str, optional
-        Method used to compute the Lifted Condensation Level. Passed to
-        :func:`earthkit.meteo.thermo.array.lcl`. Defaults to ``"davies"``.
-
-    Returns
-    -------
-    array-like
-        CAPE (J/kg), shape equal to the horizontal dimensions of the input arrays.
-    array-like
-        CIN (J/kg), shape equal to the horizontal dimensions of the input arrays.
-    dict, optional
-        Only present when ``extra_outputs`` is non-empty. Keys are a subset of
-        the strings listed in the ``extra_outputs`` parameter description.
-
+    See :func:`earthkit.meteo.thermo.array.surface_cape_cin` for the full
+    parameter and return-value documentation.
 
     Implementations
     ------------------------
-    :func:`cape_cin` calls the following implementation for array-like input:
+    :func:`surface_cape_cin` calls the following implementation for array-like input:
 
-    - :py:meth:`earthkit.meteo.thermo.array.cape_cin`
+    - :py:meth:`earthkit.meteo.thermo.array.surface_cape_cin`
     """
-    dispatched = dispatch(cape_cin, fieldlist=False, array=True, xarray=False)
+    dispatched = dispatch(surface_cape_cin, fieldlist=False, array=True, xarray=False)
     return dispatched(
         p,
         zh,
@@ -2619,10 +2552,106 @@ def cape_cin(
         t_sfc,
         r_sfc,
         zh_sfc,
-        parcel_type,
-        h_bottom=h_bottom,
-        h_top=h_top,
+        extra_outputs=extra_outputs,
+        vertical_axis=vertical_axis,
+        ept_method=ept_method,
+        lcl_method=lcl_method,
+    )
+
+
+def mixed_layer_cape_cin(
+    p: "ArrayLike",
+    zh: "ArrayLike",
+    t: "ArrayLike",
+    r: "ArrayLike",
+    p_sfc: "ArrayLike",
+    t_sfc: "ArrayLike",
+    r_sfc: "ArrayLike",
+    zh_sfc: "ArrayLike",
+    *,
+    layer_depth: float = 5000.0,
+    extra_outputs: list | None = None,
+    vertical_axis: int = 0,
+    ept_method: str = "bolton39",
+    lcl_method: str = "davies",
+) -> tuple["ArrayLike", "ArrayLike"]:
+    r"""Compute CAPE and CIN for a parcel averaged over a mixed surface layer.
+
+    The parcel temperature and mixing ratio are pressure-weighted averages over
+    the bottom ``layer_depth`` (Pa) of the column.
+
+    See :func:`earthkit.meteo.thermo.array.mixed_layer_cape_cin` for the full
+    parameter and return-value documentation.
+
+    Implementations
+    ------------------------
+    :func:`mixed_layer_cape_cin` calls the following implementation for array-like input:
+
+    - :py:meth:`earthkit.meteo.thermo.array.mixed_layer_cape_cin`
+    """
+    dispatched = dispatch(mixed_layer_cape_cin, fieldlist=False, array=True, xarray=False)
+    return dispatched(
+        p,
+        zh,
+        t,
+        r,
+        p_sfc,
+        t_sfc,
+        r_sfc,
+        zh_sfc,
         layer_depth=layer_depth,
+        extra_outputs=extra_outputs,
+        vertical_axis=vertical_axis,
+        ept_method=ept_method,
+        lcl_method=lcl_method,
+    )
+
+
+def most_unstable_cape_cin(
+    p: "ArrayLike",
+    zh: "ArrayLike",
+    t: "ArrayLike",
+    r: "ArrayLike",
+    p_sfc: "ArrayLike",
+    t_sfc: "ArrayLike",
+    r_sfc: "ArrayLike",
+    zh_sfc: "ArrayLike",
+    *,
+    exclude_surface_layer: bool = False,
+    max_search_height: float = 3000.0,
+    extra_outputs: list | None = None,
+    vertical_axis: int = 0,
+    ept_method: str = "bolton39",
+    lcl_method: str = "davies",
+) -> tuple["ArrayLike", "ArrayLike"]:
+    r"""Compute CAPE and CIN for the most-unstable parcel.
+
+    The parcel is selected as the level (within ``[0, max_search_height]`` m
+    above the surface) that maximises equivalent potential temperature. When
+    ``exclude_surface_layer`` is set, the surface parcel is excluded
+    from the candidate set.
+
+    See :func:`earthkit.meteo.thermo.array.most_unstable_cape_cin` for the full
+    parameter and return-value documentation.
+
+    Implementations
+    ------------------------
+    :func:`most_unstable_cape_cin` calls the following implementation for array-like input:
+
+    - :py:meth:`earthkit.meteo.thermo.array.most_unstable_cape_cin`
+    """
+    dispatched = dispatch(most_unstable_cape_cin, fieldlist=False, array=True, xarray=False)
+    return dispatched(
+        p,
+        zh,
+        t,
+        r,
+        p_sfc,
+        t_sfc,
+        r_sfc,
+        zh_sfc,
+        exclude_surface_layer=exclude_surface_layer,
+        max_search_height=max_search_height,
         extra_outputs=extra_outputs,
         vertical_axis=vertical_axis,
         ept_method=ept_method,
