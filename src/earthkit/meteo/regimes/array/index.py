@@ -6,6 +6,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+from earthkit.utils.array import array_namespace
+
 
 def project(field, patterns, weights, **patterns_extra_coords):
     """Project onto the given regime patterns.
@@ -28,11 +30,10 @@ def project(field, patterns, weights, **patterns_extra_coords):
 
     Returns
     -------
-    dict[str,array_like]
-        Results of the projection. One item per pattern label, output fields
-        have same shape as input field except for the dimensions reduced during
-        the projection (i.e., the spatial dimensions of the patterns are missing
-        on the right).
+    array_like
+        Results of the projection. Output fields have same shape as input field
+        except that the dimensions reduced during the projection (i.e., the
+        spatial dimensions of the patterns) are replaced by a regime dimension.
     """
     ndim_field = len(patterns.shape)
     if field.shape[-ndim_field:] != patterns.shape:
@@ -46,29 +47,24 @@ def project(field, patterns, weights, **patterns_extra_coords):
         raise ValueError(f"shape of weights {weights.shape} must match shape of patterns {patterns.shape}")
     weights = weights / weights.sum()
 
-    # Project onto each pattern
+    field = array_namespace(field).expand_dims(field, -ndim_field - 1)
     sum_axes = tuple(range(-ndim_field, 0, 1))
-    return {
-        label: (field * pattern * weights).sum(axis=sum_axes)
-        for label, pattern in patterns.patterns(**patterns_extra_coords).items()
-    }
+    return (field * patterns.patterns(**patterns_extra_coords) * weights).sum(axis=sum_axes)
 
 
 def regime_index(projections, mean, std):
     """Regime index by standardisation of projections onto patterns.
 
-    Convenience function to work with dictionaries.
-
     Parameters
     ----------
-    projections : dict[str,array_like]
+    projections : array_like
         Projections onto regime patterns.
-    mean : dict[str,array_like]
-    std : dict[str,array_like]
+    mean : array_like
+    std : array_like
 
     Returns
     -------
-    dict[str, array_like]
+    array_like
         ``(projection - mean) / std`` for each regime
     """
-    return {label: (proj - mean[label]) / std[label] for label, proj in projections.items()}
+    return (projections - mean) / std

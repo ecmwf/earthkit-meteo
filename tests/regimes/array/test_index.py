@@ -26,11 +26,10 @@ def patterns():
         }
 
         def patterns(self, single=True):
-            return {
-                "dipole": (self._dipole if single else np.stack([self._dipole, 2 * self._dipole])),
-                "monopole": (self._monopole if single else np.stack([self._monopole, 2 * self._monopole])),
-                "dipole_inv": (-self._dipole if single else np.stack([-self._dipole, -2 * self._dipole])),
-            }
+            out = np.asarray([self._dipole, self._monopole, -self._dipole])
+            if not single:
+                out = np.stack([out, 2 * out])
+            return out
 
     return MockPatterns()
 
@@ -50,40 +49,37 @@ def test_project_matches_weights_and_pattern_shapes(patterns):
 
 
 def test_project_ones_with_uniform_weights(patterns):
-    proj = array.project(np.ones(patterns.shape), patterns, weights=np.ones(patterns.shape))
-    assert np.isclose(proj["dipole"], np.mean(patterns._dipole))
-    assert np.isclose(proj["monopole"], np.mean(patterns._monopole))
-    assert np.isclose(proj["dipole_inv"], np.mean(patterns._dipole))
-    # Pattern symmetry
-    assert np.isclose(proj["dipole"], -proj["dipole_inv"])
+    result = array.project(np.ones(patterns.shape), patterns, weights=np.ones(patterns.shape))
+    reference = [np.mean(patterns._dipole), np.mean(patterns._monopole), np.mean(-patterns._dipole)]
+    np.testing.assert_allclose(result, reference)
 
 
 def test_project_ones_with_coslat_weights(patterns):
     lat_2d = np.repeat(patterns._lat, patterns._lon.size).reshape(patterns.shape)
     coslat = np.cos(np.deg2rad(lat_2d))
     proj = array.project(np.ones(patterns.shape), patterns, weights=coslat)
-    assert proj["dipole"] > 0  # positive values where weights are heigher
-    assert proj["dipole_inv"] < 0  # negative values where weights are higher
-    assert np.isclose(proj["dipole"], -proj["dipole_inv"])
+    assert proj.shape == (3,)
+    # Dipole plausibility
+    assert proj[0] > 0  # positive values where weights are heigher
+    assert proj[2] < 0  # negative values where weights are higher
+    np.testing.assert_allclose(proj[0], -proj[2])
 
 
 def test_project_zeros_returns_zero(patterns):
     proj = array.project(np.zeros(patterns.shape), patterns, weights=np.ones(patterns.shape))
-    assert np.isclose(proj["dipole"], 0.0)
-    assert np.isclose(proj["monopole"], 0.0)
-    assert np.isclose(proj["dipole_inv"], 0.0)
+    np.testing.assert_allclose(proj, 0.0)
 
 
 def test_project_is_commutative(patterns):
     fields = np.stack([patterns._dipole, patterns._monopole])
     proj = array.project(fields, patterns, weights=np.ones(patterns.shape))
-    np.testing.assert_allclose(proj["dipole"][1], proj["monopole"][0])
+    np.testing.assert_allclose(proj[0, 1], proj[1, 0])
 
 
 def test_project_maintains_shape(patterns):
     fields = np.zeros((2, 3, 4, *patterns.shape))
     proj = array.project(fields, patterns, weights=np.ones(patterns.shape))
-    assert proj["dipole"].shape == (2, 3, 4)
+    assert proj.shape == (2, 3, 4, 3)
 
 
 @pytest.mark.xfail(reason="grid info not available from earthkit-geo")
@@ -99,8 +95,8 @@ def test_project_with_single_pattern_return(patterns):
         single=True,
     )
     # All patterns are the same; monopole has nonzero projection
-    assert proj["monopole"].shape == (2,)
-    assert np.isclose(proj["monopole"][0], proj["monopole"][1])
+    assert proj.shape == (2, 3)
+    np.testing.assert_allclose(proj[0, 1], proj[1, 1])
 
 
 def test_project_with_multiple_pattern_return(patterns):
@@ -111,8 +107,8 @@ def test_project_with_multiple_pattern_return(patterns):
         single=False,
     )
     # Second pattern has twice the amplitude; monopole has nonzero projection
-    assert proj["monopole"].shape == (2,)
-    assert np.isclose(proj["monopole"][0], 0.5 * proj["monopole"][1])
+    assert proj.shape == (2, 3)
+    np.testing.assert_allclose(proj[0, 1], 0.5 * proj[1, 1])
 
 
 def test_regime_index_with_dict():

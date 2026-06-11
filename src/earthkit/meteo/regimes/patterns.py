@@ -179,7 +179,7 @@ class ConstantPatterns(Patterns):
         dict[str,array_like]
             Mapping from labels to patterns.
         """
-        return dict(zip(self._labels, self._patterns))
+        return self._patterns
 
 
 class ModulatedPatterns(Patterns):
@@ -216,9 +216,6 @@ class ModulatedPatterns(Patterns):
         if not callable(self._modulator):
             raise ValueError("modulator must be callable")
 
-    def _base_pattern(self, label):
-        return self._base_patterns[self._labels.index(label)]
-
     def patterns(self, **patterns_extra_coords):
         """Evaluated patterns for a given input to the modulator function.
 
@@ -235,4 +232,4 @@ class ModulatedPatterns(Patterns):
         modulator = self.xp.asarray(self._modulator(**patterns_extra_coords))
         # Adapt to shape of patterns
         modulator = modulator[(..., *((self.xp.newaxis,) * len(self.shape)))]
-        return DeferredPatternsDict(self._labels, lambda label: modulator * self._base_pattern(label))
+        return modulator * self._base_patterns
