@@ -9,7 +9,7 @@
 from earthkit.utils.array import array_namespace
 
 
-def project(fields, patterns, weights, **patterns_extra_coords):
+def project(fields, patterns, weights, patterns_coords=None):
     """Project onto the given regime patterns.
 
     Parameters
@@ -23,7 +23,7 @@ def project(fields, patterns, weights, **patterns_extra_coords):
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1. Must
         have shape of the patterns.
-    **patterns_coords : dict[str,Any], optional
+    patterns_coords : dict[str,Any], optional
         Keyword arguments for the pattern generation. E.g., a sequence of
         dates for date-modulated patterns. Must have the shape of `field`
         without the trailing dimensions onto which the patterns are projected.
@@ -35,6 +35,8 @@ def project(fields, patterns, weights, **patterns_extra_coords):
         except that the dimensions reduced during the projection (i.e., the
         spatial dimensions of the patterns) are replaced by a regime dimension.
     """
+    if patterns_coords is None:
+        patterns_coords = {}
     ndim_field = len(patterns.shape)
     if fields.shape[-ndim_field:] != patterns.shape:
         raise ValueError(f"shape of input fields {fields.shape} incompatible with shape of patterns {patterns.shape}")
@@ -49,7 +51,7 @@ def project(fields, patterns, weights, **patterns_extra_coords):
 
     fields = array_namespace(fields).expand_dims(fields, -ndim_field - 1)
     sum_axes = tuple(range(-ndim_field, 0, 1))
-    return (fields * patterns.patterns(**patterns_extra_coords) * weights).sum(axis=sum_axes)
+    return (fields * patterns.patterns(**patterns_coords) * weights).sum(axis=sum_axes)
 
 
 def regime_index(projections, mean, std):

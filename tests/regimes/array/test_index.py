@@ -25,9 +25,9 @@ def patterns():
             "area": [max(_lat), min(_lon), min(_lat), max(_lon)],
         }
 
-        def patterns(self, single=True):
+        def patterns(self, multiple=False):
             out = np.asarray([self._dipole, self._monopole, -self._dipole])
-            if not single:
+            if multiple:
                 out = np.stack([out, 2 * out])
             return out
 
@@ -89,10 +89,7 @@ def test_project_generates_weights_by_default(patterns):
 
 def test_project_with_single_pattern_return(patterns):
     proj = array.project(
-        np.ones((2, *patterns.shape)),
-        patterns,
-        weights=np.ones(patterns.shape),
-        single=True,
+        np.ones((2, *patterns.shape)), patterns, weights=np.ones(patterns.shape), patterns_coords={"multiple": False}
     )
     # All patterns are the same; monopole has nonzero projection
     assert proj.shape == (2, 3)
@@ -101,10 +98,7 @@ def test_project_with_single_pattern_return(patterns):
 
 def test_project_with_multiple_pattern_return(patterns):
     proj = array.project(
-        np.ones((2, *patterns.shape)),
-        patterns,
-        weights=np.ones(patterns.shape),
-        single=False,
+        np.ones((2, *patterns.shape)), patterns, weights=np.ones(patterns.shape), patterns_coords={"multiple": True}
     )
     # Second pattern has twice the amplitude; monopole has nonzero projection
     assert proj.shape == (2, 3)

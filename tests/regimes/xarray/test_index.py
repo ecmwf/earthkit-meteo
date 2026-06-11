@@ -50,7 +50,7 @@ def patterns():
 
 
 def test_project_with_with_lower_dimensional_weights(data3d, patterns, weights1d):
-    result = project(data3d, patterns, weights1d, foo="foo")
+    result = project(data3d, patterns, weights1d, patterns_coords={"foo": "foo"})
     assert result.dims == ("foo", "pattern")
     assert result.shape == (3, len(patterns))
     assert result.coords["pattern"].values.tolist() == ["a", "b"]
@@ -64,7 +64,7 @@ def test_project_with_with_lower_dimensional_weights(data3d, patterns, weights1d
 
 def test_project_with_full_dimensional_weights(data3d, patterns):
     weights2d = data3d.sel(foo=1.0)
-    result = project(data3d, patterns, weights2d, foo="foo")
+    result = project(data3d, patterns, weights2d, patterns_coords={"foo": "foo"})
     assert result.dims == ("foo", "pattern")
     assert result.shape == (3, len(patterns))
     assert result.coords["pattern"].values.tolist() == ["a", "b"]
@@ -85,21 +85,21 @@ def test_project_ensures_weight_dims_are_pattern_dims(data3d, patterns):
 
 def test_project_maintains_additional_dimensions_not_in_patterns_before(data3d, patterns, weights1d):
     data4d = data3d.expand_dims({"bar": [4.0, 5.0]})
-    result = project(data4d, patterns, weights1d, foo="foo", bar="bar")
+    result = project(data4d, patterns, weights1d, patterns_coords={"foo": "foo", "bar": "bar"})
     assert result.dims == ("bar", "foo", "pattern")
     assert result.shape == (2, 3, 2)
 
 
 def test_project_maintains_additional_dimensions_not_in_patterns_after(data3d, patterns, weights1d):
     data4d = data3d.expand_dims({"bar": [4.0, 5.0]}, axis=1)
-    result = project(data4d, patterns, weights1d, foo="foo")
+    result = project(data4d, patterns, weights1d, patterns_coords={"foo": "foo"})
     assert result.dims == ("foo", "bar", "pattern")
     assert result.shape == (3, 2, 2)
 
 
 def test_project_fails_when_trailing_shape_does_not_match_pattern_shape(data3d, patterns, weights1d):
     with pytest.raises(ValueError):
-        project(data3d.transpose("foo", "lon", "lat"), patterns, weights1d, foo="foo")
+        project(data3d.transpose("foo", "lon", "lat"), patterns, weights1d, patterns_coords={"foo": "foo"})
     with pytest.raises(ValueError):
         project(data3d.isel(lon=slice(0, 1)), patterns, weights1d)
 

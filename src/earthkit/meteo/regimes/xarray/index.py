@@ -17,14 +17,14 @@ def _labels_as_coord(patterns):
     return xr.DataArray(values, coords={_PATTERN_DIM: (_PATTERN_DIM, values)}, dims=[_PATTERN_DIM])
 
 
-def _patterns_xr(patterns, reference_da, patterns_extra_coords):
+def _patterns_xr(patterns, reference_da, patterns_coords):
     """Patterns evaluated for the given coords (if any) as xr.DataArrays.
 
     Parameters
     ----------
     reference_da : xr.DataArray
         Reference dataarray to take coordinates and dimension orders from.
-    patterns_extra_coords : Mapping[str,str]
+    patterns_coords : Mapping[str,str]
         Mapping of extra coordinates argument names (as given to .patterns)
         to DataArray coordinate names (as used in reference_da).
 
@@ -32,11 +32,9 @@ def _patterns_xr(patterns, reference_da, patterns_extra_coords):
     -------
     xarray.DataArray
     """
-    import xarray as xr
-
     xp = patterns.xp
     # Extra coordinate dims, in order of reference dims
-    extra_dims = [dim for dim in reference_da.dims if dim in patterns_extra_coords.values()]
+    extra_dims = [dim for dim in reference_da.dims if dim in patterns_coords.values()]
     # Output dimensions and coordinates of the patterns
     dims = [*extra_dims, *reference_da.dims[-patterns.ndim :]]
     coords = {dim: reference_da.coords[dim] for dim in dims}
@@ -59,11 +57,11 @@ def _patterns_xr(patterns, reference_da, patterns_extra_coords):
         )
     )
     # Rearrange to match provided kwarg-coord mapping
-    extra_coords = {kwarg: extra_coords_arrs[patterns_extra_coords[kwarg]] for kwarg in patterns_extra_coords}
+    extra_coords = {kwarg: extra_coords_arrs[patterns_coords[kwarg]] for kwarg in patterns_coords}
     return xr.DataArray(patterns.patterns(**extra_coords), coords=coords, dims=dims)
 
 
-def project(fields, patterns, weights, **patterns_extra_coords):
+def project(fields, patterns, weights, patterns_coords=None):
     """Project onto the given patterns.
 
     Parameters
@@ -76,7 +74,7 @@ def project(fields, patterns, weights, **patterns_extra_coords):
     weights : xarray.DataArray
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1.
-    **patterns_coords : dict[str,str], optional
+    patterns_coords : dict[str,str], optional
         Mapping of coordinate names to keyword arguments of the pattern
         generation function. Only coordinates that are dimensions of `field`
         can be mapped.
@@ -87,6 +85,8 @@ def project(fields, patterns, weights, **patterns_extra_coords):
         The projection(s) for each pattern, with rightmost a ``"pattern"``
         dimension replacing the spatial dimension(s) reduced in the projection.
     """
+    if patterns_coords is None:
+        patterns_coords = {}
     # Dimensions of a single pattern, assumed to be the trailing dimensions
     field_trailing_shape = fields.shape[-patterns.ndim :]
     if field_trailing_shape != patterns.shape:
@@ -104,7 +104,7 @@ def project(fields, patterns, weights, **patterns_extra_coords):
     weights = weights / weights.sum() * weights.size / patterns.size
     # Matching the behaviour of array.project, introduce the regime dimension
     # as a new outermost dimension
-    patterns_da = _patterns_xr(patterns, fields, patterns_extra_coords)
+    patterns_da = _patterns_xr(patterns, fields, patterns_coords)
     return (fields * patterns_da).weighted(weights).sum(dim=pattern_dims).rename("projection")
 
 

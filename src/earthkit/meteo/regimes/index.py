@@ -11,7 +11,7 @@ from ..utils.decorators import dispatch
 __all__ = ["project", "regime_index"]
 
 
-def project(fields, patterns, weights, **patterns_extra_coords):
+def project(fields, patterns, weights, patterns_coords=None):
     """Project onto the given patterns.
 
     Parameters
@@ -24,7 +24,7 @@ def project(fields, patterns, weights, **patterns_extra_coords):
     weights : xarray.DataArray | array_like
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1.
-    **patterns_coords : dict[str,Any] | dict[str,array_like], optional
+    patterns_coords : dict[str,Any] | dict[str,array_like], optional
         Coordinates for the pattern generation function.
 
     Returns
@@ -35,7 +35,7 @@ def project(fields, patterns, weights, **patterns_extra_coords):
 
     .. admonition:: Implementations
 
-        Depending on the type of argument `field`, this function calls:
+        Depending on the type of argument `fields`, this function calls:
 
         - :py:func:`earthkit.meteo.regimes.xarray.project` for ``xarray.DataArray``
         - :py:func:`earthkit.meteo.regimes.array.project` for ``array_like``
@@ -43,7 +43,7 @@ def project(fields, patterns, weights, **patterns_extra_coords):
         The function returns an object of the same type as the input argument.
     """
     dispatched = dispatch(project, xarray=True, array=True)
-    return dispatched(fields, patterns, weights, **patterns_extra_coords)
+    return dispatched(fields, patterns, weights, patterns_coords)
 
 
 def regime_index(projections, mean, std):
