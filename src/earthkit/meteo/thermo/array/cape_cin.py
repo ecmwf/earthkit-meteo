@@ -627,7 +627,7 @@ def _assemble_extras(result, extra_outputs, vertical_axis):
     return extras
 
 
-def _run_cape_cin(comp, p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc, *, extra_outputs, vertical_axis):
+def _run_cape_cin(comp, p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc, *, extra_outputs, vertical_axis):
     """Run a ``_CapeCinComp`` over the input arrays.
 
     Handles validation of ``extra_outputs``, ``vertical_axis`` reshaping of
@@ -639,9 +639,9 @@ def _run_cape_cin(comp, p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc, *, extra_outpu
     if vertical_axis != 0:
         vertical_axis = _normalise_vertical_axis(vertical_axis, p.ndim)
         p = np.swapaxes(p, 0, vertical_axis)
-        zh = np.swapaxes(zh, 0, vertical_axis)
         t = np.swapaxes(t, 0, vertical_axis)
         q = np.swapaxes(q, 0, vertical_axis)
+        zh = np.swapaxes(zh, 0, vertical_axis)
 
     p_sfc = np.asarray(p_sfc, dtype=float)
     t_sfc = np.asarray(t_sfc, dtype=float)
@@ -664,12 +664,12 @@ _CAPE_CIN_COMMON_DOCSTRING = """
     p : array-like
         Pressure (Pa) on pressure levels. The vertical axis must be the first axis
         (axis=0) unless ``vertical_axis`` is set.
-    zh : array-like
-        Geopotential height (m) on pressure levels, same shape as ``p``.
     t : array-like
         Temperature (K) on pressure levels, same shape as ``p``.
     q : array-like
         Specific humidity (kg/kg) on pressure levels, same shape as ``p``.
+    zh : array-like
+        Geopotential height (m) on pressure levels, same shape as ``p``.
     p_sfc : array-like
         Surface pressure (Pa), shape equal to the horizontal dimensions of ``p``.
         The surface is included as an additional level in the computation.
@@ -711,9 +711,9 @@ _CAPE_CIN_COMMON_DOCSTRING = """
 
 def surface_cape_cin(
     p,
-    zh,
     t,
     q,
+    zh,
     p_sfc,
     t_sfc,
     q_sfc,
@@ -732,9 +732,9 @@ def surface_cape_cin(
     return _run_cape_cin(
         comp,
         p,
-        zh,
         t,
         q,
+        zh,
         p_sfc,
         t_sfc,
         q_sfc,
@@ -749,9 +749,9 @@ surface_cape_cin.__doc__ += _CAPE_CIN_COMMON_DOCSTRING
 
 def mixed_layer_cape_cin(
     p,
-    zh,
     t,
     q,
+    zh,
     p_sfc,
     t_sfc,
     q_sfc,
@@ -779,9 +779,9 @@ def mixed_layer_cape_cin(
     return _run_cape_cin(
         comp,
         p,
-        zh,
         t,
         q,
+        zh,
         p_sfc,
         t_sfc,
         q_sfc,
@@ -796,9 +796,9 @@ mixed_layer_cape_cin.__doc__ += _CAPE_CIN_COMMON_DOCSTRING
 
 def most_unstable_cape_cin(
     p,
-    zh,
     t,
     q,
+    zh,
     p_sfc,
     t_sfc,
     q_sfc,
@@ -835,9 +835,9 @@ def most_unstable_cape_cin(
     return _run_cape_cin(
         comp,
         p,
-        zh,
         t,
         q,
+        zh,
         p_sfc,
         t_sfc,
         q_sfc,

@@ -110,9 +110,9 @@ def _sfc_from_profile(p, t, q, zh):
     return p[-1], t[-1], q[-1], zh[-1]
 
 
-def _strip_sfc(p, zh, t, q):
+def _strip_sfc(p, t, q, zh):
     """Strip the bottom (surface) level from stacked profile arrays."""
-    return p[:-1], zh[:-1], t[:-1], q[:-1]
+    return p[:-1], t[:-1], q[:-1], zh[:-1]
 
 
 # ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ def test_cape_cin(case_name, parcel_type):
     q = data.q[case_name][:, None]
 
     func = _cape_cin_func(parcel_type)
-    cape, cin = func(*_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh))
+    cape, cin = func(*_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh))
 
     case_idx = CASE_NAMES.index(case_name)
     np.testing.assert_allclose(cape, data.expected_cape[parcel_type][case_idx], atol=1)
@@ -147,7 +147,7 @@ def test_cape_cin_stacked():
     p, zh, t, q = data.p_stacked, data.zh_stacked, data.t_stacked, data.q_stacked
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape, cin = func(*_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh))
+        cape, cin = func(*_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh))
         np.testing.assert_allclose(cape, data.expected_cape[parcel_type], atol=1)
         np.testing.assert_allclose(cin, data.expected_cin[parcel_type], atol=1)
 
@@ -167,7 +167,7 @@ def test_cape_cin_vertical_axis_minus_1():
 
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape, cin = func(p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc, vertical_axis=-1)
+        cape, cin = func(p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc, vertical_axis=-1)
         np.testing.assert_allclose(cape, data.expected_cape[parcel_type], atol=1)
         np.testing.assert_allclose(cin, data.expected_cin[parcel_type], atol=1)
 
@@ -184,7 +184,7 @@ def test_cape_cin_arbitrary_nd_shape():
 
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape, cin = func(*_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh))
+        cape, cin = func(*_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh))
         assert cape.shape == horizontal_shape
         assert cin.shape == horizontal_shape
 
@@ -200,7 +200,7 @@ def test_cape_cin_lat_lon():
 
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape, cin = func(*_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh))
+        cape, cin = func(*_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh))
         np.testing.assert_allclose(cape, data.expected_cape[parcel_type].reshape(ny, nx), atol=1)
         np.testing.assert_allclose(cin, data.expected_cin[parcel_type].reshape(ny, nx), atol=1)
 
@@ -224,7 +224,7 @@ def test_cape_cin_missing_values():
 
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape, cin = func(p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc)
+        cape, cin = func(p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc)
         assert np.isnan(cape[0])
         assert np.isnan(cin[0])
         assert np.isnan(cape[2])
@@ -239,9 +239,9 @@ def test_mixed_layer_cape_cin_layer_depth_forwarded():
     q = data.q["unstable"][:, None]
     zh = data.zh["unstable"][:, None]
 
-    cape_default, _ = thermo.mixed_layer_cape_cin(*_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh))
+    cape_default, _ = thermo.mixed_layer_cape_cin(*_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh))
     cape_wide, _ = thermo.mixed_layer_cape_cin(
-        *_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh), layer_depth=15000
+        *_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh), layer_depth=15000
     )
     assert not np.isclose(cape_default, cape_wide, atol=1), (
         "layer_depth option was not forwarded to the mixed-layer parcel computation"
@@ -263,7 +263,7 @@ def _synthetic_elevated_mu_profile():
     zh_pl = np.array([[500.0], [1000.0], [1500.0], [2500.0], [4000.0], [6000.0]])
     t_pl = np.array([[277.0], [274.0], [270.0], [262.0], [248.0], [230.0]])
     q_pl = np.array([[0.015], [0.010], [0.008], [0.005], [0.003], [0.001]])
-    return p_pl, zh_pl, t_pl, q_pl, p_sfc, t_sfc, q_sfc, zh_sfc
+    return p_pl, t_pl, q_pl, zh_pl, p_sfc, t_sfc, q_sfc, zh_sfc
 
 
 def test_most_unstable_cape_cin_max_search_height_forwarded():
@@ -300,9 +300,9 @@ def test_most_unstable_cape_cin_exclude_surface_layer():
     t_pl = np.array([[290.0], [285.0], [280.0], [272.0], [258.0], [240.0]])
     q_pl = np.array([[0.012], [0.010], [0.008], [0.005], [0.003], [0.001]])
 
-    cape_default, _ = thermo.most_unstable_cape_cin(p_pl, zh_pl, t_pl, q_pl, p_sfc, t_sfc, q_sfc, zh_sfc)
+    cape_default, _ = thermo.most_unstable_cape_cin(p_pl, t_pl, q_pl, zh_pl, p_sfc, t_sfc, q_sfc, zh_sfc)
     cape_excl, _ = thermo.most_unstable_cape_cin(
-        p_pl, zh_pl, t_pl, q_pl, p_sfc, t_sfc, q_sfc, zh_sfc, exclude_surface_layer=True
+        p_pl, t_pl, q_pl, zh_pl, p_sfc, t_sfc, q_sfc, zh_sfc, exclude_surface_layer=True
     )
     assert not np.isclose(cape_default, cape_excl, atol=1), (
         "exclude_surface_layer option did not affect the most-unstable parcel selection"
@@ -345,7 +345,7 @@ def test_cape_cin_all_nan_profile():
 
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape, cin = func(p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc)
+        cape, cin = func(p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc)
         assert np.isnan(cape[0]), f"{parcel_type}: expected NaN for all-NaN column, got {cape[0]}"
         assert np.isnan(cin[0]), f"{parcel_type}: expected NaN for all-NaN column, got {cin[0]}"
         np.testing.assert_allclose(cape[1], 0.0, atol=1)
@@ -368,7 +368,7 @@ def test_cape_cin_no_lfc():
 
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape, cin = func(p, zh, t, q, p_full[-1], t_sfc, q_full[-1], zh_full[-1])
+        cape, cin = func(p, t, q, zh, p_full[-1], t_sfc, q_full[-1], zh_full[-1])
         np.testing.assert_allclose(cape, 0.0, atol=1e-6, err_msg=f"{parcel_type}: expected CAPE=0")
         np.testing.assert_allclose(cin, 0.0, atol=1e-6, err_msg=f"{parcel_type}: expected CIN=0")
 
@@ -399,8 +399,8 @@ def test_cape_cin_unsorted_pressure():
         q_sfc = q_full[-1]
         zh_sfc = zh_full[-1]
         func = _cape_cin_func(parcel_type)
-        cape_sorted, cin_sorted = func(p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc)
-        cape_flip, cin_flip = func(p_flip, zh_flip, t_flip, q_flip, p_sfc, t_sfc, q_sfc, zh_sfc)
+        cape_sorted, cin_sorted = func(p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc)
+        cape_flip, cin_flip = func(p_flip, t_flip, q_flip, zh_flip, p_sfc, t_sfc, q_sfc, zh_sfc)
         np.testing.assert_allclose(
             cape_flip, cape_sorted, atol=1, err_msg=f"{parcel_type}: CAPE differs for flipped input"
         )
@@ -441,7 +441,7 @@ def test_cape_cin_unsorted_pressure_stacked():
 
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape, cin = func(p2, zh2, t2, q2, p_sfc2, t_sfc2, q_sfc2, zh_sfc2)
+        cape, cin = func(p2, t2, q2, zh2, p_sfc2, t_sfc2, q_sfc2, zh_sfc2)
         np.testing.assert_allclose(
             cape[0],
             cape[1],
@@ -463,7 +463,7 @@ def test_cape_cin_very_dry():
 
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape, cin = func(*_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh))
+        cape, cin = func(*_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh))
         np.testing.assert_allclose(cape, 0.0, atol=1, err_msg=f"{parcel_type}: expected CAPE=0 for dry profile")
         np.testing.assert_allclose(cin, 0.0, atol=1, err_msg=f"{parcel_type}: expected CIN=0 for dry profile")
 
@@ -613,7 +613,7 @@ def _unstable_1col():
 def test_extra_outputs_none_returns_two_tuple():
     """When extra_outputs is not set the return value must be a 2-tuple."""
     p, zh, t, q = _unstable_1col()
-    result = thermo.surface_cape_cin(*_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh))
+    result = thermo.surface_cape_cin(*_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh))
     assert len(result) == 2, "Expected (cape, cin) 2-tuple when extra_outputs is None"
     cape, cin = result
     assert cape.shape == (1,)
@@ -623,7 +623,7 @@ def test_extra_outputs_none_returns_two_tuple():
 def test_extra_outputs_empty_list_returns_two_tuple():
     """An empty extra_outputs list must behave the same as None."""
     p, zh, t, q = _unstable_1col()
-    result = thermo.surface_cape_cin(*_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh), extra_outputs=[])
+    result = thermo.surface_cape_cin(*_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh), extra_outputs=[])
     assert len(result) == 2
 
 
@@ -639,7 +639,7 @@ def test_extra_outputs_parcel_path_shape():
     horizontal_shape = (1,)
 
     cape, cin, extras = thermo.surface_cape_cin(
-        *_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh), extra_outputs=["parcel_path"]
+        *_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh), extra_outputs=["parcel_path"]
     )
     path = extras["parcel_path"]
 
@@ -684,7 +684,7 @@ def test_extra_outputs_parcel_path_nd_shape():
     zh = data.zh_stacked.reshape(nz, ny, nx)
 
     cape, cin, extras = thermo.surface_cape_cin(
-        *_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh), extra_outputs=["parcel_path"]
+        *_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh), extra_outputs=["parcel_path"]
     )
     path = extras["parcel_path"]
 
@@ -705,7 +705,7 @@ def test_extra_outputs_standalone_key_levels():
 
     p, zh, t, q = _unstable_1col()
     cape, cin, extras = thermo.surface_cape_cin(
-        *_strip_sfc(p, zh, t, q),
+        *_strip_sfc(p, t, q, zh),
         *_sfc_from_profile(p, t, q, zh),
         extra_outputs=["lcl", "lfc", "el", "parcel"],
     )
@@ -727,7 +727,7 @@ def test_extra_outputs_key_levels_consistent_with_parcel_path():
     """Standalone lcl/lfc/el must match those embedded in parcel_path."""
     p, zh, t, q = _unstable_1col()
     cape, cin, extras = thermo.surface_cape_cin(
-        *_strip_sfc(p, zh, t, q),
+        *_strip_sfc(p, t, q, zh),
         *_sfc_from_profile(p, t, q, zh),
         extra_outputs=["lcl", "lfc", "el", "parcel", "parcel_path"],
     )
@@ -747,9 +747,9 @@ def test_extra_outputs_key_levels_consistent_with_parcel_path():
 def test_extra_outputs_cape_cin_values_unchanged():
     """extra_outputs must not alter the cape/cin values."""
     p, zh, t, q = _unstable_1col()
-    cape_base, cin_base = thermo.surface_cape_cin(*_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh))
+    cape_base, cin_base = thermo.surface_cape_cin(*_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh))
     cape_ext, cin_ext, _ = thermo.surface_cape_cin(
-        *_strip_sfc(p, zh, t, q), *_sfc_from_profile(p, t, q, zh), extra_outputs=["parcel_path"]
+        *_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh), extra_outputs=["parcel_path"]
     )
     np.testing.assert_array_equal(cape_base, cape_ext)
     np.testing.assert_array_equal(cin_base, cin_ext)
@@ -760,7 +760,7 @@ def test_extra_outputs_invalid_key_raises():
     p, zh, t, q = _unstable_1col()
     with pytest.raises(ValueError, match="extra_outputs"):
         thermo.surface_cape_cin(
-            *_strip_sfc(p, zh, t, q),
+            *_strip_sfc(p, t, q, zh),
             *_sfc_from_profile(p, t, q, zh),
             extra_outputs=["parcel_path", "not_a_real_key"],
         )
@@ -769,7 +769,7 @@ def test_extra_outputs_invalid_key_raises():
 def test_extra_outputs_parcel_path_pressure_sorted():
     """parcel_path.p must be in ascending order even when input is descending."""
     p, zh, t, q = _unstable_1col()
-    p_pl, zh_pl, t_pl, q_pl = _strip_sfc(p, zh, t, q)
+    p_pl, t_pl, q_pl, zh_pl = _strip_sfc(p, t, q, zh)
     p_flip = np.flip(p_pl, axis=0)
     t_flip = np.flip(t_pl, axis=0)
     zh_flip = np.flip(zh_pl, axis=0)
@@ -777,9 +777,9 @@ def test_extra_outputs_parcel_path_pressure_sorted():
 
     _, _, extras = thermo.surface_cape_cin(
         p_flip,
-        zh_flip,
         t_flip,
         q_flip,
+        zh_flip,
         *_sfc_from_profile(p, t, q, zh),  # surface from original
         extra_outputs=["parcel_path"],
     )
@@ -793,14 +793,14 @@ def test_extra_outputs_parcel_path_pressure_sorted():
 def test_extra_outputs_vertical_axis_minus_1():
     """parcel_path profile arrays must have the vertical axis restored to the caller's position."""
     p, zh, t, q = _unstable_1col()
-    p_pl, zh_pl, t_pl, q_pl = _strip_sfc(p, zh, t, q)
+    p_pl, t_pl, q_pl, zh_pl = _strip_sfc(p, t, q, zh)
     # transpose to (1, nz_pl) — vertical axis is now axis 1 (== -1)
-    p_T, zh_T, t_T, q_T = p_pl.T, zh_pl.T, t_pl.T, q_pl.T
+    p_T, t_T, q_T, zh_T = p_pl.T, t_pl.T, q_pl.T, zh_pl.T
     # Surface is the bottom row of the original (nz, 1) profile, shape (1,)
     p_sfc, t_sfc, q_sfc, zh_sfc = _sfc_from_profile(p, t, q, zh)
 
     cape, cin, extras = thermo.surface_cape_cin(
-        p_T, zh_T, t_T, q_T, p_sfc, t_sfc, q_sfc, zh_sfc, vertical_axis=-1, extra_outputs=["parcel_path"]
+        p_T, t_T, q_T, zh_T, p_sfc, t_sfc, q_sfc, zh_sfc, vertical_axis=-1, extra_outputs=["parcel_path"]
     )
     # profile arrays must mirror the caller's shape: (1, nz_pl + 1)
     nz_path = p_pl.shape[0] + 1
@@ -832,9 +832,9 @@ def test_extra_outputs_vertical_axis_arbitrary():
 
     cape, cin, extras = thermo.surface_cape_cin(
         p_v2,
-        zh_v2,
         t_v2,
         q_v2,
+        zh_v2,
         p_full[-1],
         t_full[-1],
         q_full[-1],
@@ -883,8 +883,8 @@ def test_subground_levels_ignored():
 
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape_base, cin_base = func(p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc)
-        cape_ext, cin_ext = func(p_ext, zh_ext, t_ext, q_ext, p_sfc, t_sfc, q_sfc, zh_sfc)
+        cape_base, cin_base = func(p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc)
+        cape_ext, cin_ext = func(p_ext, t_ext, q_ext, zh_ext, p_sfc, t_sfc, q_sfc, zh_sfc)
         np.testing.assert_allclose(
             cape_ext,
             cape_base,
@@ -925,7 +925,7 @@ def test_nan_in_subground_does_not_propagate():
 
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape, cin = func(p_ext, zh_ext, t_ext, q_ext, p_sfc, t_sfc, q_sfc, zh_sfc)
+        cape, cin = func(p_ext, t_ext, q_ext, zh_ext, p_sfc, t_sfc, q_sfc, zh_sfc)
         assert np.isfinite(cin[0]), f"{parcel_type}: CIN is NaN/Inf due to sub-ground NaN"
 
 
@@ -945,7 +945,7 @@ def test_surface_parcel_uses_sfc_values():
     # Warmer surface → more CAPE
     t_sfc_warm = t_sfc_default + 3.0
 
-    cape_default, _ = thermo.surface_cape_cin(p, zh, t, q, p_sfc, t_sfc_default, q_sfc, zh_sfc)
-    cape_warm, _ = thermo.surface_cape_cin(p, zh, t, q, p_sfc, t_sfc_warm, q_sfc, zh_sfc)
+    cape_default, _ = thermo.surface_cape_cin(p, t, q, zh, p_sfc, t_sfc_default, q_sfc, zh_sfc)
+    cape_warm, _ = thermo.surface_cape_cin(p, t, q, zh, p_sfc, t_sfc_warm, q_sfc, zh_sfc)
 
     assert cape_warm[0] > cape_default[0], "Warmer surface temperature should produce more CAPE for the surface parcel"
