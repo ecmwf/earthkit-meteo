@@ -6,27 +6,28 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+from collections.abc import Sequence
+
 import xarray as xr
 from earthkit.utils.array import array_namespace
 
-_PATTERN_DIM = "pattern"
 
-
-def _labels_as_coord(patterns):
+def _labels_as_coord(patterns, name):
     values = patterns.xp.asarray(patterns.labels)
-    return xr.DataArray(values, coords={_PATTERN_DIM: (_PATTERN_DIM, values)}, dims=[_PATTERN_DIM])
+    return xr.DataArray(values, coords={name: (name, values)}, dims=[name])
 
 
-def _patterns_xr(patterns, reference_da, patterns_coords):
+def _patterns_xr(patterns, reference_da, patterns_coords, patterns_dim="pattern"):
     """Patterns evaluated for the given coords (if any) as xr.DataArrays.
 
     Parameters
     ----------
+    patterns : earthkit.meteo.regimes.Patterns
     reference_da : xr.DataArray
         Reference dataarray to take coordinates and dimension orders from.
     patterns_coords : Mapping[str,str]
-        Mapping of extra coordinates argument names (as given to .patterns)
-        to DataArray coordinate names (as used in reference_da).
+    pattern_dim : str, optional
+        Name of the pattern dimension that replaces the grid dimensions.
 
     Returns
     -------
@@ -46,9 +47,9 @@ def _patterns_xr(patterns, reference_da, patterns_coords):
         coords = {dim: xp.asarray(values).rechunk(reference_da.chunksizes[dim]) for dim, values in coords.items()}
     # Regime pattern coordinate based on pattern labels: insert after extra
     # coords and before grid coords
-    assert _PATTERN_DIM not in dims
-    dims.insert(-patterns.ndim, _PATTERN_DIM)
-    coords[_PATTERN_DIM] = _labels_as_coord(patterns)
+    assert patterns_dim not in dims
+    dims.insert(-patterns.ndim, patterns_dim)
+    coords[patterns_dim] = _labels_as_coord(patterns, patterns_dim)
     # Cartesian product of coordinates for patterns generator
     extra_coords_arrs = dict(
         zip(
@@ -57,7 +58,7 @@ def _patterns_xr(patterns, reference_da, patterns_coords):
         )
     )
     # Rearrange to match provided kwarg-coord mapping
-    extra_coords = {kwarg: extra_coords_arrs[patterns_coords[kwarg]] for kwarg in patterns_coords}
+    extra_coords = {kwarg: extra_coords_arrs[coord] for kwarg, coord in patterns_coords.items()}
     return xr.DataArray(patterns.patterns(**extra_coords), coords=coords, dims=dims)
 
 
@@ -74,10 +75,11 @@ def project(fields, patterns, weights, patterns_coords=None):
     weights : xarray.DataArray
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1.
-    patterns_coords : dict[str,str], optional
+    patterns_coords : Mapping[str,str] | Sequence[str], optional
         Mapping of coordinate names to keyword arguments of the pattern
-        generation function. Only coordinates that are dimensions of `field`
-        can be mapped.
+        generation function. If a sequence is given, argument and associated
+        coordinate names are assumed to be identical. Only coordinates that are
+        dimensions of `fields` can be mapped.
 
     Returns
     -------
@@ -87,6 +89,8 @@ def project(fields, patterns, weights, patterns_coords=None):
     """
     if patterns_coords is None:
         patterns_coords = {}
+    elif isinstance(patterns_coords, Sequence):
+        patterns_coords = {coord: coord for coord in patterns_coords}
     # Dimensions of a single pattern, assumed to be the trailing dimensions
     field_trailing_shape = fields.shape[-patterns.ndim :]
     if field_trailing_shape != patterns.shape:
