@@ -111,18 +111,13 @@ def test_project_with_multiple_pattern_return(patterns):
     np.testing.assert_allclose(proj[0, 1], 0.5 * proj[1, 1])
 
 
-def test_regime_index_with_dict():
-    proj = {
-        "foo": np.asarray([0.0, 1.0, 2.0, 3.0, 4.0, 5.0]),
-        "bar": np.asarray([0.0, 1.0, 2.0, 3.0, 4.0, 5.0]),
-    }
-    mean = {"foo": 2.0, "bar": -4.0}
-    std = {"foo": 10.0, "bar": 2.0}
+def test_regime_index():
+    proj = np.asarray([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0], [5.0, 5.0]])
+    mean = np.asarray([2.0, -4.0])
+    std = np.asarray([10.0, 2.0])
 
-    index = array.regime_index(proj, mean, std)
+    result = array.regime_index(proj, mean, std)
+    reference = np.asarray([[-0.2, 2.0], [-0.1, 2.5], [0.0, 3.0], [0.1, 3.5], [0.2, 4.0], [0.3, 4.5]])
 
-    assert len(index) == 2
-    assert "foo" in index
-    assert "bar" in index
-    np.testing.assert_allclose(index["foo"], [-0.2, -0.1, 0.0, 0.1, 0.2, 0.3])
-    np.testing.assert_allclose(index["bar"], [2.0, 2.5, 3.0, 3.5, 4.0, 4.5])
+    assert result.shape == proj.shape
+    np.testing.assert_allclose(result, reference)
