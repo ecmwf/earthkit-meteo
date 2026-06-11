@@ -45,20 +45,7 @@ def pressure_from_metadata(fields: Field | FieldList) -> float | list[float]:
     return [field_pressure_in_pa(f) for f in fields]
 
 
-def surface_pressure_values(field, copy=False):
-    import numpy as np
-
-    arr = field.to_numpy(copy=copy)
-    first_value = arr.flat[np.argmax(arr == arr)]
-
-    # If the first value is less than 20.0, we assume that this is the logarithm of the surface
-    #  pressure, and we exponentiate it to get the actual surface pressure in Pa.
-    if first_value < 20.0:
-        return np.exp(arr)
-    else:
-        return arr
-
-
+# TODO: use new vertical methods from earthkit-data, once they are available.
 def hybrid_level_parameters_from_fieldlist(*args) -> tuple[NDArray[Any], NDArray[Any]]:
     import earthkit.data as ekd
     import numpy as np
@@ -76,8 +63,6 @@ def hybrid_level_parameters_from_fieldlist(*args) -> tuple[NDArray[Any], NDArray
                     if pv_num is not None and pv_num > 2:
                         pv_num = int(pv_num)
                         coeff_num = int(pv_num / 2)
-                        pv = field.get("metadata.pv")
-
                         pv = field.get("metadata.pv")
                         if pv is not None and len(pv) == pv_num:
                             A = np.array(pv[:coeff_num])

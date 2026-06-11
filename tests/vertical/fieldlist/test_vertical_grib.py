@@ -940,6 +940,10 @@ def test_fieldlist_grib_interpolate_monotonic_pl_to_pl_field(sort_mode, target_i
     if sort_mode is not None:
         t = t.order_by({"vertical.level": sort_mode})
 
+    with pytest.raises(ValueError):
+        # coord_type must be specified
+        vertical.interpolate_monotonic(t, coord=None, target_coord=target_coord)
+
     out = vertical.interpolate_monotonic(t, coord=None, target_coord=target_coord, coord_type="pressure")
 
     if isinstance(target_coord, Field):

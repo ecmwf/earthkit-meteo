@@ -16,7 +16,7 @@ from numpy.typing import ArrayLike
 
 from earthkit.meteo import constants
 from earthkit.meteo.utils.decorators import fieldlist_ufunc
-from earthkit.meteo.utils.fieldlist import get_hybrid_level_parameters, surface_pressure_values
+from earthkit.meteo.utils.fieldlist import get_hybrid_level_parameters
 from earthkit.meteo.utils.param import FIELD_PARAMS
 
 from .. import array
@@ -397,7 +397,7 @@ def pressure_on_hybrid_levels(
     sp = [sp] if isinstance(sp, Field) else sp
 
     for field in sp:
-        sp_values = surface_pressure_values(field)
+        sp_values = field.to_numpy(copy=False)
         res_values = array.pressure_on_hybrid_levels(
             sp_values,
             A,
@@ -1243,27 +1243,29 @@ def interpolate_monotonic(
     data: FieldList
         Data to be interpolated. Must have at least two fields.
     coord: ArrayLike | FieldList | None
-        Vertical coordinates related to ``data``. If None, the coordinates are
-        extracted from the metadata of the input fields in ``data``. When provided
-        as a FieldList, it must have the same number of fields and levels as ``data``,
-        but the level ordering can be different. In this case the field values define
-        the coordinate values for each field value in ``data`` and the level metadata
-        is only used to pair up the fields in ``coord`` and ``data``.  The coordinate
+        Vertical coordinates related to ``data``. A valid value must be
+        provided. When it is a FieldList, it must have the same number of
+        fields and levels as ``data``, but the level ordering can be different.
+        The field values in ``coord`` define the vertical coordinate values for each
+        corresponding field in ``data``. The level metadata
+        is only used to pair up the fields in ``coord`` and ``data``.
+        The vertical coordinate
         values defined in this way must be monotonic along the vertical
         axis when sorted by the level (either ascending or descending).
         When provided as an ArrayLike, it must be a 1D array with each value
         corresponding to the field at the same position in ``data``.
-    target_coord: ArrayLike | FieldList | Field | None, optional
+    target_coord: ArrayLike | FieldList | Field | None
         Target coordinate levels to which ``data`` will be interpolated. When it is a
-        FieldList or Field each field value provide the coordinate values the `data``
+        FieldList or Field each field value provides the coordinate values the `data``
         will be interpolated to. When provided as an ArrayLike, it must be a 1D array of
         coordinate values each defining a constant target
-        level. Must be of the same type and units as ``coord``.
-    coord_type: str | None, optional
-        Type of the coordinate levels in ``coord`` and ``target_coord``. If None, the coordinate type is
-        inferred from the metadata of the input fields in ``coord``. The possible values are the same as
+        level. The values must be of the same type of coordinate as that of ``coord``.
+    coord_type: str | None
+        Type of the coordinate levels in ``coord`` and ``target_coord``.
+        The possible values are the same as
         the level types supported in earthkit.data
         for a Field. See: :py::func:`earthkit.data.field.component.level_type` for details.
+        A valid value must be provided.
     interpolation: {"linear", "log", "nearest"}, default="linear"
         Interpolation mode. Default is ``"linear"``. Possible values:
 
@@ -1312,15 +1314,13 @@ def interpolate_monotonic(
         if aux_max_level_data is None or aux_max_level_coord is None:
             raise ValueError("Both aux_max_level_data and aux_max_level_coord must be provided together.")
 
+    if coord_type is None:
+        raise ValueError("No coordinate type specified. Please specify coord_type explicitly.")
+
     # prepare input data
     source = MonotonicData(level_type=None, sort="descending")
     source.add_profile(key="data", fl=data)
     source.add_profile(key="coord", fl=coord, fl_template=source.data, coord=True)
-
-    if coord_type is None and coord is None:
-        coord_type = source.coord[0].get("vertical.level_type")
-        if coord_type is None:
-            raise ValueError("Cannot infer the coordinate type. Please specify coord_type explicitly.")
 
     # prepare target
     target = TargetVariable.build(
