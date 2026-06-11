@@ -2524,9 +2524,9 @@ def specific_gas_constant(q: "ArrayLike" | "xarray.DataArray") -> "ArrayLike" | 
 
 def surface_cape_cin(
     p: "ArrayLike",
-    zh: "ArrayLike",
     t: "ArrayLike",
     q: "ArrayLike",
+    zh: "ArrayLike",
     p_sfc: "ArrayLike",
     t_sfc: "ArrayLike",
     q_sfc: "ArrayLike",
@@ -2553,9 +2553,9 @@ def surface_cape_cin(
     dispatched = dispatch(surface_cape_cin, fieldlist=False, array=True, xarray=False)
     return dispatched(
         p,
-        zh,
         t,
         q,
+        zh,
         p_sfc,
         t_sfc,
         q_sfc,
@@ -2569,9 +2569,9 @@ def surface_cape_cin(
 
 def mixed_layer_cape_cin(
     p: "ArrayLike",
-    zh: "ArrayLike",
     t: "ArrayLike",
     q: "ArrayLike",
+    zh: "ArrayLike",
     p_sfc: "ArrayLike",
     t_sfc: "ArrayLike",
     q_sfc: "ArrayLike",
@@ -2600,9 +2600,9 @@ def mixed_layer_cape_cin(
     dispatched = dispatch(mixed_layer_cape_cin, fieldlist=False, array=True, xarray=False)
     return dispatched(
         p,
-        zh,
         t,
         q,
+        zh,
         p_sfc,
         t_sfc,
         q_sfc,
@@ -2617,9 +2617,9 @@ def mixed_layer_cape_cin(
 
 def most_unstable_cape_cin(
     p: "ArrayLike",
-    zh: "ArrayLike",
     t: "ArrayLike",
     q: "ArrayLike",
+    zh: "ArrayLike",
     p_sfc: "ArrayLike",
     t_sfc: "ArrayLike",
     q_sfc: "ArrayLike",
@@ -2651,9 +2651,9 @@ def most_unstable_cape_cin(
     dispatched = dispatch(most_unstable_cape_cin, fieldlist=False, array=True, xarray=False)
     return dispatched(
         p,
-        zh,
         t,
         q,
+        zh,
         p_sfc,
         t_sfc,
         q_sfc,
