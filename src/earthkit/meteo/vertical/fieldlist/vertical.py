@@ -1262,9 +1262,8 @@ def interpolate_monotonic(
         level. The values must be of the same type of coordinate as that of ``coord``.
     coord_type: str | None
         Type of the coordinate levels in ``coord`` and ``target_coord``.
-        The possible values are the same as
-        the level types supported in earthkit.data
-        for a Field. See: :py::func:`earthkit.data.field.component.level_type` for details.
+        The possible values are level types supported in a Field in earthkit.data.
+        See: :py::func:`earthkit.data.field.component.level_type` for details.
         A valid value must be provided.
     interpolation: {"linear", "log", "nearest"}, default="linear"
         Interpolation mode. Default is ``"linear"``. Possible values:
