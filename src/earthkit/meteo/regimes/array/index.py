@@ -9,12 +9,12 @@
 from earthkit.utils.array import array_namespace
 
 
-def project(field, patterns, weights, **patterns_extra_coords):
+def project(fields, patterns, weights, **patterns_extra_coords):
     """Project onto the given regime patterns.
 
     Parameters
     ----------
-    field : array_like
+    fields : array_like
         Input field(s) to project. The patterns are projected onto the trailing
         dimensions of the input fields.
     patterns : earthkit.meteo.regimes.Patterns
@@ -36,8 +36,8 @@ def project(field, patterns, weights, **patterns_extra_coords):
         spatial dimensions of the patterns) are replaced by a regime dimension.
     """
     ndim_field = len(patterns.shape)
-    if field.shape[-ndim_field:] != patterns.shape:
-        raise ValueError(f"shape of input fields {field.shape} incompatible with shape of patterns {patterns.shape}")
+    if fields.shape[-ndim_field:] != patterns.shape:
+        raise ValueError(f"shape of input fields {fields.shape} incompatible with shape of patterns {patterns.shape}")
 
     if weights is None:
         # TODO generate area-based weights from grid of patterns with earthkit-geo
@@ -47,9 +47,9 @@ def project(field, patterns, weights, **patterns_extra_coords):
         raise ValueError(f"shape of weights {weights.shape} must match shape of patterns {patterns.shape}")
     weights = weights / weights.sum()
 
-    field = array_namespace(field).expand_dims(field, -ndim_field - 1)
+    fields = array_namespace(fields).expand_dims(fields, -ndim_field - 1)
     sum_axes = tuple(range(-ndim_field, 0, 1))
-    return (field * patterns.patterns(**patterns_extra_coords) * weights).sum(axis=sum_axes)
+    return (fields * patterns.patterns(**patterns_extra_coords) * weights).sum(axis=sum_axes)
 
 
 def regime_index(projections, mean, std):

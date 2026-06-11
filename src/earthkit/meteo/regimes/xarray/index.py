@@ -63,12 +63,12 @@ def _patterns_xr(patterns, reference_da, patterns_extra_coords):
     return xr.DataArray(patterns.patterns(**extra_coords), coords=coords, dims=dims)
 
 
-def project(field, patterns, weights, **patterns_extra_coords):
+def project(fields, patterns, weights, **patterns_extra_coords):
     """Project onto the given patterns.
 
     Parameters
     ----------
-    field : xarray.DataArray
+    fields : xarray.DataArray
         Input field(s) to project. The patterns are projected onto the trailing
         dimensions of the input fields.
     patterns : earthkit.meteo.regimes.Patterns
@@ -88,13 +88,13 @@ def project(field, patterns, weights, **patterns_extra_coords):
         dimension replacing the spatial dimension(s) reduced in the projection.
     """
     # Dimensions of a single pattern, assumed to be the trailing dimensions
-    field_trailing_shape = field.shape[-patterns.ndim :]
+    field_trailing_shape = fields.shape[-patterns.ndim :]
     if field_trailing_shape != patterns.shape:
         raise ValueError(
             "trailing dimensions of input field must match shape of patterns: "
             f"expected {patterns.shape}, got {field_trailing_shape}"
         )
-    pattern_dims = field.dims[-patterns.ndim :]
+    pattern_dims = fields.dims[-patterns.ndim :]
     # Normalise weights so they sum to zero over the pattern domain and
     # compensate for weights that don't have all pattern dimensions
     if weights is None:
@@ -104,8 +104,8 @@ def project(field, patterns, weights, **patterns_extra_coords):
     weights = weights / weights.sum() * weights.size / patterns.size
     # Matching the behaviour of array.project, introduce the regime dimension
     # as a new outermost dimension
-    patterns_da = _patterns_xr(patterns, field, patterns_extra_coords)
-    return (field * patterns_da).weighted(weights).sum(dim=pattern_dims).rename("projection")
+    patterns_da = _patterns_xr(patterns, fields, patterns_extra_coords)
+    return (fields * patterns_da).weighted(weights).sum(dim=pattern_dims).rename("projection")
 
 
 def regime_index(projections, mean, std):

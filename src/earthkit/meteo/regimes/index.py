@@ -11,12 +11,12 @@ from ..utils.decorators import dispatch
 __all__ = ["project", "regime_index"]
 
 
-def project(field, patterns, weights, **patterns_extra_coords):
+def project(fields, patterns, weights, **patterns_extra_coords):
     """Project onto the given patterns.
 
     Parameters
     ----------
-    field : xarray.DataArray | array_like
+    fields : xarray.DataArray | array_like
         Input field(s) to project. The patterns are projected onto the trailing
         dimensions of the input fields.
     patterns : earthkit.meteo.regimes.Patterns
@@ -43,7 +43,7 @@ def project(field, patterns, weights, **patterns_extra_coords):
         The function returns an object of the same type as the input argument.
     """
     dispatched = dispatch(project, xarray=True, array=True)
-    return dispatched(field, patterns, weights, **patterns_extra_coords)
+    return dispatched(fields, patterns, weights, **patterns_extra_coords)
 
 
 def regime_index(projections, mean, std):
