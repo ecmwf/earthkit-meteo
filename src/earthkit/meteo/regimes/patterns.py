@@ -188,6 +188,6 @@ class ModulatedPatterns(Patterns):
             Modulated patterns.
         """
         modulator = self.xp.asarray(self._modulator(**patterns_extra_coords))
-        # Adapt to shape of patterns
-        modulator = modulator[(..., *((self.xp.newaxis,) * len(self.shape)))]
+        # Adapt to shape of patterns, include patterns as dim
+        modulator = modulator[(..., *((self.xp.newaxis,) * (1 + self.ndim)))]
         return modulator * self._base_patterns

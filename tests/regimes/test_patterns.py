@@ -96,13 +96,13 @@ class TestModulatedPatterns:
 
     def test_patterns_one_argument_scalar(self, patterns):
         pat = patterns.patterns(x=[3.0, 0.0, -4.0], y=1.0)
-        assert pat.shape == (3, *self.dipole.shape)
-        np.testing.assert_allclose(pat[0], self.dipole)
-        np.testing.assert_allclose(pat[1], 0.0)
-        np.testing.assert_allclose(pat[2], -self.dipole)
+        assert pat.shape == (3, 1, *self.dipole.shape)
+        np.testing.assert_allclose(pat[0, 0], self.dipole)
+        np.testing.assert_allclose(pat[1, 0], 0.0)
+        np.testing.assert_allclose(pat[2, 0], -self.dipole)
 
     def test_patterns_both_arguments_vectors(self, patterns):
         pat = patterns.patterns(x=[3.0, -4.0], y=[1.0, 2.0])
-        assert pat.shape == (2, *self.dipole.shape)
-        np.testing.assert_allclose(pat[0], self.dipole)
-        np.testing.assert_allclose(pat[1], -2 * self.dipole)
+        assert pat.shape == (2, 1, *self.dipole.shape)
+        np.testing.assert_allclose(pat[0, 0], self.dipole)
+        np.testing.assert_allclose(pat[1, 0], -2 * self.dipole)
