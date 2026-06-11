@@ -41,6 +41,10 @@ class TestConstantPatterns:
     def test_ndim(self, patterns):
         assert patterns.ndim == 2
 
+    def test_len(self, patterns):
+        assert len(patterns) == 3
+        assert len(patterns) == len(patterns.labels)
+
     def test_patterns(self, patterns):
         pat = patterns.patterns()
         assert len(pat) == 3

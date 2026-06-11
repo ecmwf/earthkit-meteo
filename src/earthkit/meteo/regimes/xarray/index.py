@@ -7,6 +7,60 @@
 # does it submit to any jurisdiction.
 
 import xarray as xr
+from earthkit.utils.array import array_namespace
+
+_PATTERN_DIM = "pattern"
+
+
+def _labels_as_coord(patterns):
+    values = patterns.xp.asarray(patterns.labels)
+    return xr.DataArray(values, coords={_PATTERN_DIM: (_PATTERN_DIM, values)}, dims=[_PATTERN_DIM])
+
+
+def _patterns_xr(patterns, reference_da, patterns_extra_coords):
+    """Patterns evaluated for the given coords (if any) as xr.DataArrays.
+
+    Parameters
+    ----------
+    reference_da : xr.DataArray
+        Reference dataarray to take coordinates and dimension orders from.
+    patterns_extra_coords : Mapping[str,str]
+        Mapping of extra coordinates argument names (as given to .patterns)
+        to DataArray coordinate names (as used in reference_da).
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    import xarray as xr
+
+    xp = patterns.xp
+    # Extra coordinate dims, in order of reference dims
+    extra_dims = [dim for dim in reference_da.dims if dim in patterns_extra_coords.values()]
+    # Output dimensions and coordinates of the patterns
+    dims = [*extra_dims, *reference_da.dims[-patterns.ndim :]]
+    coords = {dim: reference_da.coords[dim] for dim in dims}
+    # Lazy and chunked pattern generation: if the reference dataset is
+    # chunked, transfer its chunking to the coordinates and use the chunk-
+    # enabled array namespace in the next step
+    if reference_da.chunksizes:
+        xp = array_namespace(reference_da.data)
+        coords = {dim: xp.asarray(values).rechunk(reference_da.chunksizes[dim]) for dim, values in coords.items()}
+    # Regime pattern coordinate based on pattern labels: insert after extra
+    # coords and before grid coords
+    assert _PATTERN_DIM not in dims
+    dims.insert(-patterns.ndim, _PATTERN_DIM)
+    coords[_PATTERN_DIM] = _labels_as_coord(patterns)
+    # Cartesian product of coordinates for patterns generator
+    extra_coords_arrs = dict(
+        zip(
+            extra_dims,
+            xp.meshgrid(*(coords[dim] for dim in extra_dims), indexing="ij"),
+        )
+    )
+    # Rearrange to match provided kwarg-coord mapping
+    extra_coords = {kwarg: extra_coords_arrs[patterns_extra_coords[kwarg]] for kwarg in patterns_extra_coords}
+    return xr.DataArray(patterns.patterns(**extra_coords), coords=coords, dims=dims)
 
 
 def project(field, patterns, weights, **patterns_extra_coords):
@@ -52,13 +106,8 @@ def project(field, patterns, weights, **patterns_extra_coords):
     weights = weights / weights.sum() * weights.size / patterns.size
     # Matching the behaviour of array.project, introduce the regime dimension
     # as a new outermost dimension
-    return xr.concat(
-        [
-            (field * pattern).weighted(weights).sum(dim=pattern_dims).assign_coords({"pattern": label})
-            for label, pattern in patterns._patterns_iterxr(field, patterns_extra_coords)
-        ],
-        dim="pattern",
-    ).rename("projection")
+    patterns_da = _patterns_xr(patterns, field, patterns_extra_coords)
+    return (field * patterns_da).weighted(weights).sum(dim=pattern_dims).rename("projection")
 
 
 def regime_index(projections, mean, std):

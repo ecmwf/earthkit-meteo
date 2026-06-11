@@ -70,53 +70,11 @@ class Patterns(abc.ABC):
     def patterns(self, **patterns_extra_coords) -> collections.abc.Mapping:
         """Patterns evaluated for the given coords (if any)."""
 
-    # While it would be nice to expose the this to the user, keep it internal
-    # for now until a more elegant solution is found. Ideally, this function
-    # would only take **pattern_extra_coords, but the ordering of the
-    # dimensions matters and the dimensions/coordinates of the pattern itself
-    # need to be added in. We might be able to get the latter from the gridspec
-    # at some point. For now, everything is taken from a reference dataset to
-    # ensure that dimension order and naming matches.
-    def _patterns_iterxr(self, reference_da, patterns_extra_coords):
-        """Patterns evaluated for the given coords (if any) as xr.DataArrays.
-
-        Parameters
-        ----------
-        reference_da : xr.DataArray
-            Reference dataarray to take coordinates and dimension orders from.
-        patterns_extra_coords : Mapping[str, str]
-            Mapping of extra coordinates argument names (as given to .patterns)
-            to DataArray coordinate names (as used in reference_da).
-        """
-        import xarray as xr
-
-        xp = self.xp
-        # Extra coordinate dims, in order of reference dims
-        extra_dims = [dim for dim in reference_da.dims if dim in patterns_extra_coords.values()]
-        # Output dimensions and coordinates of the patterns
-        dims = [*extra_dims, *reference_da.dims[-self.ndim :]]
-        coords = {dim: reference_da.coords[dim] for dim in dims}
-        # Lazy and chunked pattern generation: if the reference dataset is
-        # chunked, transfer its chunking to the coordinates and use the chunk-
-        # enabled array namespace in the next step
-        if reference_da.chunksizes:
-            xp = array_namespace(reference_da.data)
-            coords = {dim: xp.asarray(values).rechunk(reference_da.chunksizes[dim]) for dim, values in coords.items()}
-        # Cartesian product of coordinates for patterns generator
-        extra_coords_arrs = dict(
-            zip(
-                extra_dims,
-                xp.meshgrid(*(coords[dim] for dim in extra_dims), indexing="ij"),
-            )
-        )
-        # Rearrange to match provided kwarg-coord mapping
-        extra_coords = {kwarg: extra_coords_arrs[patterns_extra_coords[kwarg]] for kwarg in patterns_extra_coords}
-        # Delegate the pattern generation and package the patterns as DataArrays
-        for name, patterns in self.patterns(**extra_coords).items():
-            yield name, xr.DataArray(patterns, coords=coords, dims=dims)
-
     def __repr__(self):
         return f"{self.__class__.__name__}{self.labels}"
+
+    def __len__(self):
+        return len(self._labels)
 
 
 class DeferredPatternsDict(collections.abc.Mapping):
