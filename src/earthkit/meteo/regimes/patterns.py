@@ -7,7 +7,6 @@
 # does it submit to any jurisdiction.
 
 import abc
-import collections.abc
 import functools
 import operator
 
@@ -67,37 +66,11 @@ class Patterns(abc.ABC):
         return self._xp
 
     @abc.abstractmethod
-    def patterns(self, **patterns_extra_coords) -> collections.abc.Mapping:
+    def patterns(self, **patterns_extra_coords):
         """Patterns evaluated for the given coords (if any)."""
 
     def __repr__(self):
         return f"{self.__class__.__name__}{self.labels}"
-
-    def __len__(self):
-        return len(self._labels)
-
-
-class DeferredPatternsDict(collections.abc.Mapping):
-    """Mapping that evaluates patterns on access.
-
-    Parameters
-    ----------
-    labels : Iterable[str]
-        Labels for the patterns (keys).
-    getter : Callable[[str], array_like]
-        Function that returns evaluated patterns for a given label.
-    """
-
-    def __init__(self, labels, getter):
-        self._labels = tuple(labels)
-        assert callable(getter)
-        self._getter = getter
-
-    def __getitem__(self, key):
-        return self._getter(key)
-
-    def __iter__(self):
-        yield from self._labels
 
     def __len__(self):
         return len(self._labels)
