@@ -24,7 +24,7 @@ def project(fields, patterns, weights, patterns_coords=None):
     weights : xarray.DataArray | array_like
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1.
-    patterns_coords : dict[str,Any] | dict[str,array_like], optional
+    patterns_coords : Mapping[str,str] | Sequence[str] | Mapping[str,array_like], optional
         Coordinates for the pattern generation function.
 
     Returns
