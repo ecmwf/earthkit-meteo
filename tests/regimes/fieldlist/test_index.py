@@ -48,9 +48,9 @@ def test_project_with_constant_patterns(fields, weights):
     patterns = ConstantPatterns(labels=["foo", "bar"], patterns=[[[1.0, 1.0]], [[0.1, 0.9]]], grid=GRID_SPEC)
     result = fieldlist.project(fields, patterns, weights)
     reference = array.project(fields.data(keys="value", flatten=False), patterns, weights)
-
     assert result.shape == (4, 2)
-    np.testing.assert_allclose(result, reference)
+    np.testing.assert_array_equal(result, reference)
+    np.testing.assert_array_equal(result.columns, ["bar", "foo"])
 
 
 @pytest.mark.parametrize("weights", [None, np.asarray([[1.0, 1.0]]), np.asarray([[0.2, 0.8]])])
@@ -68,6 +68,23 @@ def test_project_with_valid_time_dependent_patterns(fields, weights):
         weights,
         patterns_coords={"t": fields.get("time.valid_datetime")},
     )
-
     assert result.shape == (4, 2)
-    np.testing.assert_allclose(result, reference)
+    np.testing.assert_array_equal(result, reference)
+    np.testing.assert_array_equal(result.columns, ["foo", "bar"])
+
+
+def test_project_with_automatic_regridding():
+    field = ekd.Field.from_components(
+        values=np.asarray([[0.0, 0.0, 0.0, 0.0], [0.0, 1.0, 1.0, 0.0], [0.0, 1.0, 1.0, 0.0]]),
+        geography={"grid_spec": {"grid": [1.0, 1.0], "area": [46.0, -1.0, 44.0, 2.0]}},
+    )
+    patterns = ConstantPatterns(
+        labels=["foo", "bar"],
+        grid={"grid": [1.0, 1.0], "area": [45.0, 0.0, 44.0, 1.0]},
+        patterns=np.asarray([
+            [[1.0, 1.0], [1.0, 1.0]],
+            [[2.0, 2.0], [2.0, 2.0]],
+        ]),
+    )
+    result = fieldlist.project(field, patterns, weights=np.ones((2, 2)))
+    np.testing.assert_allclose(result, [[1.0, 2.0]])

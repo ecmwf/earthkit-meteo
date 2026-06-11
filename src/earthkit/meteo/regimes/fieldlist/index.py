@@ -7,6 +7,7 @@
 # does it submit to any jurisdiction.
 
 import earthkit.data as ekd
+import earthkit.geo as ekg
 import pandas as pd
 
 from .. import array as regimes_array
@@ -42,9 +43,15 @@ def project(field, patterns, weights=None, patterns_coords=None):
     weights = prepare_normalised_weights(weights, patterns)
     if not isinstance(field, ekd.FieldList):
         field = field.to_fieldlist()
-    # Project field-by-field to keep peak memory usage down
     proj = []
     for fld in field:
+        # Automatic regridding of fields to match pattern grid (including
+        # cropping to pattern area)
+        if fld.get("geography.grid") != patterns.grid:
+            try:
+                fld = ekg.regrid(fld, out_grid=patterns.grid)
+            except RuntimeError as e:
+                raise RuntimeError(f"regridding to pattern grid failed for {fld!r}") from e
         values = fld.data(keys="value", flatten=False)
         # Extract extra coordinates required for the pattern generation
         coords = {kwarg: fld.get(coord) for kwarg, coord in patterns_coords.items()}
