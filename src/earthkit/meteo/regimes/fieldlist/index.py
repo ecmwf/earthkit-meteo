@@ -13,7 +13,7 @@ from .. import array as regimes_array
 from .._weights import prepare_normalised_weights
 
 
-def project(field, patterns, weights=None, **patterns_extra_coords):
+def project(field, patterns, weights=None, patterns_coords=None):
     """Project onto the given patterns.
 
     Parameters
@@ -27,7 +27,7 @@ def project(field, patterns, weights=None, **patterns_extra_coords):
         before application so the sum of weights over the domain equals 1. Must
         have the shape of the patterns. If no weights are specified, area-based
         weights are generated from the cosine of latitude of the patterns grid.
-    **patterns_extra_coords : dict[str, str], optional
+    patterns_coords : Mapping[str,str], optional
         Mapping of field metadata keys to keyword arguments of the pattern
         generator.
 
@@ -37,6 +37,8 @@ def project(field, patterns, weights=None, **patterns_extra_coords):
         The projection(s) for each pattern. One column per pattern, one row
         per field (same order as input fields).
     """
+    if patterns_coords is None:
+        patterns_coords = {}
     weights = prepare_normalised_weights(weights, patterns)
     if not isinstance(field, ekd.FieldList):
         field = field.to_fieldlist()
@@ -45,6 +47,6 @@ def project(field, patterns, weights=None, **patterns_extra_coords):
     for fld in field:
         values = fld.data(keys="value", flatten=False)
         # Extract extra coordinates required for the pattern generation
-        coords = {kwarg: fld.get(coord) for kwarg, coord in patterns_extra_coords.items()}
-        proj.append(regimes_array.project(values, patterns, weights, **coords))
+        coords = {kwarg: fld.get(coord) for kwarg, coord in patterns_coords.items()}
+        proj.append(regimes_array.project(values, patterns, weights, patterns_coords=coords))
     return pd.DataFrame.from_records(proj, columns=patterns.labels)

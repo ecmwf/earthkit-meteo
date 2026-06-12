@@ -38,7 +38,7 @@ def data3d():
 def patterns():
     class MockPatternsForData3d(Patterns):
         def __init__(self):
-            grid = {"grid": [1.0, 1.0], "area": [46.0, 0.0, 45.0, 3.0]}
+            grid = ekg.grids.Grid({"grid": [10.0, 10.0], "area": [60.0, -10.0, 50.0, 20.0]})
             super().__init__(["a", "b"], grid=grid, xp=np)
 
         def patterns(self, **kwargs):
@@ -85,14 +85,15 @@ def test_project_with_full_dimensional_weights(data3d, patterns):
 
 def test_project_ensures_weight_dims_are_pattern_dims(data3d, patterns):
     with pytest.raises(ValueError):
-        project(data3d, patterns, weights=data3d, foo="foo")  # dimension foo is not a pattern dim
+        project(data3d, patterns, weights=data3d, patterns_coords=["foo"])  # dimension foo is not a pattern dim
 
 
 def test_project_with_weights_generation(data3d, patterns):
-    result = project(data3d, patterns, foo="foo")
+    result = project(data3d, patterns, patterns_coords=["foo"])
     # Project with explicit cos(lat)-weights for reference
     weights = np.cos(np.deg2rad(data3d.coords["lat"]))
-    reference = project(data3d, patterns, weights=weights, foo="foo")
+    print(weights)
+    reference = project(data3d, patterns, weights=weights, patterns_coords=["foo"])
     xr.testing.assert_allclose(result, reference)
 
 

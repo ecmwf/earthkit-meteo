@@ -45,7 +45,7 @@ def fields():
 
 @pytest.mark.parametrize("weights", [None, np.asarray([[1.0, 1.0]]), np.asarray([[0.2, 0.8]])])
 def test_project_with_constant_patterns(fields, weights):
-    patterns = ConstantPatterns(labels=["foo", "bar"], grid=GRID_SPEC, patterns=[[[1.0, 1.0]], [[0.1, 0.9]]])
+    patterns = ConstantPatterns(labels=["foo", "bar"], patterns=[[[1.0, 1.0]], [[0.1, 0.9]]], grid=GRID_SPEC)
     result = fieldlist.project(fields, patterns, weights)
     reference = array.project(fields.data(keys="value", flatten=False), patterns, weights)
 
@@ -57,13 +57,16 @@ def test_project_with_constant_patterns(fields, weights):
 def test_project_with_valid_time_dependent_patterns(fields, weights):
     patterns = ModulatedPatterns(
         labels=["foo", "bar"],
-        grid=GRID_SPEC,
         base_patterns=[[[1.0, 1.0]], [[0.1, 0.9]]],
         modulator=lambda t: pd.to_datetime(t).hour,
+        grid=GRID_SPEC,
     )
-    result = fieldlist.project(fields, patterns, weights, t="time.valid_datetime")
+    result = fieldlist.project(fields, patterns, weights, patterns_coords={"t": "time.valid_datetime"})
     reference = array.project(
-        fields.data(keys="value", flatten=False), patterns, weights, t=fields.get("time.valid_datetime")
+        fields.data(keys="value", flatten=False),
+        patterns,
+        weights,
+        patterns_coords={"t": fields.get("time.valid_datetime")},
     )
 
     assert result.shape == (4, 2)
