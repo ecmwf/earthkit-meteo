@@ -18,8 +18,8 @@ from earthkit.meteo.regimes import xarray as regimes_xarray
 def patterns():
     return regimes.ConstantPatterns(
         labels=["foo", "bar"],
-        grid={"grid": [1.0, 1.0], "area": [45.0, 0.0, 45.0, 1.0]},
         patterns=[[[1.0, 1.0]], [[0.1, 0.9]]],
+        grid={"grid": [1.0, 1.0], "area": [45.0, 0.0, 45.0, 1.0]},
     )
 
 

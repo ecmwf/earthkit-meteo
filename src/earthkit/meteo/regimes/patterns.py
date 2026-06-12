@@ -27,7 +27,7 @@ class Patterns(abc.ABC):
         Array namespace of the generated patterns.
     """
 
-    def __init__(self, labels, grid, xp):
+    def __init__(self, labels, *, grid, xp):
         self._labels = tuple(labels)
         self._grid = grid
         self._xp = xp
@@ -83,19 +83,19 @@ class ConstantPatterns(Patterns):
     ----------
     labels : Iterable[str]
         Labels for the patterns.
-    grid : dict
-        Specification of the grid on which the patterns live.
     patterns : array_like
         The patterns (one for each label, stacked into a single array).
+    grid : dict
+        Specification of the grid on which the patterns live.
     xp : array_namespace, optional
         The array namespace used for the patterns and their generation. By
         default, it is inferred from the type of `base_patterns`.
     """
 
-    def __init__(self, labels, grid, patterns, xp=None):
+    def __init__(self, labels, patterns, *, grid, xp=None):
         if xp is None:
             xp = array_namespace(patterns)
-        super().__init__(labels, grid, xp)
+        super().__init__(labels, grid=grid, xp=xp)
         self._patterns = self._xp.asarray(patterns)
         if self._patterns.ndim != 1 + len(self.shape):
             raise ValueError("must have exactly one label axis in the patterns")
@@ -120,23 +120,23 @@ class ModulatedPatterns(Patterns):
     ----------
     labels : Iterable[str]
         Labels for the patterns.
-    grid : dict
-        Specification of the grid on which the patterns live.
     base_patterns : array_like
         Base patterns (one for each label, stacked into a single array).
     modulator : Callable[Any,array_like]
         Scalar function to modulate the base patterns. The parameters required
         to evaluate this function must be provided when projecting as
         `patterns_extra_coords` kwargs.
+    grid : dict
+        Specification of the grid on which the patterns live.
     xp : array_namespace, optional
         The array namespace used for the patterns and their generation. By
         default, it is inferred from the type of `base_patterns`.
     """
 
-    def __init__(self, labels, grid, base_patterns, modulator, xp=None):
+    def __init__(self, labels, base_patterns, modulator, *, grid, xp=None):
         if xp is None:
             xp = array_namespace(base_patterns)
-        super().__init__(labels, grid, xp)
+        super().__init__(labels, grid=grid, xp=xp)
         self._base_patterns = self.xp.asarray(base_patterns)
         # Pattern verification
         if self._base_patterns.ndim != 1 + len(self.shape):
