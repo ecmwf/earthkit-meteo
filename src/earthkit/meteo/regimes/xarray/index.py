@@ -12,11 +12,6 @@ import xarray as xr
 from earthkit.utils.array import array_namespace
 
 
-def _labels_as_coord(patterns, name):
-    values = patterns.xp.asarray(patterns.labels)
-    return xr.DataArray(values, coords={name: (name, values)}, dims=[name])
-
-
 def _patterns_xr(patterns, reference_da, patterns_coords, patterns_dim="pattern"):
     """Patterns evaluated for the given coords (if any) as xr.DataArrays.
 
@@ -33,6 +28,8 @@ def _patterns_xr(patterns, reference_da, patterns_coords, patterns_dim="pattern"
     -------
     xarray.DataArray
     """
+    if patterns_dim in reference_da.dims:
+        raise ValueError("pattern dimension '{patterns_dim}' already exists")
     xp = patterns.xp
     # Extra coordinate dims, in order of reference dims
     extra_dims = [dim for dim in reference_da.dims if dim in patterns_coords.values()]
@@ -46,10 +43,10 @@ def _patterns_xr(patterns, reference_da, patterns_coords, patterns_dim="pattern"
         xp = array_namespace(reference_da.data)
         coords = {dim: xp.asarray(values).rechunk(reference_da.chunksizes[dim]) for dim, values in coords.items()}
     # Regime pattern coordinate based on pattern labels: insert after extra
-    # coords and before grid coords
-    assert patterns_dim not in dims
-    dims.insert(-patterns.ndim, patterns_dim)
-    coords[patterns_dim] = _labels_as_coord(patterns, patterns_dim)
+    # coords and before grid coords. This leaves it as the innermost dimension
+    # after the projection.
+    dims.insert(len(dims) - patterns.ndim, patterns_dim)
+    coords[patterns_dim] = xr.DataArray(xp.asarray(patterns.labels), dims=[patterns_dim])
     # Cartesian product of coordinates for patterns generator
     extra_coords_arrs = dict(
         zip(
@@ -91,6 +88,7 @@ def project(fields, patterns, weights, patterns_coords=None):
         patterns_coords = {}
     elif isinstance(patterns_coords, Sequence):
         patterns_coords = {coord: coord for coord in patterns_coords}
+
     # Dimensions of a single pattern, assumed to be the trailing dimensions
     field_trailing_shape = fields.shape[-patterns.ndim :]
     if field_trailing_shape != patterns.shape:
@@ -99,15 +97,15 @@ def project(fields, patterns, weights, patterns_coords=None):
             f"expected {patterns.shape}, got {field_trailing_shape}"
         )
     pattern_dims = fields.dims[-patterns.ndim :]
-    # Normalise weights so they sum to zero over the pattern domain and
+
+    # Normalise weights so they sum to one over the pattern domain and
     # compensate for weights that don't have all pattern dimensions
     if weights is None:
         raise NotImplementedError("automatic generation of weights")
     if set(weights.dims) - set(pattern_dims):
         raise ValueError("weight must only be specified over pattern dimensions")
     weights = weights / weights.sum() * weights.size / patterns.size
-    # Matching the behaviour of array.project, introduce the regime dimension
-    # as a new outermost dimension
+
     patterns_da = _patterns_xr(patterns, fields, patterns_coords)
     return (fields * patterns_da).weighted(weights).sum(dim=pattern_dims).rename("projection")
 

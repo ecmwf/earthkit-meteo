@@ -66,7 +66,7 @@ class Patterns(abc.ABC):
         return self._xp
 
     @abc.abstractmethod
-    def patterns(self, **patterns_extra_coords):
+    def patterns(self, **patterns_coords):
         """Patterns evaluated for the given coords (if any)."""
 
     def __repr__(self):
@@ -89,7 +89,7 @@ class ConstantPatterns(Patterns):
         Specification of the grid on which the patterns live.
     xp : array_namespace, optional
         The array namespace used for the patterns and their generation. By
-        default, it is inferred from the type of `base_patterns`.
+        default, it is inferred from the type of `patterns`.
     """
 
     def __init__(self, labels, patterns, *, grid, xp=None):
@@ -103,18 +103,20 @@ class ConstantPatterns(Patterns):
             raise ValueError("number of labels does not match number of patterns")
 
     def patterns(self):
-        """All patterns.
+        """Patterns.
 
         Returns
         -------
-        dict[str,array_like]
-            Mapping from labels to patterns.
+        array_like
         """
         return self._patterns
 
 
 class ModulatedPatterns(Patterns):
-    """Patterns generated from a set of base patterns and a custom scalar function.
+    """Patterns generated from base patterns and a custom scalar function.
+
+    The base patterns are multiplied with the return values of the modulation
+    function to generate the patterns.
 
     Parameters
     ----------
@@ -147,20 +149,20 @@ class ModulatedPatterns(Patterns):
         if not callable(self._modulator):
             raise ValueError("modulator must be callable")
 
-    def patterns(self, **patterns_extra_coords):
+    def patterns(self, **patterns_coords):
         """Evaluated patterns for a given input to the modulator function.
 
         Parameters
         ----------
-        **patterns_extra_coords : dict[str,Any], optional
+        **patterns_coords : dict[str,Any], optional
             Keyword arguments for the modulator function.
 
         Returns
         -------
-        Mapping[str,array_like]
+        array_like
             Modulated patterns.
         """
-        modulator = self.xp.asarray(self._modulator(**patterns_extra_coords))
+        modulator = self.xp.asarray(self._modulator(**patterns_coords))
         # Adapt to shape of patterns, include patterns as dim
         modulator = modulator[(..., *((self.xp.newaxis,) * (1 + self.ndim)))]
         return modulator * self._base_patterns

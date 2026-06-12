@@ -24,8 +24,9 @@ def project(fields, patterns, weights, patterns_coords=None):
     weights : xarray.DataArray | array_like
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1.
-    patterns_coords : Mapping[str,str] | Sequence[str] | Mapping[str,array_like], optional
-        Coordinates for the pattern generation function.
+    patterns_coords : Mapping[str,Any] | Sequence[str], optional
+        Coordinates for the pattern generation function. Consult the individual
+        implementations on the interpretation.
 
     Returns
     -------
@@ -58,7 +59,7 @@ def regime_index(projections, mean, std):
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray | array_like
         Standardised projection.
 
 

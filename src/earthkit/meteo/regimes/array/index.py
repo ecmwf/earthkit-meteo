@@ -23,7 +23,7 @@ def project(fields, patterns, weights, patterns_coords=None):
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1. Must
         have shape of the patterns.
-    patterns_coords : dict[str,Any], optional
+    patterns_coords : Mapping[str,Any], optional
         Keyword arguments for the pattern generation. E.g., a sequence of
         dates for date-modulated patterns. Must have the shape of `field`
         without the trailing dimensions onto which the patterns are projected.
