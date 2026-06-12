@@ -10,49 +10,61 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from earthkit.meteo.utils.testing import NO_EKD
-
-pytestmark = pytest.mark.skipif(NO_EKD, reason="EKD is not installed")
+ekd = pytest.importorskip("earthkit.data")
 
 from earthkit.meteo.regimes import ConstantPatterns, ModulatedPatterns, array, fieldlist
 
-GRIDSPEC = {"grid": [1.0, 1.0], "area": [45.0, 0.0, 45.0, 1.0]}
+GRID_SPEC = {"grid": [1.0, 1.0], "area": [45.0, 0.0, 45.0, 1.0]}
 
 
 @pytest.fixture
 def fields():
-    from earthkit.data import Field, FieldList
-
-    return FieldList.from_fields([
-        Field.from_components(values=np.asarray([[1.0, 1.0]]), time={"base_datetime": "2020-01-01T00:00", "step": 0}),
-        Field.from_components(values=np.asarray([[1.0, 6.0]]), time={"base_datetime": "2020-01-01T00:00", "step": 3}),
-        Field.from_components(values=np.asarray([[6.0, 1.0]]), time={"base_datetime": "2020-01-01T00:00", "step": 6}),
-        Field.from_components(values=np.asarray([[6.0, 6.0]]), time={"base_datetime": "2020-01-01T00:00", "step": 9}),
+    return ekd.FieldList.from_fields([
+        ekd.Field.from_components(
+            values=np.asarray([[1.0, 1.0]]),
+            time={"base_datetime": "2020-01-01T00:00", "step": 0},
+            geography={"grid_spec": GRID_SPEC},
+        ),
+        ekd.Field.from_components(
+            values=np.asarray([[1.0, 6.0]]),
+            time={"base_datetime": "2020-01-01T00:00", "step": 3},
+            geography={"grid_spec": GRID_SPEC},
+        ),
+        ekd.Field.from_components(
+            values=np.asarray([[6.0, 1.0]]),
+            time={"base_datetime": "2020-01-01T00:00", "step": 6},
+            geography={"grid_spec": GRID_SPEC},
+        ),
+        ekd.Field.from_components(
+            values=np.asarray([[6.0, 6.0]]),
+            time={"base_datetime": "2020-01-01T00:00", "step": 9},
+            geography={"grid_spec": GRID_SPEC},
+        ),
     ])
 
 
-@pytest.mark.parametrize("weights", [np.asarray([[1.0, 1.0]]), np.asarray([[0.2, 0.8]])])
+@pytest.mark.parametrize("weights", [None, np.asarray([[1.0, 1.0]]), np.asarray([[0.2, 0.8]])])
 def test_project_with_constant_patterns(fields, weights):
-    patterns = ConstantPatterns(labels=["foo", "bar"], grid=GRIDSPEC, patterns=[[[1.0, 1.0]], [[0.1, 0.9]]])
+    patterns = ConstantPatterns(labels=["foo", "bar"], grid=GRID_SPEC, patterns=[[[1.0, 1.0]], [[0.1, 0.9]]])
     result = fieldlist.project(fields, patterns, weights)
-    reference = array.project(fields.values[:, None, :], patterns, weights)
+    reference = array.project(fields.data(keys="value", flatten=False), patterns, weights)
 
     assert result.shape == (4, 2)
-    np.testing.assert_allclose(result["foo"], reference["foo"])
-    np.testing.assert_allclose(result["bar"], reference["bar"])
+    np.testing.assert_allclose(result, reference)
 
 
-@pytest.mark.parametrize("weights", [np.asarray([[1.0, 1.0]]), np.asarray([[0.2, 0.8]])])
+@pytest.mark.parametrize("weights", [None, np.asarray([[1.0, 1.0]]), np.asarray([[0.2, 0.8]])])
 def test_project_with_valid_time_dependent_patterns(fields, weights):
     patterns = ModulatedPatterns(
         labels=["foo", "bar"],
-        grid=GRIDSPEC,
+        grid=GRID_SPEC,
         base_patterns=[[[1.0, 1.0]], [[0.1, 0.9]]],
         modulator=lambda t: pd.to_datetime(t).hour,
     )
     result = fieldlist.project(fields, patterns, weights, t="time.valid_datetime")
-    reference = array.project(fields.values[:, None, :], patterns, weights, t=fields.get("time.valid_datetime"))
+    reference = array.project(
+        fields.data(keys="value", flatten=False), patterns, weights, t=fields.get("time.valid_datetime")
+    )
 
     assert result.shape == (4, 2)
-    np.testing.assert_allclose(result["foo"], reference["foo"])
-    np.testing.assert_allclose(result["bar"], reference["bar"])
+    np.testing.assert_allclose(result, reference)

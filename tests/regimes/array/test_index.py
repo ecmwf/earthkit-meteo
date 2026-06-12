@@ -9,21 +9,25 @@
 import numpy as np
 import pytest
 
-from earthkit.meteo.regimes import array
+ekg = pytest.importorskip("earthkit.geo")
+
+from earthkit.meteo.regimes import Patterns, array
 
 
 @pytest.fixture
 def patterns():
-    class MockPatterns:
+    class MockPatterns(Patterns):
         _lat = np.linspace(90.0, 0.0, 91)
         _lon = np.linspace(60.0, -60.0, 121)
         _dipole = np.cos(np.deg2rad(_lon[None, :])) * np.cos(np.deg2rad(_lat[:, None]) * 2)
         _monopole = np.cos(np.deg2rad(_lon[None, :])) * np.sin(np.deg2rad(_lat[:, None]) * 2)
-        shape = (91, 121)
-        grid = {
+        grid = ekg.grids.Grid({
             "grid": [1.0, 1.0],
-            "area": [max(_lat), min(_lon), min(_lat), max(_lon)],
-        }
+            "area": [max(_lat).item(), min(_lon).item(), min(_lat).item(), max(_lon).item()],
+        })
+
+        def __init__(self):
+            super().__init__(["a", "b", "c"], grid=self.grid, xp=np)
 
         def patterns(self, multiple=False):
             out = np.asarray([self._dipole, self._monopole, -self._dipole])
@@ -82,9 +86,14 @@ def test_project_maintains_shape(patterns):
     assert proj.shape == (2, 3, 4, 3)
 
 
-@pytest.mark.xfail(reason="grid info not available from earthkit-geo")
-def test_project_generates_weights_by_default(patterns):
-    array.project(np.ones(patterns.shape), patterns)
+def test_project_generates_coslat_weights_by_default(patterns):
+    result = array.project(np.ones(patterns.shape), patterns)
+
+    lat_2d = np.repeat(patterns._lat, patterns._lon.size).reshape(patterns.shape)
+    coslat = np.cos(np.deg2rad(lat_2d))
+    reference = array.project(np.ones(patterns.shape), patterns, weights=coslat)
+
+    np.testing.assert_allclose(result, reference)
 
 
 def test_project_with_single_pattern_return(patterns):

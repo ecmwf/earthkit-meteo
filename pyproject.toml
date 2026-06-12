@@ -34,7 +34,7 @@ name = "earthkit-meteo"
 readme = "README.md"
 requires-python = ">=3.10"
 optional-dependencies.all = [
-  "earthkit-meteo[samples,scores,stats]"
+  "earthkit-meteo[regimes,samples,scores,stats]"
 ]
 optional-dependencies.dev = [
   "earthkit-meteo[all,docs,test]"
@@ -61,6 +61,9 @@ optional-dependencies.gpu = [
 optional-dependencies.lunar = [
   "astropy"
 ]
+optional-dependencies.regimes = [
+  "earthkit-geo"
+]
 optional-dependencies.samples = [
   "requests"
 ]
@@ -75,6 +78,7 @@ optional-dependencies.stats = [
 optional-dependencies.test = [
   "astropy",
   "earthkit-data",
+  "earthkit-geo",
   "netcdf4",
   "pandas",
   "pytest",

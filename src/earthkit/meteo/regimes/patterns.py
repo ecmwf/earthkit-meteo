@@ -7,9 +7,8 @@
 # does it submit to any jurisdiction.
 
 import abc
-import functools
-import operator
 
+from earthkit.geo.grids import Grid
 from earthkit.utils.array import array_namespace
 
 
@@ -21,7 +20,7 @@ class Patterns(abc.ABC):
     labels : Iterable[str]
         Labels for the patterns. The ordering determines the ordering of all
         outputs.
-    grid : dict
+    grid : earthkit.geo.Grid | dict | str
         Specification of the grid on which the patterns live.
     xp : array_namespace, optional
         Array namespace of the generated patterns.
@@ -29,7 +28,7 @@ class Patterns(abc.ABC):
 
     def __init__(self, labels, *, grid, xp):
         self._labels = tuple(labels)
-        self._grid = grid
+        self._grid = grid if isinstance(grid, Grid) else Grid(grid)
         self._xp = xp
 
     @property
@@ -38,22 +37,19 @@ class Patterns(abc.ABC):
         return self._labels
 
     @property
-    def grid(self) -> dict:
+    def grid(self) -> Grid:
         """The grid on which the patterns live."""
         return self._grid
 
     @property
     def shape(self):
         """Shape of a single pattern."""
-        # TODO placeholder until this functionality is available from earthkit-geo
-        lat0, lon0, lat1, lon1 = self.grid["area"]
-        dlat, dlon = self.grid["grid"]
-        return (int(abs(lat0 - lat1) / dlat) + 1, int(abs(lon0 - lon1) / dlon) + 1)
+        return self._grid.shape
 
     @property
     def size(self) -> int:
         """Number of grid points in a single pattern."""
-        return functools.reduce(operator.mul, self.shape)
+        return self._grid.size()
 
     @property
     def ndim(self) -> int:

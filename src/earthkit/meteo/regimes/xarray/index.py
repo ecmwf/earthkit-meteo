@@ -11,6 +11,8 @@ from collections.abc import Sequence
 import xarray as xr
 from earthkit.utils.array import array_namespace
 
+from .._weights import generate_area_weights
+
 
 def _patterns_xr(patterns, reference_da, patterns_coords, patterns_dim="pattern"):
     """Patterns evaluated for the given coords (if any) as xr.DataArrays.
@@ -59,7 +61,7 @@ def _patterns_xr(patterns, reference_da, patterns_coords, patterns_dim="pattern"
     return xr.DataArray(patterns.patterns(**extra_coords), coords=coords, dims=dims)
 
 
-def project(fields, patterns, weights, patterns_coords=None):
+def project(fields, patterns, weights=None, patterns_coords=None):
     """Project onto the given patterns.
 
     Parameters
@@ -71,7 +73,9 @@ def project(fields, patterns, weights, patterns_coords=None):
         Patterns to project on.
     weights : xarray.DataArray
         Weights for the summation in the projection. Weights are normalised
-        before application so the sum of weights over the domain equals 1.
+        before application so the sum of weights over the domain equals 1. If no
+        weights are specified, area-based weights are generated from the cosine
+        of latitude of the patterns grid.
     patterns_coords : Mapping[str,str] | Sequence[str], optional
         Mapping of coordinate names to keyword arguments of the pattern
         generation function. If a sequence is given, argument and associated
@@ -97,13 +101,13 @@ def project(fields, patterns, weights, patterns_coords=None):
             f"expected {patterns.shape}, got {field_trailing_shape}"
         )
     pattern_dims = fields.dims[-patterns.ndim :]
-
-    # Normalise weights so they sum to one over the pattern domain and
-    # compensate for weights that don't have all pattern dimensions
     if weights is None:
-        raise NotImplementedError("automatic generation of weights")
+        weights = generate_area_weights(patterns.grid, patterns.xp)
+        pattern_coords = {dim: fields.coords[dim] for dim in pattern_dims}
+        weights = xr.DataArray(weights, coords=pattern_coords, dims=pattern_dims)
     if set(weights.dims) - set(pattern_dims):
         raise ValueError("weight must only be specified over pattern dimensions")
+    # Normalise weights and compensate for weights without all pattern dimensions
     weights = weights / weights.sum() * weights.size / patterns.size
 
     patterns_da = _patterns_xr(patterns, fields, patterns_coords)

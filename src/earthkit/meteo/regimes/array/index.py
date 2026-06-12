@@ -8,8 +8,10 @@
 
 from earthkit.utils.array import array_namespace
 
+from .._weights import prepare_normalised_weights
 
-def project(fields, patterns, weights, patterns_coords=None):
+
+def project(fields, patterns, weights=None, patterns_coords=None):
     """Project onto the given regime patterns.
 
     Parameters
@@ -19,10 +21,11 @@ def project(fields, patterns, weights, patterns_coords=None):
         dimensions of the input fields.
     patterns : earthkit.meteo.regimes.Patterns
         Patterns to project on.
-    weights : array_like
+    weights : array_like, optional
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1. Must
-        have shape of the patterns.
+        have shape of the patterns. If no weights are specified, area-based
+        weights are generated from the cosine of latitude of the patterns grid.
     patterns_coords : Mapping[str,Any], optional
         Keyword arguments for the pattern generation. E.g., a sequence of
         dates for date-modulated patterns. Must have the shape of `field`
@@ -38,18 +41,10 @@ def project(fields, patterns, weights, patterns_coords=None):
     if patterns_coords is None:
         patterns_coords = {}
     ndim_field = len(patterns.shape)
+    fields = array_namespace(fields).expand_dims(fields, -ndim_field - 1)
     if fields.shape[-ndim_field:] != patterns.shape:
         raise ValueError(f"shape of input fields {fields.shape} incompatible with shape of patterns {patterns.shape}")
-
-    if weights is None:
-        # TODO generate area-based weights from grid of patterns with earthkit-geo
-        # TODO make weights an optional argument with None default and document
-        raise NotImplementedError("automatic generation of weights")
-    if weights.shape != patterns.shape:
-        raise ValueError(f"shape of weights {weights.shape} must match shape of patterns {patterns.shape}")
-    weights = weights / weights.sum()
-
-    fields = array_namespace(fields).expand_dims(fields, -ndim_field - 1)
+    weights = prepare_normalised_weights(weights, patterns)
     sum_axes = tuple(range(-ndim_field, 0, 1))
     return (fields * patterns.patterns(**patterns_coords) * weights).sum(axis=sum_axes)
 

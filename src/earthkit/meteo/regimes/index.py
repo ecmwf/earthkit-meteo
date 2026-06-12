@@ -11,7 +11,7 @@ from ..utils.decorators import dispatch
 __all__ = ["project", "regime_index"]
 
 
-def project(fields, patterns, weights, patterns_coords=None):
+def project(fields, patterns, weights=None, patterns_coords=None):
     """Project onto the given patterns.
 
     Parameters
@@ -21,9 +21,11 @@ def project(fields, patterns, weights, patterns_coords=None):
         dimensions of the input fields.
     patterns : earthkit.meteo.regimes.Patterns
         Patterns to project on.
-    weights : xarray.DataArray | array_like
+    weights : xarray.DataArray | array_like, optional
         Weights for the summation in the projection. Weights are normalised
-        before application so the sum of weights over the domain equals 1.
+        before application so the sum of weights over the domain equals 1. If no
+        weights are specified, area-based weights are generated from the cosine
+        of latitude of the patterns grid.
     patterns_coords : Mapping[str,Any] | Sequence[str], optional
         Coordinates for the pattern generation function. Consult the individual
         implementations on the interpretation.

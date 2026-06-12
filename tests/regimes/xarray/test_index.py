@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 
 xr = pytest.importorskip("xarray")
+ekg = pytest.importorskip("earthkit.geo")
 
 from earthkit.meteo.regimes import Patterns
 from earthkit.meteo.regimes.xarray import project, regime_index
@@ -35,7 +36,7 @@ def data3d():
 
 @pytest.fixture
 def patterns():
-    class MockPatterns(Patterns):
+    class MockPatternsForData3d(Patterns):
         def __init__(self):
             grid = {"grid": [1.0, 1.0], "area": [46.0, 0.0, 45.0, 3.0]}
             super().__init__(["a", "b"], grid=grid, xp=np)
@@ -50,7 +51,7 @@ def patterns():
                 return kwargs["foo"][..., None, None, None] * out
             return out
 
-    return MockPatterns()
+    return MockPatternsForData3d()
 
 
 def test_project_with_with_lower_dimensional_weights(data3d, patterns, weights1d):
@@ -84,7 +85,15 @@ def test_project_with_full_dimensional_weights(data3d, patterns):
 
 def test_project_ensures_weight_dims_are_pattern_dims(data3d, patterns):
     with pytest.raises(ValueError):
-        project(data3d, patterns, weights=data3d)  # dimension foo is not a pattern dim
+        project(data3d, patterns, weights=data3d, foo="foo")  # dimension foo is not a pattern dim
+
+
+def test_project_with_weights_generation(data3d, patterns):
+    result = project(data3d, patterns, foo="foo")
+    # Project with explicit cos(lat)-weights for reference
+    weights = np.cos(np.deg2rad(data3d.coords["lat"]))
+    reference = project(data3d, patterns, weights=weights, foo="foo")
+    xr.testing.assert_allclose(result, reference)
 
 
 def test_project_without_patterns_coords(data3d, patterns, weights1d):

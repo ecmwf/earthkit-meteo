@@ -9,6 +9,8 @@
 import numpy as np
 import pytest
 
+ekg = pytest.importorskip("earthkit.geo")
+
 from earthkit.meteo import regimes
 
 
@@ -24,7 +26,7 @@ class TestConstantPatterns:
             labels=["dipole", "monopole", "dipole_inv"],
             grid={
                 "grid": [1.0, 1.0],
-                "area": [max(self.lat), min(self.lon), min(self.lat), max(self.lon)],
+                "area": [max(self.lat).item(), min(self.lon).item(), min(self.lat).item(), max(self.lon).item()],
             },
             patterns=np.stack([self.dipole, self.monopole, -self.dipole]).copy(),
         )
@@ -45,6 +47,9 @@ class TestConstantPatterns:
         assert len(patterns) == 3
         assert len(patterns) == len(patterns.labels)
 
+    def test_grid(self, patterns):
+        assert isinstance(patterns.grid, ekg.grids.Grid)
+
     def test_patterns(self, patterns):
         pat = patterns.patterns()
         assert pat.shape == (3, 91, 121)
@@ -63,7 +68,7 @@ class TestModulatedPatterns:
             labels=["dipole"],
             grid={
                 "grid": [1.0, 1.0],
-                "area": [max(self.lat), min(self.lon), min(self.lat), max(self.lon)],
+                "area": [max(self.lat).item(), min(self.lon).item(), min(self.lat).item(), max(self.lon).item()],
             },
             base_patterns=np.stack([self.dipole]).copy(),
             modulator=lambda x, y: y * np.sign(x),
@@ -84,6 +89,9 @@ class TestModulatedPatterns:
             },
             dims=["foo", "bar", "baz", "lat", "lon"],
         )
+
+    def test_grid(self, patterns):
+        assert isinstance(patterns.grid, ekg.grids.Grid)
 
     def test_shape(self, patterns):
         assert patterns.shape == (self.lat.size, self.lon.size)
