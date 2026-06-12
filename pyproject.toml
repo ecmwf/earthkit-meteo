@@ -76,6 +76,7 @@ optional-dependencies.test = [
   "astropy",
   "earthkit-data",
   "netcdf4",
+  "pandas",
   "pytest",
   "pytest-cov",
   "requests",

@@ -43,7 +43,7 @@ def project(fields, patterns, weights, patterns_coords=None):
 
         The function returns an object of the same type as the input argument.
     """
-    dispatched = dispatch(project, xarray=True, array=True)
+    dispatched = dispatch(project, xarray=True, array=True, fieldlist=True)
     return dispatched(fields, patterns, weights, patterns_coords)
 
 
@@ -78,5 +78,5 @@ def regime_index(projections, mean, std):
 
         (projection - mean) / std
     """
-    dispatched = dispatch(regime_index, xarray=True, array=True)
+    dispatched = dispatch(regime_index, xarray=True, array=True, fieldlist=True)
     return dispatched(projections, mean, std)

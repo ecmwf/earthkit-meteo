@@ -14,6 +14,8 @@ Weather regimes based on projections onto spatial patterns.
   scheme based on the abstract base class :py:class:`Patterns`.
 - To compute regime indices, use the functions :py:func:`project` and
   :py:func:`regime_index` together with a given pattern collection/generator.
+  These functions dispatch to backend implementations in the ``array``,
+  ``xarray`` and ``fieldlist`` submodules based on the input type.
 
 
 .. note::
