@@ -38,6 +38,7 @@ def interpolate_monotonic(
         target coordinate definition
     coord_type : str, optional
         type of level of the output. Currently unused.
+        Intended for future use in the output metadata.
     interpolation : str
         interpolation algorithm, one of {"linear", "log", "nearest"}
     vertical_dim : str
@@ -199,6 +200,7 @@ def interpolate_sleve_to_coord_levels(
         target field on same levels as data field
     coord_type : str, optional
         type of level of the output. Currently unused.
+        Intended for future use in the output metadata.
     target_coord : TargetCoordinates
         target coordinate definition
     folding_mode : str
