@@ -96,7 +96,7 @@ class FieldListDispatcher(DataDispatcher):
         func = getattr(module, func, None)
         sig = signature(func)
         _kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
-        return getattr(module, func)(*args, **_kwargs)
+        return func(*args, **_kwargs)
 
 
 class ArrayDispatcher(DataDispatcher):

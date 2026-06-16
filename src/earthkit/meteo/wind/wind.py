@@ -21,6 +21,7 @@ from earthkit.meteo.utils.decorators import dispatch
 
 if TYPE_CHECKING:
     import xarray  # type: ignore[import]
+    from earthkit.data import Field, FieldList  # type: ignore[import]
 
 ArrayLike: TypeAlias = Any
 
@@ -33,22 +34,30 @@ def speed(u: "ArrayLike", v: "ArrayLike") -> "ArrayLike": ...
 def speed(u: "xarray.DataArray", v: "xarray.DataArray") -> "xarray.DataArray": ...
 
 
+@overload
+def speed(u: "FieldList", v: "FieldList") -> "FieldList": ...
+
+
+@overload
+def speed(u: "Field", v: "Field") -> "Field": ...
+
+
 def speed(
-    u: "ArrayLike" | "xarray.DataArray",
-    v: "ArrayLike" | "xarray.DataArray",
-) -> "ArrayLike" | "xarray.DataArray":
+    u: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+    v: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+) -> "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field":
     r"""Compute the wind speed/vector magnitude.
 
     Parameters
     ----------
-    u: array-like | xarray.DataArray
+    u: array-like | xarray.DataArray | FieldList | Field
         u wind/x vector component
-    v: array-like | xarray.DataArray
+    v: array-like | xarray.DataArray | FieldList | Field
         v wind/y vector component (same units as ``u``)
 
     Returns
     -------
-    array-like | xarray.DataArray
+    array-like | xarray.DataArray | FieldList | Field
         Wind speed/magnitude (same units as ``u`` and ``v``)
 
 
@@ -58,11 +67,12 @@ def speed(
 
     - :py:meth:`earthkit.meteo.wind.array.speed` for array-like
     - :py:meth:`earthkit.meteo.wind.xarray.speed` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.wind.fieldlist.speed` for FieldList | Field
 
     The function returns an object of the same type as the input arguments.
 
     """
-    dispatched = dispatch(speed, array=True)
+    dispatched = dispatch(speed, array=True, fieldlist=True)
     return dispatched(u, v)
 
 
@@ -84,19 +94,37 @@ def direction(
 ) -> "xarray.DataArray": ...
 
 
+@overload
 def direction(
-    u: "ArrayLike" | "xarray.DataArray",
-    v: "ArrayLike" | "xarray.DataArray",
+    u: "FieldList",
+    v: "FieldList",
     convention: str = "meteo",
     to_positive: bool = True,
-) -> "ArrayLike" | "xarray.DataArray":
+) -> "FieldList": ...
+
+
+@overload
+def direction(
+    u: "Field",
+    v: "Field",
+    convention: str = "meteo",
+    to_positive: bool = True,
+) -> "Field": ...
+
+
+def direction(
+    u: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+    v: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+    convention: str = "meteo",
+    to_positive: bool = True,
+) -> "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field":
     r"""Compute the direction/angle of a vector quantity.
 
     Parameters
     ----------
-    u: array-like | xarray.DataArray
+    u: array-like | xarray.DataArray | FieldList | Field
         u wind/x vector component
-    v: array-like | xarray.DataArray
+    v: array-like | xarray.DataArray | FieldList | Field
         v wind/y vector component (same units as ``u``)
     convention: str, optional
         Specify how the direction/angle is interpreted. The possible values are as follows:
@@ -111,7 +139,7 @@ def direction(
 
     Returns
     -------
-    array-like | xarray.DataArray
+    array-like | xarray.DataArray | FieldList | Field
         Direction/angle (degrees)
 
 
@@ -133,6 +161,7 @@ def direction(
 
     - :py:meth:`earthkit.meteo.wind.array.direction` for array-like
     - :py:meth:`earthkit.meteo.wind.xarray.direction` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.wind.fieldlist.direction` for FieldList | Field
 
     The function returns an object of the same type as the input arguments.
 
@@ -151,21 +180,29 @@ def xy_to_polar(
 ) -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
 
 
+@overload
+def xy_to_polar(x: "FieldList", y: "FieldList", convention: str = "meteo") -> tuple["FieldList", "FieldList"]: ...
+
+
+@overload
+def xy_to_polar(x: "Field", y: "Field", convention: str = "meteo") -> tuple["Field", "Field"]: ...
+
+
 def xy_to_polar(
-    x: "ArrayLike" | "xarray.DataArray",
-    y: "ArrayLike" | "xarray.DataArray",
+    x: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+    y: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
     convention: str = "meteo",
 ) -> tuple[
-    "ArrayLike" | "xarray.DataArray",
-    "ArrayLike" | "xarray.DataArray",
+    "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+    "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
 ]:
     r"""Convert wind/vector data from xy representation to polar representation.
 
     Parameters
     ----------
-    x: array-like | xarray.DataArray
+    x: array-like | xarray.DataArray | FieldList | Field
         u wind/x vector component
-    y: array-like | xarray.DataArray
+    y: array-like | xarray.DataArray | FieldList | Field
         v wind/y vector component (same units as ``u``)
     convention: str
         Specify how the direction/angle component of the target polar coordinate
@@ -177,9 +214,9 @@ def xy_to_polar(
 
     Returns
     -------
-    array-like | xarray.DataArray
+    array-like | xarray.DataArray | FieldList | Field
         Magnitude (same units as ``u``)
-    array-like | xarray.DataArray
+    array-like | xarray.DataArray | FieldList | Field
         Direction (degrees)
 
     Notes
@@ -194,6 +231,7 @@ def xy_to_polar(
 
     - :py:meth:`earthkit.meteo.wind.array.xy_to_polar` for array-like
     - :py:meth:`earthkit.meteo.wind.xarray.xy_to_polar` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.wind.fieldlist.xy_to_polar` for FieldList | Field
 
     The function returns an object of the same type as the input arguments.
 
@@ -219,21 +257,37 @@ def polar_to_xy(
 ) -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
 
 
+@overload
 def polar_to_xy(
-    magnitude: "ArrayLike" | "xarray.DataArray",
-    direction: "ArrayLike" | "xarray.DataArray",
+    magnitude: "FieldList",
+    direction: "FieldList",
+    convention: str = "meteo",
+) -> tuple["FieldList", "FieldList"]: ...
+
+
+@overload
+def polar_to_xy(
+    magnitude: "Field",
+    direction: "Field",
+    convention: str = "meteo",
+) -> tuple["Field", "Field"]: ...
+
+
+def polar_to_xy(
+    magnitude: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+    direction: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
     convention: str = "meteo",
 ) -> tuple[
-    "ArrayLike" | "xarray.DataArray",
-    "ArrayLike" | "xarray.DataArray",
+    "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+    "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
 ]:
     r"""Convert wind/vector data from polar representation to xy representation.
 
     Parameters
     ----------
-    magnitude: array-like | xarray.DataArray
+    magnitude: array-like | xarray.DataArray | FieldList | Field
         Speed/magnitude of the vector
-    direction: array-like | xarray.DataArray
+    direction: array-like | xarray.DataArray | FieldList | Field
         Direction of the vector (degrees)
     convention: str
         Specify how ``direction`` is interpreted. The possible values are as follows:
@@ -245,9 +299,9 @@ def polar_to_xy(
 
     Returns
     -------
-    array-like | xarray.DataArray
+    array-like | xarray.DataArray | FieldList | Field
         X vector component (same units as ``magnitude``)
-    array-like | xarray.DataArray
+    array-like | xarray.DataArray | FieldList | Field
         Y vector component (same units as ``magnitude``)
 
 
@@ -263,6 +317,7 @@ def polar_to_xy(
 
     - :py:meth:`earthkit.meteo.wind.array.polar_to_xy` for array-like
     - :py:meth:`earthkit.meteo.wind.xarray.polar_to_xy` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.wind.fieldlist.polar_to_xy` for FieldList | Field
 
     The function returns an object of the same type as the input arguments.
 
@@ -287,25 +342,41 @@ def w_from_omega(
 ) -> "xarray.DataArray": ...
 
 
+@overload
 def w_from_omega(
-    omega: "ArrayLike" | "xarray.DataArray",
-    t: "ArrayLike" | "xarray.DataArray",
-    p: "ArrayLike" | "xarray.DataArray",
-) -> "ArrayLike" | "xarray.DataArray":
+    omega: "FieldList",
+    t: "FieldList",
+    p: "FieldList",
+) -> "FieldList": ...
+
+
+@overload
+def w_from_omega(
+    omega: "Field",
+    t: "Field",
+    p: "Field",
+) -> "Field": ...
+
+
+def w_from_omega(
+    omega: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+    t: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+    p: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+) -> "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field":
     r"""Compute the hydrostatic vertical velocity from pressure velocity.
 
     Parameters
     ----------
-    omega : array-like
+    omega : array-like | xarray.DataArray | FieldList | Field
         Hydrostatic pressure velocity (Pa/s)
-    t : array-like
+    t : array-like | xarray.DataArray | FieldList | Field
         Temperature (K)
-    p : array-like | xarray.DataArray
+    p : array-like | xarray.DataArray | FieldList | Field
         Pressure (Pa)
 
     Returns
     -------
-    array-like | xarray.DataArray
+    array-like | xarray.DataArray | FieldList | Field
         Hydrostatic vertical velocity (m/s)
 
     Notes
@@ -329,6 +400,7 @@ def w_from_omega(
 
     - :py:meth:`earthkit.meteo.wind.array.w_from_omega` for array-like
     - :py:meth:`earthkit.meteo.wind.xarray.w_from_omega` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.wind.fieldlist.w_from_omega` for FieldList | Field
 
     The function returns an object of the same type as the input arguments.
 
@@ -345,17 +417,27 @@ def coriolis(lat: "ArrayLike") -> "ArrayLike": ...
 def coriolis(lat: "xarray.DataArray") -> "xarray.DataArray": ...
 
 
-def coriolis(lat: "xarray.DataArray" | "ArrayLike") -> "xarray.DataArray" | "ArrayLike":
+@overload
+def coriolis(lat: "FieldList") -> "FieldList": ...
+
+
+@overload
+def coriolis(lat: "Field") -> "Field": ...
+
+
+def coriolis(
+    lat: "xarray.DataArray" | "ArrayLike" | "FieldList" | "Field",
+) -> "xarray.DataArray" | "ArrayLike" | "FieldList" | "Field":
     r"""Compute the Coriolis parameter.
 
     Parameters
     ----------
-    lat : array-like | xarray.DataArray
+    lat : array-like | xarray.DataArray | FieldList | Field
         Latitude (degrees)
 
     Returns
     -------
-    array-like | xarray.DataArray
+    array-like | xarray.DataArray | FieldList | Field
         The Coriolis parameter (:math:`s^{-1}`)
 
     Notes
@@ -377,11 +459,12 @@ def coriolis(lat: "xarray.DataArray" | "ArrayLike") -> "xarray.DataArray" | "Arr
 
     - :py:meth:`earthkit.meteo.wind.array.coriolis` for array-like
     - :py:meth:`earthkit.meteo.wind.xarray.coriolis` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.wind.fieldlist.coriolis` for FieldList | Field
 
     The function returns an object of the same type as the input arguments.
 
     """
-    dispatched = dispatch(coriolis, array=True)
+    dispatched = dispatch(coriolis, array=True, fieldlist=True)
     return dispatched(lat)
 
 
