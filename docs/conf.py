@@ -51,7 +51,7 @@ extensions = [
     # Option to click viewcode
     "sphinx.ext.viewcode",
     # Links to the documentation of other projects via cross-references
-    # "sphinx.ext.intersphinx",
+    "sphinx.ext.intersphinx",
     # Generates summary tables for modules/classes/functions
     # "sphinx.ext.autosummary",
     # Allows citing BibTeX bibliographic entries in reStructuredText

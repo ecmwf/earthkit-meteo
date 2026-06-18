@@ -353,6 +353,10 @@ def pressure_on_hybrid_levels(
 
     For more details see [IFS-CY49R1-Dynamics]_ Chapter 2, Section 2.2.1.
 
+    Examples
+    --------
+    - :ref:`/tutorials/vertical/hybrid_levels_fieldlist.ipynb`
+
     """
     if isinstance(sp, FieldList):
         if len(sp) != 1:
@@ -463,6 +467,11 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
     --------
     pressure_on_hybrid_levels
     earthkit.meteo.vertical.array.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta
+
+    Examples
+    --------
+    - :ref:`/tutorials/vertical/hybrid_levels_fieldlist.ipynb`
+
     """
     from .utils import HybridData
 
@@ -547,6 +556,11 @@ def relative_geopotential_thickness_on_hybrid_levels(
     ``alpha`` and ``delta`` can be calculated using :func:`pressure_on_hybrid_levels`.
 
     The computations are described in [IFS-CY49R1-Dynamics]_ Chapter 2, Section 2.2.1.
+
+    Examples
+    --------
+    - :ref:`/tutorials/vertical/hybrid_levels_fieldlist.ipynb`
+
     """
     from .utils import HybridData
 
@@ -636,6 +650,10 @@ def geopotential_on_hybrid_levels(
     Notes
     -----
     The computations are described in [IFS-CY49R1-Dynamics]_ Chapter 2, Section 2.2.1.
+
+    Examples
+    --------
+    - :ref:`/tutorials/vertical/hybrid_levels_fieldlist.ipynb`
 
     """
     from .utils import HybridData
@@ -736,6 +754,10 @@ def height_on_hybrid_levels(
     from the ``t``, ``q``, ``zs`` and the hybrid
     level definition (``A``, ``B``  or ``sp``). The
     computations are described in [IFS-CY49R1-Dynamics]_ Chapter 2, Section 2.2.1.
+
+    Examples
+    --------
+    - :ref:`/tutorials/vertical/hybrid_levels_fieldlist.ipynb`
 
     """
     from .utils import HybridData
@@ -844,6 +866,11 @@ def interpolate_hybrid_to_pressure_levels(
     --------
     interpolate_monotonic
     earthkit.meteo.vertical.array.interpolate_hybrid_to_pressure_levels
+
+    Examples
+    --------
+    - :ref:`/tutorials/vertical/interpolate_hybrid_to_pl_fieldlist.ipynb`
+
     """
     from .utils import HybridData, SingleVariable, TargetVariable, to_resulting_fieldlist
 
@@ -1015,6 +1042,11 @@ def interpolate_hybrid_to_height_levels(
     interpolate_monotonic
     height_on_hybrid_levels
     earthkit.meteo.vertical.array.interpolate_hybrid_to_height_levels
+
+    Examples
+    --------
+    - :ref:`/tutorials/vertical/interpolate_hybrid_to_hl_fieldlist.ipynb`
+
     """
     from .utils import HybridData, SingleVariable, TargetVariable, to_resulting_fieldlist
 
@@ -1160,6 +1192,11 @@ def interpolate_pressure_to_height_levels(
     --------
     interpolate_monotonic
     earthkit.meteo.vertical.array.interpolate_pressure_to_height_levels
+
+    Examples
+    --------
+    - :ref:`/tutorials/vertical/interpolate_pl_to_hl_fieldlist.ipynb`
+
     """
     from .utils import MonotonicData, SingleVariable, TargetVariable, to_resulting_fieldlist
 
@@ -1256,14 +1293,14 @@ def interpolate_monotonic(
         corresponding to the field at the same position in ``data``.
     target_coord: ArrayLike | FieldList | Field | None
         Target coordinate levels to which ``data`` will be interpolated. When it is a
-        FieldList or Field each field value provides the coordinate values the `data``
+        FieldList or Field each field value provides the coordinate values the ``data``
         will be interpolated to. When provided as an ArrayLike, it must be a 1D array of
         coordinate values each defining a constant target
         level. The values must be of the same type of coordinate as that of ``coord``.
     coord_type: str | None
         Type of the coordinate levels in ``coord`` and ``target_coord``.
         The possible values are level types supported in a Field in earthkit.data.
-        See: :py::func:`earthkit.data.field.component.level_type` for details.
+        See: :py:class:`~earthkit.data.field.component.level_type.LevelType` for details.
         A valid value must be provided.
     interpolation: {"linear", "log", "nearest"}, default="linear"
         Interpolation mode. Default is ``"linear"``. Possible values:
@@ -1302,6 +1339,13 @@ def interpolate_monotonic(
     See Also
     --------
     earthkit.meteo.vertical.array.interpolate_monotonic
+
+
+    Examples
+    --------
+    - :ref:`/tutorials/vertical/interpolate_hybrid_to_hl_fieldlist.ipynb`
+    - :ref:`/tutorials/vertical/interpolate_pl_to_pl_fieldlist.ipynb`
+
     """
     from .utils import MonotonicData, SingleVariable, TargetVariable, to_resulting_fieldlist
 

@@ -164,8 +164,8 @@ def cos_solar_zenith_angle(date, latitudes, longitudes=None):
     - :py:meth:`earthkit.meteo.solar.array.cos_solar_zenith_angle` otherwise
     - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle` when any
       input is xarray.DataArray
-        - :py:meth:`earthkit.meteo.solar.fieldlist.cos_solar_zenith_angle` when
-            ``latitudes`` is FieldList or Field
+    - :py:meth:`earthkit.meteo.solar.fieldlist.cos_solar_zenith_angle` when
+      ``latitudes`` is FieldList or Field
 
     The function returns an object of the same type as the input arguments.
     """
@@ -265,8 +265,8 @@ def cos_solar_zenith_angle_integrated(
       otherwise
     - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle_integrated`
       when any input is xarray.DataArray
-        - :py:meth:`earthkit.meteo.solar.fieldlist.cos_solar_zenith_angle_integrated`
-            when ``latitudes`` is FieldList or Field
+    - :py:meth:`earthkit.meteo.solar.fieldlist.cos_solar_zenith_angle_integrated`
+      when ``latitudes`` is FieldList or Field
 
     The function returns an object of the same type as the input arguments.
     """
@@ -415,8 +415,8 @@ def toa_incident_solar_radiation(
       otherwise
     - :py:meth:`earthkit.meteo.solar.xarray.toa_incident_solar_radiation`
       when any input is xarray.DataArray
-        - :py:meth:`earthkit.meteo.solar.fieldlist.toa_incident_solar_radiation`
-            when ``latitudes`` is FieldList or Field
+    - :py:meth:`earthkit.meteo.solar.fieldlist.toa_incident_solar_radiation`
+      when ``latitudes`` is FieldList or Field
 
     The function returns an object of the same type as the input arguments.
     """

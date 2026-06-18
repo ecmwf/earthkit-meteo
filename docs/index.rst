@@ -93,6 +93,7 @@ Have a feature request or found a bug? Feel free to open an
    :hidden:
 
    getting-started
+   faq
    tutorials/index
    how-tos/index
    concepts/index
