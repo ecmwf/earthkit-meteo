@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+from .bootstrap import bootstrap, resample
 from .deterministic import (
     abs_error,
     cosine_similarity,
@@ -39,4 +40,6 @@ __all__ = [
     "squared_error",
     "standard_deviation_of_error",
     "kge",
+    "bootstrap",
+    "resample",
 ]

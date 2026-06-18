@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dataclasses as dc
 from typing import Any, Literal, Sequence
 
 import numpy as np
@@ -11,7 +10,6 @@ except ImportError as e:
     raise RuntimeError("vertical.xarray.interpolation requires xarray") from e
 
 __all__ = [
-    "TargetCoordinates",
     "interpolate_monotonic",
     "interpolate_to_pressure_levels",
     "interpolate_sleve_to_coord_levels",
@@ -19,22 +17,11 @@ __all__ = [
 ]
 
 
-@dc.dataclass
-class TargetCoordinates:
-    """Target Coordinates."""
-
-    type_of_level: str
-    values: Sequence[float]
-
-    @property
-    def size(self):
-        return len(self.values)
-
-
 def interpolate_monotonic(
     data: xr.DataArray,
     coord: xr.DataArray,
-    target_coord: TargetCoordinates,
+    target_coord: Sequence[float],
+    coord_type: str | None = None,
     interpolation: Literal["linear", "log", "nearest"] = "linear",
     vertical_dim: str = "z",
     **kwargs,
@@ -47,8 +34,11 @@ def interpolate_monotonic(
         field to interpolate
     coord : xarray.DataArray
         target coordinate field data on the same levels as data
-    target_coord : TargetCoordinates
+    target_coord : sequence of float
         target coordinate definition
+    coord_type : str, optional
+        type of level of the output. Currently unused.
+        Intended for future use in the output metadata.
     interpolation : str
         interpolation algorithm, one of {"linear", "log", "nearest"}
     vertical_dim : str
@@ -85,7 +75,7 @@ def interpolate_monotonic(
     fkm1 = data.shift({vertical_dim: 1})
 
     # ... loop through target values
-    for target_idx, t0 in enumerate(target_coord.values):
+    for target_idx, t0 in enumerate(target_coord):
         # ... find the 3d field where pressure is > p0 on level k
         #     and was <= p0 on level k-1
         # ... extract the index k of the vertical layer at which p2 adopts its minimum
@@ -185,19 +175,16 @@ def interpolate_to_pressure_levels(
         raise ValueError(
             f"target coordinate value out of range (must be in interval [{target_p_min}, {target_p_max}]Pa)"
         )
-    target = TargetCoordinates(
-        type_of_level="isobaricInPa",
-        values=target_values.tolist(),
-    )
 
-    return interpolate_monotonic(data, p, target, interpolation, vertical_dim)
+    return interpolate_monotonic(data, p, target_values.tolist(), "isobaricInPa", interpolation, vertical_dim)
 
 
 def interpolate_sleve_to_coord_levels(
     data: xr.DataArray,
     h: xr.DataArray,
     coord: xr.DataArray,
-    target_coord: TargetCoordinates,
+    target_coord: Sequence[float],
+    coord_type: str | None = None,
     folding_mode: Literal["low_fold", "high_fold", "undef_fold"] = "undef_fold",
     vertical_dim: str = "z",
 ) -> xr.DataArray:
@@ -211,8 +198,11 @@ def interpolate_sleve_to_coord_levels(
         height on same levels as data field
     coord : xarray.DataArray
         target field on same levels as data field
-    target_coord : TargetCoordinates
-        target coordinate definition
+    target_coord : sequence of float
+        target coordinate values
+    coord_type : str, optional
+        type of level of the output. Currently unused.
+        Intended for future use in the output metadata.
     folding_mode : str
         handle when the target is observed multiple times in a column,
         one of {"low_fold", "high_fold", "undef_fold"}
@@ -245,7 +235,7 @@ def interpolate_sleve_to_coord_levels(
     fkm1 = data.shift({vertical_dim: 1})
 
     # ... loop through tc values
-    for t_idx, t0 in enumerate(target_coord.values):
+    for t_idx, t0 in enumerate(target_coord):
         folding_coord_exception = xr.full_like(h[{vertical_dim: 0}], False)
         # ... find the height field where target is >= t0 on level k and was <= t0
         #     on level k-1 or where theta is <= th0 on level k
@@ -345,17 +335,13 @@ def interpolate_sleve_to_theta_levels(
     tc_values = np.array(target_theta) * th_tc_unit_conversions[target_t_units]
     if np.any((tc_values < th_tc_min) | (tc_values > th_tc_max)):
         raise ValueError(f"target coordinate value out of range (must be in interval [{th_tc_min}, {th_tc_max}]K)")
-    tc = TargetCoordinates(
-        type_of_level="theta",
-        values=tc_values.tolist(),
-    )
 
-    return interpolate_sleve_to_coord_levels(data, h, theta, tc, folding_mode, vertical_dim)
+    return interpolate_sleve_to_coord_levels(data, h, theta, tc_values.tolist(), "theta", folding_mode, vertical_dim)
 
 
 def _init_field_with_vcoord(
     parent: xr.DataArray,
-    vcoord: TargetCoordinates,
+    vcoord: Sequence[float],
     fill_value: Any,
     dtype: np.dtype | None = None,
     vertical_dim: str = "z",
@@ -369,7 +355,7 @@ def _init_field_with_vcoord(
     ----------
     parent : xarray.DataArray
         parent field
-    vcoord: TargetCoordinates
+    vcoord: sequence of float
         target vertical coordinates for the output field
     fill_value : Any
         value the data array of the new field is initialized with
@@ -393,18 +379,13 @@ def _init_field_with_vcoord(
     #       in the interface
     # attrs
     attrs = parent.attrs
-
-    # Metadata handling is not yet implemented
-    # attrs = parent.attrs | metadata.override(
-    #     parent.metadata, typeOfLevel=vcoord.type_of_level
-    # )
     # dims
-    sizes = dict(parent.sizes.items()) | {vertical_dim: vcoord.size}
+    sizes = dict(parent.sizes.items()) | {vertical_dim: len(vcoord)}
     # coords
     # ... inherit all except for the vertical coordinates
     coords = {c: v for c, v in parent.coords.items() if vertical_dim not in v.dims}
     # ... initialize the vertical target coordinates
-    coords[vertical_dim] = xr.IndexVariable(vertical_dim, vcoord.values)
+    coords[vertical_dim] = xr.IndexVariable(vertical_dim, vcoord)
     # dtype
     if dtype is None:
         dtype = parent.data.dtype

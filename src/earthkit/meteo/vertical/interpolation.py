@@ -1,5 +1,4 @@
 from earthkit.meteo.utils.decorators import dispatch
-from earthkit.meteo.vertical.xarray import TargetCoordinates  # noqa
 
 
 def interpolate_monotonic(
