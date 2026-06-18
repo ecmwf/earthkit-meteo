@@ -198,11 +198,11 @@ def interpolate_sleve_to_coord_levels(
         height on same levels as data field
     coord : xarray.DataArray
         target field on same levels as data field
+    target_coord : sequence of float
+        target coordinate values
     coord_type : str, optional
         type of level of the output. Currently unused.
         Intended for future use in the output metadata.
-    target_coord : TargetCoordinates
-        target coordinate definition
     folding_mode : str
         handle when the target is observed multiple times in a column,
         one of {"low_fold", "high_fold", "undef_fold"}
