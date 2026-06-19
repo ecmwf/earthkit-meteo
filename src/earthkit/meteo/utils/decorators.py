@@ -12,6 +12,16 @@ from earthkit.utils.decorators import dispatch as dispatch
 from earthkit.utils.decorators import xarray_ufunc as xarray_ufunc
 
 
+def get_dim_from_defaults(da, dim: str | None, dim_names: tuple[str, ...]) -> str | None:
+    """Get dimension name from defaults if not provided."""
+    if dim is not None:
+        return dim
+    for name in dim_names:
+        if name in da.dims:
+            return name
+    return None
+
+
 def field_ufunc(func, *args, **kwargs):
     import earthkit.data as ekd
 
