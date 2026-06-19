@@ -1381,7 +1381,7 @@ def interpolate_monotonic(
 
 def interpolate_monotonic(
     data: "ArrayLike | xarray.DataArray | FieldList",
-    coord: "ArrayLike | xarray.DataArray | FieldList",
+    coords: "ArrayLike | xarray.DataArray | FieldList",
     target_coord: "ArrayLike | xarray.DataArray | FieldList",
     coord_type: str | None = None,
     interpolation: str = "linear",
@@ -1397,7 +1397,7 @@ def interpolate_monotonic(
     ----------
     data: array-like | xarray.DataArray | FieldList
         Data to be interpolated. Must have at least two fields/elements.
-    coord: array-like | xarray.DataArray | FieldList
+    coords: array-like | xarray.DataArray | FieldList
         Vertical coordinates related to ``data``.
     target_coord: array-like | xarray.DataArray | FieldList
         Target coordinate levels to which ``data`` will be interpolated.
@@ -1454,7 +1454,7 @@ def interpolate_monotonic(
         _kwargs["coord_type"] = coord_type
 
     return dispatch(interpolate_monotonic, xarray=True, fieldlist=True, array=True)(
-        data, coord, target_coord, **_kwargs
+        data, coords, target_coord, **_kwargs
     )
 
 

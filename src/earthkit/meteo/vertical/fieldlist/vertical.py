@@ -1264,7 +1264,7 @@ def interpolate_pressure_to_height_levels(
 
 def interpolate_monotonic(
     data: FieldList,
-    coord: ArrayLike | FieldList | None = None,
+    coords: ArrayLike | FieldList | None = None,
     target_coord: ArrayLike | FieldList | Field | None = None,
     coord_type: str | None = None,
     interpolation: Literal["linear", "log", "nearest"] = "linear",
@@ -1279,13 +1279,13 @@ def interpolate_monotonic(
     ----------
     data: FieldList
         Data to be interpolated. Must have at least two fields.
-    coord: ArrayLike | FieldList | None
+    coords: ArrayLike | FieldList | None
         Vertical coordinates related to ``data``. A valid value must be
         provided. When it is a FieldList, it must have the same number of
         fields and levels as ``data``, but the level ordering can be different.
-        The field values in ``coord`` define the vertical coordinate values for each
+        The field values in ``coords`` define the vertical coordinate values for each
         corresponding field in ``data``. The level metadata
-        is only used to pair up the fields in ``coord`` and ``data``.
+        is only used to pair up the fields in ``coords`` and ``data``.
         The vertical coordinate
         values defined in this way must be monotonic along the vertical
         axis when sorted by the level (either ascending or descending).
@@ -1296,7 +1296,7 @@ def interpolate_monotonic(
         FieldList or Field each field value provides the coordinate values the ``data``
         will be interpolated to. When provided as an ArrayLike, it must be a 1D array of
         coordinate values each defining a constant target
-        level. The values must be of the same type of coordinate as that of ``coord``.
+        level. The values must be of the same type of coordinate as that of ``coords``.
     coord_type: str | None
         Type of the coordinate levels in ``coord`` and ``target_coord``.
         The possible values are level types supported in a Field in earthkit.data.
@@ -1363,7 +1363,7 @@ def interpolate_monotonic(
     # prepare input data
     source = MonotonicData(level_type=None, sort="descending")
     source.add_profile(key="data", fl=data)
-    source.add_profile(key="coord", fl=coord, fl_template=source.data, coord=True)
+    source.add_profile(key="coord", fl=coords, fl_template=source.data, coord=True)
 
     # prepare target
     target = TargetVariable.build(

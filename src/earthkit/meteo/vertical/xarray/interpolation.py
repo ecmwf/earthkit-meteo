@@ -19,7 +19,7 @@ __all__ = [
 
 def interpolate_monotonic(
     data: xr.DataArray,
-    coord: xr.DataArray,
+    coords: xr.DataArray,
     target_coord: Sequence[float],
     coord_type: str | None = None,
     interpolation: Literal["linear", "log", "nearest"] = "linear",
@@ -32,7 +32,7 @@ def interpolate_monotonic(
     ----------
     data : xarray.DataArray
         field to interpolate
-    coord : xarray.DataArray
+    coords : xarray.DataArray
         target coordinate field data on the same levels as data
     target_coord : sequence of float
         target coordinate definition
@@ -55,7 +55,7 @@ def interpolate_monotonic(
         raise ValueError(f"Unknown interpolation: {interpolation}")
 
     # ... determine direction of target field
-    dtdz = coord.diff(vertical_dim)
+    dtdz = coords.diff(vertical_dim)
     positive = np.all(dtdz > 0).item()
 
     if not positive and not np.all(dtdz < 0):
@@ -63,7 +63,7 @@ def interpolate_monotonic(
 
     # Prepare output field field_on_target on target coordinates
     field_on_target = _init_field_with_vcoord(
-        data.broadcast_like(coord),
+        data.broadcast_like(coords),
         target_coord,
         np.nan,
         vertical_dim=vertical_dim,
@@ -71,7 +71,7 @@ def interpolate_monotonic(
 
     # Interpolate
     # ... prepare interpolation
-    tkm1 = coord.shift({vertical_dim: 1})
+    tkm1 = coords.shift({vertical_dim: 1})
     fkm1 = data.shift({vertical_dim: 1})
 
     # ... loop through target values
@@ -83,9 +83,9 @@ def interpolate_monotonic(
         # ... note that if the condition above is not fulfilled, minind will
         #     be set to k_top
         if positive:
-            t2 = coord.where((coord >= t0) & (tkm1 <= t0))
+            t2 = coords.where((coords >= t0) & (tkm1 <= t0))
         else:
-            t2 = coord.where((coord <= t0) & (tkm1 >= t0))
+            t2 = coords.where((coords <= t0) & (tkm1 >= t0))
 
         minind = t2.fillna(np.inf).argmin(dim=vertical_dim)
 
