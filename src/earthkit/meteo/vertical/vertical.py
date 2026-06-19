@@ -502,7 +502,7 @@ def pressure_on_hybrid_levels(
         Output data to return. See the concrete implementations for details.
     vertical_dim : int, default=0
         Axis corresponding to the vertical coordinate in the output arrays. Default is 0.
-        Cannot be specified for FieldList/Field data.
+        This keyword argument is not supported when the input data is FieldList.
 
     Returns
     -------
@@ -526,9 +526,11 @@ def pressure_on_hybrid_levels(
 
     The function returns an object of the same type as the input arguments.
     """
-    return dispatch(pressure_on_hybrid_levels, xarray=False, fieldlist=True, array=True)(
-        sp, A=A, B=B, levels=levels, alpha_top=alpha_top, output=output, vertical_dim=vertical_dim
-    )
+    _kwargs = dict(A=A, B=B, levels=levels, alpha_top=alpha_top, output=output, vertical_dim=vertical_dim)
+    if vertical_dim != 0:
+        _kwargs["vertical_dim"] = vertical_dim
+
+    return dispatch(pressure_on_hybrid_levels, xarray=False, fieldlist=True, array=True)(sp, **_kwargs)
 
 
 @overload
@@ -551,7 +553,6 @@ def relative_geopotential_thickness_on_hybrid_levels(
     A: "ArrayLike | None" = None,
     B: "ArrayLike | None" = None,
     alpha_top: Literal["ifs", "arpege"] = "ifs",
-    vertical_dim: int = 0,
 ) -> "FieldList": ...
 
 
@@ -589,7 +590,7 @@ def relative_geopotential_thickness_on_hybrid_levels(
         See :func:`pressure_on_hybrid_levels` for details.
     vertical_dim : int, default=0
         Axis corresponding to the vertical coordinate in the input and output arrays.
-        Default is 0. Cannot be specified for FieldList/Field data.
+        Default is 0. This keyword argument is not supported when the input data is FieldList.
 
     Returns
     -------
@@ -616,8 +617,12 @@ def relative_geopotential_thickness_on_hybrid_levels(
 
     The function returns an object of the same type as the input arguments.
     """
+    _kwargs = dict(A=A, B=B, alpha_top=alpha_top)
+    if vertical_dim != 0:
+        _kwargs["vertical_dim"] = vertical_dim
+
     return dispatch(relative_geopotential_thickness_on_hybrid_levels, xarray=False, fieldlist=True, array=True)(
-        t, q, sp, A, B, alpha_top=alpha_top, vertical_dim=vertical_dim
+        t, q, sp, **_kwargs
     )
 
 
@@ -665,7 +670,7 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
         Must have the same shape, level range and order as ``t``. See the concrete implementations for details.
     vertical_dim : int, optional
         Axis corresponding to the vertical coordinate in the input and output arrays.
-        Default is 0. Cannot be specified for FieldList/Field data.
+        Default is 0. This keyword argument is not supported when the input data is FieldList.
 
     Returns
     -------
@@ -692,12 +697,16 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
 
     The function returns an object of the same type as the input arguments.
     """
+    _kwargs = dict()
+    if vertical_dim != 0:
+        _kwargs["vertical_dim"] = vertical_dim
+
     return dispatch(
         relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta,
         xarray=False,
         fieldlist=True,
         array=True,
-    )(t, q, alpha, delta, vertical_dim=vertical_dim)
+    )(t, q, alpha, delta, **_kwargs)
 
 
 @overload
@@ -764,7 +773,7 @@ def geopotential_on_hybrid_levels(
         for details.
     vertical_dim : int, default=0
         Axis corresponding to the vertical coordinate in the input and output arrays.
-        Default is 0. Cannot be specified for FieldList/Field data.
+        Default is 0. This keyword argument is not supported when the input data is FieldList.
 
     Returns
     -------
@@ -787,9 +796,11 @@ def geopotential_on_hybrid_levels(
 
     The function returns an object of the same type as the input arguments.
     """
-    return dispatch(geopotential_on_hybrid_levels, xarray=False, fieldlist=True, array=True)(
-        t, q, zs, sp, A, B, alpha_top=alpha_top, vertical_dim=vertical_dim
-    )
+    _kwargs = dict(A=A, B=B, alpha_top=alpha_top)
+    if vertical_dim != 0:
+        _kwargs["vertical_dim"] = vertical_dim
+
+    return dispatch(geopotential_on_hybrid_levels, xarray=False, fieldlist=True, array=True)(t, q, zs, sp, **_kwargs)
 
 
 @overload
@@ -837,45 +848,45 @@ def height_on_hybrid_levels(
 
     Parameters
     ----------
-        t : ArrayLike | FieldList
-            Temperature on hybrid full-levels (K). See the concrete implementations for details.
-        q : ArrayLike | FieldList
-            Specific humidity on hybrid full-levels (kg/kg). Must have the same shape, level
-            range and order as ``t``. See the concrete implementations for details.
-        zs : ArrayLike | FieldList
-            Surface geopotential (m2/s2). Not used when ``h_type`` is ``"geopotential"`` and
-            ``h_reference`` is ``"ground"``. See the concrete implementations for details.
-        sp : ArrayLike | FieldList
-            Surface pressure (Pa). See the concrete implementations for details.
-        A : array-like | None, optional
-            A-coefficients defining the hybrid levels. Must contain all the half-levels
-            in ascending order with respect to the model level number.
-            Can be None for FieldList/Field input if the coefficients can be resolved
-            from metadata (FieldList only).
-        B : array-like | None, optional
-            B-coefficients defining the hybrid levels. Must contain all the half-levels
-            in ascending order with respect to the model level number.
-            Must have the same size as ``A``. Can be None for FieldList/Field input if the
-            coefficients can be resolved from metadata (FieldList only).
-        alpha_top : {"ifs", "arpege"}, default="ifs"
-            Option to initialise alpha at the top of the model atmosphere.
-            See :func:`earthkit.meteo.vertical.array.pressure_on_hybrid_levels`
-            for details.
-        h_type : {"geometric", "geopotential"}, default="geometric"
-            Type of height to compute. Possible values are:
+    t : ArrayLike | FieldList
+        Temperature on hybrid full-levels (K). See the concrete implementations for details.
+    q : ArrayLike | FieldList
+        Specific humidity on hybrid full-levels (kg/kg). Must have the same shape, level
+        range and order as ``t``. See the concrete implementations for details.
+    zs : ArrayLike | FieldList
+        Surface geopotential (m2/s2). Not used when ``h_type`` is ``"geopotential"`` and
+        ``h_reference`` is ``"ground"``. See the concrete implementations for details.
+    sp : ArrayLike | FieldList
+        Surface pressure (Pa). See the concrete implementations for details.
+    A : array-like | None, optional
+        A-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number.
+        Can be None for FieldList/Field input if the coefficients can be resolved
+        from metadata (FieldList only).
+    B : array-like | None, optional
+        B-coefficients defining the hybrid levels. Must contain all the half-levels
+        in ascending order with respect to the model level number.
+        Must have the same size as ``A``. Can be None for FieldList/Field input if the
+        coefficients can be resolved from metadata (FieldList only).
+    alpha_top : {"ifs", "arpege"}, default="ifs"
+        Option to initialise alpha at the top of the model atmosphere.
+        See :func:`earthkit.meteo.vertical.array.pressure_on_hybrid_levels`
+        for details.
+    h_type : {"geometric", "geopotential"}, default="geometric"
+        Type of height to compute. Possible values are:
 
-            - ``"geometric"``: geometric height (m) with respect to ``h_reference``
-            - ``"geopotential"``: geopotential height (m) with respect to ``h_reference``
+        - ``"geometric"``: geometric height (m) with respect to ``h_reference``
+        - ``"geopotential"``: geopotential height (m) with respect to ``h_reference``
 
-        h_reference : {"ground", "sea"}, default="ground"
-            Reference level for the height calculation. Possible values are:
+    h_reference : {"ground", "sea"}, default="ground"
+        Reference level for the height calculation. Possible values are:
 
-            - ``"ground"``: height with respect to the ground/surface level
-            - ``"sea"``: height with respect to sea level
+        - ``"ground"``: height with respect to the ground/surface level
+        - ``"sea"``: height with respect to sea level
 
-        vertical_dim : int, default=0
-            Axis corresponding to the vertical coordinate in the input and output arrays.
-            Default is 0.
+    vertical_dim : int, default=0
+        Axis corresponding to the vertical coordinate in the input and output arrays.
+        Default is 0. This keyword argument is not supported when the input data is FieldList.
 
     Returns
     -------
@@ -901,18 +912,11 @@ def height_on_hybrid_levels(
 
     The function returns an object of the same type as the input arguments.
     """
-    return dispatch(height_on_hybrid_levels, xarray=False, fieldlist=True, array=True)(
-        t,
-        q,
-        zs,
-        sp,
-        A,
-        B,
-        alpha_top=alpha_top,
-        h_type=h_type,
-        h_reference=h_reference,
-        vertical_dim=vertical_dim,
-    )
+    _kwargs = dict(A=A, B=B, alpha_top=alpha_top, h_type=h_type, h_reference=h_reference)
+    if vertical_dim != 0:
+        _kwargs["vertical_dim"] = vertical_dim
+
+    return dispatch(height_on_hybrid_levels, xarray=False, fieldlist=True, array=True)(t, q, zs, sp, **_kwargs)
 
 
 @overload
@@ -1007,7 +1011,8 @@ def interpolate_hybrid_to_pressure_levels(
         Pressures (Pa) of ``aux_top_data``. See the concrete implementations for details.
     vertical_dim : int, default=0
         Axis corresponding to the vertical coordinate in the input and output arrays.
-        Cannot be specified for FieldList/Field data.
+        Cannot be specified for FieldList/Field data. This keyword argument is not supported when
+        the input data is FieldList.
 
     Returns
     -------
@@ -1029,21 +1034,22 @@ def interpolate_hybrid_to_pressure_levels(
     - :py:meth:`earthkit.meteo.vertical.array.interpolate_hybrid_to_pressure_levels` for array-like
     - :py:meth:`earthkit.meteo.vertical.fieldlist.interpolate_hybrid_to_pressure_levels` for FieldList
 
-    The function returns an object of the same type as the input arguments.
+    The function returns an object of the same type as the ``data`` argument.
     """
-    return dispatch(interpolate_hybrid_to_pressure_levels, xarray=False, fieldlist=True, array=True)(
-        data,
-        target_p,
-        sp,
-        A,
-        B,
+    _kawrgs = dict(
         alpha_top=alpha_top,
         interpolation=interpolation,
         aux_bottom_data=aux_bottom_data,
         aux_bottom_p=aux_bottom_p,
         aux_top_data=aux_top_data,
         aux_top_p=aux_top_p,
-        vertical_dim=vertical_dim,
+    )
+
+    if vertical_dim != 0:
+        _kawrgs["vertical_dim"] = vertical_dim
+
+    return dispatch(interpolate_hybrid_to_pressure_levels, xarray=False, fieldlist=True, array=True)(
+        data, target_p, sp, A, B, **_kawrgs
     )
 
 
@@ -1087,17 +1093,16 @@ def interpolate_hybrid_to_height_levels(
     aux_bottom_h: "ArrayLike | None" = ...,
     aux_top_data: "ArrayLike | None" = ...,
     aux_top_h: "ArrayLike | None" = ...,
-    vertical_dim: int = ...,
 ) -> "FieldList": ...
 
 
 def interpolate_hybrid_to_height_levels(
-    data: "ArrayLike | xarray.DataArray | FieldList",
+    data: "ArrayLike | FieldList",
     target_h: "ArrayLike",
-    t: "ArrayLike | xarray.DataArray | FieldList",
-    q: "ArrayLike | xarray.DataArray | FieldList",
-    za: "ArrayLike | xarray.DataArray | FieldList",
-    sp: "ArrayLike | xarray.DataArray | FieldList",
+    t: "ArrayLike | FieldList",
+    q: "ArrayLike | FieldList",
+    za: "ArrayLike | FieldList",
+    sp: "ArrayLike | FieldList",
     A: "ArrayLike | None" = None,
     B: "ArrayLike | None" = None,
     alpha_top: str = "ifs",
@@ -1109,12 +1114,12 @@ def interpolate_hybrid_to_height_levels(
     aux_top_data: "ArrayLike | None" = None,
     aux_top_h: "ArrayLike | None" = None,
     vertical_dim: int = 0,
-) -> "ArrayLike | xarray.DataArray | FieldList":
+) -> "ArrayLike | FieldList":
     r"""Interpolate data from hybrid full-levels (IFS model levels) to height levels.
 
     Parameters
     ----------
-    data : array-like | xarray.DataArray | FieldList
+    data : array-like | FieldList
         Data to be interpolated. Levels must be in ascending order with respect to the model
         level number. The axis corresponding to the vertical coordinate is defined by
         ``vertical_dim``.
@@ -1123,16 +1128,16 @@ def interpolate_hybrid_to_height_levels(
         1D array, or a multidimensional array whose non-vertical axes match those of ``data``.
         The type of the height and the reference level are defined by ``h_type`` and
         ``h_reference``.
-    t : array-like | xarray.DataArray | FieldList
+    t : array-like | FieldList
         Temperature on hybrid full-levels (K). Must have the same shape, level range and order
         as ``data``.
-    q : array-like | xarray.DataArray | FieldList
+    q : array-like | FieldList
         Specific humidity on hybrid full-levels (kg/kg). Must have the same shape, level range
         and order as ``t``.
-    za : array-like | xarray.DataArray | FieldList
+    za : array-like | FieldList
         Surface geopotential (m2/s2). Not used when ``h_type`` is ``"geopotential"`` and
         ``h_reference`` is ``"ground"``.
-    sp : array-like | xarray.DataArray | FieldList
+    sp : array-like | FieldList
         Surface pressure (Pa).
     A : array-like | None, optional
         A-coefficients defining the hybrid levels. If None (default), must be resolvable from
@@ -1164,11 +1169,11 @@ def interpolate_hybrid_to_height_levels(
         Heights (m) of ``aux_top_data``.
     vertical_dim : int, optional
         Axis corresponding to the vertical coordinate in the input and output arrays.
-        Default is 0.
+        Default is 0. This keyword argument is not supported when the input data is FieldList.
 
     Returns
     -------
-    array-like | xarray.DataArray | FieldList
+    array-like | FieldList
         Data interpolated to the target height levels. Values outside the available height
         range are set to nan. The axis corresponding to the vertical coordinate is defined by
         ``vertical_dim``.
@@ -1187,17 +1192,11 @@ def interpolate_hybrid_to_height_levels(
     - :py:meth:`earthkit.meteo.vertical.array.interpolate_hybrid_to_height_levels` for array-like
     - :py:meth:`earthkit.meteo.vertical.fieldlist.interpolate_hybrid_to_height_levels` for FieldList
 
-    The function returns an object of the same type as the input arguments.
+    The function returns an object of the same type as the ``data`` argument.
     """
-    return dispatch(interpolate_hybrid_to_height_levels, xarray=False, fieldlist=True, array=True)(
-        data,
-        target_h,
-        t,
-        q,
-        za,
-        sp,
-        A,
-        B,
+    _kwargs = dict(
+        A=A,
+        B=B,
         alpha_top=alpha_top,
         h_type=h_type,
         h_reference=h_reference,
@@ -1206,7 +1205,11 @@ def interpolate_hybrid_to_height_levels(
         aux_bottom_h=aux_bottom_h,
         aux_top_data=aux_top_data,
         aux_top_h=aux_top_h,
-        vertical_dim=vertical_dim,
+    )
+    if vertical_dim != 0:
+        _kwargs["vertical_dim"] = vertical_dim
+    return dispatch(interpolate_hybrid_to_height_levels, xarray=False, fieldlist=True, array=True)(
+        data, target_h, t, q, za, sp, **_kwargs
     )
 
 
@@ -1240,15 +1243,14 @@ def interpolate_pressure_to_height_levels(
     aux_bottom_h: "ArrayLike | None" = ...,
     aux_top_data: "ArrayLike | None" = ...,
     aux_top_h: "ArrayLike | None" = ...,
-    vertical_dim: int = ...,
 ) -> "FieldList": ...
 
 
 def interpolate_pressure_to_height_levels(
-    data: "ArrayLike | xarray.DataArray | FieldList",
+    data: "ArrayLike | FieldList",
     target_h: "ArrayLike",
-    z: "ArrayLike | xarray.DataArray | FieldList",
-    zs: "ArrayLike | xarray.DataArray | FieldList | None" = None,
+    z: "ArrayLike | FieldList",
+    zs: "ArrayLike | FieldList | None" = None,
     h_type: Literal["geometric", "geopotential"] = "geometric",
     h_reference: Literal["ground", "sea"] = "ground",
     interpolation: Literal["linear", "log", "nearest"] = "linear",
@@ -1257,12 +1259,12 @@ def interpolate_pressure_to_height_levels(
     aux_top_data: "ArrayLike | None" = None,
     aux_top_h: "ArrayLike | None" = None,
     vertical_dim: int = 0,
-) -> "ArrayLike | xarray.DataArray | FieldList":
+) -> "ArrayLike | FieldList":
     r"""Interpolate data from pressure levels to height levels.
 
     Parameters
     ----------
-    data : array-like | xarray.DataArray | FieldList
+    data : array-like | FieldList
         Data to be interpolated. Levels must be monotonic (ascending or descending with
         respect to pressure). The axis corresponding to the vertical coordinate is defined
         by ``vertical_dim``.
@@ -1271,9 +1273,9 @@ def interpolate_pressure_to_height_levels(
         1D array, or a multidimensional array whose non-vertical axes match those of ``data``.
         The type of the height and the reference level are defined by ``h_type`` and
         ``h_reference``.
-    z : array-like | xarray.DataArray | FieldList
+    z : array-like | FieldList
         Geopotential (m2/s2) on the same pressure levels as ``data``.
-    zs : array-like | xarray.DataArray | FieldList
+    zs : array-like | FieldList | None
         Surface geopotential (m2/s2). Only used when ``h_reference`` is ``"ground"``.
     h_type : str, optional
         Type of height. Default is ``"geometric"``. Possible values are ``"geometric"`` and
@@ -1296,11 +1298,11 @@ def interpolate_pressure_to_height_levels(
         Heights (m) of ``aux_top_data``.
     vertical_dim : int, optional
         Axis corresponding to the vertical coordinate in the input and output arrays.
-        Default is 0.
+        Default is 0. This keyword argument is not supported when the input data is FieldList.
 
     Returns
     -------
-    array-like | xarray.DataArray | FieldList
+    array-like | FieldList
         Data interpolated to the target height levels. Values outside the available height
         range are set to nan. The axis corresponding to the vertical coordinate is defined by
         ``vertical_dim``.
@@ -1321,11 +1323,7 @@ def interpolate_pressure_to_height_levels(
 
     The function returns an object of the same type as the input arguments.
     """
-    return dispatch(interpolate_pressure_to_height_levels, xarray=False, fieldlist=True, array=True)(
-        data,
-        target_h,
-        z,
-        zs,
+    _kwargs = dict(
         h_type=h_type,
         h_reference=h_reference,
         interpolation=interpolation,
@@ -1333,5 +1331,260 @@ def interpolate_pressure_to_height_levels(
         aux_bottom_h=aux_bottom_h,
         aux_top_data=aux_top_data,
         aux_top_h=aux_top_h,
+    )
+    if vertical_dim != 0:
+        _kwargs["vertical_dim"] = vertical_dim
+
+    return dispatch(interpolate_pressure_to_height_levels, xarray=False, fieldlist=True, array=True)(
+        data, target_h, z, zs, **_kwargs
+    )
+
+
+@overload
+def interpolate_monotonic(
+    data: "ArrayLike",
+    coord: "ArrayLike",
+    target_coord: "ArrayLike",
+    interpolation: str = "linear",
+    aux_min_level_data=None,
+    aux_min_level_coord=None,
+    aux_max_level_data=None,
+    aux_max_level_coord=None,
+    vertical_dim=None,
+) -> "ArrayLike": ...
+
+
+@overload
+def interpolate_monotonic(
+    data: "xarray.DataArray",
+    coord: "xarray.DataArray",
+    target_coord: "ArrayLike",
+    coord_type: str | None = None,
+    interpolation: str = "linear",
+    vertical_dim=None,
+) -> "xarray.DataArray": ...
+
+
+@overload
+def interpolate_monotonic(
+    data: "FieldList",
+    coord: "ArrayLike | FieldList",
+    target_coord: "ArrayLike | FieldList",
+    coord_type: str | None = None,
+    interpolation: str = "linear",
+    aux_min_level_data=None,
+    aux_min_level_coord=None,
+    aux_max_level_data=None,
+    aux_max_level_coord=None,
+) -> "FieldList": ...
+
+
+def interpolate_monotonic(
+    data: "ArrayLike | xarray.DataArray | FieldList",
+    coord: "ArrayLike | xarray.DataArray | FieldList",
+    target_coord: "ArrayLike | xarray.DataArray | FieldList",
+    coord_type: str | None = None,
+    interpolation: str = "linear",
+    aux_min_level_data=None,
+    aux_min_level_coord=None,
+    aux_max_level_data=None,
+    aux_max_level_coord=None,
+    vertical_dim=None,
+):
+    r"""Interpolate data between the same type of monotonic coordinate levels.
+
+    Parameters
+    ----------
+    data: array-like | xarray.DataArray | FieldList
+        Data to be interpolated. Must have at least two fields/elements.
+    coord: array-like | xarray.DataArray | FieldList
+        Vertical coordinates related to ``data``.
+    target_coord: array-like | xarray.DataArray | FieldList
+        Target coordinate levels to which ``data`` will be interpolated.
+    coord_type: str | None, optional
+        Type of the coordinate levels. This keyword argument is not supported
+        when the input data is ArrayLike.
+    interpolation: str, optional
+        Interpolation mode ("linear", "log", or "nearest").
+    aux_min_level_data: optional
+        Auxiliary data for minimum level extrapolation. This keyword argument is not supported
+        when the input data is Xarray..
+    aux_min_level_coord: optional
+        Coordinates of auxiliary minimum level data. This keyword argument is not supported
+        when the input data is Xarray.
+    aux_max_level_data: optional
+        Auxiliary data for maximum level extrapolation. This keyword argument is not supported
+        when the input data is Xarray.
+    aux_max_level_coord: optional
+        Coordinates of auxiliary maximum level data. This keyword argument is not supported
+        when the input data is Xarray.
+    vertical_dim: int | str | None, optional
+        Vertical dimension specification. This keyword argument is not supported when the input
+        data is FieldList.
+
+    Returns
+    -------
+    array-like | xarray.DataArray | FieldList
+        Interpolated data at target coordinate levels.
+
+
+    Implementations
+    ---------------
+    :func:`interpolate_monotonic` calls one of the following implementations
+    depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.vertical.array.interpolate_monotonic` for array-like
+    - :py:meth:`earthkit.meteo.vertical.xarray.interpolate_monotonic` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.interpolate_monotonic` for FieldList
+
+    The function returns an object of the same type as the ``data`` argument.
+
+    """
+    _kwargs = dict(
+        interpolation=interpolation,
+        aux_min_level_data=aux_min_level_data,
+        aux_min_level_coord=aux_min_level_coord,
+        aux_max_level_data=aux_max_level_data,
+        aux_max_level_coord=aux_max_level_coord,
+    )
+
+    if vertical_dim is not None:
+        _kwargs["vertical_dim"] = vertical_dim
+    if coord_type is not None:
+        _kwargs["coord_type"] = coord_type
+
+    return dispatch(interpolate_monotonic, xarray=True, fieldlist=True, array=True)(
+        data, coord, target_coord, **_kwargs
+    )
+
+
+def interpolate_to_pressure_levels(data, p, target_p, target_p_units="Pa", interpolation="linear", vertical_dim="z"):
+    r"""Interpolate data to pressure levels.
+
+    Parameters
+    ----------
+    data: xarray.DataArray
+        Data to be interpolated.
+    p:  xarray.DataArray
+        Pressure coordinate of ``data``.
+    target_p: ArrayLike
+        Target pressure levels.
+    target_p_units: str, optional
+        Units of ``target_p`` (default: "Pa").
+    interpolation: str, optional
+        Interpolation mode (default: "linear").
+    vertical_dim: str, optional
+        Vertical dimension (default: "z").
+
+    Returns
+    -------
+    xarray.DataArray
+        Interpolated data at target pressure levels.
+
+
+    Implementations
+    ---------------
+    :func:`interpolate_to_pressure_levels` calls one of the following implementations
+    depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.vertical.xarray.interpolate_to_pressure_levels` for xarray.DataArray
+
+    The function returns an object of the same type as the ``data`` argument.
+
+    """
+    return dispatch(interpolate_to_pressure_levels, xarray=True, fieldlist=False, array=False)(
+        data,
+        p,
+        target_p,
+        target_p_units=target_p_units,
+        interpolation=interpolation,
+        vertical_dim=vertical_dim,
+    )
+
+
+def interpolate_sleve_to_coord_levels(data, h, coord, target_coord, folding_mode="undef_fold", vertical_dim="z"):
+    r"""Interpolate data from SLEVE levels to coordinate levels.
+
+    Parameters
+    ----------
+    data: xarray.DataArray
+        Data on SLEVE levels.
+    h: xarray.DataArray
+        SLEVE coordinate values.
+    coord: xarray.DataArray
+        Reference coordinate values.
+    target_coord: ArrayLike
+        Target coordinate levels.
+    folding_mode: str, optional
+        Folding mode (default: "undef_fold").
+    vertical_dim: str, optional
+        Vertical dimension (default: "z").
+
+    Returns
+    -------
+    xarray.DataArray
+        Interpolated data at target coordinate levels.
+
+
+    Implementations
+    ---------------
+    :func:`interpolate_sleve_to_coord_levels` calls one of the following implementations
+    depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.vertical.xarray.interpolate_sleve_to_coord_levels` for xarray.DataArray
+
+    The function returns an object of the same type as the ``data`` argument.
+
+    """
+    return dispatch(interpolate_sleve_to_coord_levels, xarray=True, fieldlist=False, array=False)(
+        data, h, coord, target_coord, folding_mode=folding_mode, vertical_dim=vertical_dim
+    )
+
+
+def interpolate_sleve_to_theta_levels(
+    data, g, theta, target_theta, target_t_units="K", folding_mode="undef_fold", vertical_dim="z"
+):
+    r"""Interpolate data from SLEVE levels to theta (potential temperature) levels.
+
+    Parameters
+    ----------
+    data: xarray.DataArray
+        Data on SLEVE levels.
+    g: xarray.DataArray
+        Gravity or related SLEVE parameter.
+    theta: xarray.DataArray
+        Reference theta values.
+    target_theta: ArrayLike
+        Target theta levels.
+    target_t_units: str, optional
+        Units of target theta (default: "K").
+    folding_mode: str, optional
+        Folding mode (default: "undef_fold").
+    vertical_dim: str, optional
+        Vertical dimension (default: "z").
+
+    Returns
+    -------
+    xarray.DataArray
+        Interpolated data at target theta levels.
+
+
+    Implementations
+    ---------------
+    :func:`interpolate_sleve_to_theta_levels` calls one of the following implementations
+    depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.vertical.xarray.interpolate_sleve_to_theta_levels` for xarray.DataArray
+
+    The function returns an object of the same type as the ``data`` argument.
+
+    """
+    return dispatch(interpolate_sleve_to_theta_levels, xarray=True, fieldlist=False, array=False)(
+        data,
+        g,
+        theta,
+        target_theta,
+        target_t_units=target_t_units,
+        folding_mode=folding_mode,
         vertical_dim=vertical_dim,
     )

@@ -70,7 +70,7 @@ optional-dependencies.stats = [
   "scipy>=1.15"
 ]
 optional-dependencies.test = [
-  "earthkit-data>=1.0.0rc0",
+  "earthkit-data>=1.0.0rc12",
   "netcdf4",
   "pytest",
   "pytest-cov",

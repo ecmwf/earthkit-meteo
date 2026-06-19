@@ -17,5 +17,4 @@ The API is split into two layers:
   based on input type.
 """
 
-from . import array as array
 from .thermo import *  # noqa

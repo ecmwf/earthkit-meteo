@@ -110,7 +110,7 @@ def _make_input_xr(data, coord, target_coord, expected_data, vdim, xp=np, device
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
 @pytest.mark.parametrize("ds_input,ds_expected,vdim,mode", make_input("pressure_s_s_s"))
 def test_xr_interpolate_monotonic_s_s_s(ds_input, ds_expected, vdim, mode):
-    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+    from earthkit.meteo.vertical import interpolate_monotonic
 
     observed = interpolate_monotonic(
         ds_input.data,
@@ -126,7 +126,7 @@ def test_xr_interpolate_monotonic_s_s_s(ds_input, ds_expected, vdim, mode):
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
 @pytest.mark.parametrize("ds_input,ds_expected,vdim,mode", make_input("pressure_a_a_s"))
 def test_xr_interpolate_monotonic_a_a_s(ds_input, ds_expected, vdim, mode):
-    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+    from earthkit.meteo.vertical import interpolate_monotonic
 
     observed = interpolate_monotonic(
         ds_input.data,
@@ -142,7 +142,7 @@ def test_xr_interpolate_monotonic_a_a_s(ds_input, ds_expected, vdim, mode):
 @pytest.mark.skipif(NO_XARRAY, reason="Xarray tests disabled")
 @pytest.mark.parametrize("ds_input,ds_expected,vdim,mode", make_input("pressure_a_s_s"))
 def test_xr_interpolate_monotonic_a_s_s(ds_input, ds_expected, vdim, mode):
-    from earthkit.meteo.vertical.interpolation import interpolate_monotonic
+    from earthkit.meteo.vertical import interpolate_monotonic
 
     observed = interpolate_monotonic(
         ds_input.data,
