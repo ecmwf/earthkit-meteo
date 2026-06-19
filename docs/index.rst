@@ -2,7 +2,7 @@
 Earthkit-meteo's documentation
 ======================================================
 
-**earthkit-meteo** is a Python package providing meteorological computations using array input (Numpy, Torch and CuPy) and output. It is part of the :xref:`earthkit` ecosystem.
+**earthkit-meteo** is a Python package providing meteorological computations using array (NumPy, Torch and CuPy), xarray or fieldlist. It is part of the :xref:`earthkit` ecosystem.
 
 .. important::
 

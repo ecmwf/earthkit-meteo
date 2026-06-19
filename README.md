@@ -34,7 +34,7 @@
 > \[!IMPORTANT\]
 > This software is **Emerging** and subject to ECMWF's guidelines on [Software Maturity](https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity).
 
-**earthkit-meteo** is a Python package providing meteorological computations using array (Numpy, Torch and CuPy), xarray or fieldlist.   It is part of the [earthkit](https://github.com/ecmwf/earthkit) ecosystem.
+**earthkit-meteo** is a Python package providing meteorological computations using array (NumPy, Torch and CuPy), xarray or fieldlist. It is part of the [earthkit](https://github.com/ecmwf/earthkit) ecosystem.
 
 ## Quick Start
 
