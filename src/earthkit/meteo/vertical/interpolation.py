@@ -5,6 +5,7 @@ def interpolate_monotonic(
     data,
     coord,
     target_coord,
+    coord_type: str | None = None,
     interpolation: str = "linear",
     aux_min_level_data=None,
     aux_min_level_coord=None,
@@ -12,29 +13,49 @@ def interpolate_monotonic(
     aux_max_level_coord=None,
     vertical_dim=None,
 ):
+
+    _kwargs = dict(
+        interpolation=interpolation,
+        aux_min_level_data=aux_min_level_data,
+        aux_min_level_coord=aux_min_level_coord,
+        aux_max_level_data=aux_max_level_data,
+        aux_max_level_coord=aux_max_level_coord,
+    )
+
     if vertical_dim is not None:
-        return dispatch(interpolate_monotonic, xarray=True, fieldlist=False, array=True)(
-            data,
-            coord,
-            target_coord,
-            interpolation=interpolation,
-            aux_min_level_data=aux_min_level_data,
-            aux_min_level_coord=aux_min_level_coord,
-            aux_max_level_data=aux_max_level_data,
-            aux_max_level_coord=aux_max_level_coord,
-            vertical_dim=vertical_dim,
-        )
-    else:
-        return dispatch(interpolate_monotonic, xarray=True, fieldlist=False, array=True)(
-            data,
-            coord,
-            target_coord,
-            interpolation=interpolation,
-            aux_min_level_data=aux_min_level_data,
-            aux_min_level_coord=aux_min_level_coord,
-            aux_max_level_data=aux_max_level_data,
-            aux_max_level_coord=aux_max_level_coord,
-        )
+        _kwargs["vertical_dim"] = vertical_dim
+    if coord_type is not None:
+        _kwargs["coord_type"] = coord_type
+
+    return dispatch(interpolate_monotonic, xarray=True, fieldlist=False, array=True)(
+        data, coord, target_coord, **_kwargs
+    )
+
+    # if vertical_dim is not None:
+    #     return dispatch(interpolate_monotonic, xarray=True, fieldlist=False, array=True)(
+    #         data,
+    #         coord,
+    #         target_coord,
+    #         coord_type=coord_type,
+    #         interpolation=interpolation,
+    #         aux_min_level_data=aux_min_level_data,
+    #         aux_min_level_coord=aux_min_level_coord,
+    #         aux_max_level_data=aux_max_level_data,
+    #         aux_max_level_coord=aux_max_level_coord,
+    #         vertical_dim=vertical_dim,
+    #     )
+    # else:
+    #     return dispatch(interpolate_monotonic, xarray=True, fieldlist=False, array=True)(
+    #         data,
+    #         coord,
+    #         target_coord,
+    #         coord_type=coord_type,
+    #         interpolation=interpolation,
+    #         aux_min_level_data=aux_min_level_data,
+    #         aux_min_level_coord=aux_min_level_coord,
+    #         aux_max_level_data=aux_max_level_data,
+    #         aux_max_level_coord=aux_max_level_coord,
+    #     )
 
 
 def interpolate_to_pressure_levels(data, p, target_p, target_p_units="Pa", interpolation="linear", vertical_dim="z"):
