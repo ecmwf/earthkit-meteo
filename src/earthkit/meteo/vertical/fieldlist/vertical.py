@@ -49,7 +49,7 @@ def geopotential_height_from_geopotential(
     where :math:`g` is the gravitational acceleration on the surface of
     the Earth (see :py:attr:`earthkit.meteo.constants.g`).
     """
-    fieldlist_ufunc_kwargs = {"default": "gh", "param_unit": "gpm"}
+    fieldlist_ufunc_kwargs = {"default_variable": "geopotential_height"}
 
     return fieldlist_ufunc(
         array.geopotential_height_from_geopotential, z, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs
@@ -83,7 +83,7 @@ def geopotential_from_geopotential_height(
     where :math:`g` is the gravitational acceleration on the surface of
     the Earth (see :py:attr:`earthkit.meteo.constants.g`).
     """
-    fieldlist_ufunc_kwargs = {"default": "z", "param_unit": "m2/s2"}
+    fieldlist_ufunc_kwargs = {"default_variable": "geopotential"}
 
     return fieldlist_ufunc(
         array.geopotential_from_geopotential_height, gh, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs
@@ -120,7 +120,7 @@ def geopotential_height_from_geometric_height(
     where :math:`R_{earth}` is the average radius of the Earth
     (see :py:attr:`earthkit.meteo.constants.R_earth`).
     """
-    fieldlist_ufunc_kwargs = {"default": "gh", "param_unit": "gpm"}
+    fieldlist_ufunc_kwargs = {"default_variable": "geopotential_height"}
 
     return fieldlist_ufunc(
         array.geopotential_height_from_geometric_height,
@@ -164,7 +164,7 @@ def geopotential_from_geometric_height(
         * :math:`g` is the gravitational acceleration on the surface of
           the Earth (see :py:attr:`earthkit.meteo.constants.g`)
     """
-    fieldlist_ufunc_kwargs = {"default": "z", "param_unit": "m2/s2"}
+    fieldlist_ufunc_kwargs = {"default_variable": "geopotential"}
 
     return fieldlist_ufunc(
         array.geopotential_from_geometric_height,
@@ -204,7 +204,7 @@ def geometric_height_from_geopotential_height(
     where :math:`R_{earth}` is the average radius of the Earth
     (see :py:attr:`earthkit.meteo.constants.R_earth`).
     """
-    fieldlist_ufunc_kwargs = {"default": "h", "param_unit": "m"}
+    fieldlist_ufunc_kwargs = {"default_variable": "geometric_height_above_sea"}
 
     return fieldlist_ufunc(
         array.geometric_height_from_geopotential_height,
@@ -248,7 +248,7 @@ def geometric_height_from_geopotential(
         * :math:`g` is the gravitational acceleration on the surface of
           the Earth (see :py:attr:`earthkit.meteo.constants.g`)
     """
-    fieldlist_ufunc_kwargs = {"default": "h", "param_unit": "m"}
+    fieldlist_ufunc_kwargs = {"default_variable": "geometric_height_above_sea"}
 
     return fieldlist_ufunc(
         array.geometric_height_from_geopotential,
@@ -781,7 +781,16 @@ def height_on_hybrid_levels(
         t_arr, q_arr, zs_arr, sp_arr, A=A, B=B, alpha_top=alpha_top, h_type=h_type, h_reference=h_reference
     )
 
-    return source.to_fieldlist(res, template=t[0], param_name="height")
+    if h_type == "geopotential" and h_reference == "ground":
+        param_name = "geopotential_height_above_ground"
+    elif h_type == "geopotential" and h_reference == "sea":
+        param_name = "geopotential_height_above_sea"
+    elif h_type == "geometric" and h_reference == "ground":
+        param_name = "geometric_height_above_ground"
+    elif h_type == "geometric" and h_reference == "sea":
+        param_name = "geometric_height_above_sea"
+
+    return source.to_fieldlist(res, template=t[0], param_name=param_name)
 
 
 def interpolate_hybrid_to_pressure_levels(

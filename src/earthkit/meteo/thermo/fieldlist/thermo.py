@@ -42,7 +42,8 @@ def specific_humidity_from_mixing_ratio(w: FieldList | Field) -> FieldList | Fie
         q = \frac {w}{1+w}
 
     """
-    fieldlist_ufunc_kwargs = {"default": "q"}
+    fieldlist_ufunc_kwargs = {"default_variable": "specific_humidity"}
+
     return fieldlist_ufunc(array.specific_humidity_from_mixing_ratio, w, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
@@ -68,7 +69,7 @@ def mixing_ratio_from_specific_humidity(q: FieldList | Field) -> FieldList | Fie
         w = \frac {q}{1-q}
 
     """
-    fieldlist_ufunc_kwargs = {"default": "w"}
+    fieldlist_ufunc_kwargs = {"default_variable": "mixing_ratio"}
     return fieldlist_ufunc(array.mixing_ratio_from_specific_humidity, q, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
@@ -103,7 +104,7 @@ def vapour_pressure_from_specific_humidity(
     with :math:`\epsilon =  R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "vapp", "param_unit": "Pa"}
+    fieldlist_ufunc_kwargs = {"default_variable": "vapour_pressure"}
     if p is None:
         p = pressure_from_metadata(q)  # convert to Pa
 
@@ -143,7 +144,7 @@ def vapour_pressure_from_mixing_ratio(
     with :math:`\epsilon =  R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "vapp", "param_unit": "Pa"}
+    fieldlist_ufunc_kwargs = {"default_variable": "vapour_pressure"}
     if p is None:
         p = pressure_from_metadata(w)  # convert to Pa
 
@@ -183,7 +184,7 @@ def specific_humidity_from_vapour_pressure(
     with :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "q", "param_unit": "kg/kg"}
+    fieldlist_ufunc_kwargs = {"default_variable": "specific_humidity"}
     if p is None:
         p = pressure_from_metadata(e)  # convert to Pa
 
@@ -229,7 +230,7 @@ def mixing_ratio_from_vapour_pressure(
     with :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "w", "param_unit": "kg/kg"}
+    fieldlist_ufunc_kwargs = {"default_variable": "mixing_ratio"}
     if p is None:
         p = pressure_from_metadata(e)  # convert to Pa
 
@@ -280,7 +281,7 @@ def saturation_vapour_pressure(t: FieldList | Field, phase: str = "mixed") -> Fi
     with :math:`\alpha(t) = (\frac{t-t_{i}}{t_{0}-t_{i}})^2`.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "swvp", "param_unit": "Pa"}
+    fieldlist_ufunc_kwargs = {"default_variable": "saturation_vapour_pressure"}
     return fieldlist_ufunc(
         array.saturation_vapour_pressure, t, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs, phase=phase
     )
@@ -319,7 +320,7 @@ def saturation_mixing_ratio(
         return mixing_ratio_from_vapour_pressure(e, p)
 
     """
-    fieldlist_ufunc_kwargs = {"default": "ws", "param_unit": "kg/kg"}
+    fieldlist_ufunc_kwargs = {"default_variable": "saturation_mixing_ratio"}
 
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
@@ -362,7 +363,7 @@ def saturation_specific_humidity(
         return specific_humidity_from_vapour_pressure(e, p)
 
     """
-    fieldlist_ufunc_kwargs = {"default": "sqw", "param_unit": "kg/kg"}
+    fieldlist_ufunc_kwargs = {"default_variable": "saturation_specific_humidity"}
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -389,7 +390,7 @@ def saturation_vapour_pressure_slope(t: FieldList | Field, phase: str = "mixed")
         The result has the same type as the input ``t`` (FieldList or Field).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "swvp_slope", "param_unit": "Pa/K"}
+    fieldlist_ufunc_kwargs = {"default_variable": "saturation_vapour_pressure_slope"}
     return fieldlist_ufunc(
         array.saturation_vapour_pressure_slope, t, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs, phase=phase
     )
@@ -448,7 +449,7 @@ def saturation_mixing_ratio_slope(
         * :math:`e_{s}` is the :func:`saturation_vapour_pressure` for the given ``phase``
 
     """
-    fieldlist_ufunc_kwargs = {"default": "ws_slope", "param_unit": "kg kg-1 K-1"}
+    fieldlist_ufunc_kwargs = {"default_variable": "saturation_mixing_ratio_slope"}
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -517,7 +518,7 @@ def saturation_specific_humidity_slope(
         * :math:`e_{s}` is the :func:`saturation_vapour_pressure` for the given ``phase``
 
     """
-    fieldlist_ufunc_kwargs = {"default": "sqw_slope", "param_unit": "kg kg-1 K-1"}
+    fieldlist_ufunc_kwargs = {"default_variable": "saturation_specific_humidity_slope"}
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
 
@@ -553,7 +554,7 @@ def temperature_from_saturation_vapour_pressure(es: FieldList | Field) -> FieldL
     phase ``es`` was computed to.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "t", "param_unit": "K"}
+    fieldlist_ufunc_kwargs = {"default_variable": "temperature"}
     return fieldlist_ufunc(
         array.temperature_from_saturation_vapour_pressure, es, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs
     )
@@ -584,7 +585,7 @@ def relative_humidity_from_dewpoint(t: FieldList | Field, td: FieldList | Field)
     where :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "r", "param_unit": "%"}
+    fieldlist_ufunc_kwargs = {"default_variable": "relative_humidity"}
     return fieldlist_ufunc(array.relative_humidity_from_dewpoint, t, td, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
@@ -624,7 +625,7 @@ def relative_humidity_from_specific_humidity(
         * :math:`e_{msat}` is the :func:`saturation_vapour_pressure` based on the "mixed" phase
 
     """
-    fieldlist_ufunc_kwargs = {"default": "r", "param_unit": "%"}
+    fieldlist_ufunc_kwargs = {"default_variable": "relative_humidity"}
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -669,7 +670,7 @@ def specific_humidity_from_dewpoint(
     Then `q` is computed from :math:`e` using :func:`specific_humidity_from_vapour_pressure`.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "q", "param_unit": "kg/kg"}
+    fieldlist_ufunc_kwargs = {"default_variable": "specific_humidity"}
     if p is None:
         p = pressure_from_metadata(td)  # convert to Pa
     return fieldlist_ufunc(array.specific_humidity_from_dewpoint, td, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
@@ -712,7 +713,7 @@ def mixing_ratio_from_dewpoint(
     Then `w` is computed from :math:`e` using :func:`mixing_ratio_from_vapour_pressure`.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "w", "param_unit": "kg/kg"}
+    fieldlist_ufunc_kwargs = {"default_variable": "mixing_ratio"}
     if p is None:
         p = pressure_from_metadata(td)  # convert to Pa
     return fieldlist_ufunc(array.mixing_ratio_from_dewpoint, td, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
@@ -753,7 +754,7 @@ def specific_humidity_from_relative_humidity(
     Then :math:`q` is computed from :math:`e` using :func:`specific_humidity_from_vapour_pressure`.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "q", "param_unit": "kg/kg"}
+    fieldlist_ufunc_kwargs = {"default_variable": "specific_humidity"}
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -795,16 +796,16 @@ def dewpoint_from_relative_humidity(t: FieldList | Field, r: FieldList | Field) 
 
     """
     param_ids = {
-        # 130: "td",  # atmospheric dewpoint, paramId=?
-        167: "2d",  # 2m dewpoint, paramId=168
+        130: "dewpoint",
+        167: "2m_dewpoint",
     }
 
     variables = {
-        # "t": "td",  # atmospheric dewpoint
-        "2t": "2d",  # 2m dewpoint
+        "t": "dewpoint",
+        "2t": "2m_dewpoint",
     }
 
-    fieldlist_ufunc_kwargs = {"param_ids": param_ids, "variables": variables, "default": "td"}
+    fieldlist_ufunc_kwargs = {"param_ids": param_ids, "variables": variables, "default_variable": "dewpoint"}
     return fieldlist_ufunc(array.dewpoint_from_relative_humidity, t, r, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
@@ -849,18 +850,17 @@ def dewpoint_from_specific_humidity(
 
     """
     param_ids = {
-        174096: "2d",  # 2m dewpoint, paramId=168
+        174096: "2m_dewpoint",
     }
 
     variables = {
-        "2sh": "2d",  # 2m dewpoint
+        "2sh": "2m_dewpoint",
     }
 
     fieldlist_ufunc_kwargs = {
         "param_ids": param_ids,
         "variables": variables,
-        "default": "td",
-        "param_unit": "K",
+        "default_variable": "dewpoint",
     }
 
     if p is None:
@@ -893,7 +893,7 @@ def virtual_temperature(t: FieldList | Field, q: FieldList | Field) -> FieldList
     with :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "vtmp"}
+    fieldlist_ufunc_kwargs = {"default_variable": "virtual_temperature"}
     return fieldlist_ufunc(array.virtual_temperature, t, q, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
@@ -934,7 +934,7 @@ def virtual_potential_temperature(
         * :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "vptmp"}
+    fieldlist_ufunc_kwargs = {"default_variable": "virtual_potential_temperature"}
 
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
@@ -973,7 +973,7 @@ def potential_temperature(
     with :math:`\kappa = R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "pt"}
+    fieldlist_ufunc_kwargs = {"default_variable": "potential_temperature"}
 
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
@@ -1012,7 +1012,7 @@ def temperature_from_potential_temperature(
     with :math:`\kappa = R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "t"}
+    fieldlist_ufunc_kwargs = {"default_variable": "temperature"}
 
     if p is None:
         p = pressure_from_metadata(th)
@@ -1058,7 +1058,7 @@ def pressure_on_dry_adiabat(
     with :math:`\kappa =  R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "pres", "param_unit": "Pa"}
+    fieldlist_ufunc_kwargs = {"default_variable": "pressure"}
 
     if p_def is None:
         p_def = pressure_from_metadata(t_def)
@@ -1104,7 +1104,7 @@ def temperature_on_dry_adiabat(
     with :math:`\kappa =  R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "t", "param_unit": "K"}
+    fieldlist_ufunc_kwargs = {"default_variable": "temperature"}
 
     if p_def is None:
         p_def = pressure_from_metadata(t_def)
@@ -1150,7 +1150,7 @@ def lcl_temperature(t: FieldList | Field, td: FieldList | Field, method: str = "
             t_{LCL} = 56.0 +  \frac{1}{\frac{1}{td - 56} + \frac{log(\frac{t}{td})}{800}}
 
     """
-    fieldlist_ufunc_kwargs = {"default": "t_lcl"}
+    fieldlist_ufunc_kwargs = {"default_variable": "lcl_temperature"}
     return fieldlist_ufunc(array.lcl_temperature, t, td, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs, method=method)
 
 
@@ -1194,19 +1194,24 @@ def lcl(
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
 
+    from earthkit.meteo.utils.param import FIELD_PARAMS
+
+    t_out_metadata = FIELD_PARAMS.field_parameter_metadata("lcl_temperature")
+    p_out_metadata = FIELD_PARAMS.field_parameter_metadata("lcl_pressure")
+
     # Handle single Field input
     if isinstance(t, ekd.Field):
         t_lcl, p_lcl = array.lcl(t.values, td.values, p.values if isinstance(p, ekd.Field) else p, method=method)
-        t_out = t.set({"values": t_lcl, "parameter.variable": "t_lcl", "parameter.units": "K"})
-        p_out = t.set({"values": p_lcl, "parameter.variable": "p_lcl", "parameter.units": "Pa"})
+        t_out = t.set({"values": t_lcl, **t_out_metadata})
+        p_out = t.set({"values": p_lcl, **p_out_metadata})
         return t_out, p_out
 
     t_result = []
     p_result = []
     for t_f, td_f, p_f in zip(t, td, p):
         t_lcl, p_lcl = array.lcl(t_f.values, td_f.values, p_f.values, method=method)
-        t_result.append(t_f.set({"values": t_lcl, "parameter.variable": "t_lcl", "parameter.units": "K"}))
-        p_result.append(t_f.set({"values": p_lcl, "parameter.variable": "p_lcl", "parameter.units": "Pa"}))
+        t_result.append(t_f.set({"values": t_lcl, **t_out_metadata}))
+        p_result.append(t_f.set({"values": p_lcl, **p_out_metadata}))
     return ekd.FieldList.from_fields(t_result), ekd.FieldList.from_fields(p_result)
 
 
@@ -1290,7 +1295,7 @@ def ept_from_dewpoint(
         * :math:`\kappa = R_{d}/c_{pd}` (see :data:`earthkit.meteo.constants.kappa`)
 
     """
-    fieldlist_ufunc_kwargs = {"default": "eqpt"}
+    fieldlist_ufunc_kwargs = {"default_variable": "eqpt"}
 
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
@@ -1335,7 +1340,7 @@ def ept_from_specific_humidity(
     (the dewpoint is computed from q with :func:`dewpoint_from_specific_humidity`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "eqpt"}
+    fieldlist_ufunc_kwargs = {"default_variable": "eqpt"}
 
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
@@ -1408,7 +1413,7 @@ def saturation_ept(
           (see :data:`earthkit.meteo.constants.c_pd`)
 
     """
-    fieldlist_ufunc_kwargs = {"default": "sept"}
+    fieldlist_ufunc_kwargs = {"default_variable": "sept"}
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(array.saturation_ept, t, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs, method=method)
@@ -1454,7 +1459,7 @@ def temperature_on_moist_adiabat(
         be carried out nan is returned. The result has the same type as the input ``ept`` (FieldList or Field).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "t"}
+    fieldlist_ufunc_kwargs = {"default_variable": "temperature"}
     if p is None:
         p = pressure_from_metadata(ept)  # convert to Pa
     return fieldlist_ufunc(
@@ -1514,7 +1519,7 @@ def wet_bulb_temperature_from_dewpoint(
       pressure ``p`` on the moist adiabat with the given ``t_method``.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "wbgt"}
+    fieldlist_ufunc_kwargs = {"default_variable": "wet_bulb_temperature"}
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -1576,7 +1581,7 @@ def wet_bulb_temperature_from_specific_humidity(
       pressure ``p`` on the moist adiabat with the given ``t_method``.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "wbgt"}
+    fieldlist_ufunc_kwargs = {"default_variable": "wet_bulb_temperature"}
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -1638,7 +1643,7 @@ def wet_bulb_potential_temperature_from_dewpoint(
       pressure :math:`10^{5}` Pa on the moist adiabat with the given ``t_method``.
 
     """
-    fieldlist_ufunc_kwargs = {"default": "wbgpt"}
+    fieldlist_ufunc_kwargs = {"default_variable": "wet_bulb_potential_temperature"}
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -1697,7 +1702,7 @@ def wet_bulb_potential_temperature_from_specific_humidity(
     (the dewpoint is computed from q with :func:`dewpoint_from_specific_humidity`).
 
     """
-    fieldlist_ufunc_kwargs = {"default": "wbgpt"}
+    fieldlist_ufunc_kwargs = {"default_variable": "wet_bulb_potential_temperature"}
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
     return fieldlist_ufunc(
@@ -1740,5 +1745,5 @@ def specific_gas_constant(q: FieldList | Field) -> FieldList | Field:
         * :math:`R_{v}` is the gas constant for water vapour (see :data:`earthkit.meteo.constants.Rv`)
 
     """
-    fieldlist_ufunc_kwargs = {"default": "R", "param_unit": "J kg-1 K-1"}
+    fieldlist_ufunc_kwargs = {"default_variable": "specific_gas_constant"}
     return fieldlist_ufunc(array.specific_gas_constant, q, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)

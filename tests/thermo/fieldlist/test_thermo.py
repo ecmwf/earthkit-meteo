@@ -186,12 +186,12 @@ def test_fieldlist_mixing_ratio_from_specific_humidity(input_type):
 
     if input_type == "fieldlist":
         assert len(out) == len(q)
-        assert out.get("parameter.variable") == ["w"] * len(q)
+        assert out.get("parameter.variable") == ["mass_mixrat"] * len(q)
         for f, vals in zip(out, SPECIFIC_HUMIDITIES):
             ref = array.mixing_ratio_from_specific_humidity(np.array(vals))
             np.testing.assert_allclose(f.values, ref)
     elif input_type == "field":
-        assert out.get("parameter.variable") == "w"
+        assert out.get("parameter.variable") == "mass_mixrat"
         ref = array.mixing_ratio_from_specific_humidity(np.array(SPECIFIC_HUMIDITIES[0]))
         np.testing.assert_allclose(out.values, ref)
 
@@ -290,13 +290,13 @@ def test_fieldlist_mixing_ratio_from_vapour_pressure(input_type, pres_type):
 
     if input_type == "fieldlist":
         assert len(out) == len(e)
-        assert out.get("parameter.variable") == ["w"] * len(e)
+        assert out.get("parameter.variable") == ["mass_mixrat"] * len(e)
         assert out.get("parameter.units") == ["kg/kg"] * len(e)
         for f, vals, p_val in zip(out, e_values, PRESSURES):
             ref = array.mixing_ratio_from_vapour_pressure(np.array(vals), np.array([p_val]))
             np.testing.assert_allclose(f.values, ref)
     elif input_type == "field":
-        assert out.get("parameter.variable") == "w"
+        assert out.get("parameter.variable") == "mass_mixrat"
         assert out.get("parameter.units") == "kg/kg"
         ref = array.mixing_ratio_from_vapour_pressure(np.array(e_values[0]), np.array([PRESSURES[0]]))
         np.testing.assert_allclose(out.values, ref)
@@ -591,13 +591,13 @@ def test_fieldlist_mixing_ratio_from_dewpoint(input_type, pres_type):
 
     if input_type == "fieldlist":
         assert len(out) == len(td)
-        assert out.get("parameter.variable") == ["w"] * len(td)
+        assert out.get("parameter.variable") == ["mass_mixrat"] * len(td)
         assert out.get("parameter.units") == ["kg/kg"] * len(td)
         for f, vals, p_val in zip(out, DEWPOINTS, PRESSURES):
             ref = array.mixing_ratio_from_dewpoint(np.array(vals), np.array([p_val]))
             np.testing.assert_allclose(f.values, ref)
     elif input_type == "field":
-        assert out.get("parameter.variable") == "w"
+        assert out.get("parameter.variable") == "mass_mixrat"
         assert out.get("parameter.units") == "kg/kg"
         ref = array.mixing_ratio_from_dewpoint(np.array(DEWPOINTS[0]), np.array([PRESSURES[0]]))
         np.testing.assert_allclose(out.values, ref)
@@ -1041,14 +1041,14 @@ def test_fieldlist_wet_bulb_potential_temperature_from_dewpoint(input_type, pres
 
     if input_type == "fieldlist":
         assert len(out) == len(t)
-        assert out.get("parameter.variable") == ["wbgpt"] * len(t)
+        assert out.get("parameter.variable") == ["wbpt"] * len(t)
         for f, v1, v2, p_val in zip(out, TEMPERATURES, DEWPOINTS, PRESSURES):
             ref = array.wet_bulb_potential_temperature_from_dewpoint(
                 np.array(v1), np.array(v2), np.array([p_val, p_val])
             )
             np.testing.assert_allclose(f.values, ref)
     elif input_type == "field":
-        assert out.get("parameter.variable") == "wbgpt"
+        assert out.get("parameter.variable") == "wbpt"
         ref = array.wet_bulb_potential_temperature_from_dewpoint(
             np.array(TEMPERATURES[0]), np.array(DEWPOINTS[0]), np.array([PRESSURES[0], PRESSURES[0]])
         )
@@ -1070,14 +1070,14 @@ def test_fieldlist_wet_bulb_potential_temperature_from_specific_humidity(input_t
 
     if input_type == "fieldlist":
         assert len(out) == len(t)
-        assert out.get("parameter.variable") == ["wbgpt"] * len(t)
+        assert out.get("parameter.variable") == ["wbpt"] * len(t)
         for f, v1, v2, p_val in zip(out, TEMPERATURES, SPECIFIC_HUMIDITIES, PRESSURES):
             ref = array.wet_bulb_potential_temperature_from_specific_humidity(
                 np.array(v1), np.array(v2), np.array([p_val])
             )
             np.testing.assert_allclose(f.values, ref)
     elif input_type == "field":
-        assert out.get("parameter.variable") == "wbgpt"
+        assert out.get("parameter.variable") == "wbpt"
         ref = array.wet_bulb_potential_temperature_from_specific_humidity(
             np.array(TEMPERATURES[0]), np.array(SPECIFIC_HUMIDITIES[0]), np.array([PRESSURES[0]])
         )

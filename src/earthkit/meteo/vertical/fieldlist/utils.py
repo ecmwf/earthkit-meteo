@@ -90,7 +90,12 @@ def coord_fieldlist_from_template(fl_template=None, keep_template_shape=False):
 def to_resulting_fieldlist(arr, template=None, levels=None, vertical=None, metadata=None, param_name=""):
     metadata = metadata or {}
     if param_name:
-        metadata = {"parameter": FIELD_PARAMS.get(param_name), **metadata}
+        param_item = FIELD_PARAMS.get(param_name)
+        param_metadata = {
+            "variable": param_item["variable"],
+            "units": param_item["units"],
+        }
+        metadata = {"parameter": param_metadata, **metadata}
 
     if "vertical" in metadata:
         raise ValueError(

@@ -251,40 +251,85 @@ def xarray_ufunc(func, *args, **kwargs):
 
 
 def field_ufunc(func, *args, **kwargs):
+    """Apply a function to the values of earthkit.data Field or FieldList objects.
+
+    Parameters
+    ----------
+    func: callable
+        The function to apply to the values of the Field or FieldList objects.
+    *args: tuple
+        The Field or FieldList objects to which the function will be applied.
+    **kwargs: dict
+        Additional keyword arguments to pass to the function. The following special keyword arguments are recognized:
+        - fieldlist_ufunc_kwargs: dict, optional
+            A dictionary of keyword arguments to pass to the function when applied to FieldList objects.
+            This can include 'variables', 'param_ids', 'default_variable'
+
+            - 'variables': dict, optional
+                A mapping of input field parameter.variable values to output parameter variable
+                names. The output parameters names must be  defined in FIELD_PARAMS.
+            - 'param_ids': dict, optional
+                A mapping of input metadata.paramId values to output parameter variable names.
+                The output parameters names must be defined in FIELD_PARAMS.
+            - 'default_variable': str, optional
+                The default parameter variable name to use if no mapping is found in
+                'variables' or 'param_ids'. This must be defined in FIELD_PARAMS.
+
+            The algorithm for determining the output parameter variable name is as follows:
+            1. If 'variables' is provided, check if the first input field's parameter.variable
+                is in the mapping. If so, use the corresponding output variable name.
+            2. If 'param_ids' is provided, check if the first input field's metadata.paramId
+                is in the mapping. If so, use the corresponding output variable name.
+            3. If neither mapping yields a result, use 'default_variable' if provided.
+            4. If no output parameter variable name can be determined, raise a ValueError.
+
+            Once the output parameter variable name is determined, the corresponding metadata
+            (parameter.variable and parameter.units) will be looked up in FIELD_PARAMS and set
+            on the resulting Field.
+    """
     import earthkit.data as ekd
 
     fieldlist_ufunc_kwargs = kwargs.pop("fieldlist_ufunc_kwargs", None) or {}
-    variables = fieldlist_ufunc_kwargs.get("variables", {})
-    param_ids = fieldlist_ufunc_kwargs.get("param_ids", {})
-    default = fieldlist_ufunc_kwargs.get("default")
-    unit = fieldlist_ufunc_kwargs.get("param_unit")
 
     fields = args
-    u0 = fields[0]
-    assert isinstance(u0, ekd.Field), "field_ufunc first argument must be a Field"
+    field = fields[0]
+    assert isinstance(field, ekd.Field), "field_ufunc first argument must be a Field"
     v = func(*(field.values if isinstance(field, ekd.Field) else field for field in fields), **kwargs)
 
-    name = None
-    var_u = u0.get("parameter.variable", default=None)
-    if var_u is not None:
-        name = variables.get(var_u)
-    else:
-        var_u = u0.get("metadata.paramId", default=None)
-        if var_u is not None:
-            name = param_ids.get(var_u)
-        else:
-            var_u = "unknown"
+    # determine the metadata to set on the resulting Field
+    variables = fieldlist_ufunc_kwargs.get("variables", {})
+    param_ids = fieldlist_ufunc_kwargs.get("param_ids", {})
+    default = fieldlist_ufunc_kwargs.get("default_variable")
 
-    if default is None:
-        default = var_u
+    name = None
+    if variables:
+        var_in = field.get("parameter.variable", default=None)
+        if var_in is not None:
+            name = variables.get(var_in)
+
+    if name is None and param_ids:
+        param_id_in = field.get("metadata.paramId", default=None)
+        if param_id_in is not None:
+            name = param_ids.get(param_id_in)
 
     if name is None:
         name = default
 
-    if unit is None:
-        unit = u0.get("parameter.units")
+    if name is None:
+        raise ValueError(
+            "Could not determine parameter name for the resulting Field. Please provide "
+            "a 'default_variable' in 'fieldlist_ufunc_kwargs'."
+        )
 
-    result = u0.set({"values": v, "parameter.variable": name, "parameter.units": unit})
+    # look up the parameter metadata from FIELD_PARAMS
+    from earthkit.meteo.utils.param import FIELD_PARAMS
+
+    param_item = FIELD_PARAMS.get(name)
+
+    if param_item is None:
+        raise ValueError(f"Unknown parameter '{name}' specified in fieldlist_ufunc_kwargs")
+    parameter_kwargs = {"parameter.variable": param_item["variable"], "parameter.units": param_item["units"]}
+    result = field.set({"values": v, **parameter_kwargs})
 
     return result
 

@@ -35,7 +35,9 @@ def cos_solar_zenith_angle(
         Cosine of the solar zenith angle (clipped to be non-negative). The
         result has the same type as the input (FieldList or Field).
     """
-    out_metadata = {"parameter.variable": "cossza", "parameter.units": "1"}
+    from earthkit.meteo.utils.param import FIELD_PARAMS  # type: ignore[import]
+
+    out_metadata = FIELD_PARAMS.field_parameter_metadata("cos_solar_zenith_angle")
 
     if isinstance(data, Field):
         lat, lon = data.geography.latlons()
@@ -79,7 +81,10 @@ def cos_solar_zenith_angle_integrated(
         Time-integrated cosine of the solar zenith angle. The result has the
         same type as the input (FieldList or Field).
     """
-    out_metadata = {"parameter.variable": "cossza_integrated", "parameter.units": "1"}
+    from earthkit.meteo.utils.param import FIELD_PARAMS  # type: ignore[import]
+
+    out_metadata = FIELD_PARAMS.field_parameter_metadata("cos_solar_zenith_angle_integrated")
+
     if isinstance(data, Field):
         lat, lon = data.geography.latlons()
         v = array.cos_solar_zenith_angle_integrated(
@@ -137,7 +142,10 @@ def toa_incident_solar_radiation(
         same type as the input (FieldList or Field).
     """
     # TODO: clarify the units of the result (W/m^2 * time?) and add to metadata and docstring
-    out_metadata = {"parameter.variable": "toa_incident_solar_radiation", "parameter.units": "1"}
+    from earthkit.meteo.utils.param import FIELD_PARAMS  # type: ignore[import]
+
+    out_metadata = FIELD_PARAMS.field_parameter_metadata("toa_incident_solar_radiation")
+
     if isinstance(data, Field):
         lat, lon = data.geography.latlons()
         v = array.toa_incident_solar_radiation(

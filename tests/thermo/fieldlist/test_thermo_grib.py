@@ -85,7 +85,7 @@ def test_fieldlist_grib_mixing_ratio_from_specific_humidity_pl(input_type):
 
     if input_type == "fieldlist":
         assert len(out) == len(q)
-        assert (np.array(out.get("parameter.variable")) == "w").all()
+        assert (np.array(out.get("parameter.variable")) == "mass_mixrat").all()
 
     if input_type == "field":
         f = out
@@ -94,7 +94,7 @@ def test_fieldlist_grib_mixing_ratio_from_specific_humidity_pl(input_type):
 
     # field metadata
     ref_metadata = {
-        "parameter.variable": "w",
+        "parameter.variable": "mass_mixrat",
         # "metadata.shortName": "w",
         "vertical.level": 850,
         # "metadata.levelist": 850,

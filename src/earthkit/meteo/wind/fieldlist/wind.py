@@ -38,24 +38,24 @@ def speed(u: FieldList | Field, v: FieldList | Field) -> FieldList | Field:
         Wind speed/magnitude (same units as ``u`` and ``v``). The result has
         the same type as the input (FieldList or Field).
     """
-    param_ids = {
-        131: "ws",  # atmospheric wind, paramId=10
-        165: "10ws",  # 10m wind, paramId=207
-        228246: "100si",  # 100m wind, paramId=228249
-        228239: "200si",  # 200m wind, paramId=228241
+    variables = {
+        "u": "wind_speed",
+        "10u": "10m_wind_speed",
+        "100ua": "100m_wind_speed",
+        "200ua": "200m_wind_speed",
     }
 
-    variables = {
-        "u": "ws",  # atmospheric wind
-        "10u": "10ws",  # 10m wind
-        "100ua": "100si",  # 100m wind
-        "200ua": "200si",  # 200m wind
+    param_ids = {
+        131: "wind_speed",
+        165: "10m_wind_speed",
+        228246: "100m_wind_speed",
+        228239: "200m_wind_speed",
     }
 
     fieldlist_ufunc_kwargs = {
         "variables": variables,
         "param_ids": param_ids,
-        "default": "ws",
+        "default_variable": "wind_speed",
     }
     return fieldlist_ufunc(array.speed, u, v, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
@@ -101,7 +101,7 @@ def direction(u: FieldList | Field, v: FieldList | Field, convention="meteo", to
 
     """
     fieldlist_ufunc_kwargs = {
-        "default": "wdir",
+        "default_variable": "wind_direction",
     }
     return fieldlist_ufunc(
         array.direction,
@@ -249,8 +249,7 @@ def w_from_omega(
         p = pressure_from_metadata(omega)  # convert to Pa
 
     fieldlist_ufunc_kwargs = {
-        "default": "wz",
-        "param_unit": "m/s",
+        "default_variable": "geometric_vertical_velocity",
     }
 
     return fieldlist_ufunc(array.w_from_omega, omega, t, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
@@ -283,15 +282,19 @@ def coriolis(data: FieldList | Field) -> FieldList | Field:
     (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
 
     """
+    from earthkit.meteo.utils.param import FIELD_PARAMS
+
+    out_metadata = FIELD_PARAMS.field_parameter_metadata("coriolis")
+
     result = []
     if isinstance(data, Field):
         lat = data.geography.latitudes()
         c = array.coriolis(lat)
-        return data.set({"values": c, "parameter.variable": "fc", "parameter.units": "1/s"})
+        return data.set({"values": c, **out_metadata})
     else:
         for field in data:
             lat = field.geography.latitudes()
             c = array.coriolis(lat)
-            result.append(field.set({"values": c, "parameter.variable": "fc", "parameter.units": "1/s"}))
+            result.append(field.set({"values": c, **out_metadata}))
 
         return FieldList.from_fields(result)
