@@ -1265,7 +1265,7 @@ def interpolate_pressure_to_height_levels(
 def interpolate_monotonic(
     data: FieldList,
     coords: ArrayLike | FieldList | None = None,
-    target_coord: ArrayLike | FieldList | Field | None = None,
+    target_coords: ArrayLike | FieldList | Field | None = None,
     coord_type: str | None = None,
     interpolation: Literal["linear", "log", "nearest"] = "linear",
     aux_min_level_data: float | FieldList | Field | None = None,
@@ -1291,14 +1291,14 @@ def interpolate_monotonic(
         axis when sorted by the level (either ascending or descending).
         When provided as an ArrayLike, it must be a 1D array with each value
         corresponding to the field at the same position in ``data``.
-    target_coord: ArrayLike | FieldList | Field | None
+    target_coords: ArrayLike | FieldList | Field | None
         Target coordinate levels to which ``data`` will be interpolated. When it is a
         FieldList or Field each field value provides the coordinate values the ``data``
         will be interpolated to. When provided as an ArrayLike, it must be a 1D array of
         coordinate values each defining a constant target
         level. The values must be of the same type of coordinate as that of ``coords``.
     coord_type: str | None
-        Type of the coordinate levels in ``coord`` and ``target_coord``.
+        Type of the coordinate levels in ``coord`` and ``target_coords``.
         The possible values are level types supported in a Field in earthkit.data.
         See: :py:class:`~earthkit.data.field.component.level_type.LevelType` for details.
         A valid value must be provided.
@@ -1368,13 +1368,13 @@ def interpolate_monotonic(
     # prepare target
     target = TargetVariable.build(
         key="target_coord",
-        fl=target_coord,
+        fl=target_coords,
     )
 
     # get arrays
     data_arr = source.data.to_numpy(copy=False)
     coord_arr = source.coord.to_numpy(copy=False)
-    target_coord_arr = target.fl.to_numpy(copy=False)
+    target_coords_arr = target.fl.to_numpy(copy=False)
 
     aux = {
         "aux_min_level_data": aux_min_level_data,
@@ -1391,7 +1391,7 @@ def interpolate_monotonic(
     res_arr = array.interpolate_monotonic(
         data_arr,
         coord_arr,
-        target_coord_arr,
+        target_coords_arr,
         interpolation=interpolation,
         **aux,
         vertical_dim=0,

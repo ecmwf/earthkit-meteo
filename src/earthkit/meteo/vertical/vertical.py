@@ -1343,8 +1343,8 @@ def interpolate_pressure_to_height_levels(
 @overload
 def interpolate_monotonic(
     data: "ArrayLike",
-    coord: "ArrayLike",
-    target_coord: "ArrayLike",
+    coords: "ArrayLike",
+    target_coords: "ArrayLike",
     interpolation: str = "linear",
     aux_min_level_data=None,
     aux_min_level_coord=None,
@@ -1357,8 +1357,8 @@ def interpolate_monotonic(
 @overload
 def interpolate_monotonic(
     data: "xarray.DataArray",
-    coord: "xarray.DataArray",
-    target_coord: "ArrayLike",
+    coords: "xarray.DataArray",
+    target_coords: "ArrayLike",
     coord_type: str | None = None,
     interpolation: str = "linear",
     vertical_dim=None,
@@ -1368,8 +1368,8 @@ def interpolate_monotonic(
 @overload
 def interpolate_monotonic(
     data: "FieldList",
-    coord: "ArrayLike | FieldList",
-    target_coord: "ArrayLike | FieldList",
+    coords: "ArrayLike | FieldList",
+    target_coords: "ArrayLike | FieldList",
     coord_type: str | None = None,
     interpolation: str = "linear",
     aux_min_level_data=None,
@@ -1382,7 +1382,7 @@ def interpolate_monotonic(
 def interpolate_monotonic(
     data: "ArrayLike | xarray.DataArray | FieldList",
     coords: "ArrayLike | xarray.DataArray | FieldList",
-    target_coord: "ArrayLike | xarray.DataArray | FieldList",
+    target_coords: "ArrayLike | xarray.DataArray | FieldList",
     coord_type: str | None = None,
     interpolation: str = "linear",
     aux_min_level_data=None,
@@ -1399,7 +1399,7 @@ def interpolate_monotonic(
         Data to be interpolated. Must have at least two fields/elements.
     coords: array-like | xarray.DataArray | FieldList
         Vertical coordinates related to ``data``.
-    target_coord: array-like | xarray.DataArray | FieldList
+    target_coords: array-like | xarray.DataArray | FieldList
         Target coordinate levels to which ``data`` will be interpolated.
     coord_type: str | None, optional
         Type of the coordinate levels. This keyword argument is not supported
@@ -1454,7 +1454,7 @@ def interpolate_monotonic(
         _kwargs["coord_type"] = coord_type
 
     return dispatch(interpolate_monotonic, xarray=True, fieldlist=True, array=True)(
-        data, coords, target_coord, **_kwargs
+        data, coords, target_coords, **_kwargs
     )
 
 
@@ -1502,7 +1502,7 @@ def interpolate_to_pressure_levels(data, p, target_p, target_p_units="Pa", inter
     )
 
 
-def interpolate_sleve_to_coord_levels(data, h, coord, target_coord, folding_mode="undef_fold", vertical_dim="z"):
+def interpolate_sleve_to_coord_levels(data, h, coord, target_coords, folding_mode="undef_fold", vertical_dim="z"):
     r"""Interpolate data from SLEVE levels to coordinate levels.
 
     Parameters
@@ -1513,7 +1513,7 @@ def interpolate_sleve_to_coord_levels(data, h, coord, target_coord, folding_mode
         SLEVE coordinate values.
     coord: xarray.DataArray
         Reference coordinate values.
-    target_coord: ArrayLike
+    target_coords: ArrayLike
         Target coordinate levels.
     folding_mode: str, optional
         Folding mode (default: "undef_fold").
@@ -1537,7 +1537,7 @@ def interpolate_sleve_to_coord_levels(data, h, coord, target_coord, folding_mode
 
     """
     return dispatch(interpolate_sleve_to_coord_levels, xarray=True, fieldlist=False, array=False)(
-        data, h, coord, target_coord, folding_mode=folding_mode, vertical_dim=vertical_dim
+        data, h, coord, target_coords, folding_mode=folding_mode, vertical_dim=vertical_dim
     )
 
 

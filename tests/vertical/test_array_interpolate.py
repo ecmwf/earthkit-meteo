@@ -234,7 +234,7 @@ def test_array_interpolate_monotonic_to_pressure_s_s_s_aux(data, coord, target_c
     r = vertical.interpolate_monotonic(
         data=data,
         coords=coord,
-        target_coord=target_coord,
+        target_coords=target_coord,
         interpolation=mode,
         aux_max_level_data=1100,
         aux_max_level_coord=1100,
@@ -266,7 +266,7 @@ def test_array_interpolate_monotonic_to_height_s_s_s_aux(data, coord, target_coo
     r = vertical.interpolate_monotonic(
         data=data,
         coords=coord,
-        target_coord=target_coord,
+        target_coords=target_coord,
         interpolation=mode,
         aux_min_level_data=0.0,
         aux_min_level_coord=0.0,
@@ -320,7 +320,7 @@ def test_array_interpolate_monotonic_to_height_a_a_a_aux(
     r = vertical.interpolate_monotonic(
         data=data,
         coords=coord,
-        target_coord=target_coord,
+        target_coords=target_coord,
         interpolation=mode,
         aux_min_level_data=aux_data,
         aux_min_level_coord=aux_coord,

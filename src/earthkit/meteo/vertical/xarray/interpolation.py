@@ -20,7 +20,7 @@ __all__ = [
 def interpolate_monotonic(
     data: xr.DataArray,
     coords: xr.DataArray,
-    target_coord: Sequence[float],
+    target_coords: Sequence[float],
     coord_type: str | None = None,
     interpolation: Literal["linear", "log", "nearest"] = "linear",
     vertical_dim: str = "z",
@@ -34,7 +34,7 @@ def interpolate_monotonic(
         field to interpolate
     coords : xarray.DataArray
         target coordinate field data on the same levels as data
-    target_coord : sequence of float
+    target_coords : sequence of float
         target coordinate definition
     coord_type : str, optional
         type of level of the output. Currently unused.
@@ -64,7 +64,7 @@ def interpolate_monotonic(
     # Prepare output field field_on_target on target coordinates
     field_on_target = _init_field_with_vcoord(
         data.broadcast_like(coords),
-        target_coord,
+        target_coords,
         np.nan,
         vertical_dim=vertical_dim,
     )
@@ -75,7 +75,7 @@ def interpolate_monotonic(
     fkm1 = data.shift({vertical_dim: 1})
 
     # ... loop through target values
-    for target_idx, t0 in enumerate(target_coord):
+    for target_idx, t0 in enumerate(target_coords):
         # ... find the 3d field where pressure is > p0 on level k
         #     and was <= p0 on level k-1
         # ... extract the index k of the vertical layer at which p2 adopts its minimum
@@ -183,7 +183,7 @@ def interpolate_sleve_to_coord_levels(
     data: xr.DataArray,
     h: xr.DataArray,
     coord: xr.DataArray,
-    target_coord: Sequence[float],
+    target_coords: Sequence[float],
     coord_type: str | None = None,
     folding_mode: Literal["low_fold", "high_fold", "undef_fold"] = "undef_fold",
     vertical_dim: str = "z",
@@ -198,7 +198,7 @@ def interpolate_sleve_to_coord_levels(
         height on same levels as data field
     coord : xarray.DataArray
         target field on same levels as data field
-    target_coord : sequence of float
+    target_coords : sequence of float
         target coordinate values
     coord_type : str, optional
         type of level of the output. Currently unused.
@@ -226,7 +226,7 @@ def interpolate_sleve_to_coord_levels(
 
     # Prepare output field on target coordinates
     field_on_target = _init_field_with_vcoord(
-        data.broadcast_like(coord), target_coord, np.nan, vertical_dim=vertical_dim
+        data.broadcast_like(coord), target_coords, np.nan, vertical_dim=vertical_dim
     )
 
     # Interpolate
@@ -235,7 +235,7 @@ def interpolate_sleve_to_coord_levels(
     fkm1 = data.shift({vertical_dim: 1})
 
     # ... loop through tc values
-    for t_idx, t0 in enumerate(target_coord):
+    for t_idx, t0 in enumerate(target_coords):
         folding_coord_exception = xr.full_like(h[{vertical_dim: 0}], False)
         # ... find the height field where target is >= t0 on level k and was <= t0
         #     on level k-1 or where theta is <= th0 on level k

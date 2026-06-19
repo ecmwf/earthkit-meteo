@@ -1,4 +1,4 @@
-.. _vertical-tutorials:
+.. _input-tutorials:
 
 Input
 ++++++++++++++
