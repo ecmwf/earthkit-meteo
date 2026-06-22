@@ -625,7 +625,7 @@ def pressure_on_hybrid_levels(
 
     Examples
     --------
-    - :ref:`/how-tos/vertical/hybrid_levels_array.ipynb`
+    - :ref:`/tutorials/vertical/hybrid_levels_array.ipynb`
 
     """
     if isinstance(output, str):
@@ -839,7 +839,7 @@ def _compute_relative_geopotential_thickness_on_hybrid_levels(
 
     Examples
     --------
-    - :ref:`/how-tos/vertical/hybrid_levels_array.ipynb`
+    - :ref:`/tutorials/vertical/hybrid_levels_array.ipynb`
 
 
     """
@@ -915,7 +915,7 @@ def relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(
 
     Examples
     --------
-    - :ref:`/how-tos/vertical/hybrid_levels_array.ipynb`
+    - :ref:`/tutorials/vertical/hybrid_levels_array.ipynb`
 
 
     """
@@ -1007,7 +1007,7 @@ def relative_geopotential_thickness_on_hybrid_levels(
 
     Examples
     --------
-    - :ref:`/how-tos/vertical/hybrid_levels_array.ipynb`
+    - :ref:`/tutorials/vertical/hybrid_levels_array.ipynb`
 
     """
     if A is None or B is None:
@@ -1112,7 +1112,7 @@ def geopotential_on_hybrid_levels(
 
     Examples
     --------
-    - :ref:`/how-tos/vertical/hybrid_levels_array.ipynb`
+    - :ref:`/tutorials/vertical/hybrid_levels_array.ipynb`
 
     """
     z = relative_geopotential_thickness_on_hybrid_levels(t, q, sp, A, B, vertical_dim=vertical_dim, alpha_top=alpha_top)
@@ -1210,7 +1210,7 @@ def height_on_hybrid_levels(
 
     Examples
     --------
-    - :ref:`/how-tos/vertical/hybrid_levels_array.ipynb`
+    - :ref:`/tutorials/vertical/hybrid_levels_array.ipynb`
 
     """
     if h_reference not in ["sea", "ground"]:
@@ -1357,7 +1357,7 @@ def interpolate_hybrid_to_pressure_levels(
 
     Examples
     --------
-    - :ref:`/how-tos/vertical/interpolate_hybrid_to_pl_array.ipynb`
+    - :ref:`/tutorials/vertical/interpolate_hybrid_to_pl_array.ipynb`
 
     """
     xp = array_namespace(data, A, B, sp)
@@ -1514,7 +1514,7 @@ def interpolate_hybrid_to_height_levels(
 
     Examples
     --------
-    - :ref:`/how-tos/vertical/interpolate_hybrid_to_hl_array.ipynb`
+    - :ref:`/tutorials/vertical/interpolate_hybrid_to_hl_array.ipynb`
 
     """
     h = height_on_hybrid_levels(
@@ -1645,7 +1645,7 @@ def interpolate_pressure_to_height_levels(
 
     Examples
     --------
-    - :ref:`/how-tos/vertical/interpolate_pl_to_hl_array.ipynb`
+    - :ref:`/tutorials/vertical/interpolate_pl_to_hl_array.ipynb`
 
     """
     if h_type == "geometric":
@@ -1753,10 +1753,10 @@ def interpolate_monotonic(
 
     Examples
     --------
-    - :ref:`/how-tos/vertical/interpolate_hybrid_to_pl_array.ipynb`
-    - :ref:`/how-tos/vertical/interpolate_hybrid_to_hl_array.ipynb`
-    - :ref:`/how-tos/vertical/interpolate_pl_to_hl_array.ipynb`
-    - :ref:`/how-tos/vertical/interpolate_pl_to_pl_array.ipynb`
+    - :ref:`/tutorials/vertical/interpolate_hybrid_to_pl_array.ipynb`
+    - :ref:`/tutorials/vertical/interpolate_hybrid_to_hl_array.ipynb`
+    - :ref:`/tutorials/vertical/interpolate_pl_to_hl_array.ipynb`
+    - :ref:`/tutorials/vertical/interpolate_pl_to_pl_array.ipynb`
 
     """
     from .monotonic import MonotonicInterpolator

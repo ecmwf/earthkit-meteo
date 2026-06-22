@@ -83,7 +83,7 @@ Added the following array-based functions to  :py:mod:`earthkit.meteo.vertical.a
 
 See the notebook examples:
 
-- :ref:`/how-tos/hybrid_levels.ipynb`
+- :ref:`/tutorials/vertical/hybrid_levels_fieldlist.ipynb`
 
 Array-based vertical interpolations
 ------------------------------------------
@@ -97,10 +97,10 @@ Added the following array-based vertical interpolation functions to :py:mod:`ear
 
 See the notebook examples:
 
-- :ref:`/how-tos/interpolate_hybrid_to_hl.ipynb`
-- :ref:`/how-tos/interpolate_hybrid_to_pl.ipynb`
-- :ref:`/how-tos/interpolate_pl_to_hl.ipynb`
-- :ref:`/how-tos/interpolate_pl_to_pl.ipynb`
+- :ref:`/tutorials/vertical/interpolate_hybrid_to_hl_fieldlist.ipynb`
+- :ref:`/tutorials/vertical/interpolate_hybrid_to_pl_fieldlist.ipynb`
+- :ref:`/tutorials/vertical/interpolate_pl_to_hl_fieldlist.ipynb`
+- :ref:`/tutorials/vertical/interpolate_pl_to_pl_fieldlist.ipynb`
 
 
 Xarray-based vertical interpolation functions
@@ -118,4 +118,4 @@ Regimes
 
 Added new submodule :py:mod:`earthkit.meteo.regimes` with classes to define a weather regime classification based on patterns and functions to project anomaly fields onto these patterns to compute a regime index, following the approach of `Michel and Rivière (2011) <https://doi.org/10.1175/2011JAS3635.1>`_.
 
-See the notebook example: :ref:`/how-tos/seven_weather_regimes.ipynb`
+See the notebook example: :ref:`/how-tos/regimes/seven_weather_regimes.ipynb`
