@@ -8,4 +8,5 @@ Tutorials
 
     input/index.rst
     extreme/index.rst
+    regimes/index.rst
     vertical/index.rst

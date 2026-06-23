@@ -118,4 +118,4 @@ Regimes
 
 Added new submodule :py:mod:`earthkit.meteo.regimes` with classes to define a weather regime classification based on patterns and functions to project anomaly fields onto these patterns to compute a regime index, following the approach of `Michel and Rivière (2011) <https://doi.org/10.1175/2011JAS3635.1>`_.
 
-See the notebook example: :ref:`/how-tos/regimes/seven_weather_regimes.ipynb`
+See the notebook example: :ref:`/tutorials/regimes/seven_weather_regimes.ipynb`

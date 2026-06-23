@@ -1,4 +1,4 @@
-.. _regimes-how-tos:
+.. _regimes-tutorials:
 
 
 Regimes
