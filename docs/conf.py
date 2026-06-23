@@ -27,10 +27,15 @@ else:
     source_branch = "main"
 
 # Branch for upstream earthkit repo (used for fetching earthkit-packages.yml)
-if rtd_version_type == "branch":
-    ek_branch = rtd_version
-else:  # Tags will use main
+# Tags will use main
+if rtd_version_type in ("tag"):
     ek_branch = "main"
+# Pull requests and unknmown versions will use develop
+# Not sure how you get unknown, but its a valid value of rtd_version_type
+elif rtd_version_type in ("external", "unknown"):
+    ek_branch = "develop"
+else:
+    ek_branch = rtd_version
 
 sys.path.insert(0, os.path.abspath("../../src"))
 sys.path.insert(0, os.path.abspath("./"))
