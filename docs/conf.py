@@ -6,11 +6,8 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-import json
 import os
 import sys
-
-import yaml
 
 on_rtd = os.environ.get("READTHEDOCS") == "True"
 
@@ -28,6 +25,17 @@ if rtd_version_type in ("branch", "tag"):
     source_branch = rtd_version
 else:
     source_branch = "main"
+
+# Branch for upstream earthkit repo (used for fetching earthkit-packages.yml)
+# Tags will use main
+if rtd_version_type in ("tag"):
+    ek_branch = "main"
+# Pull requests and unknmown versions will use develop
+# Not sure how you get unknown, but its a valid value of rtd_version_type
+elif rtd_version_type in ("external", "unknown"):
+    ek_branch = "develop"
+else:
+    ek_branch = rtd_version
 
 sys.path.insert(0, os.path.abspath("../../src"))
 sys.path.insert(0, os.path.abspath("./"))
@@ -211,21 +219,9 @@ intersphinx_mapping = {
 }
 
 
-def _write_earthkit_packages_js(app):
-    """Read earthkit-packages.yml and write a JS data file into the output _static dir."""
-    config_path = os.path.join(os.path.dirname(__file__), "earthkit-packages.yml")
-    with open(config_path, encoding="utf-8") as fh:
-        config = yaml.safe_load(fh)
-    packages = config.get("packages", [])
-    static_dir = os.path.join(app.outdir, "_static")
-    os.makedirs(static_dir, exist_ok=True)
-    js_path = os.path.join(static_dir, "earthkit-packages.js")
-    with open(js_path, "w", encoding="utf-8") as fh:
-        fh.write(f"window.earthkitPackages = {json.dumps(packages)};\n")
-
-
 def setup(app):
+    from earthkit_packages import _write_earthkit_packages_js
     from skip_api_rules import _skip_api_items
 
-    app.connect("builder-inited", _write_earthkit_packages_js)
+    app.connect("builder-inited", lambda app: _write_earthkit_packages_js(app, ek_branch))
     app.connect("autoapi-skip-member", _skip_api_items)
