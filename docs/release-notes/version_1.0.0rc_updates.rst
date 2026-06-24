@@ -58,8 +58,8 @@ The actual implementations are now available in the ``array`` and ``xarray`` sub
 
 .. code-block:: python
 
-    from earthkit.meteo.wind.array import wind_speed as array_wind_speed
-    from earthkit.meteo.wind.xarray import wind_speed as xarray_wind_speed
+    from earthkit.meteo.wind.array import speed as array_wind_speed
+    from earthkit.meteo.wind.xarray import speed as xarray_wind_speed
 
     # For array-based inputs
     speed = array_wind_speed(u_array, v_array)
