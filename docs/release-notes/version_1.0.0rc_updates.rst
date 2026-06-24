@@ -45,7 +45,7 @@ Added a high-level interface to most of the functions to support both array-base
 
 .. code-block:: python
 
-    from earthkit.meteo.wind import wind_speed
+    from earthkit.meteo.wind import speed as wind_speed
 
     # For array-based inputs
     speed = wind_speed(u_array, v_array)
