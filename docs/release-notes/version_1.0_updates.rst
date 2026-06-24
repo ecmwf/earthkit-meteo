@@ -61,9 +61,9 @@ submodules and can also be directly accessed bypassing the high level dispatch m
 
 .. code-block:: python
 
-    from earthkit.meteo.wind.array import wind as array_wind
-    from earthkit.meteo.wind.xarray import wind as xarray_wind
-    from earthkit.meteo.wind.fieldlist import wind as fieldlist_wind
+    import earthkit.meteo.wind.array as array_wind
+    import earthkit.meteo.wind.xarray as xarray_wind
+    import earthkit.meteo.wind.fieldlist as fieldlist_wind
 
     # For array-based inputs
     speed = array_wind.speed(u_array, v_array)
