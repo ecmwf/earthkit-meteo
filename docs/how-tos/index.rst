@@ -8,3 +8,4 @@ How-to Guides
     :maxdepth: 1
 
     stats/index.rst
+    vertical/index.rst
