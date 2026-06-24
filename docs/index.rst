@@ -1,6 +1,6 @@
 
-Earthkit-meteo's documentation
-======================================================
+earthkit-meteo
+==============
 
 **earthkit-meteo** is a Python package providing meteorological computations using array (NumPy, Torch and CuPy), xarray or fieldlist. It is part of the :xref:`earthkit` ecosystem.
 
