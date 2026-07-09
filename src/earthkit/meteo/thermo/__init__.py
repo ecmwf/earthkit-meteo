@@ -18,3 +18,4 @@ The API is split into two layers:
 """
 
 from .thermo import *  # noqa
+from . import excess_heat  # noqa
