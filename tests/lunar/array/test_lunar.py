@@ -23,6 +23,22 @@ from earthkit.meteo.lunar.array import lunar
 @pytest.mark.parametrize(
     "date,lat,lon,v_ref",
     [
+        (datetime.datetime(2004, 4, 5, 12, 3, 0), -5, 164, 369020.9437902331),
+    ],
+)
+def test_singular_distance_to_moon(xp, device, date, lat, lon, v_ref):
+    lat = xp.asarray(lat, device=device)
+    lon = xp.asarray(lon, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
+    v = lunar.singular_distance_to_moon(date, lat, lon)
+    v_ref = xp.asarray(v_ref, dtype=v.dtype)
+    assert xp.allclose(v, v_ref)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize(
+    "date,lat,lon,v_ref",
+    [
         (datetime.datetime(2004, 4, 5, 12, 3, 0), -5, 164, 362933.3708641256),
         (datetime.datetime(2004, 4, 5, 12, 3, 0), [-5, 5], [164, -16], [362933.3708641256, 375118.1672196273]),
     ],
