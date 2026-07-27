@@ -17,6 +17,28 @@ from earthkit.meteo.utils.decorators import dispatch
 ArrayLike: TypeAlias = Any
 
 
+def singular_distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, longitudes: ArrayLike) -> Any:
+    """Distance to the Moon in km from the Earth centre,
+    with no reference to the latitude and longitude of the observer.
+
+    Parameters
+    ----------
+    date : datetime.datetime
+        The date and time for which to compute the distance.
+    latitudes : array-like
+        Latitudes, used only for array namespace and device inference.
+    longitudes : array-like
+        Longitudes, used only for array namespace and device inference.
+
+    Returns
+    -------
+    distance : float
+        Distance to the Moon in km from the Earth centre at the given date and time.
+    """
+    dispatched = dispatch(singular_distance_to_moon, array=True, xarray=False, fieldlist=False)
+    return dispatched(date, latitudes, longitudes)
+
+
 def distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, longitudes: ArrayLike) -> Any:
     """Distance to the Moon in km.
 
