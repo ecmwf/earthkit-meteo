@@ -59,7 +59,7 @@ def _get_body_xyz(body_name: str, time: "astropy.time.Time", xp: ArrayNamespace)
     body = get_body(body_name, time)
     body_itrs = body.transform_to(ITRS(obstime=time))
 
-    xyz = xp.array([
+    xyz = xp.asarray([
         body_itrs.cartesian.x.to(astropy_units.km).value,
         body_itrs.cartesian.y.to(astropy_units.km).value,
         body_itrs.cartesian.z.to(astropy_units.km).value,
@@ -93,7 +93,7 @@ def _get_observer_xyz(
         lon=longitudes * astropy_units.deg, lat=latitudes * astropy_units.deg, height=0 * astropy_units.m
     )
     obs_itrs = loc.get_itrs(obstime=time)
-    obs_xyz = xp.array([
+    obs_xyz = xp.asarray([
         obs_itrs.cartesian.x.to(astropy_units.km).value,
         obs_itrs.cartesian.y.to(astropy_units.km).value,
         obs_itrs.cartesian.z.to(astropy_units.km).value,
