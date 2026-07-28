@@ -19,8 +19,8 @@ from typing import (
 from earthkit.meteo.utils.decorators import dispatch
 
 if TYPE_CHECKING:
-    import xarray  # type: ignore[import]
     import numpy as np  # type: ignore[import]
+    import xarray  # type: ignore[import]
 
 
 ArrayLike: TypeAlias = Any
