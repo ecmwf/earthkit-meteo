@@ -675,7 +675,7 @@ def surface_cape_cin(
     r"""Compute CAPE and CIN for a parcel lifted from the surface.
 
     The parcel properties are taken directly from ``p_sfc``/``t_sfc``/``q_sfc``.
-    
+
     Parameters
     ----------
     p : np.ndarray
