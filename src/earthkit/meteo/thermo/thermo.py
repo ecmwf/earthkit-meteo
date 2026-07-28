@@ -20,6 +20,7 @@ from earthkit.meteo.utils.decorators import dispatch
 
 if TYPE_CHECKING:
     import xarray  # type: ignore[import]
+    import numpy as np  # type: ignore[import]
 
 
 ArrayLike: TypeAlias = Any
@@ -2523,20 +2524,20 @@ def specific_gas_constant(q: "ArrayLike" | "xarray.DataArray") -> "ArrayLike" | 
 
 
 def surface_cape_cin(
-    p: "ArrayLike",
-    t: "ArrayLike",
-    q: "ArrayLike",
-    zh: "ArrayLike",
-    p_sfc: "ArrayLike",
-    t_sfc: "ArrayLike",
-    q_sfc: "ArrayLike",
-    zh_sfc: "ArrayLike",
+    p: np.ndarray,
+    t: np.ndarray,
+    q: np.ndarray,
+    zh: np.ndarray,
+    p_sfc: np.ndarray,
+    t_sfc: np.ndarray,
+    q_sfc: np.ndarray,
+    zh_sfc: np.ndarray,
     *,
     extra_outputs: list | None = None,
     vertical_axis: int = 0,
     ept_method: str = "bolton43",
     lcl_method: str = "davies",
-) -> tuple["ArrayLike", "ArrayLike"]:
+) -> tuple[np.ndarray, np.ndarray]:
     r"""Compute CAPE and CIN for a parcel lifted from the surface.
 
     The parcel properties are taken directly from ``p_sfc``/``t_sfc``/``q_sfc``.
@@ -2568,21 +2569,21 @@ def surface_cape_cin(
 
 
 def mixed_layer_cape_cin(
-    p: "ArrayLike",
-    t: "ArrayLike",
-    q: "ArrayLike",
-    zh: "ArrayLike",
-    p_sfc: "ArrayLike",
-    t_sfc: "ArrayLike",
-    q_sfc: "ArrayLike",
-    zh_sfc: "ArrayLike",
+    p: np.ndarray,
+    t: np.ndarray,
+    q: np.ndarray,
+    zh: np.ndarray,
+    p_sfc: np.ndarray,
+    t_sfc: np.ndarray,
+    q_sfc: np.ndarray,
+    zh_sfc: np.ndarray,
     *,
     layer_depth: float = 5000.0,
     extra_outputs: list | None = None,
     vertical_axis: int = 0,
     ept_method: str = "bolton43",
     lcl_method: str = "davies",
-) -> tuple["ArrayLike", "ArrayLike"]:
+) -> tuple[np.ndarray, np.ndarray]:
     r"""Compute CAPE and CIN for a parcel averaged over a mixed surface layer.
 
     The parcel temperature and specific humidity are pressure-weighted averages over
@@ -2616,14 +2617,14 @@ def mixed_layer_cape_cin(
 
 
 def most_unstable_cape_cin(
-    p: "ArrayLike",
-    t: "ArrayLike",
-    q: "ArrayLike",
-    zh: "ArrayLike",
-    p_sfc: "ArrayLike",
-    t_sfc: "ArrayLike",
-    q_sfc: "ArrayLike",
-    zh_sfc: "ArrayLike",
+    p: np.ndarray,
+    t: np.ndarray,
+    q: np.ndarray,
+    zh: np.ndarray,
+    p_sfc: np.ndarray,
+    t_sfc: np.ndarray,
+    q_sfc: np.ndarray,
+    zh_sfc: np.ndarray,
     *,
     exclude_surface_layer: bool = False,
     max_search_height: float = 3000.0,
@@ -2631,7 +2632,7 @@ def most_unstable_cape_cin(
     vertical_axis: int = 0,
     ept_method: str = "bolton43",
     lcl_method: str = "davies",
-) -> tuple["ArrayLike", "ArrayLike"]:
+) -> tuple[np.ndarray, np.ndarray]:
     r"""Compute CAPE and CIN for the most-unstable parcel.
 
     The parcel is selected as the level (within ``[0, max_search_height]`` m

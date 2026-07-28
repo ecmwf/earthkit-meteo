@@ -31,8 +31,8 @@ class PressureLevel:
     """Pressure (Pa)."""
     t: np.ndarray
     """Temperature (K)."""
-    z: np.ndarray
-    """Geopotential height above ground (m)."""
+    zh_agl: np.ndarray
+    """Geopotential height above ground level (m)."""
 
 
 @dc.dataclass(frozen=True)
@@ -48,13 +48,13 @@ class ParcelOrigin:
     """Temperature (K)."""
     q: np.ndarray
     """Specific humidity (kg/kg)."""
-    z: np.ndarray
-    """Geopotential height above ground (m)."""
+    zh_agl: np.ndarray
+    """Geopotential height above ground level (m)."""
 
 
 @dc.dataclass(frozen=True)
 class ParcelPath:
-    """Temperature profile of the lifted parcel and its environment.
+    """Parcel ascent profile and diagnostic levels.
 
     Profile arrays (``p``, ``t``, ``q``, ``tv``, ``tv_env``) have shape
     ``(n_levels, ...)``, where the levels are sorted in ascending pressure
@@ -68,8 +68,8 @@ class ParcelPath:
     # Profile arrays — shape (n_levels, ...)
     p: np.ndarray
     """Pressure grid, sorted ascending (Pa)."""
-    z: np.ndarray
-    """Geopotential height above ground (m)."""
+    zh_agl: np.ndarray
+    """Geopotential height above ground level (m)."""
     t: np.ndarray
     """Parcel temperature (K)."""
     q: np.ndarray
@@ -484,13 +484,13 @@ class _CapeCinComp:
 
         # TODO include LI calculation here and add to extra outputs if requested
 
-        lcl = PressureLevel(p=p_lcl, t=t_lcl, z=z_lcl)
-        lfc = PressureLevel(p=p_lfc, t=t_lfc, z=z_lfc)
-        el = PressureLevel(p=p_el, t=t_el, z=z_el)
-        origin = ParcelOrigin(p=p_start, t=t_start, q=q_start, z=z_start)
+        lcl = PressureLevel(p=p_lcl, t=t_lcl, zh_agl=z_lcl)
+        lfc = PressureLevel(p=p_lfc, t=t_lfc, zh_agl=z_lfc)
+        el = PressureLevel(p=p_el, t=t_el, zh_agl=z_el)
+        origin = ParcelOrigin(p=p_start, t=t_start, q=q_start, zh_agl=z_start)
         parcel_path = ParcelPath(
             p=p,
-            z=zh_agl,
+            zh_agl=zh_agl,
             t=t_parcel,
             q=q_parcel,
             tv=tv_parcel,
@@ -613,7 +613,7 @@ def _assemble_extras(result, extra_outputs, vertical_axis):
             if vertical_axis != 0:
                 path = ParcelPath(
                     p=np.swapaxes(path.p, 0, vertical_axis),
-                    z=np.swapaxes(path.z, 0, vertical_axis),
+                    zh_agl=np.swapaxes(path.zh_agl, 0, vertical_axis),
                     t=np.swapaxes(path.t, 0, vertical_axis),
                     q=np.swapaxes(path.q, 0, vertical_axis),
                     tv=np.swapaxes(path.tv, 0, vertical_axis),
@@ -657,27 +657,44 @@ def _run_cape_cin(comp, p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc, *, extra_outpu
     return result.cape, result.cin, extras
 
 
-_CAPE_CIN_COMMON_DOCSTRING = """
+def surface_cape_cin(
+    p: np.ndarray,
+    t: np.ndarray,
+    q: np.ndarray,
+    zh: np.ndarray,
+    p_sfc: np.ndarray,
+    t_sfc: np.ndarray,
+    q_sfc: np.ndarray,
+    zh_sfc: np.ndarray,
+    *,
+    extra_outputs=None,
+    vertical_axis=0,
+    ept_method="bolton43",
+    lcl_method="davies",
+):
+    r"""Compute CAPE and CIN for a parcel lifted from the surface.
 
+    The parcel properties are taken directly from ``p_sfc``/``t_sfc``/``q_sfc``.
+    
     Parameters
     ----------
-    p : array-like
+    p : np.ndarray
         Pressure (Pa) on pressure levels. The vertical axis must be the first axis
         (axis=0) unless ``vertical_axis`` is set.
-    t : array-like
+    t : np.ndarray
         Temperature (K) on pressure levels, same shape as ``p``.
-    q : array-like
+    q : np.ndarray
         Specific humidity (kg/kg) on pressure levels, same shape as ``p``.
-    zh : array-like
+    zh : np.ndarray
         Geopotential height (m) on pressure levels, same shape as ``p``.
-    p_sfc : array-like
+    p_sfc : np.ndarray
         Surface pressure (Pa), shape equal to the horizontal dimensions of ``p``.
         The surface is included as an additional level in the computation.
-    t_sfc : array-like
+    t_sfc : np.ndarray
         Surface temperature (K), same horizontal shape as ``p_sfc``.
-    q_sfc : array-like
+    q_sfc : np.ndarray
         Surface specific humidity (kg/kg), same horizontal shape as ``p_sfc``.
-    zh_sfc : array-like
+    zh_sfc : np.ndarray
         Surface geopotential height (m), same horizontal shape as ``p_sfc``.
         Used as the height reference: all profile heights are expressed relative
         to ``zh_sfc`` internally.
@@ -700,33 +717,12 @@ _CAPE_CIN_COMMON_DOCSTRING = """
 
     Returns
     -------
-    cape : array-like
+    cape : np.ndarray
         CAPE (J/kg), shape equal to the horizontal dimensions of the input arrays.
-    cin : array-like
+    cin : np.ndarray
         CIN (J/kg), shape equal to the horizontal dimensions of the input arrays.
     extras : dict, optional
         Only present when ``extra_outputs`` is non-empty.
-"""
-
-
-def surface_cape_cin(
-    p,
-    t,
-    q,
-    zh,
-    p_sfc,
-    t_sfc,
-    q_sfc,
-    zh_sfc,
-    *,
-    extra_outputs=None,
-    vertical_axis=0,
-    ept_method="bolton43",
-    lcl_method="davies",
-):
-    r"""Compute CAPE and CIN for a parcel lifted from the surface.
-
-    The parcel properties are taken directly from ``p_sfc``/``t_sfc``/``q_sfc``.
     """
     comp = _CapeCinSurface(lcl_method=lcl_method, ept_method=ept_method)
     return _run_cape_cin(
@@ -744,18 +740,15 @@ def surface_cape_cin(
     )
 
 
-surface_cape_cin.__doc__ += _CAPE_CIN_COMMON_DOCSTRING
-
-
 def mixed_layer_cape_cin(
-    p,
-    t,
-    q,
-    zh,
-    p_sfc,
-    t_sfc,
-    q_sfc,
-    zh_sfc,
+    p: np.ndarray,
+    t: np.ndarray,
+    q: np.ndarray,
+    zh: np.ndarray,
+    p_sfc: np.ndarray,
+    t_sfc: np.ndarray,
+    q_sfc: np.ndarray,
+    zh_sfc: np.ndarray,
     *,
     layer_depth=5000.0,
     extra_outputs=None,
@@ -769,11 +762,56 @@ def mixed_layer_cape_cin(
     the bottom ``layer_depth`` (Pa) of the column. The parcel is launched from
     the surface pressure.
 
-    Additional Parameters
-    ---------------------
+    Parameters
+    ----------
+    p : np.ndarray
+        Pressure (Pa) on pressure levels. The vertical axis must be the first axis
+        (axis=0) unless ``vertical_axis`` is set.
+    t : np.ndarray
+        Temperature (K) on pressure levels, same shape as ``p``.
+    q : np.ndarray
+        Specific humidity (kg/kg) on pressure levels, same shape as ``p``.
+    zh : np.ndarray
+        Geopotential height (m) on pressure levels, same shape as ``p``.
+    p_sfc : np.ndarray
+        Surface pressure (Pa), shape equal to the horizontal dimensions of ``p``.
+        The surface is included as an additional level in the computation.
+    t_sfc : np.ndarray
+        Surface temperature (K), same horizontal shape as ``p_sfc``.
+    q_sfc : np.ndarray
+        Surface specific humidity (kg/kg), same horizontal shape as ``p_sfc``.
+    zh_sfc : np.ndarray
+        Surface geopotential height (m), same horizontal shape as ``p_sfc``.
+        Used as the height reference: all profile heights are expressed relative
+        to ``zh_sfc`` internally.
+    extra_outputs : list of str, optional
+        Optional diagnostics to compute and return as a third element. Allowed
+        keys: ``"lcl"``, ``"lfc"``, ``"el"``, ``"parcel"``, ``"parcel_path"``.
+        When ``None`` or empty the function returns only ``(cape, cin)``.
+    vertical_axis : int, optional
+        Axis of the input arrays that corresponds to the vertical dimension.
+        Defaults to ``0``. ``-1`` may also be used to indicate the last axis.
+        Surface arrays (``p_sfc``, ``t_sfc``, ``q_sfc``, ``zh_sfc``) have no
+        vertical axis and are not affected by this parameter.
+    ept_method : str, optional
+        Method used to compute equivalent potential temperature. Passed to
+        :func:`earthkit.meteo.thermo.array.ept_from_specific_humidity`.
+        Defaults to ``"bolton43"``.
+    lcl_method : str, optional
+        Method used to compute the Lifted Condensation Level. Passed to
+        :func:`earthkit.meteo.thermo.array.lcl`. Defaults to ``"davies"``.
     layer_depth : float, optional
         Depth (Pa) of the layer over which the parcel is averaged. Defaults to
         ``5000`` Pa.
+
+    Returns
+    -------
+    cape : np.ndarray
+        CAPE (J/kg), shape equal to the horizontal dimensions of the input arrays.
+    cin : np.ndarray
+        CIN (J/kg), shape equal to the horizontal dimensions of the input arrays.
+    extras : dict, optional
+        Only present when ``extra_outputs`` is non-empty.
     """
     comp = _CapeCinMixed(layer_depth=layer_depth, lcl_method=lcl_method, ept_method=ept_method)
     return _run_cape_cin(
@@ -791,18 +829,15 @@ def mixed_layer_cape_cin(
     )
 
 
-mixed_layer_cape_cin.__doc__ += _CAPE_CIN_COMMON_DOCSTRING
-
-
 def most_unstable_cape_cin(
-    p,
-    t,
-    q,
-    zh,
-    p_sfc,
-    t_sfc,
-    q_sfc,
-    zh_sfc,
+    p: np.ndarray,
+    t: np.ndarray,
+    q: np.ndarray,
+    zh: np.ndarray,
+    p_sfc: np.ndarray,
+    t_sfc: np.ndarray,
+    q_sfc: np.ndarray,
+    zh_sfc: np.ndarray,
     *,
     exclude_surface_layer=False,
     max_search_height=3000.0,
@@ -816,8 +851,44 @@ def most_unstable_cape_cin(
     The parcel is selected as the level (within ``[0, max_search_height]`` m
     above the surface) that maximises equivalent potential temperature.
 
-    Additional Parameters
-    ---------------------
+    Parameters
+    ----------
+    p : np.ndarray
+        Pressure (Pa) on pressure levels. The vertical axis must be the first axis
+        (axis=0) unless ``vertical_axis`` is set.
+    t : np.ndarray
+        Temperature (K) on pressure levels, same shape as ``p``.
+    q : np.ndarray
+        Specific humidity (kg/kg) on pressure levels, same shape as ``p``.
+    zh : np.ndarray
+        Geopotential height (m) on pressure levels, same shape as ``p``.
+    p_sfc : np.ndarray
+        Surface pressure (Pa), shape equal to the horizontal dimensions of ``p``.
+        The surface is included as an additional level in the computation.
+    t_sfc : np.ndarray
+        Surface temperature (K), same horizontal shape as ``p_sfc``.
+    q_sfc : np.ndarray
+        Surface specific humidity (kg/kg), same horizontal shape as ``p_sfc``.
+    zh_sfc : np.ndarray
+        Surface geopotential height (m), same horizontal shape as ``p_sfc``.
+        Used as the height reference: all profile heights are expressed relative
+        to ``zh_sfc`` internally.
+    extra_outputs : list of str, optional
+        Optional diagnostics to compute and return as a third element. Allowed
+        keys: ``"lcl"``, ``"lfc"``, ``"el"``, ``"parcel"``, ``"parcel_path"``.
+        When ``None`` or empty the function returns only ``(cape, cin)``.
+    vertical_axis : int, optional
+        Axis of the input arrays that corresponds to the vertical dimension.
+        Defaults to ``0``. ``-1`` may also be used to indicate the last axis.
+        Surface arrays (``p_sfc``, ``t_sfc``, ``q_sfc``, ``zh_sfc``) have no
+        vertical axis and are not affected by this parameter.
+    ept_method : str, optional
+        Method used to compute equivalent potential temperature. Passed to
+        :func:`earthkit.meteo.thermo.array.ept_from_specific_humidity`.
+        Defaults to ``"bolton43"``.
+    lcl_method : str, optional
+        Method used to compute the Lifted Condensation Level. Passed to
+        :func:`earthkit.meteo.thermo.array.lcl`. Defaults to ``"davies"``.
     exclude_surface_layer : bool, optional
         If ``True``, the surface parcel (i.e. the level at
         ``zh_agl == 0``) is excluded from the candidate set, so the selected
@@ -825,6 +896,15 @@ def most_unstable_cape_cin(
     max_search_height : float, optional
         Upper bound (m above the surface) of the search range for the most
         unstable parcel. Defaults to ``3000`` m.
+
+    Returns
+    -------
+    cape : np.ndarray
+        CAPE (J/kg), shape equal to the horizontal dimensions of the input arrays.
+    cin : np.ndarray
+        CIN (J/kg), shape equal to the horizontal dimensions of the input arrays.
+    extras : dict, optional
+        Only present when ``extra_outputs`` is non-empty.
     """
     comp = _CapeCinMostUnstable(
         exclude_surface_layer=exclude_surface_layer,
@@ -845,6 +925,3 @@ def most_unstable_cape_cin(
         extra_outputs=extra_outputs,
         vertical_axis=vertical_axis,
     )
-
-
-most_unstable_cape_cin.__doc__ += _CAPE_CIN_COMMON_DOCSTRING
