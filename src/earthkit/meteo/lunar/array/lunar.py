@@ -17,8 +17,9 @@ from typing import (
 )
 
 from earthkit.utils.array import array_namespace
+from numpy.typing import NDArray
 
-ArrayLike: TypeAlias = Any
+NDArrayLike: TypeAlias = NDArray | float
 ArrayNamespace: TypeAlias = Any
 
 _ASTROPY_AVAILABLE = True
@@ -69,29 +70,32 @@ def _get_body_xyz(body_name: str, time: "astropy.time.Time", xp: ArrayNamespace)
 
 
 def _get_observer_xyz(
-    time: "astropy.time.Time", latitudes: ArrayLike, longitudes: ArrayLike, xp: ArrayNamespace
-) -> Any:
+    time: "astropy.time.Time", latitudes: NDArrayLike, longitudes: NDArrayLike, xp: ArrayNamespace
+) -> NDArray:
     """Get the ITRS cartesian coordinates of surface observers on Earth at a given time.
 
     Parameters
     ----------
     time : astropy.time.Time
         The observation time (used to set the ITRS obstime).
-    latitudes : array-like
+    latitudes : NDArrayLike
         Latitudes of the observer(s) in degrees.
-    longitudes : array-like
+    longitudes : NDArrayLike
         Longitudes of the observer(s) in degrees.
     xp : ArrayNamespace
         The array namespace (e.g., numpy, cupy).
 
     Returns
     -------
-    xyz : array-like (shape (3, N))
+    xyz : NDArrayLike (shape (3, N))
         ITRS cartesian coordinates of the observer(s) in km.
     """
-    loc = EarthLocation.from_geodetic(
-        lon=longitudes * astropy_units.deg, lat=latitudes * astropy_units.deg, height=0 * astropy_units.m
-    )
+    # loc = EarthLocation.from_geodetic(
+    #     lon=longitudes * astropy_units.deg, lat=latitudes * astropy_units.deg, height=0 * astropy_units.m
+    # )
+
+    loc = EarthLocation.from_geodetic(lon=longitudes, lat=latitudes)
+
     obs_itrs = loc.get_itrs(obstime=time)
     obs_xyz = xp.asarray([
         obs_itrs.cartesian.x.to(astropy_units.km).value,
@@ -102,25 +106,21 @@ def _get_observer_xyz(
     return obs_xyz
 
 
-def _get_distance_between_bodies(
-    observer_xyz: ArrayLike, target_xyz: ArrayLike, xp: ArrayNamespace, device: Any
-) -> Any:
+def _get_distance_between_bodies(observer_xyz: NDArray, target_xyz: NDArray, xp: ArrayNamespace) -> NDArray:
     """Compute the distance from observer(s) to a target body.
 
     Parameters
     ----------
-    observer_xyz : array-like (shape (3, N) or (3,))
+    observer_xyz : NDArray (shape (3, N) or (3,))
         Cartesian coordinates of the observer(s) in km.
-    target_xyz : array-like (shape (3,) or (3, N))
+    target_xyz : NDArray (shape (3,) or (3, N))
         Cartesian coordinates of the target body in km.
     xp : ArrayNamespace
         The array namespace (e.g., numpy, cupy).
-    device : device
-        The device on which to return the array.
 
     Returns
     -------
-    distances : array-like (shape (N,))
+    distances : NDArray (shape (N,))
         Distances from observer(s) to the target body in km.
     """
     if observer_xyz.ndim == 1:
@@ -128,12 +128,11 @@ def _get_distance_between_bodies(
     if target_xyz.ndim == 1:
         target_xyz = target_xyz[:, xp.newaxis]  # shape (3, 1)
     diff = observer_xyz - target_xyz  # shape (3, N)
-    distances = xp.asarray(xp.linalg.norm(diff, axis=0), device=device)  # shape (N,)
-
+    distances = xp.linalg.norm(diff, axis=0)  # shape (N,)
     return distances
 
 
-def singular_distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, longitudes: ArrayLike) -> Any:
+def distance_from_earth_centre_to_moon(date: datetime.datetime) -> float:
     """Distance to the Moon in km from the Earth centre,
     with no reference to the latitude and longitude of the observer.
 
@@ -141,10 +140,6 @@ def singular_distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, lon
     ----------
     date : datetime.datetime
         The date and time for which to compute the distance.
-    latitudes : array-like
-        Latitudes, used only for array namespace and device inference.
-    longitudes : array-like
-        Longitudes, used only for array namespace and device inference.
 
     Returns
     -------
@@ -153,33 +148,32 @@ def singular_distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, lon
     """
     _require_astropy("distance_to_moon")
 
-    xp = array_namespace(latitudes, longitudes)
-    device = xp.device(latitudes)
+    xp = array_namespace("numpy")
 
     time = Time(date)  # Convert to astropy Time object
 
     moon_xyz = _get_body_xyz("moon", time, xp)
     earth_xyz = _get_body_xyz("earth", time, xp)
-    distance = _get_distance_between_bodies(earth_xyz, moon_xyz, xp, device)
+    distance = _get_distance_between_bodies(earth_xyz, moon_xyz, xp)
 
     return distance
 
 
-def distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, longitudes: ArrayLike) -> Any:
+def distance_to_moon(date: datetime.datetime, latitudes: NDArrayLike, longitudes: NDArrayLike) -> NDArrayLike:
     """Distance to the Moon in km.
 
     Parameters
     ----------
     date : datetime.datetime
         The date and time for which to compute the distance.
-    latitudes : array-like
+    latitudes : NDArrayLike
         Latitudes of the observer(s) in degrees.
-    longitudes : array-like
+    longitudes : NDArrayLike
         Longitudes of the observer(s) in degrees.
 
     Returns
     -------
-    distances : array-like
+    distances : NDArrayLike
         Distances to the Moon in km.
     """
     _require_astropy("distance_to_moon")
@@ -187,32 +181,30 @@ def distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, longitudes: 
     xp = array_namespace(latitudes, longitudes)
     latitudes = xp.asarray(latitudes)
     longitudes = xp.asarray(longitudes)
-    device = xp.device(latitudes)
 
     time = Time(date)  # Convert to astropy Time object
 
     moon_xyz = _get_body_xyz("moon", time, xp)
     observer_xyz = _get_observer_xyz(time, latitudes, longitudes, xp)
-
-    distances = _get_distance_between_bodies(observer_xyz, moon_xyz, xp, device)
+    distances = _get_distance_between_bodies(observer_xyz, moon_xyz, xp)
     return distances
 
 
-def delta_distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, longitudes: ArrayLike) -> Any:
+def delta_distance_to_moon(date: datetime.datetime, latitudes: NDArrayLike, longitudes: NDArrayLike) -> NDArrayLike:
     """Delta distance to the Moon in km, relative to the minimum instantaneous distance.
 
     Parameters
     ----------
     date : datetime.datetime
         The date and time for which to compute the delta distance.
-    latitudes : array-like
+    latitudes : NDArrayLike
         Latitudes of the observer(s) in degrees.
-    longitudes : array-like
+    longitudes : NDArrayLike
         Longitudes of the observer(s) in degrees.
 
     Returns
     -------
-    delta_distances : array-like
+    delta_distances : NDArrayLike
         The difference between the distances and the minimum distance to the Moon of the specific observer(s).
     """
     distances = distance_to_moon(date, latitudes, longitudes)

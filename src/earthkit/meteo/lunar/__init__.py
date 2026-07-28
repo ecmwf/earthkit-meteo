@@ -23,7 +23,7 @@ Currently, the only supported backend is the ``array`` implementation, so the lo
 from .lunar import *  # noqa
 
 __all__ = [
-    "singular_distance_to_moon",
+    "distance_from_earth_centre_to_moon",
     "distance_to_moon",
     "delta_distance_to_moon",
 ]

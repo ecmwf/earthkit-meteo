@@ -12,12 +12,15 @@ from __future__ import annotations
 import datetime
 from typing import Any, TypeAlias
 
+from numpy.typing import NDArray
+
 from earthkit.meteo.utils.decorators import dispatch
 
-ArrayLike: TypeAlias = Any
+NDArrayLike: TypeAlias = NDArray | float
+ArrayNamespace: TypeAlias = Any
 
 
-def singular_distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, longitudes: ArrayLike) -> Any:
+def distance_from_earth_centre_to_moon(date: datetime.datetime) -> float:
     """Distance to the Moon in km from the Earth centre,
     with no reference to the latitude and longitude of the observer.
 
@@ -35,47 +38,48 @@ def singular_distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, lon
     distance : float
         Distance to the Moon in km from the Earth centre at the given date and time.
     """
-    dispatched = dispatch(singular_distance_to_moon, array=True, xarray=False, fieldlist=False)
-    return dispatched(date, latitudes, longitudes)
+    from . import array as lunar_array
+
+    return lunar_array.distance_from_earth_centre_to_moon(date)
 
 
-def distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, longitudes: ArrayLike) -> Any:
+def distance_to_moon(date: datetime.datetime, latitudes: NDArrayLike, longitudes: NDArrayLike) -> NDArrayLike:
     """Distance to the Moon in km.
 
     Parameters
     ----------
     date : datetime.datetime
         The date and time for which to compute the distance.
-    latitudes : array-like
+    latitudes : NDArrayLike
         Latitudes of the observer(s) in degrees.
-    longitudes : array-like
+    longitudes : NDArrayLike
         Longitudes of the observer(s) in degrees.
 
     Returns
     -------
-    distances : array-like
+    distances : NDArrayLike
         Distances to the Moon in km.
     """
-    dispatched = dispatch(distance_to_moon, array=True, xarray=False, fieldlist=False)
+    dispatched = dispatch(distance_to_moon, match=1, array=True, xarray=False, fieldlist=False)
     return dispatched(date, latitudes, longitudes)
 
 
-def delta_distance_to_moon(date: datetime.datetime, latitudes: ArrayLike, longitudes: ArrayLike) -> Any:
+def delta_distance_to_moon(date: datetime.datetime, latitudes: NDArrayLike, longitudes: NDArrayLike) -> NDArrayLike:
     """Delta distance to the Moon in km, relative to the minimum instantaneous distance.
 
     Parameters
     ----------
     date : datetime.datetime
         The date and time for which to compute the delta distance.
-    latitudes : array-like
+    latitudes : NDArrayLike
         Latitudes of the observer(s) in degrees.
-    longitudes : array-like
+    longitudes : NDArrayLike
         Longitudes of the observer(s) in degrees.
 
     Returns
     -------
-    delta_distances : array-like
-        Delta distances to the Moon in km, relative to the minimum instantaneous distance.
+    delta_distances : NDArrayLike
+        The difference between the distances and the minimum distance to the Moon of the specific observer(s).
     """
-    dispatched = dispatch(delta_distance_to_moon, array=True, xarray=False, fieldlist=False)
+    dispatched = dispatch(delta_distance_to_moon, match=1, array=True, xarray=False, fieldlist=False)
     return dispatched(date, latitudes, longitudes)

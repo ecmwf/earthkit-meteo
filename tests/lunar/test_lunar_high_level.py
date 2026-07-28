@@ -12,15 +12,11 @@ import datetime
 
 import numpy as np
 import pytest
-from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
-from earthkit.meteo.lunar.array import lunar
+from earthkit.meteo import lunar
 
-# Test case: full moon on 5 April 2004 at 12:03 UTC
-# Sub-lunar point:  lat=5.15, lon=164.2
-
-# Currently only numpy is supported, but we keep the parametrization for future support of other array libraries.
-_NAMESPACE_DEVICES = list(filter(lambda x: x[0]._earthkit_array_namespace_name == "numpy", NAMESPACE_DEVICES))
+# Currently these are the same tests as in the array implementation, but we keep them separate for future
+# support of other array libraries.
 
 
 @pytest.mark.parametrize(
@@ -29,12 +25,11 @@ _NAMESPACE_DEVICES = list(filter(lambda x: x[0]._earthkit_array_namespace_name =
         (datetime.datetime(2004, 4, 5, 12, 3, 0), 369020.9437902331),
     ],
 )
-def test_distance_from_earth_centre_to_moon(date, v_ref):
+def test_distance_from_earth_centre_to_moon_high(date, v_ref):
     v = lunar.distance_from_earth_centre_to_moon(date)
     assert np.allclose(v, v_ref)
 
 
-@pytest.mark.parametrize("xp, device", _NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "date,lat,lon,v_ref",
     [
@@ -42,7 +37,10 @@ def test_distance_from_earth_centre_to_moon(date, v_ref):
         (datetime.datetime(2004, 4, 5, 12, 3, 0), [-5, 5], [164, -16], [362933.3708641256, 375118.1672196273]),
     ],
 )
-def test_distance_to_moon(xp, device, date, lat, lon, v_ref):
+def test_distance_to_moon_high(date, lat, lon, v_ref):
+    xp = np
+    device = None
+
     lat = xp.asarray(lat, device=device)
     lon = xp.asarray(lon, device=device)
     v_ref = xp.asarray(v_ref, device=device)
@@ -51,7 +49,6 @@ def test_distance_to_moon(xp, device, date, lat, lon, v_ref):
     assert xp.allclose(v, v_ref)
 
 
-@pytest.mark.parametrize("xp, device", _NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "date,lat,lon,v_ref",
     [
@@ -63,7 +60,10 @@ def test_distance_to_moon(xp, device, date, lat, lon, v_ref):
         ),
     ],
 )
-def test_delta_distance_to_moon(xp, device, date, lat, lon, v_ref):
+def test_delta_distance_to_moon_high(date, lat, lon, v_ref):
+    xp = np
+    device = None
+
     lat = xp.asarray(lat, device=device)
     lon = xp.asarray(lon, device=device)
     v_ref = xp.asarray(v_ref, device=device)
