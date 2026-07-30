@@ -19,7 +19,7 @@ C_pl = 4218.0
 
 
 @dc.dataclass(frozen=True)
-class PressureLevel:
+class ParcelLevel:
     """Pressure, temperature and height at a single key level.
 
     All arrays have the shape of the horizontal dimensions of the input
@@ -56,9 +56,9 @@ class ParcelOrigin:
 class ParcelPath:
     """Parcel ascent profile and diagnostic levels.
 
-    Profile arrays (``p``, ``t``, ``q``, ``tv``, ``tv_env``) have shape
-    ``(n_levels, ...)``, where the levels are sorted in ascending pressure
-    order regardless of the order supplied by the caller.
+    Profile arrays (``zh_agl``, ``t``, ``q``, ``tv``, ``tv_env``) have shape
+    ``(n_levels, ...)`` and are ordered consistently from one end of the
+    profile to the other. All profile arrays share the same ordering.
 
     The key diagnostic levels (``lcl``, ``lfc``, ``el``) and the parcel
     ``origin`` have shape ``(...)`` (horizontal dimensions only) so that the
@@ -66,8 +66,6 @@ class ParcelPath:
     """
 
     # Profile arrays — shape (n_levels, ...)
-    p: np.ndarray
-    """Pressure grid, sorted ascending (Pa)."""
     zh_agl: np.ndarray
     """Geopotential height above ground level (m)."""
     t: np.ndarray
@@ -80,11 +78,11 @@ class ParcelPath:
     """Environment virtual temperature (K)."""
 
     # Key levels — shape (...) i.e. horizontal dims only
-    lcl: PressureLevel
+    lcl: ParcelLevel
     """Lifted Condensation Level."""
-    lfc: PressureLevel
+    lfc: ParcelLevel
     """Level of Free Convection (NaN where no convection)."""
-    el: PressureLevel
+    el: ParcelLevel
     """Equilibrium Level (NaN where no convection)."""
 
     # Parcel origin
@@ -268,9 +266,9 @@ class _CapeCinResult:
 
     cape: np.ndarray
     cin: np.ndarray
-    lcl: "PressureLevel"
-    lfc: "PressureLevel"
-    el: "PressureLevel"
+    lcl: "ParcelLevel"
+    lfc: "ParcelLevel"
+    el: "ParcelLevel"
     origin: "ParcelOrigin"
     parcel_path: "ParcelPath"
 
@@ -484,12 +482,11 @@ class _CapeCinComp:
 
         # TODO include LI calculation here and add to extra outputs if requested
 
-        lcl = PressureLevel(p=p_lcl, t=t_lcl, zh_agl=z_lcl)
-        lfc = PressureLevel(p=p_lfc, t=t_lfc, zh_agl=z_lfc)
-        el = PressureLevel(p=p_el, t=t_el, zh_agl=z_el)
+        lcl = ParcelLevel(p=p_lcl, t=t_lcl, zh_agl=z_lcl)
+        lfc = ParcelLevel(p=p_lfc, t=t_lfc, zh_agl=z_lfc)
+        el = ParcelLevel(p=p_el, t=t_el, zh_agl=z_el)
         origin = ParcelOrigin(p=p_start, t=t_start, q=q_start, zh_agl=z_start)
         parcel_path = ParcelPath(
-            p=p,
             zh_agl=zh_agl,
             t=t_parcel,
             q=q_parcel,
@@ -612,7 +609,6 @@ def _assemble_extras(result, extra_outputs, vertical_axis):
             path = result.parcel_path
             if vertical_axis != 0:
                 path = ParcelPath(
-                    p=np.swapaxes(path.p, 0, vertical_axis),
                     zh_agl=np.swapaxes(path.zh_agl, 0, vertical_axis),
                     t=np.swapaxes(path.t, 0, vertical_axis),
                     q=np.swapaxes(path.q, 0, vertical_axis),

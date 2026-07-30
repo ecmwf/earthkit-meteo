@@ -646,7 +646,7 @@ def test_extra_outputs_parcel_path_shape():
     assert isinstance(path, ParcelPath)
 
     # Profile arrays
-    for attr in ("p", "zh_agl", "t", "q", "tv", "tv_env"):
+    for attr in ("zh_agl", "t", "q", "tv", "tv_env"):
         arr = getattr(path, attr)
         assert arr.shape == (nz_path,) + horizontal_shape, (
             f"parcel_path.{attr}: expected shape {(nz_path,) + horizontal_shape}, got {arr.shape}"
@@ -692,7 +692,7 @@ def test_extra_outputs_parcel_path_nd_shape():
     nz_path = nz
 
     assert isinstance(path, ParcelPath)
-    for attr in ("p", "zh_agl", "t", "q", "tv", "tv_env"):
+    for attr in ("zh_agl", "t", "q", "tv", "tv_env"):
         assert getattr(path, attr).shape == (nz_path, ny, nx), f"profile array {attr} wrong shape"
     for level_attr in ("lcl", "lfc", "el"):
         assert getattr(path, level_attr).p.shape == (ny, nx), f"key level {level_attr}.p wrong shape"
@@ -701,7 +701,7 @@ def test_extra_outputs_parcel_path_nd_shape():
 
 def test_extra_outputs_standalone_key_levels():
     """Requesting 'lcl', 'lfc', 'el', 'parcel' individually returns the right objects."""
-    from earthkit.meteo.thermo.array.cape_cin import ParcelOrigin, PressureLevel
+    from earthkit.meteo.thermo.array.cape_cin import ParcelLevel, ParcelOrigin
 
     p, zh, t, q = _unstable_1col()
     cape, cin, extras = thermo.surface_cape_cin(
@@ -712,7 +712,7 @@ def test_extra_outputs_standalone_key_levels():
     assert set(extras.keys()) == {"lcl", "lfc", "el", "parcel"}
 
     for key in ("lcl", "lfc", "el"):
-        assert isinstance(extras[key], PressureLevel), f"extras['{key}'] should be a PressureLevel"
+        assert isinstance(extras[key], ParcelLevel), f"extras['{key}'] should be a ParcelLevel"
         assert extras[key].p.shape == (1,)
         assert extras[key].t.shape == (1,)
         assert extras[key].zh_agl.shape == (1,)
@@ -766,8 +766,8 @@ def test_extra_outputs_invalid_key_raises():
         )
 
 
-def test_extra_outputs_parcel_path_pressure_sorted():
-    """parcel_path.p must be in ascending order even when input is descending."""
+def test_extra_outputs_parcel_path_height_sorted():
+    """parcel_path.z_agl must be in decending order even when input is ascending."""
     p, zh, t, q = _unstable_1col()
     p_pl, t_pl, q_pl, zh_pl = _strip_sfc(p, t, q, zh)
     p_flip = np.flip(p_pl, axis=0)
@@ -783,10 +783,10 @@ def test_extra_outputs_parcel_path_pressure_sorted():
         *_sfc_from_profile(p, t, q, zh),  # surface from original
         extra_outputs=["parcel_path"],
     )
-    path_p = extras["parcel_path"].p[:, 0]
-    finite_p = path_p[np.isfinite(path_p)]
-    assert np.all(np.diff(finite_p) >= 0), (
-        "parcel_path.p must be sorted ascending (NaN sub-ground levels at end are excluded)"
+    path_zh_agl = extras["parcel_path"].zh_agl[:, 0]
+    finite_zh = path_zh_agl[np.isfinite(path_zh_agl)]
+    assert np.all(np.diff(finite_zh) <= 0), (
+        "parcel_path.zh_agl must be sorted descending (NaN sub-ground levels at end are excluded)"
     )
 
 
@@ -804,7 +804,7 @@ def test_extra_outputs_vertical_axis_minus_1():
     )
     # profile arrays must mirror the caller's shape: (1, nz_pl + 1)
     nz_path = p_pl.shape[0] + 1
-    for attr in ("p", "zh_agl", "t", "q", "tv", "tv_env"):
+    for attr in ("zh_agl", "t", "q", "tv", "tv_env"):
         arr = getattr(extras["parcel_path"], attr)
         assert arr.shape == (1, nz_path), f"parcel_path.{attr}: expected (1, {nz_path}), got {arr.shape}"
 
@@ -843,7 +843,7 @@ def test_extra_outputs_vertical_axis_arbitrary():
         extra_outputs=["parcel_path"],
     )
     # parcel_path includes the surface, so along the vertical axis it has nz_pl + 1 = nz levels
-    for attr in ("p", "zh_agl", "t", "q", "tv", "tv_env"):
+    for attr in ("zh_agl", "t", "q", "tv", "tv_env"):
         arr = getattr(extras["parcel_path"], attr)
         assert arr.shape == (ny, nx, nz), f"parcel_path.{attr}: expected {(ny, nx, nz)}, got {arr.shape}"
     # horizontal outputs are unaffected
