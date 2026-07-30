@@ -28,7 +28,6 @@ repos:
   rev: 0.7.14
   hooks:
   - id: mdformat
-    exclude: cruft-update-template.md
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
   rev: v2.16.0
   hooks:

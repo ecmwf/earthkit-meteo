@@ -85,9 +85,6 @@ urls.Repository = "https://github.com/ecmwf/earthkit-meteo/"
 [tool.coverage]
 run.branch = "true"
 
-[tool.isort]
-profile = "black"
-
 [tool.pydocstyle]
 add_ignore = ["D1", "D200", "D205", "D400", "D401"]
 convention = "numpy"
