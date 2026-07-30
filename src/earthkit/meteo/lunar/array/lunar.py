@@ -90,10 +90,6 @@ def _get_observer_xyz(
     xyz : NDArrayLike (shape (3, N))
         ITRS cartesian coordinates of the observer(s) in km.
     """
-    # loc = EarthLocation.from_geodetic(
-    #     lon=longitudes * astropy_units.deg, lat=latitudes * astropy_units.deg, height=0 * astropy_units.m
-    # )
-
     loc = EarthLocation.from_geodetic(lon=longitudes, lat=latitudes)
 
     obs_itrs = loc.get_itrs(obstime=time)
