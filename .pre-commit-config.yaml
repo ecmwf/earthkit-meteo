@@ -35,6 +35,10 @@ repos:
     args: [--autofix, --preserve-quotes]
   - id: pretty-format-toml
     args: [--autofix]
+- repo: https://github.com/fsfe/reuse-tool
+  rev: v6.2.0
+  hooks:
+  - id: reuse
 - repo: https://github.com/sphinx-contrib/sphinx-lint
   rev: v1.0.0
   hooks:
