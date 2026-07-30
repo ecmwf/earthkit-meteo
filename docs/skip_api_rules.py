@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 European Centre for Medium-Range Weather Forecasts (ECMWF)
+# SPDX-License-Identifier: Apache-2.0
+
 # define skip rules for autoapi
 def _skip_api_items(app, what, name, obj, skip, options):
     # print(f"{what=} {name=}")
