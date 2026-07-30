@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 European Centre for Medium-Range Weather Forecasts (ECMWF)
+# SPDX-License-Identifier: Apache-2.0
+
 from earthkit.data import Field, FieldList  # type: ignore[import]
 
 from earthkit.meteo.utils.fieldlist import get_hybrid_level_parameters

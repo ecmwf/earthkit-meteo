@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 European Centre for Medium-Range Weather Forecasts (ECMWF)
+# SPDX-License-Identifier: Apache-2.0
+
 from .extreme_values import fit_gumbel, return_period_to_value, value_to_return_period
 from .numpy_extended import nanaverage
 

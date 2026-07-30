@@ -15,6 +15,8 @@ path = [
   ".readthedocs.yml",
   ".pre-commit-config.yaml",
   "pyproject.toml",
-  "pytest.ini"
+  "pytest.ini",
+  "tests/data/*.csv",
+  "src/earthkit/meteo/conf/*.json"
 ]
 precedence = "aggregate"
