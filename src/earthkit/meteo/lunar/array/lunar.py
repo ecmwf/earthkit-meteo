@@ -72,12 +72,12 @@ def _get_body_xyz(body_name: str, time: "astropy.time.Time", xp: ArrayNamespace)
 def _get_observer_xyz(
     time: "astropy.time.Time", latitudes: NDArrayLike, longitudes: NDArrayLike, xp: ArrayNamespace
 ) -> NDArray:
-    """Get the ITRS cartesian coordinates of surface observers on Earth at a given time.
+    """Get the :term:`ITRS` cartesian coordinates of surface observers on Earth at a given time.
 
     Parameters
     ----------
     time : astropy.time.Time
-        The observation time (used to set the ITRS obstime).
+        The observation time (used to set the :term:`ITRS` obstime).
     latitudes : NDArrayLike
         Latitudes of the observer(s) in degrees.
     longitudes : NDArrayLike
@@ -88,7 +88,8 @@ def _get_observer_xyz(
     Returns
     -------
     xyz : NDArrayLike (shape (3, N))
-        ITRS cartesian coordinates of the observer(s) in km.
+        :term:`ITRS` cartesian coordinates of the observer(s) in km.
+
     """
     loc = EarthLocation.from_geodetic(lon=longitudes, lat=latitudes)
 
