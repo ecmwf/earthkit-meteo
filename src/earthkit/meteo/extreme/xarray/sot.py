@@ -9,6 +9,8 @@
 
 from __future__ import annotations
 
+from typing import Optional
+
 import xarray as xr
 
 from earthkit.meteo.utils.decorators import get_dim_from_defaults, xarray_ufunc
@@ -20,6 +22,7 @@ def sot(
     clim: xr.DataArray,
     ens: xr.DataArray,
     perc: int,
+    perc_tail: Optional[int] = None,
     eps: float = -1e4,
     clim_dim: str | None = None,
     ens_dim: str | None = None,
@@ -37,6 +40,8 @@ def sot(
         Ensemble forecast. The reduction dimension is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
+    perc_tail: int, optional
+        Percentile value for the tail (typically 1 or 99). If None, it will be set to 1 or 99 depending on ``perc``.
     eps: (float)
         Epsilon factor for zero values
     clim_dim: str, optional
@@ -65,6 +70,7 @@ def sot(
         clim,
         ens,
         perc=perc,
+        perc_tail=perc_tail,
         eps=eps,
         clim_dim=-1,
         ens_dim=-1,
@@ -79,6 +85,7 @@ def sot_unsorted(
     clim: xr.DataArray,
     ens: xr.DataArray,
     perc: int,
+    perc_tail: Optional[int] = None,
     eps: float = -1e4,
     clim_dim: str | None = None,
     ens_dim: str | None = None,
@@ -93,6 +100,8 @@ def sot_unsorted(
         Ensemble forecast. The reduction dimension is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
+    perc_tail: int, optional
+        Percentile value for the tail (typically 1 or 99). If None, it will be set to 1 or 99 depending on ``perc``.
     eps: (float)
         Epsilon factor for zero values
     clim_dim: str, optional
@@ -116,6 +125,7 @@ def sot_unsorted(
         clim,
         ens,
         perc=perc,
+        perc_tail=perc_tail,
         eps=eps,
         clim_dim=-1,
         ens_dim=-1,

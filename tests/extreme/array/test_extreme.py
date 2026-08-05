@@ -121,13 +121,16 @@ def test_np_sot(xp, device, clim, ens, v_ref):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("clim, ens, v_ref", [(_data.clim_eps2, _data.ens_eps2, [np.nan])])
-def test_np_sot_perc(xp, device, clim, ens, v_ref):
+@pytest.mark.parametrize(
+    "clim, ens, perc_tail, v_ref",
+    [(_data.clim_eps2, _data.ens_eps2, None, [np.nan]), (_data.clim_eps2, _data.ens_eps2, 99, [np.nan])],
+)
+def test_np_sot_perc(xp, device, clim, ens, perc_tail, v_ref):
     clim = xp.asarray(clim, device=device)
     ens = xp.asarray(ens, device=device)
     v_ref = xp.asarray(v_ref, device=device)
 
-    sot = extreme.array.sot(clim, ens, 90, eps=1e4)
+    sot = extreme.array.sot(clim, ens, 90, perc_tail=perc_tail, eps=1e4)
 
     v_ref = xp.asarray(v_ref, dtype=sot.dtype)
 
