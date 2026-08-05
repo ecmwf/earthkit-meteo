@@ -112,5 +112,6 @@ Have a feature request or found a bug? Feel free to open an
 
    release-notes/index
    references
+   glossary
    licence
    genindex
