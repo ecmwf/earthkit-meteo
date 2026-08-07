@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 European Centre for Medium-Range Weather Forecasts (ECMWF)
+# SPDX-License-Identifier: Apache-2.0
+
 import numpy as np
 
 cpf_val = np.array([0.0, 1.0, 0.0, 0.53921568, 0.7352941], dtype=np.float32)
