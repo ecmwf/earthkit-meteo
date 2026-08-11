@@ -15,8 +15,6 @@ from scipy import interpolate
 from earthkit.meteo import thermo
 from earthkit.meteo.constants import constants
 
-C_pl = 4218.0
-
 
 @dc.dataclass(frozen=True)
 class ParcelLevel:
@@ -208,7 +206,7 @@ def _moist_ascent_lookup_table(ept_method):
         es_parcel = thermo.saturation_vapour_pressure(t_parcel, phase="water")
         r_parcel = constants.epsilon * es_parcel / (p - es_parcel)
 
-        dlv_dt = constants.c_pv - C_pl
+        dlv_dt = constants.c_pv - constants.c_l
         lv = constants.Lv + dlv_dt * (t_parcel - constants.T0)
 
         # Terms from Emanuel, 1995 (Eq. 4.7.3)
