@@ -9,7 +9,7 @@
 import numpy as np
 import pytest
 
-ekg = pytest.importorskip("earthkit.geo")
+ekg = pytest.importorskip("earthkit.geo", reason="regimes require earthkit.geo")
 
 from earthkit.meteo.regimes import Patterns, array
 

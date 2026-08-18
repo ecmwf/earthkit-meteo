@@ -24,8 +24,8 @@ def project(fields, patterns, weights=None, patterns_coords=None):
     weights : xarray.DataArray | array_like, optional
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1. If no
-        weights are specified, area-based weights are generated from the cosine
-        of latitude of the patterns grid.
+        weights are specified, area-based weights are generated from the
+        patterns grid.
     patterns_coords : Mapping[str,Any] | Sequence[str], optional
         Coordinates for the pattern generation function. Consult the individual
         implementations on the interpretation.
@@ -40,10 +40,12 @@ def project(fields, patterns, weights=None, patterns_coords=None):
 
         Depending on the type of argument `fields`, this function calls:
 
-        - :py:func:`earthkit.meteo.regimes.xarray.project` for ``xarray.DataArray``
         - :py:func:`earthkit.meteo.regimes.array.project` for ``array_like``
-
-        The function returns an object of the same type as the input argument.
+          (returns  same type)
+        - :py:func:`earthkit.meteo.regimes.xarray.project` for :py:class:`xarray.DataArray`
+          (returns same type)
+        - :py:func:`earthkit.meteo.regimes.fieldlist.project` for :py:class:`FieldList`
+          or :py:class:`Field` (returns array_like)
     """
     dispatched = dispatch(project, xarray=True, array=True, fieldlist=True)
     return dispatched(fields, patterns, weights, patterns_coords)
@@ -80,5 +82,5 @@ def regime_index(projections, mean, std):
 
         (projection - mean) / std
     """
-    dispatched = dispatch(regime_index, xarray=True, array=True, fieldlist=True)
+    dispatched = dispatch(regime_index, xarray=True, array=True, fieldlist=False)
     return dispatched(projections, mean, std)

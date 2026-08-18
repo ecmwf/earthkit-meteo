@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 ekd = pytest.importorskip("earthkit.data")
+ekg = pytest.importorskip("earthkit.geo", reason="regimes require earthkit.geo")
 
 from earthkit.meteo.regimes import ConstantPatterns, ModulatedPatterns, array, fieldlist
 
@@ -50,7 +51,6 @@ def test_project_with_constant_patterns(fields, weights):
     reference = array.project(fields.data(keys="value", flatten=False), patterns, weights)
     assert result.shape == (4, 2)
     np.testing.assert_array_equal(result, reference)
-    np.testing.assert_array_equal(result.columns, ["bar", "foo"])
 
 
 @pytest.mark.parametrize("weights", [None, np.asarray([[1.0, 1.0]]), np.asarray([[0.2, 0.8]])])
@@ -70,10 +70,9 @@ def test_project_with_valid_time_dependent_patterns(fields, weights):
     )
     assert result.shape == (4, 2)
     np.testing.assert_array_equal(result, reference)
-    np.testing.assert_array_equal(result.columns, ["foo", "bar"])
 
 
-def test_project_with_automatic_regridding():
+def test_project_with_regrid_to_pattern():
     field = ekd.Field.from_components(
         values=np.asarray([[0.0, 0.0, 0.0, 0.0], [0.0, 1.0, 1.0, 0.0], [0.0, 1.0, 1.0, 0.0]]),
         geography={"grid_spec": {"grid": [1.0, 1.0], "area": [46.0, -1.0, 44.0, 2.0]}},
@@ -86,5 +85,5 @@ def test_project_with_automatic_regridding():
             [[2.0, 2.0], [2.0, 2.0]],
         ]),
     )
-    result = fieldlist.project(field, patterns, weights=np.ones((2, 2)))
+    result = fieldlist.project(field, patterns, weights=np.ones((2, 2)), regrid_to_pattern=True)
     np.testing.assert_allclose(result, [[1.0, 2.0]])

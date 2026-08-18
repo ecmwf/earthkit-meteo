@@ -44,7 +44,7 @@ def project(fields, patterns, weights=None, patterns_coords=None):
     fields = array_namespace(fields).expand_dims(fields, -ndim_field - 1)
     if fields.shape[-ndim_field:] != patterns.shape:
         raise ValueError(f"shape of input fields {fields.shape} incompatible with shape of patterns {patterns.shape}")
-    weights = prepare_normalised_weights(weights, patterns)
+    weights = prepare_normalised_weights(patterns, weights=weights)
     sum_axes = tuple(range(-ndim_field, 0, 1))
     return (fields * patterns.patterns(**patterns_coords) * weights).sum(axis=sum_axes)
 

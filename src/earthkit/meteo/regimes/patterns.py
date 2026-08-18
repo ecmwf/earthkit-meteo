@@ -22,7 +22,7 @@ class Patterns(abc.ABC):
         outputs.
     grid : earthkit.geo.Grid | dict | str
         Specification of the grid on which the patterns live.
-    xp : array_namespace, optional
+    xp : array_namespace
         Array namespace of the generated patterns.
     """
 
@@ -81,7 +81,7 @@ class ConstantPatterns(Patterns):
         Labels for the patterns.
     patterns : array_like
         The patterns (one for each label, stacked into a single array).
-    grid : dict
+    grid : earthkit.geo.Grid | dict | str
         Specification of the grid on which the patterns live.
     xp : array_namespace, optional
         The array namespace used for the patterns and their generation. By
@@ -92,7 +92,7 @@ class ConstantPatterns(Patterns):
         if xp is None:
             xp = array_namespace(patterns)
         super().__init__(labels, grid=grid, xp=xp)
-        self._patterns = self._xp.asarray(patterns)
+        self._patterns = self.xp.asarray(patterns)
         if self._patterns.ndim != 1 + len(self.shape):
             raise ValueError("must have exactly one label axis in the patterns")
         if len(self.labels) != self._patterns.shape[0]:
@@ -124,7 +124,7 @@ class ModulatedPatterns(Patterns):
         Scalar function to modulate the base patterns. The parameters required
         to evaluate this function must be provided when projecting as
         `patterns_extra_coords` kwargs.
-    grid : dict
+    grid : earthkit.geo.Grid | dict | str
         Specification of the grid on which the patterns live.
     xp : array_namespace, optional
         The array namespace used for the patterns and their generation. By

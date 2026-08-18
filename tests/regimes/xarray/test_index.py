@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 xr = pytest.importorskip("xarray")
-ekg = pytest.importorskip("earthkit.geo")
+ekg = pytest.importorskip("earthkit.geo", reason="regimes require earthkit.geo")
 
 from earthkit.meteo.regimes import Patterns
 from earthkit.meteo.regimes.xarray import project, regime_index
@@ -92,7 +92,6 @@ def test_project_with_weights_generation(data3d, patterns):
     result = project(data3d, patterns, patterns_coords=["foo"])
     # Project with explicit cos(lat)-weights for reference
     weights = np.cos(np.deg2rad(data3d.coords["lat"]))
-    print(weights)
     reference = project(data3d, patterns, weights=weights, patterns_coords=["foo"])
     xr.testing.assert_allclose(result, reference)
 

@@ -9,9 +9,14 @@
 import numpy as np
 import pytest
 
+pytest.importorskip("earthkit.geo", reason="regimes require earthkit-geo")
+
 from earthkit.meteo import regimes
 from earthkit.meteo.regimes import array as regimes_array
+from earthkit.meteo.regimes import fieldlist as regimes_fieldlist
 from earthkit.meteo.regimes import xarray as regimes_xarray
+
+GRID_SPEC = {"grid": [1.0, 1.0], "area": [45.0, 0.0, 45.0, 1.0]}
 
 
 @pytest.fixture
@@ -19,7 +24,7 @@ def patterns():
     return regimes.ConstantPatterns(
         labels=["foo", "bar"],
         patterns=[[[1.0, 1.0]], [[0.1, 0.9]]],
-        grid={"grid": [1.0, 1.0], "area": [45.0, 0.0, 45.0, 1.0]},
+        grid=GRID_SPEC,
     )
 
 
@@ -82,3 +87,29 @@ def test_highlevel_regime_index_dispatches_to_xarray(xarray_data3d):
     ref = regimes_xarray.regime_index(xarray_data3d, mean, std)
 
     xr.testing.assert_allclose(got, ref)
+
+
+ekd = pytest.importorskip("earthkit.data")
+
+
+@pytest.fixture
+def fieldlist_data():
+    return ekd.FieldList.from_fields([
+        ekd.Field.from_components(
+            values=np.asarray([[1.0, 1.0]]),
+            time={"base_datetime": "2020-01-01T00:00", "step": 0},
+            geography={"grid_spec": GRID_SPEC},
+        ),
+        ekd.Field.from_components(
+            values=np.asarray([[1.0, 6.0]]),
+            time={"base_datetime": "2020-01-01T00:00", "step": 3},
+            geography={"grid_spec": GRID_SPEC},
+        ),
+    ])
+
+
+def test_highlevel_project_dispatches_to_fieldlist(fieldlist_data, patterns):
+    got = regimes.project(fieldlist_data, patterns)
+    ref = regimes_fieldlist.project(fieldlist_data, patterns)
+
+    np.testing.assert_allclose(got, ref)

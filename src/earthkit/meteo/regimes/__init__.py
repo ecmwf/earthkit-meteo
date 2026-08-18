@@ -17,15 +17,7 @@ Weather regimes based on projections onto spatial patterns.
   These functions dispatch to backend implementations in the ``array``,
   ``xarray`` and ``fieldlist`` submodules based on the input type.
 
-
-.. note::
-    At the moment, only regular lat-lon grids are supported for the
-    specification of patterns::
-
-        {
-            "grid": [lon_spacing, lat_spacing],
-            "area": [lat0, lon0, lat1, lon1]
-        }
+Requires :py:mod:`earthkit.geo`.
 """
 
 from . import array

@@ -8,18 +8,17 @@
 
 import earthkit.data as ekd
 import earthkit.geo as ekg
-import pandas as pd
 
 from .. import array as regimes_array
 from .._weights import prepare_normalised_weights
 
 
-def project(field, patterns, weights=None, patterns_coords=None):
+def project(fields, patterns, weights=None, patterns_coords=None, regrid_to_pattern=True):
     """Project onto the given patterns.
 
     Parameters
     ----------
-    field : earthkit.data.FieldList | earthkit.data.Field
+    fields : earthkit.data.FieldList | earthkit.data.Field
         Input fields whose values the patterns are projected onto.
     patterns : earthkit.meteo.regimes.Patterns
         Patterns to project on.
@@ -27,33 +26,37 @@ def project(field, patterns, weights=None, patterns_coords=None):
         Weights for the summation in the projection. Weights are normalised
         before application so the sum of weights over the domain equals 1. Must
         have the shape of the patterns. If no weights are specified, area-based
-        weights are generated from the cosine of latitude of the patterns grid.
+        weights are generated from the patterns grid.
     patterns_coords : Mapping[str,str], optional
         Mapping of field metadata keys to keyword arguments of the pattern
         generator.
+    regrid_to_pattern : bool
+        Allow regridding of input fields to match the pattern grid. Enabled by
+        default.
 
     Returns
     -------
-    pandas.DataFrame
-        The projection(s) for each pattern. One column per pattern, one row
-        per field (same order as input fields).
+    array_like
+        The projection(s) for each pattern. One row per field, one column per
+        pattern. Same order as input fields and pattern labels, respectively.
     """
     if patterns_coords is None:
         patterns_coords = {}
-    weights = prepare_normalised_weights(weights, patterns)
-    if not isinstance(field, ekd.FieldList):
-        field = field.to_fieldlist()
+    weights = prepare_normalised_weights(patterns, weights)
+    if not isinstance(fields, ekd.FieldList):
+        fields = fields.to_fieldlist()
     proj = []
-    for fld in field:
-        # Automatic regridding of fields to match pattern grid (including
-        # cropping to pattern area)
-        if fld.get("geography.grid") != patterns.grid:
+    for field in fields:
+        # Automatic regridding, also covers cropping to pattern area
+        if regrid_to_pattern and field.get("geography.grid") != patterns.grid:
             try:
-                fld = ekg.regrid(fld, out_grid=patterns.grid)
+                field = ekg.regrid(field, out_grid=patterns.grid)
             except RuntimeError as e:
-                raise RuntimeError(f"regridding to pattern grid failed for {fld!r}") from e
-        values = fld.data(keys="value", flatten=False)
+                raise RuntimeError(
+                    f"regrid_to_pattern=True but regridding to pattern grid {patterns.grid!r} failed for {fields!r}"
+                ) from e
+        values = field.data(keys="value", flatten=False)
         # Extract extra coordinates required for the pattern generation
-        coords = {kwarg: fld.get(coord) for kwarg, coord in patterns_coords.items()}
+        coords = {kwarg: field.get(coord) for kwarg, coord in patterns_coords.items()}
         proj.append(regimes_array.project(values, patterns, weights, patterns_coords=coords))
-    return pd.DataFrame.from_records(proj, columns=patterns.labels)
+    return patterns.xp.asarray(proj)

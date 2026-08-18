@@ -102,8 +102,7 @@ def project(fields, patterns, weights=None, patterns_coords=None):
         )
     pattern_dims = fields.dims[-patterns.ndim :]
     if weights is None:
-        weights = generate_area_weights(patterns.grid, patterns.xp)
-        print(weights)
+        weights = generate_area_weights(patterns.grid, xp=patterns.xp)
         pattern_coords = {dim: fields.coords[dim] for dim in pattern_dims}
         weights = xr.DataArray(weights, coords=pattern_coords, dims=pattern_dims)
     if set(weights.dims) - set(pattern_dims):

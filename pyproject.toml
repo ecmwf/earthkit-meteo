@@ -62,7 +62,7 @@ optional-dependencies.lunar = [
   "astropy"
 ]
 optional-dependencies.regimes = [
-  "earthkit-geo"
+  "earthkit-geo>=1"
 ]
 optional-dependencies.samples = [
   "requests"
@@ -78,7 +78,7 @@ optional-dependencies.stats = [
 optional-dependencies.test = [
   "astropy",
   "earthkit-data",
-  "earthkit-geo",
+  "earthkit-geo>=1",
   "netcdf4",
   "pandas",
   "pytest",
