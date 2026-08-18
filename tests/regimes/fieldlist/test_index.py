@@ -47,7 +47,7 @@ def fields():
 @pytest.mark.parametrize("weights", [None, np.asarray([[1.0, 1.0]]), np.asarray([[0.2, 0.8]])])
 def test_project_with_constant_patterns(fields, weights):
     patterns = ConstantPatterns(labels=["foo", "bar"], patterns=[[[1.0, 1.0]], [[0.1, 0.9]]], grid=GRID_SPEC)
-    result = fieldlist.project(fields, patterns, weights)
+    result = fieldlist.project(fields, patterns, weights, regrid_to_patterns=False)
     reference = array.project(fields.data(keys="value", flatten=False), patterns, weights)
     assert result.shape == (4, 2)
     np.testing.assert_array_equal(result, reference)
@@ -61,7 +61,9 @@ def test_project_with_valid_time_dependent_patterns(fields, weights):
         modulator=lambda t: pd.to_datetime(t).hour,
         grid=GRID_SPEC,
     )
-    result = fieldlist.project(fields, patterns, weights, patterns_coords={"t": "time.valid_datetime"})
+    result = fieldlist.project(
+        fields, patterns, weights, patterns_coords={"t": "time.valid_datetime"}, regrid_to_patterns=False
+    )
     reference = array.project(
         fields.data(keys="value", flatten=False),
         patterns,
@@ -85,5 +87,5 @@ def test_project_with_regrid_to_pattern():
             [[2.0, 2.0], [2.0, 2.0]],
         ]),
     )
-    result = fieldlist.project(field, patterns, weights=np.ones((2, 2)), regrid_to_pattern=True)
+    result = fieldlist.project(field, patterns, weights=np.ones((2, 2)), regrid_to_patterns=True)
     np.testing.assert_allclose(result, [[1.0, 2.0]])

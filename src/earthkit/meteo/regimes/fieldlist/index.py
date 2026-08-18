@@ -13,7 +13,7 @@ from .. import array as regimes_array
 from .._weights import prepare_normalised_weights
 
 
-def project(fields, patterns, weights=None, patterns_coords=None, regrid_to_pattern=True):
+def project(fields, patterns, weights=None, patterns_coords=None, regrid_to_patterns=True):
     """Project onto the given patterns.
 
     Parameters
@@ -30,8 +30,8 @@ def project(fields, patterns, weights=None, patterns_coords=None, regrid_to_patt
     patterns_coords : Mapping[str,str], optional
         Mapping of field metadata keys to keyword arguments of the pattern
         generator.
-    regrid_to_pattern : bool
-        Allow regridding of input fields to match the pattern grid. Enabled by
+    regrid_to_patterns : bool
+        Allow regridding of input fields to match the patterns grid. Enabled by
         default.
 
     Returns
@@ -48,7 +48,7 @@ def project(fields, patterns, weights=None, patterns_coords=None, regrid_to_patt
     proj = []
     for field in fields:
         # Automatic regridding, also covers cropping to pattern area
-        if regrid_to_pattern and field.get("geography.grid") != patterns.grid:
+        if regrid_to_patterns and field.get("geography.grid") != patterns.grid:
             try:
                 field = ekg.regrid(field, out_grid=patterns.grid)
             except RuntimeError as e:
