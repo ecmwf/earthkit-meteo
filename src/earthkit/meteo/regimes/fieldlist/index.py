@@ -28,8 +28,7 @@ def project(fields, patterns, weights=None, patterns_coords=None, regrid_to_patt
         have the shape of the patterns. If no weights are specified, area-based
         weights are generated from the patterns grid.
     patterns_coords : Mapping[str,str], optional
-        Mapping of field metadata keys to keyword arguments of the pattern
-        generator.
+        Mapping of pattern-generator keyword arguments to field metadata keys.
     regrid_to_patterns : bool
         Allow regridding of input fields to match the patterns grid. Enabled by
         default.
@@ -53,7 +52,7 @@ def project(fields, patterns, weights=None, patterns_coords=None, regrid_to_patt
                 field = ekg.regrid(field, out_grid=patterns.grid)
             except RuntimeError as e:
                 raise RuntimeError(
-                    f"regrid_to_pattern=True but regridding to pattern grid {patterns.grid!r} failed for {fields!r}"
+                    f"regrid_to_patterns=True but regridding to pattern grid {patterns.grid!r} failed for {fields!r}"
                 ) from e
         values = field.data(keys="value", flatten=False)
         # Extract extra coordinates required for the pattern generation

@@ -28,13 +28,14 @@ def project(fields, patterns, weights=None, patterns_coords=None):
         weights are generated from the cosine of latitude of the patterns grid.
     patterns_coords : Mapping[str,Any], optional
         Keyword arguments for the pattern generation. E.g., a sequence of
-        dates for date-modulated patterns. Must have the shape of `field`
-        without the trailing dimensions onto which the patterns are projected.
+        dates for date-modulated patterns. Each value must have the shape of
+        `fields` without the trailing dimensions onto which the patterns are
+        projected.
 
     Returns
     -------
     array_like
-        Results of the projection. Output fields have same shape as input field
+        Results of the projection. Output fields have same shape as input fields
         except that the dimensions reduced during the projection (i.e., the
         spatial dimensions of the patterns) are replaced by a regime dimension.
     """

@@ -77,8 +77,8 @@ def project(fields, patterns, weights=None, patterns_coords=None):
         weights are specified, area-based weights are generated from the cosine
         of latitude of the patterns grid.
     patterns_coords : Mapping[str,str] | Sequence[str], optional
-        Mapping of coordinate names to keyword arguments of the pattern
-        generation function. If a sequence is given, argument and associated
+        Mapping of pattern-generator keyword arguments to coordinate names. If a
+        sequence is given instead of a mapping, argument names and associated
         coordinate names are assumed to be identical. Only coordinates that are
         dimensions of `fields` can be mapped.
 
