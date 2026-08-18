@@ -75,6 +75,7 @@ def test_project_with_valid_time_dependent_patterns(fields, weights):
 
 
 def test_project_with_regrid_to_pattern():
+    pytest.importorskip("mir", reason="MIR not available for regridding")
     field = ekd.Field.from_components(
         values=np.asarray([[0.0, 0.0, 0.0, 0.0], [0.0, 1.0, 1.0, 0.0], [0.0, 1.0, 1.0, 0.0]]),
         geography={"grid_spec": {"grid": [1.0, 1.0], "area": [46.0, -1.0, 44.0, 2.0]}},
