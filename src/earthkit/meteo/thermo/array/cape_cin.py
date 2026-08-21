@@ -587,22 +587,47 @@ def _normalise_vertical_axis(vertical_axis, ndim):
     return vertical_axis
 
 
-def _assemble_extras(result, extra_outputs, vertical_axis):
+def _squeeze_level(lev):
+    """Squeeze the single horizontal dimension from a ParcelLevel with shape (1,) fields."""
+    return ParcelLevel(
+        p=lev.p.squeeze(axis=0),
+        t=lev.t.squeeze(axis=0),
+        zh_agl=lev.zh_agl.squeeze(axis=0),
+    )
+
+
+def _squeeze_origin(origin):
+    """Squeeze the single horizontal dimension from a ParcelOrigin with shape (1,) fields."""
+    return ParcelOrigin(
+        p=origin.p.squeeze(axis=0),
+        t=origin.t.squeeze(axis=0),
+        q=origin.q.squeeze(axis=0),
+        zh_agl=origin.zh_agl.squeeze(axis=0),
+    )
+
+
+def _assemble_extras(result, extra_outputs, vertical_axis, *, is_profile=False):
     """Build the ``extras`` dict from the internal result.
 
     The ``parcel_path`` profile arrays are swapped back to the caller's
-    ``vertical_axis`` layout if needed.
+    ``vertical_axis`` layout if needed.  When ``is_profile`` is True all
+    horizontal dimensions (size 1) are squeezed away so that the caller
+    receives 0-D scalar arrays for key levels and 1-D arrays for profiles.
     """
     extras = {}
     for key in extra_outputs:
         if key == "lcl":
-            extras["lcl"] = result.lcl
+            lev = result.lcl
+            extras["lcl"] = _squeeze_level(lev) if is_profile else lev
         elif key == "lfc":
-            extras["lfc"] = result.lfc
+            lev = result.lfc
+            extras["lfc"] = _squeeze_level(lev) if is_profile else lev
         elif key == "el":
-            extras["el"] = result.el
+            lev = result.el
+            extras["el"] = _squeeze_level(lev) if is_profile else lev
         elif key == "parcel":
-            extras["parcel"] = result.origin
+            origin = result.origin
+            extras["parcel"] = _squeeze_origin(origin) if is_profile else origin
         elif key == "parcel_path":
             path = result.parcel_path
             if vertical_axis != 0:
@@ -617,6 +642,18 @@ def _assemble_extras(result, extra_outputs, vertical_axis):
                     el=path.el,
                     origin=path.origin,
                 )
+            if is_profile:
+                path = ParcelPath(
+                    zh_agl=path.zh_agl.squeeze(axis=-1),
+                    t=path.t.squeeze(axis=-1),
+                    q=path.q.squeeze(axis=-1),
+                    tv=path.tv.squeeze(axis=-1),
+                    tv_env=path.tv_env.squeeze(axis=-1),
+                    lcl=_squeeze_level(path.lcl),
+                    lfc=_squeeze_level(path.lfc),
+                    el=_squeeze_level(path.el),
+                    origin=_squeeze_origin(path.origin),
+                )
             extras["parcel_path"] = path
     return extras
 
@@ -627,8 +664,53 @@ def _run_cape_cin(comp, p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc, *, extra_outpu
     Handles validation of ``extra_outputs``, ``vertical_axis`` reshaping of
     profile inputs/outputs, and surface array coercion. Returns either
     ``(cape, cin)`` or ``(cape, cin, extras)`` depending on ``extra_outputs``.
+
+    When ``p`` is 1-D (a single vertical profile) the function automatically
+    expands it to shape ``(nz, 1)`` internally and squeezes the trailing
+    horizontal dimension back out of all outputs before returning, so that
+    ``cape`` and ``cin`` are 0-D arrays and ``ParcelLevel``/``ParcelOrigin``
+    fields are likewise 0-D.  Surface inputs must then be scalar or
+    1-element arrays.
     """
     extra_outputs = _validate_extra_outputs(extra_outputs)
+
+    p = np.asarray(p, dtype=float)
+    t = np.asarray(t, dtype=float)
+    q = np.asarray(q, dtype=float)
+    zh = np.asarray(zh, dtype=float)
+
+    p_sfc = np.asarray(p_sfc, dtype=float)
+    t_sfc = np.asarray(t_sfc, dtype=float)
+    q_sfc = np.asarray(q_sfc, dtype=float)
+    zh_sfc = np.asarray(zh_sfc, dtype=float)
+
+    # Validate that all profile arrays share the same shape.
+    if not (t.shape == p.shape and q.shape == p.shape and zh.shape == p.shape):
+        raise ValueError(
+            f"Profile arrays p, t, q, zh must all have the same shape; "
+            f"got p={p.shape}, t={t.shape}, q={q.shape}, zh={zh.shape}"
+        )
+
+    # Detect a single-profile (1-D) input before any axis manipulation.
+    is_profile = p.ndim == 1
+    if is_profile:
+        if vertical_axis != 0:
+            raise ValueError("vertical_axis must be 0 (or omitted) when profile inputs are 1-D")
+        for name, arr in [("p_sfc", p_sfc), ("t_sfc", t_sfc), ("q_sfc", q_sfc), ("zh_sfc", zh_sfc)]:
+            if arr.ndim > 1 or (arr.ndim == 1 and arr.size != 1):
+                raise ValueError(
+                    f"When profile inputs are 1-D, surface array '{name}' must be a scalar "
+                    f"or 1-element array; got shape {arr.shape}"
+                )
+        # Expand to (nz, 1) / (1,) so the rest of the code sees a single-column grid.
+        p = p[:, None]
+        t = t[:, None]
+        q = q[:, None]
+        zh = zh[:, None]
+        p_sfc = p_sfc.reshape(1)
+        t_sfc = t_sfc.reshape(1)
+        q_sfc = q_sfc.reshape(1)
+        zh_sfc = zh_sfc.reshape(1)
 
     if vertical_axis != 0:
         vertical_axis = _normalise_vertical_axis(vertical_axis, p.ndim)
@@ -637,18 +719,16 @@ def _run_cape_cin(comp, p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc, *, extra_outpu
         q = np.swapaxes(q, 0, vertical_axis)
         zh = np.swapaxes(zh, 0, vertical_axis)
 
-    p_sfc = np.asarray(p_sfc, dtype=float)
-    t_sfc = np.asarray(t_sfc, dtype=float)
-    q_sfc = np.asarray(q_sfc, dtype=float)
-    zh_sfc = np.asarray(zh_sfc, dtype=float)
-
     result = comp._cape_cin(p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc)
 
-    if not extra_outputs:
-        return result.cape, result.cin
+    cape = result.cape.squeeze(axis=0) if is_profile else result.cape
+    cin = result.cin.squeeze(axis=0) if is_profile else result.cin
 
-    extras = _assemble_extras(result, extra_outputs, vertical_axis)
-    return result.cape, result.cin, extras
+    if not extra_outputs:
+        return cape, cin
+
+    extras = _assemble_extras(result, extra_outputs, vertical_axis, is_profile=is_profile)
+    return cape, cin, extras
 
 
 def surface_cape_cin(

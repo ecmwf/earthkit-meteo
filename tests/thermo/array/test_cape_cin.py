@@ -949,3 +949,106 @@ def test_surface_parcel_uses_sfc_values():
     cape_warm, _ = thermo.surface_cape_cin(p, t, q, zh, p_sfc, t_sfc_warm, q_sfc, zh_sfc)
 
     assert cape_warm[0] > cape_default[0], "Warmer surface temperature should produce more CAPE for the surface parcel"
+
+
+# ---------------------------------------------------------------------------
+# 1-D (single-profile) input tests
+# ---------------------------------------------------------------------------
+
+
+def test_cape_cin_1d_profile_extra_outputs():
+    """1-D profile inputs with extra_outputs should return 0-D diagnostics and
+    1-D parcel_path profile arrays.
+    """
+    from earthkit.meteo.thermo.array.cape_cin import ParcelLevel, ParcelOrigin, ParcelPath
+
+    data = CapeCinData()
+    p = data.p["unstable"]
+    t = data.t["unstable"]
+    zh = data.zh["unstable"]
+    q = data.q["unstable"]
+
+    p_sfc, t_sfc, q_sfc, zh_sfc = p[-1], t[-1], q[-1], zh[-1]
+
+    cape, cin, extras = thermo.surface_cape_cin(
+        p[:-1],
+        t[:-1],
+        q[:-1],
+        zh[:-1],
+        p_sfc,
+        t_sfc,
+        q_sfc,
+        zh_sfc,
+        extra_outputs=["lcl", "lfc", "el", "parcel", "parcel_path"],
+    )
+
+    assert cape.shape == ()
+    assert cin.shape == ()
+
+    # Key-level outputs must be 0-D
+    for key in ("lcl", "lfc", "el"):
+        lev = extras[key]
+        assert isinstance(lev, ParcelLevel)
+        assert lev.p.shape == (), f"extras['{key}'].p: expected (), got {lev.p.shape}"
+        assert lev.t.shape == (), f"extras['{key}'].t: expected (), got {lev.t.shape}"
+        assert lev.zh_agl.shape == (), f"extras['{key}'].zh_agl: expected (), got {lev.zh_agl.shape}"
+
+    ori = extras["parcel"]
+    assert isinstance(ori, ParcelOrigin)
+    assert ori.p.shape == ()
+    assert ori.t.shape == ()
+    assert ori.q.shape == ()
+    assert ori.zh_agl.shape == ()
+
+    # parcel_path profile arrays must be 1-D
+    path = extras["parcel_path"]
+    assert isinstance(path, ParcelPath)
+    nz_path = path.zh_agl.shape[0]
+    assert path.zh_agl.ndim == 1
+    for attr in ("t", "q", "tv", "tv_env"):
+        arr = getattr(path, attr)
+        assert arr.shape == (nz_path,), f"parcel_path.{attr}: expected ({nz_path},), got {arr.shape}"
+
+    # Diagnostic levels and origin embedded in the path must also be 0-D
+    for level_attr in ("lcl", "lfc", "el"):
+        lev = getattr(path, level_attr)
+        assert lev.p.shape == (), f"parcel_path.{level_attr}.p: expected (), got {lev.p.shape}"
+        assert lev.zh_agl.shape == ()
+    assert path.origin.p.shape == ()
+    assert path.origin.q.shape == ()
+
+
+def test_cape_cin_1d_profile_scalar_surface_forms():
+    """Surface inputs may be Python scalars, 0-D arrays, or 1-element arrays."""
+    data = CapeCinData()
+    p = data.p["unstable"]
+    t = data.t["unstable"]
+    zh = data.zh["unstable"]
+    q = data.q["unstable"]
+
+    p_pl, t_pl, q_pl, zh_pl = p[:-1], t[:-1], q[:-1], zh[:-1]
+    cape_ref, cin_ref = thermo.surface_cape_cin(p_pl, t_pl, q_pl, zh_pl, p[-1], t[-1], q[-1], zh[-1])
+
+    # Python floats
+    cape_f, cin_f = thermo.surface_cape_cin(
+        p_pl, t_pl, q_pl, zh_pl, float(p[-1]), float(t[-1]), float(q[-1]), float(zh[-1])
+    )
+    np.testing.assert_allclose(float(cape_f), float(cape_ref), atol=1e-6)
+    np.testing.assert_allclose(float(cin_f), float(cin_ref), atol=1e-6)
+
+    assert cape_f.shape == (), f"Expected scalar cape for 1-D input, got shape {cape_f.shape}"
+    assert cin_f.shape == (), f"Expected scalar cin for 1-D input, got shape {cin_f.shape}"
+
+    # 1-element 1-D arrays
+    cape_1, cin_1 = thermo.surface_cape_cin(
+        p_pl,
+        t_pl,
+        q_pl,
+        zh_pl,
+        p[-1:],
+        t[-1:],
+        q[-1:],
+        zh[-1:],
+    )
+    np.testing.assert_allclose(float(cape_1), float(cape_ref), atol=1e-6)
+    np.testing.assert_allclose(float(cin_1), float(cin_ref), atol=1e-6)
