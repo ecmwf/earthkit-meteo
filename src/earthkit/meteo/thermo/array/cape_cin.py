@@ -446,7 +446,7 @@ class _CapeCinComp:
         q = np.concatenate([q_sfc[None], q], axis=0)
 
         # Identify subground levels using height
-        subground = zh < zh_sfc[None, ...]
+        subground = (zh < zh_sfc[None, ...]) | np.isnan(zh)
 
         # Detect bad-data NaN: NaN at above-ground grid positions or NaN in the surface inputs.
         #    NaN at subground positions (which may already be present in the input) is expected
