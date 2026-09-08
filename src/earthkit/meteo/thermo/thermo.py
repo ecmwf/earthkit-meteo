@@ -19,6 +19,7 @@ from typing import (
 from earthkit.meteo.utils.decorators import dispatch
 
 if TYPE_CHECKING:
+    import numpy as np  # type: ignore[import]
     import xarray  # type: ignore[import]
     from earthkit.data import Field, FieldList  # type: ignore[import]
 
@@ -3100,3 +3101,148 @@ def specific_gas_constant(
     """
     dispatched = dispatch(specific_gas_constant, array=True)
     return dispatched(q)
+
+
+def surface_cape_cin(
+    p: np.ndarray,
+    t: np.ndarray,
+    q: np.ndarray,
+    zh: np.ndarray,
+    p_sfc: np.ndarray,
+    t_sfc: np.ndarray,
+    q_sfc: np.ndarray,
+    zh_sfc: np.ndarray,
+    *,
+    extra_outputs: list | None = None,
+    vertical_axis: int = 0,
+    ept_method: str = "bolton43",
+    lcl_method: str = "davies",
+) -> tuple[np.ndarray, np.ndarray]:
+    r"""Compute CAPE and CIN for a parcel lifted from the surface.
+
+    The parcel properties are taken directly from ``p_sfc``/``t_sfc``/``q_sfc``.
+
+    See :func:`earthkit.meteo.thermo.array.surface_cape_cin` for the full
+    parameter and return-value documentation.
+
+    Implementations
+    ------------------------
+    :func:`surface_cape_cin` calls the following implementation for array-like input:
+
+    - :py:meth:`earthkit.meteo.thermo.array.surface_cape_cin`
+    """
+    dispatched = dispatch(surface_cape_cin, fieldlist=False, array=True, xarray=False)
+    return dispatched(
+        p,
+        t,
+        q,
+        zh,
+        p_sfc,
+        t_sfc,
+        q_sfc,
+        zh_sfc,
+        extra_outputs=extra_outputs,
+        vertical_axis=vertical_axis,
+        ept_method=ept_method,
+        lcl_method=lcl_method,
+    )
+
+
+def mixed_layer_cape_cin(
+    p: np.ndarray,
+    t: np.ndarray,
+    q: np.ndarray,
+    zh: np.ndarray,
+    p_sfc: np.ndarray,
+    t_sfc: np.ndarray,
+    q_sfc: np.ndarray,
+    zh_sfc: np.ndarray,
+    *,
+    layer_depth: float = 5000.0,
+    extra_outputs: list | None = None,
+    vertical_axis: int = 0,
+    ept_method: str = "bolton43",
+    lcl_method: str = "davies",
+) -> tuple[np.ndarray, np.ndarray]:
+    r"""Compute CAPE and CIN for a parcel averaged over a mixed surface layer.
+
+    The parcel temperature and specific humidity are pressure-weighted averages over
+    the bottom ``layer_depth`` (Pa) of the column.
+
+    See :func:`earthkit.meteo.thermo.array.mixed_layer_cape_cin` for the full
+    parameter and return-value documentation.
+
+    Implementations
+    ------------------------
+    :func:`mixed_layer_cape_cin` calls the following implementation for array-like input:
+
+    - :py:meth:`earthkit.meteo.thermo.array.mixed_layer_cape_cin`
+    """
+    dispatched = dispatch(mixed_layer_cape_cin, fieldlist=False, array=True, xarray=False)
+    return dispatched(
+        p,
+        t,
+        q,
+        zh,
+        p_sfc,
+        t_sfc,
+        q_sfc,
+        zh_sfc,
+        layer_depth=layer_depth,
+        extra_outputs=extra_outputs,
+        vertical_axis=vertical_axis,
+        ept_method=ept_method,
+        lcl_method=lcl_method,
+    )
+
+
+def most_unstable_cape_cin(
+    p: np.ndarray,
+    t: np.ndarray,
+    q: np.ndarray,
+    zh: np.ndarray,
+    p_sfc: np.ndarray,
+    t_sfc: np.ndarray,
+    q_sfc: np.ndarray,
+    zh_sfc: np.ndarray,
+    *,
+    exclude_surface_layer: bool = False,
+    max_search_height: float = 3000.0,
+    extra_outputs: list | None = None,
+    vertical_axis: int = 0,
+    ept_method: str = "bolton43",
+    lcl_method: str = "davies",
+) -> tuple[np.ndarray, np.ndarray]:
+    r"""Compute CAPE and CIN for the most-unstable parcel.
+
+    The parcel is selected as the level (within ``[0, max_search_height]`` m
+    above the surface) that maximises equivalent potential temperature. When
+    ``exclude_surface_layer`` is set, the surface parcel is excluded
+    from the candidate set.
+
+    See :func:`earthkit.meteo.thermo.array.most_unstable_cape_cin` for the full
+    parameter and return-value documentation.
+
+    Implementations
+    ------------------------
+    :func:`most_unstable_cape_cin` calls the following implementation for array-like input:
+
+    - :py:meth:`earthkit.meteo.thermo.array.most_unstable_cape_cin`
+    """
+    dispatched = dispatch(most_unstable_cape_cin, fieldlist=False, array=True, xarray=False)
+    return dispatched(
+        p,
+        t,
+        q,
+        zh,
+        p_sfc,
+        t_sfc,
+        q_sfc,
+        zh_sfc,
+        exclude_surface_layer=exclude_surface_layer,
+        max_search_height=max_search_height,
+        extra_outputs=extra_outputs,
+        vertical_axis=vertical_axis,
+        ept_method=ept_method,
+        lcl_method=lcl_method,
+    )

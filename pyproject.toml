@@ -24,7 +24,8 @@ classifiers = [
 dependencies = [
   "deprecation",
   "earthkit-utils~=1.0",
-  "numpy"
+  "numpy",
+  "scipy"
 ]
 description = "A Python library for meteorological computations"
 dynamic = ["version"]
