@@ -7,7 +7,6 @@
 # does it submit to any jurisdiction.
 
 import abc
-import collections.abc
 import functools
 import operator
 
@@ -28,7 +27,7 @@ class Patterns(abc.ABC):
         Array namespace of the generated patterns.
     """
 
-    def __init__(self, labels, grid, xp):
+    def __init__(self, labels, *, grid, xp):
         self._labels = tuple(labels)
         self._grid = grid
         self._xp = xp
@@ -67,72 +66,11 @@ class Patterns(abc.ABC):
         return self._xp
 
     @abc.abstractmethod
-    def patterns(self, **patterns_extra_coords) -> collections.abc.Mapping:
+    def patterns(self, **patterns_coords):
         """Patterns evaluated for the given coords (if any)."""
-
-    # While it would be nice to expose the this to the user, keep it internal
-    # for now until a more elegant solution is found. Ideally, this function
-    # would only take **pattern_extra_coords, but the ordering of the
-    # dimensions matters and the dimensions/coordinates of the pattern itself
-    # need to be added in. We might be able to get the latter from the gridspec
-    # at some point. For now, everything is taken from a reference dataset to
-    # ensure that dimension order and naming matches.
-    def _patterns_iterxr(self, reference_da, patterns_extra_coords):
-        """Patterns evaluated for the given coords (if any) as xr.DataArrays.
-
-        Parameters
-        ----------
-        reference_da : xr.DataArray
-            Reference dataarray to take coordinates and dimension orders from.
-        patterns_extra_coords : Mapping[str, str]
-            Mapping of extra coordinates argument names (as given to .patterns)
-            to DataArray coordinate names (as used in reference_da).
-        """
-        import xarray as xr
-
-        # Extra coordinate dims, in order of reference dims
-        extra_dims = [dim for dim in reference_da.dims if dim in patterns_extra_coords.values()]
-        # Output dimensions and coordinates of the patterns
-        dims = [*extra_dims, *reference_da.dims[-self.ndim :]]
-        coords = {dim: reference_da.coords[dim] for dim in dims}
-        # Cartesian product of coordinates for patterns generator
-        extra_coords_arrs = dict(
-            zip(
-                extra_dims,
-                self.xp.meshgrid(*(coords[dim] for dim in extra_dims), indexing="ij"),
-            )
-        )
-        # Rearrange to match provided kwarg-coord mapping
-        extra_coords = {kwarg: extra_coords_arrs[patterns_extra_coords[kwarg]] for kwarg in patterns_extra_coords}
-        # Delegate the pattern generation and package the patterns as DataArrays
-        for name, patterns in self.patterns(**extra_coords).items():
-            yield name, xr.DataArray(patterns, coords=coords, dims=dims)
 
     def __repr__(self):
         return f"{self.__class__.__name__}{self.labels}"
-
-
-class DeferredPatternsDict(collections.abc.Mapping):
-    """Mapping that evaluates patterns on access.
-
-    Parameters
-    ----------
-    labels : Iterable[str]
-        Labels for the patterns (keys).
-    getter : Callable[[str], array_like]
-        Function that returns evaluated patterns for a given label.
-    """
-
-    def __init__(self, labels, getter):
-        self._labels = tuple(labels)
-        assert callable(getter)
-        self._getter = getter
-
-    def __getitem__(self, key):
-        return self._getter(key)
-
-    def __iter__(self):
-        yield from self._labels
 
     def __len__(self):
         return len(self._labels)
@@ -145,19 +83,19 @@ class ConstantPatterns(Patterns):
     ----------
     labels : Iterable[str]
         Labels for the patterns.
-    grid : dict
-        Specification of the grid on which the patterns live.
     patterns : array_like
         The patterns (one for each label, stacked into a single array).
+    grid : dict
+        Specification of the grid on which the patterns live.
     xp : array_namespace, optional
         The array namespace used for the patterns and their generation. By
-        default, it is inferred from the type of `base_patterns`.
+        default, it is inferred from the type of `patterns`.
     """
 
-    def __init__(self, labels, grid, patterns, xp=None):
+    def __init__(self, labels, patterns, *, grid, xp=None):
         if xp is None:
             xp = array_namespace(patterns)
-        super().__init__(labels, grid, xp)
+        super().__init__(labels, grid=grid, xp=xp)
         self._patterns = self._xp.asarray(patterns)
         if self._patterns.ndim != 1 + len(self.shape):
             raise ValueError("must have exactly one label axis in the patterns")
@@ -165,40 +103,42 @@ class ConstantPatterns(Patterns):
             raise ValueError("number of labels does not match number of patterns")
 
     def patterns(self):
-        """All patterns.
+        """Patterns.
 
         Returns
         -------
-        dict[str,array_like]
-            Mapping from labels to patterns.
+        array_like
         """
-        return dict(zip(self._labels, self._patterns))
+        return self._patterns
 
 
 class ModulatedPatterns(Patterns):
-    """Patterns generated from a set of base patterns and a custom scalar function.
+    """Patterns generated from base patterns and a custom scalar function.
+
+    The base patterns are multiplied with the return values of the modulation
+    function to generate the patterns.
 
     Parameters
     ----------
     labels : Iterable[str]
         Labels for the patterns.
-    grid : dict
-        Specification of the grid on which the patterns live.
     base_patterns : array_like
         Base patterns (one for each label, stacked into a single array).
     modulator : Callable[Any,array_like]
         Scalar function to modulate the base patterns. The parameters required
         to evaluate this function must be provided when projecting as
         `patterns_extra_coords` kwargs.
+    grid : dict
+        Specification of the grid on which the patterns live.
     xp : array_namespace, optional
         The array namespace used for the patterns and their generation. By
         default, it is inferred from the type of `base_patterns`.
     """
 
-    def __init__(self, labels, grid, base_patterns, modulator, xp=None):
+    def __init__(self, labels, base_patterns, modulator, *, grid, xp=None):
         if xp is None:
             xp = array_namespace(base_patterns)
-        super().__init__(labels, grid, xp)
+        super().__init__(labels, grid=grid, xp=xp)
         self._base_patterns = self.xp.asarray(base_patterns)
         # Pattern verification
         if self._base_patterns.ndim != 1 + len(self.shape):
@@ -209,23 +149,20 @@ class ModulatedPatterns(Patterns):
         if not callable(self._modulator):
             raise ValueError("modulator must be callable")
 
-    def _base_pattern(self, label):
-        return self._base_patterns[self._labels.index(label)]
-
-    def patterns(self, **patterns_extra_coords):
+    def patterns(self, **patterns_coords):
         """Evaluated patterns for a given input to the modulator function.
 
         Parameters
         ----------
-        **patterns_extra_coords : dict[str,Any], optional
+        **patterns_coords : dict[str,Any], optional
             Keyword arguments for the modulator function.
 
         Returns
         -------
-        Mapping[str,array_like]
+        array_like
             Modulated patterns.
         """
-        modulator = self.xp.asarray(self._modulator(**patterns_extra_coords))
-        # Adapt to shape of patterns
-        modulator = modulator[(..., *((self.xp.newaxis,) * len(self.shape)))]
-        return DeferredPatternsDict(self._labels, lambda label: modulator * self._base_pattern(label))
+        modulator = self.xp.asarray(self._modulator(**patterns_coords))
+        # Adapt to shape of patterns, include patterns as dim
+        modulator = modulator[(..., *((self.xp.newaxis,) * (1 + self.ndim)))]
+        return modulator * self._base_patterns

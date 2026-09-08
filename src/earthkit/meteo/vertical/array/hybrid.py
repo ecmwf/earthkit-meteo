@@ -7,7 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import Any, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -39,20 +41,20 @@ def _read_conf():
 _CONF = _read_conf()
 
 
-def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> Tuple[NDArray[Any], NDArray[Any]]:
+def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> tuple[NDArray[Any], NDArray[Any]]:
     r"""Get the A and B parameters of hybrid levels for a given configuration.
 
     Parameters
     ----------
-        n_levels: int
-            Number of (full) hybrid levels. Currently, only ``n_levels`` 91 and 137 are supported.
-        model : str
-            Model name. Default is "ifs". Currently, only ``model="ifs"`` are supported.
+    n_levels : int
+        Number of (full) hybrid levels. Currently, only ``n_levels`` 91 and 137 are supported.
+    model : str
+        Model name. Default is "ifs". Currently, only ``model="ifs"`` are supported.
 
     Returns
     -------
-    NDArray, NDArray
-        A tuple containing the A and B parameters on the hybrid half-levels See details below. Both are
+    tuple[NDArray, NDArray]
+        A tuple containing the A and B parameters on the hybrid half-levels. See details below. Both are
         1D numpy arrays of length ``n_levels + 1``.
 
 
@@ -88,7 +90,7 @@ def hybrid_level_parameters(n_levels: int, model: str = "ifs") -> Tuple[NDArray[
         - :math:`A_{k+1/2}` and :math:`B_{k+1/2}` are the A- and B-coefficients defining
           the model levels.
 
-    For more details see [IFS-CY47R3-Dynamics]_ Chapter 2, Section 2.2.1.
+    For more details see [IFS-CY49R1-Dynamics]_ Chapter 2, Section 2.2.1.
     """
     model = model.lower()
     n_levels = str(n_levels)

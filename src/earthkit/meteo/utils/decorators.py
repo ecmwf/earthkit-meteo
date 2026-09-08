@@ -6,189 +6,13 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-from __future__ import annotations
+from itertools import repeat
 
-from abc import ABCMeta, abstractmethod
-from functools import wraps
-from importlib import import_module
-from inspect import signature
-from typing import TYPE_CHECKING, Any
-
-from earthkit.utils.array import array_namespace
-
-if TYPE_CHECKING:
-    import xarray as xr
+from earthkit.utils.decorators import dispatch as dispatch
+from earthkit.utils.decorators import xarray_ufunc as xarray_ufunc
 
 
-def _is_xarray(obj: Any) -> bool:
-    from earthkit.meteo.utils import is_module_loaded
-
-    if not is_module_loaded("xarray"):
-        return False
-
-    try:
-        import xarray as xr
-
-        return isinstance(obj, (xr.DataArray, xr.Dataset))
-    except (ImportError, RuntimeError, SyntaxError):
-        return False
-
-
-def _is_fieldlist(obj: Any) -> bool:
-    from earthkit.meteo.utils import is_module_loaded
-
-    if not is_module_loaded("earthkit.data"):
-        return False
-
-    try:
-        from earthkit.data import FieldList
-
-        return isinstance(obj, FieldList)
-    except ImportError:
-        return False
-
-
-class DataDispatcher(metaclass=ABCMeta):
-    """A dispatcher class to route function calls based on input data types."""
-
-    @staticmethod
-    @abstractmethod
-    def match(obj: Any) -> bool:
-        pass
-
-    @abstractmethod
-    def dispatch(self, func: str, module: str, *args: Any, **kwargs: Any) -> Any:
-        pass
-
-
-class XArrayDispatcher(DataDispatcher):
-    @staticmethod
-    def match(obj: Any) -> bool:
-        return _is_xarray(obj)
-
-    def dispatch(self, func, module, *args, **kwargs):
-        module = import_module(module + ".xarray")
-        return getattr(module, func)(*args, **kwargs)
-
-
-class FieldListDispatcher(DataDispatcher):
-    @staticmethod
-    def match(obj: Any) -> bool:
-        return _is_fieldlist(obj)
-
-    def dispatch(self, func, module, *args, **kwargs):
-        module = import_module(module + ".fieldlist")
-        return getattr(module, func)(*args, **kwargs)
-
-
-class ArrayDispatcher(DataDispatcher):
-    @staticmethod
-    def match(obj: Any) -> bool:
-        xp = array_namespace(obj)
-        try:
-            xp.asarray(obj)
-            return True
-        except Exception:
-            return False
-
-    def dispatch(self, func, module, *args, **kwargs):
-        module = import_module(module + ".array")
-        return getattr(module, func)(*args, **kwargs)
-
-
-_DISPATCHERS = [XArrayDispatcher(), FieldListDispatcher(), ArrayDispatcher()]
-
-
-def dispatch(func, match=0, xarray=True, fieldlist=True, array=False):
-    """
-    Decorator to dispatch function calls based on input data types.
-    The dispatch will attempt to route the call to the appropriate
-    implementation based on the type of the specified argument.
-    The implementations are assumed to live in submodules named after the data
-    type (e.g., .xarray, .fieldlist, .array) with the same function name as
-    the toplevel function.
-
-    Parameters
-    ----------
-    func: function
-        The toplevel function to be decorated.
-    match: int or str
-        The index or name of the argument to check for dispatching. Default is 0 (the first argument).
-    xarray: bool
-        Whether to include the xarray dispatcher. Default is True.
-    fieldlist: bool
-        Whether to include the FieldList dispatcher. Default is True.
-    array: bool
-        Whether to include the array dispatcher. Default is False.
-
-    Returns
-    -------
-    function
-        The decorated function with dispatching capability.
-    """
-    DISPATCHERS = []
-    if xarray:
-        DISPATCHERS.append(_DISPATCHERS[0])
-    if fieldlist:
-        DISPATCHERS.append(_DISPATCHERS[1])
-    if array:
-        DISPATCHERS.append(_DISPATCHERS[2])
-
-    sig = signature(func)
-
-    params = list(sig.parameters)
-    if isinstance(match, int):
-        try:
-            param_name = params[match]
-        except IndexError as e:
-            raise ValueError(
-                f"'match' index {match} is invalid for function {func.__name__} with  {len(params)} arguments"
-            ) from e
-    elif isinstance(match, str):
-        if match in params:
-            param_name = match
-        else:
-            raise ValueError(f"'match' parameter name {match} is not in the function signature of {func.__name__}")
-    else:
-        raise TypeError(f"'match' must be an integer index or a string parameter name, got {type(match)}")
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        bound_args = sig.bind(*args, **kwargs)
-        bound_args.apply_defaults()
-
-        obj_to_check = bound_args.arguments[param_name]
-
-        _module = ".".join(func.__module__.split(".")[:-1])
-        for dispatcher in DISPATCHERS:
-            if dispatcher.match(obj_to_check):
-                return dispatcher.dispatch(func.__name__, _module, *args, **kwargs)
-        raise TypeError(f"No matching dispatcher found for the input type: {type(obj_to_check)}")
-
-    return wrapper
-
-
-def _infer_output_count(func) -> int:
-    try:
-        import inspect
-        from typing import get_args, get_origin
-
-        annotation = inspect.signature(func).return_annotation
-    except (ValueError, TypeError):
-        return 1
-
-    if annotation is inspect.Signature.empty:
-        return 1
-
-    origin = get_origin(annotation)
-    if origin is tuple:
-        args = get_args(annotation)
-        if args and args[-1] is not Ellipsis:
-            return len(args)
-    return 1
-
-
-def get_dim_from_defaults(da: xr.DataArray, dim: str | None, dim_names: tuple[str, ...]) -> str | None:
+def get_dim_from_defaults(da, dim: str | None, dim_names: tuple[str, ...]) -> str | None:
     """Get dimension name from defaults if not provided."""
     if dim is not None:
         return dim
@@ -198,75 +22,117 @@ def get_dim_from_defaults(da: xr.DataArray, dim: str | None, dim_names: tuple[st
     return None
 
 
-def xarray_ufunc(func, *args, **kwargs):
-    try:
-        import xarray as xr
-    except ImportError as e:
-        raise RuntimeError("xarray dependency is required") from e
+def field_ufunc(func, *args, **kwargs):
+    """Apply a function to the values of earthkit.data Field or FieldList objects.
 
-    xarray_ufunc_kwargs = kwargs.pop("xarray_ufunc_kwargs", None) or {}
-    merged = {
-        "dask": "parallelized",
-        "keep_attrs": True,
-    }
-    if xarray_ufunc_kwargs:
-        merged.update(xarray_ufunc_kwargs)
+    Parameters
+    ----------
+    func: callable
+        The function to apply to the values of the Field or FieldList objects.
+    *args: tuple
+        The Field or FieldList objects to which the function will be applied.
+    **kwargs: dict
+        Additional keyword arguments to pass to the function. The following special keyword arguments are recognized:
+        - fieldlist_ufunc_kwargs: dict, optional
+            A dictionary of keyword arguments to pass to the function when applied to FieldList objects.
+            This can include 'variables', 'param_ids', 'default_variable'
 
-    if "output_dtypes" not in merged:
-        output_count = _infer_output_count(func)
-        merged["output_dtypes"] = [float] * output_count
+            - 'variables': dict, optional
+                A mapping of input field parameter.variable values to output parameter variable
+                names. The output parameters names must be  defined in FIELD_PARAMS.
+            - 'param_ids': dict, optional
+                A mapping of input metadata.paramId values to output parameter variable names.
+                The output parameters names must be defined in FIELD_PARAMS.
+            - 'default_variable': str, optional
+                The default parameter variable name to use if no mapping is found in
+                'variables' or 'param_ids'. This must be defined in FIELD_PARAMS.
 
-    if "output_core_dims" not in merged and len(merged["output_dtypes"]) > 1:
-        output_core_dims = [args[0].dims for _ in merged["output_dtypes"]]
-        merged["output_core_dims"] = output_core_dims
+            The algorithm for determining the output parameter variable name is as follows:
+            1. If 'variables' is provided, check if the first input field's parameter.variable
+                is in the mapping. If so, use the corresponding output variable name.
+            2. If 'param_ids' is provided, check if the first input field's metadata.paramId
+                is in the mapping. If so, use the corresponding output variable name.
+            3. If neither mapping yields a result, use 'default_variable' if provided.
+            4. If no output parameter variable name can be determined, raise a ValueError.
 
-    if "input_core_dims" not in merged and len(merged["output_dtypes"]) > 1:
-        input_core_dims = [x.dims for x in args]
-        merged["input_core_dims"] = input_core_dims
+            Once the output parameter variable name is determined, the corresponding metadata
+            (parameter.variable and parameter.units) will be looked up in FIELD_PARAMS and set
+            on the resulting Field.
+    """
+    import earthkit.data as ekd
 
-    return xr.apply_ufunc(
-        func,
-        *args,
-        kwargs=kwargs,
-        **merged,
-    )
+    fieldlist_ufunc_kwargs = kwargs.pop("fieldlist_ufunc_kwargs", None) or {}
+
+    fields = args
+    field = fields[0]
+    assert isinstance(field, ekd.Field), "field_ufunc first argument must be a Field"
+    v = func(*(field.values if isinstance(field, ekd.Field) else field for field in fields), **kwargs)
+
+    # determine the metadata to set on the resulting Field
+    variables = fieldlist_ufunc_kwargs.get("variables", {})
+    param_ids = fieldlist_ufunc_kwargs.get("param_ids", {})
+    default = fieldlist_ufunc_kwargs.get("default_variable")
+
+    name = None
+    if variables:
+        var_in = field.get("parameter.variable", default=None)
+        if var_in is not None:
+            name = variables.get(var_in)
+
+    if name is None and param_ids:
+        param_id_in = field.get("metadata.paramId", default=None)
+        if param_id_in is not None:
+            name = param_ids.get(param_id_in)
+
+    if name is None:
+        name = default
+
+    if name is None:
+        raise ValueError(
+            "Could not determine parameter name for the resulting Field. Please provide "
+            "a 'default_variable' in 'fieldlist_ufunc_kwargs'."
+        )
+
+    # look up the parameter metadata from FIELD_PARAMS
+    from earthkit.meteo.utils.param import FIELD_PARAMS
+
+    param_item = FIELD_PARAMS.get(name)
+
+    if param_item is None:
+        raise ValueError(f"Unknown parameter '{name}' specified in fieldlist_ufunc_kwargs")
+    parameter_kwargs = {"parameter.variable": param_item["variable"], "parameter.units": param_item["units"]}
+    result = field.set({"values": v, **parameter_kwargs})
+
+    return result
 
 
 def fieldlist_ufunc(func, *args, **kwargs):
     import earthkit.data as ekd
 
-    fieldlist_ufunc_kwargs = kwargs.pop("fieldlist_ufunc_kwargs", None) or {}
-    variables = fieldlist_ufunc_kwargs.get("variables", {})
-    param_ids = fieldlist_ufunc_kwargs.get("param_ids", {})
-    default = fieldlist_ufunc_kwargs.get("default")
-    unit = fieldlist_ufunc_kwargs.get("param_unit")
+    if args:
+        if isinstance(args[0], ekd.Field):
+            return field_ufunc(func, *args, **kwargs)
+        elif not (isinstance(args[0], ekd.FieldList)):
+            raise TypeError(
+                "fieldlist_ufunc arguments must be Field or FieldList instances. Found unsupported type: "
+                + str(type(args[0]))
+                + " in args"
+            )
+    else:
+        raise ValueError("fieldlist_ufunc requires at least one argument")
+
+    # an argument that is None is replaced with an infinite repeat of None to allow zipping without worrying
+    # about lengths
+    safe_args = [arg if arg is not None else repeat(None) for arg in args]
 
     result = []
-    for fields in zip(*args):
-        u0 = fields[0]
-        assert isinstance(u0, ekd.Field), "fieldlist_ufunc first argument must be a FieldList"
-        v = func(*(field.values if isinstance(field, ekd.Field) else field for field in fields), **kwargs)
-
-        name = None
-        var_u = u0.get("parameter.variable", default=None)
-        if var_u is not None:
-            name = variables.get(var_u)
-        else:
-            var_u = u0.get("metadata.paramId", default=None)
-            if var_u is not None:
-                name = param_ids.get(var_u)
-            else:
-                var_u = "unknown"
-
-        if default is None:
-            default = var_u
-
-        if name is None:
-            name = default
-
-        if unit is None:
-            unit = u0.get("parameter.units")
-
-        result.append(u0.set({"values": v, "parameter.variable": name, "parameter.units": unit}))
+    for fields in zip(*safe_args):
+        result.append(
+            field_ufunc(
+                func,
+                *fields,
+                **kwargs,
+            )
+        )
 
     return ekd.FieldList.from_fields(result)

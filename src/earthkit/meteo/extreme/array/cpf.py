@@ -33,7 +33,7 @@ def _cpf(clim, ens, epsilon=None, from_zero=False):
         tau_c = icl / (nclim - 1.0)
         for iq in range(iq_start, nens):
             # quantile level of forecast
-            tau_f = (iq + 1.0) / (nens + 1.0)
+            tau_f = (iq + 0.5) / nens
 
             # quantile values of forecast and climatology
             qv_f = ens[iq, :]

@@ -24,7 +24,7 @@ def output_ds():
 
 @pytest.mark.parametrize("mode", ["high_fold", "low_fold"])
 def test_interpolate_sleve_to_theta_levels(mode, input_ds, output_ds):
-    from earthkit.meteo.vertical.interpolation import interpolate_sleve_to_theta_levels
+    from earthkit.meteo.vertical import interpolate_sleve_to_theta_levels
 
     ds = input_ds.rename({"level": "z"})
     p = ds["P"]
@@ -41,7 +41,7 @@ def test_interpolate_sleve_to_theta_levels(mode, input_ds, output_ds):
 
 @pytest.mark.parametrize("interpolation", ["linear", "log", "nearest"])
 def test_interpolate_to_pressure(interpolation, input_ds, output_ds):
-    from earthkit.meteo.vertical.interpolation import interpolate_to_pressure_levels
+    from earthkit.meteo.vertical import interpolate_to_pressure_levels
 
     ds = input_ds.rename({"level": "z"})
     p = ds["P"]

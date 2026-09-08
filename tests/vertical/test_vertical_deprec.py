@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 from earthkit.utils.array.namespace import _NUMPY_NAMESPACE
 
-from earthkit.meteo import vertical
+from earthkit.meteo.vertical.array import vertical
 
 np.set_printoptions(formatter={"float_kind": "{:.15f}".format})
 
@@ -95,7 +95,7 @@ def test_pressure_at_model_levels_migrated(index, xp):
     ref_alpha = ref_alpha[index]
 
     p_full, p_half, delta, alpha = vertical.pressure_on_hybrid_levels(
-        A, B, sp, alpha_top="ifs", output=("full", "half", "delta", "alpha")
+        sp, A=A, B=B, alpha_top="ifs", output=("full", "half", "delta", "alpha")
     )
 
     # print("p_full", repr(p_full))
@@ -267,9 +267,9 @@ def test_pressure_at_height_levels_all_migrated_1(h_target, p_ref, xp):
     t = t[:, 0]
     q = q[:, 0]
 
-    p_ml = vertical.pressure_on_hybrid_levels(A, B, sp, alpha_top="ifs", output="full")
+    p_ml = vertical.pressure_on_hybrid_levels(sp, A=A, B=B, alpha_top="ifs", output="full")
     h_ml = vertical.height_on_hybrid_levels(
-        t, q, 0, A, B, sp, alpha_top="ifs", h_type="geopotential", h_reference="ground"
+        t, q, 0, sp, A=A, B=B, alpha_top="ifs", h_type="geopotential", h_reference="ground"
     )
 
     p = vertical.interpolate_monotonic(
@@ -314,7 +314,7 @@ def test_pressure_at_height_levels_all_migrated_2(h_target, p_ref, xp):
     q = q[:, 0]
 
     p_full, alpha, delta = vertical.pressure_on_hybrid_levels(
-        A, B, sp, alpha_top="ifs", output=("full", "alpha", "delta")
+        sp, A=A, B=B, alpha_top="ifs", output=("full", "alpha", "delta")
     )
 
     z = vertical.relative_geopotential_thickness_on_hybrid_levels_from_alpha_delta(t, q, alpha, delta)
@@ -361,16 +361,16 @@ def test_pressure_at_height_levels_all_migrated_3(h_target, p_ref, xp):
     t = t[:, 0]
     q = q[:, 0]
 
-    p_ml = vertical.pressure_on_hybrid_levels(A, B, sp, output="full")
+    p_ml = vertical.pressure_on_hybrid_levels(sp, A=A, B=B, output="full")
     p = vertical.interpolate_hybrid_to_height_levels(
         p_ml,
         h_target,
         t,
         q,
         0,
+        sp,
         A,
         B,
-        sp,
         alpha_top="ifs",
         aux_bottom_data=sp,
         aux_bottom_h=0.0,

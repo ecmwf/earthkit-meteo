@@ -7,7 +7,7 @@ authors = [
   {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"}
 ]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
   "Operating System :: OS Independent",
@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
   "deprecation",
-  "earthkit-utils>=1.0.0rc0",
+  "earthkit-utils~=1.0",
   "numpy",
   "scipy"
 ]
@@ -59,6 +59,9 @@ optional-dependencies.gpu = [
   "cupy",
   "torch"
 ]
+optional-dependencies.lunar = [
+  "astropy"
+]
 optional-dependencies.samples = [
   "requests"
 ]
@@ -71,7 +74,8 @@ optional-dependencies.stats = [
   "scipy>=1.15"
 ]
 optional-dependencies.test = [
-  "earthkit-data>=1.0.0rc0",
+  "astropy",
+  "earthkit-data",
   "netcdf4",
   "pytest",
   "pytest-cov",

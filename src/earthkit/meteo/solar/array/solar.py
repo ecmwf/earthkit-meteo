@@ -305,7 +305,19 @@ def cos_solar_zenith_angle_integrated(
 
 
 def incoming_solar_radiation(date):
-    # To be replaced with improved formula
+    r"""Compute the incoming solar radiation at the top of the atmosphere (TOA).
+
+    Parameters
+    ----------
+    date: datetime.datetime | numpy.datetime64
+        Input date(s). May be a scalar or array of numpy.datetime64 or datetime.datetime objects.
+
+    Returns
+    -------
+    float
+        Incoming solar radiation at TOA.
+    """
+    # TODO: replace with an improved formula
     a, b = (165120.0, 4892416.0)
     angle = julian_day(date) / DAYS_PER_YEAR * np.pi * 2
     return np.cos(angle) * a + b
@@ -320,6 +332,30 @@ def toa_incident_solar_radiation(
     intervals_per_hour=1,
     integration_order=3,
 ):
+    r"""Compute the time-integrated incident solar radiation at the top of the atmosphere (TOA).
+
+    Parameters
+    ----------
+    begin_date: datetime.datetime | numpy.datetime64
+        Start of the integration interval.
+    end_date: datetime.datetime | numpy.datetime64
+        End of the integration interval.
+    latitudes: array-like | xarray.DataArray
+        Latitude (degrees).
+    longitudes: array-like | xarray.DataArray
+        Longitude (degrees).
+    intervals_per_hour: int, optional
+        Number of sub-intervals per hour used in the numerical integration.
+    integration_order: int, optional
+        Order of the integration scheme.
+
+    Returns
+    -------
+    array-like | xarray.DataArray
+        Time-integrated incident solar radiation at TOA.
+
+    """
+
     def func(date, latitudes, longitudes):
         isr = incoming_solar_radiation(date)
         csza = cos_solar_zenith_angle(date, latitudes, longitudes)

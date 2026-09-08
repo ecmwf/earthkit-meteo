@@ -47,9 +47,9 @@ Hogan and Hirahara (2015). doi: https://doi.org/10.1002/2015GL066868
 IFS Documentation CY47R3 - Part IV Physical processes, (2021). URL: https://www.ecmwf.int/en/elibrary/20198-ifs-documentation-cy47r3-part-iv-physical-processes
 
 
-.. [IFS-CY47R3-Dynamics]
+.. [IFS-CY49R1-Dynamics]
 
-IFS Documentation CY47R3 - Part III: Dynamics and numerical procedures, (2021). doi: `10.21957/b18qsx663 <http://dx.doi.org/10.21957/b18qsx663>`_
+IFS Documentation CY49R1 - Part III: Dynamics and numerical procedures, (2024). URL: https://www.ecmwf.int/en/elibrary/81625-ifs-documentation-cy49r1-part-iii-dynamics-and-numerical-procedures
 
 .. [Stipanuk1973]
 

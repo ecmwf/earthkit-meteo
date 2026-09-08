@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
     import numpy as np
     import xarray  # type: ignore[import]
+    from earthkit.data import Field, FieldList  # type: ignore[import]
 
 DateLike: TypeAlias = "datetime.datetime | np.datetime64"
 
@@ -114,21 +115,40 @@ def cos_solar_zenith_angle(
 ) -> "xarray.DataArray": ...
 
 
-def cos_solar_zenith_angle(date, latitudes, longitudes):
+@overload
+def cos_solar_zenith_angle(
+    date: DateLike,
+    latitudes: "FieldList",
+    longitudes: None = None,
+) -> "FieldList": ...
+
+
+@overload
+def cos_solar_zenith_angle(
+    date: DateLike,
+    latitudes: "Field",
+    longitudes: None = None,
+) -> "Field": ...
+
+
+def cos_solar_zenith_angle(date, latitudes, longitudes=None):
     r"""Compute the cosine of the solar zenith angle.
 
     Parameters
     ----------
     date: datetime.datetime | numpy.datetime64
         Date/time (typically a scalar applying to all latitude/longitude points).
-    latitudes: array-like | xarray.DataArray
-        Latitude (degrees).
-    longitudes: array-like | xarray.DataArray
-        Longitude (degrees).
+    latitudes: array-like | xarray.DataArray | FieldList | Field
+        Latitude (degrees), or a field|(s) whose geography provides
+        latitude/longitude values.
+    longitudes: array-like | xarray.DataArray | None, optional
+        Longitude (degrees). Must be provided with array/xarray inputs and must
+        be omitted (or set to ``None``) when ``latitudes`` is ``FieldList`` or
+        ``Field``.
 
     Returns
     -------
-    array-like | xarray.DataArray
+    array-like | xarray.DataArray | FieldList | Field
         Cosine of the solar zenith angle (clipped to be non-negative).
 
     Notes
@@ -144,6 +164,8 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
     - :py:meth:`earthkit.meteo.solar.array.cos_solar_zenith_angle` otherwise
     - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle` when any
       input is xarray.DataArray
+    - :py:meth:`earthkit.meteo.solar.fieldlist.cos_solar_zenith_angle` when
+      ``latitudes`` is FieldList or Field
 
     The function returns an object of the same type as the input arguments.
     """
@@ -175,11 +197,35 @@ def cos_solar_zenith_angle_integrated(
 ) -> "xarray.DataArray": ...
 
 
+@overload
+def cos_solar_zenith_angle_integrated(
+    begin_date: DateLike,
+    end_date: DateLike,
+    latitudes: "FieldList",
+    longitudes: None = None,
+    *,
+    intervals_per_hour: int = 1,
+    integration_order: int = 3,
+) -> "FieldList": ...
+
+
+@overload
+def cos_solar_zenith_angle_integrated(
+    begin_date: DateLike,
+    end_date: DateLike,
+    latitudes: "Field",
+    longitudes: None = None,
+    *,
+    intervals_per_hour: int = 1,
+    integration_order: int = 3,
+) -> "Field": ...
+
+
 def cos_solar_zenith_angle_integrated(
     begin_date,
     end_date,
     latitudes,
-    longitudes,
+    longitudes=None,
     *,
     intervals_per_hour: int = 1,
     integration_order: int = 3,
@@ -192,10 +238,13 @@ def cos_solar_zenith_angle_integrated(
         Start of the integration interval.
     end_date: datetime.datetime | numpy.datetime64
         End of the integration interval.
-    latitudes: array-like | xarray.DataArray
-        Latitude (degrees).
-    longitudes: array-like | xarray.DataArray
-        Longitude (degrees).
+    latitudes: array-like | xarray.DataArray | FieldList | Field
+        Latitude (degrees), or a field|(s) whose geography provides
+        latitude/longitude values.
+    longitudes: array-like | xarray.DataArray | None, optional
+        Longitude (degrees). Must be provided with array/xarray inputs and must
+        be omitted (or set to ``None``) when ``latitudes`` is ``FieldList`` or
+        ``Field``.
     intervals_per_hour: int, optional
         Number of sub-intervals per hour used in the numerical integration.
     integration_order: int, optional
@@ -203,7 +252,7 @@ def cos_solar_zenith_angle_integrated(
 
     Returns
     -------
-    array-like | xarray.DataArray
+    array-like | xarray.DataArray | FieldList | Field
         Time-integrated cosine of the solar zenith angle.
 
 
@@ -216,6 +265,8 @@ def cos_solar_zenith_angle_integrated(
       otherwise
     - :py:meth:`earthkit.meteo.solar.xarray.cos_solar_zenith_angle_integrated`
       when any input is xarray.DataArray
+    - :py:meth:`earthkit.meteo.solar.fieldlist.cos_solar_zenith_angle_integrated`
+      when ``latitudes`` is FieldList or Field
 
     The function returns an object of the same type as the input arguments.
     """
@@ -296,11 +347,35 @@ def toa_incident_solar_radiation(
 ) -> "xarray.DataArray": ...
 
 
+@overload
+def toa_incident_solar_radiation(
+    begin_date: DateLike,
+    end_date: DateLike,
+    latitudes: "FieldList",
+    longitudes: None = None,
+    *,
+    intervals_per_hour: int = 1,
+    integration_order: int = 3,
+) -> "FieldList": ...
+
+
+@overload
+def toa_incident_solar_radiation(
+    begin_date: DateLike,
+    end_date: DateLike,
+    latitudes: "Field",
+    longitudes: None = None,
+    *,
+    intervals_per_hour: int = 1,
+    integration_order: int = 3,
+) -> "Field": ...
+
+
 def toa_incident_solar_radiation(
     begin_date,
     end_date,
     latitudes,
-    longitudes,
+    longitudes=None,
     *,
     intervals_per_hour: int = 1,
     integration_order: int = 3,
@@ -313,10 +388,13 @@ def toa_incident_solar_radiation(
         Start of the integration interval.
     end_date: datetime.datetime | numpy.datetime64
         End of the integration interval.
-    latitudes: array-like | xarray.DataArray
-        Latitude (degrees).
-    longitudes: array-like | xarray.DataArray
-        Longitude (degrees).
+    latitudes: array-like | xarray.DataArray | FieldList | Field
+        Latitude (degrees), or a field|(s) whose geography provides
+        latitude/longitude values.
+    longitudes: array-like | xarray.DataArray | None, optional
+        Longitude (degrees). Must be provided with array/xarray inputs and must
+        be omitted (or set to ``None``) when ``latitudes`` is ``FieldList`` or
+        ``Field``.
     intervals_per_hour: int, optional
         Number of sub-intervals per hour used in the numerical integration.
     integration_order: int, optional
@@ -324,7 +402,7 @@ def toa_incident_solar_radiation(
 
     Returns
     -------
-    array-like | xarray.DataArray
+    array-like | xarray.DataArray | FieldList | Field
         Time-integrated incident solar radiation at TOA.
 
 
@@ -337,6 +415,8 @@ def toa_incident_solar_radiation(
       otherwise
     - :py:meth:`earthkit.meteo.solar.xarray.toa_incident_solar_radiation`
       when any input is xarray.DataArray
+    - :py:meth:`earthkit.meteo.solar.fieldlist.toa_incident_solar_radiation`
+      when ``latitudes`` is FieldList or Field
 
     The function returns an object of the same type as the input arguments.
     """

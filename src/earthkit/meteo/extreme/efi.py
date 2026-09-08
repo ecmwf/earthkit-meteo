@@ -66,7 +66,6 @@ def efi(
     xarray.DataArray or array-like
         EFI values.
 
-
     Implementations
     ------------------------
     :func:`efi` calls one of the following implementations depending on the type of the input arguments:

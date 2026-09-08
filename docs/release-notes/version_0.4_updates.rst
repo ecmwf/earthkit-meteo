@@ -47,7 +47,7 @@ New features
 - Added the :py:mod:`earthkit.meteo.vertical` submodule
 - Added the :py:meth:`earthkit.meteo.stats.array.value_to_return_period` and :py:meth:`earthkit.meteo.stats.array.return_period_to_value` methods. They are based on a Gumbel-distribution fit to the sample data (:pr:`29`). See the following notebook example:
 
-    - :ref:`/how-tos/return_period.ipynb`.
+    - :ref:`/how-tos/stats/return_period.ipynb`.
 
 - Added :py:meth:`earthkit.meteo.score.array.correlation.pearson` to compute the Pearson correlation over fields.
 - Implemented the symmetric Compute Crossing Point Forecast (CPF) method  :py:meth:`earthkit.meteo.extreme.array.cpf` (:pr:`28`).

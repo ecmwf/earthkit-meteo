@@ -42,6 +42,10 @@ def efi(
     -------
     xarray.DataArray
         EFI values.
+
+    Examples
+    --------
+    :ref:`/tutorials/extreme/extreme_efi_sot_xarray.ipynb`
     """
     default_dims = ["quantiles", "percentiles", "number", "ens", "member"]
     clim_dim = get_dim_from_defaults(clim, clim_dim, default_dims)

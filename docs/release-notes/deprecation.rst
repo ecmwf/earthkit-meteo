@@ -13,6 +13,9 @@ Version 1.0.0rc0
 
 It is replaced by the more generic :func:`pressure_on_hybrid_levels`. The old method is still available for backward compatibility but will be removed in a future release.
 
+.. note::
+
+   The old method now needs to be imported from the `earthkit.meteo.vertical.array` submodule. Previously it was available in the `earthkit.meteo.vertical` submodule.
 
 .. list-table::
    :header-rows: 0
@@ -35,6 +38,10 @@ It is replaced by the more generic :func:`pressure_on_hybrid_levels`. The old me
 
 It is replaced by the more generic :func:`relative_geopotential_thickness_on_hybrid_levels`. The old method is still available for backward compatibility but will be removed in a future release.
 
+.. note::
+
+   The old method now needs to be imported from the `earthkit.meteo.vertical.array` submodule. Previously it was available in the `earthkit.meteo.vertical` submodule.
+
 
 .. list-table::
    :header-rows: 0
@@ -56,6 +63,11 @@ It is replaced by the more generic :func:`relative_geopotential_thickness_on_hyb
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 It is replaced by the combined usage of :func:`pressure_on_hybrid_levels` and :func:`interpolate_hybrid_to_height_levels`. The old method is still available for backward compatibility but will be removed in a future release.
+
+
+.. note::
+
+   The old method now needs to be imported from the `earthkit.meteo.vertical.array` submodule. Previously it was available in the `earthkit.meteo.vertical` submodule.
 
 
 .. list-table::

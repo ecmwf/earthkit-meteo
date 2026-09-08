@@ -1,5 +1,5 @@
-Release notes
-==============
+Release Notes
+=============
 
 
 Deprecated features
@@ -13,7 +13,8 @@ Deprecated features
 .. toctree::
     :maxdepth: 1
 
-    version_1.0.0rc_updates
+    version_1.1_updates
+    version_1.0_updates
     version_0.6_updates
     version_0.5_updates
     version_0.4_updates
