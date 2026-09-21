@@ -526,7 +526,7 @@ def pressure_on_hybrid_levels(
 
     The function returns an object of the same type as the input arguments.
     """
-    _kwargs = dict(A=A, B=B, levels=levels, alpha_top=alpha_top, output=output, vertical_dim=vertical_dim)
+    _kwargs = dict(A=A, B=B, levels=levels, alpha_top=alpha_top, output=output)
     if vertical_dim != 0:
         _kwargs["vertical_dim"] = vertical_dim
 

@@ -10,9 +10,9 @@
 import pytest
 from _vertical_cases import *  # noqa: F401,F403
 
-import earthkit.meteo.vertical.array as vertical_array
+import earthkit.meteo.vertical as vertical_high_level
 
 
 @pytest.fixture
 def vertical():
-    return vertical_array
+    return vertical_high_level
