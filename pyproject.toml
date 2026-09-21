@@ -4,7 +4,7 @@ requires = ["setuptools>=77", "setuptools-scm>=8"]
 
 [project]
 authors = [
-  {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"}
+  { name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int" }
 ]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -31,8 +31,6 @@ dynamic = ["version"]
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 name = "earthkit-meteo"
-readme = "README.md"
-requires-python = ">=3.10"
 optional-dependencies.all = [
   "earthkit-meteo[samples,scores,stats]"
 ]
@@ -81,6 +79,8 @@ optional-dependencies.test = [
   "requests",
   "xarray"
 ]
+readme = "README.md"
+requires-python = ">=3.10"
 urls.Documentation = "https://earthkit-meteo.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-meteo/"
 urls.Issues = "https://github.com/ecmwf/earthkit-meteo/issues"
@@ -98,7 +98,6 @@ convention = "numpy"
 
 [tool.ruff]
 line-length = 120
-preview = true
 lint.ignore = [
   "D1",  # pydocstyle: Missing Docstrings
   "D107",  # pydocstyle: numpy convention
@@ -113,6 +112,7 @@ lint.ignore = [
   "D416",
   "D417"
 ]
+lint.per-file-ignores."tests/**.py" = ["E402"]
 lint.select = [
   "D",  # pydocstyle
   "E",  # pycodestyle
@@ -120,7 +120,7 @@ lint.select = [
   "I",  # isort
   "W"  # pycodestyle warnings
 ]
-lint.per-file-ignores."tests/**.py" = ["E402"]
+preview = true
 
 [tool.setuptools]
 packages.find.include = ["earthkit.meteo"]
