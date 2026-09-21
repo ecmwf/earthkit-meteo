@@ -94,17 +94,27 @@ def _ept_from_mixing_ratio(t, p, r, method="bolton43"):
 
 
 def _where_is_param_zero(level, p, param):
+    """Linearly interpolate ``p`` to the level at which ``param`` crosses zero.
 
+    Arrays are ordered with ASCENDING pressure, i.e. index 0 is the top of the
+    profile and the index increases downwards.
+
+    ``level`` is the index of the LOWER end of the bracketing pair: the zero
+    crossing must lie between ``level - 1`` (above) and ``level`` (below).
+    Callers that identify the level on the *upper* side of the crossing must
+    therefore pass ``level + 1``. If the pair does not straddle zero the result
+    is an extrapolation rather than an interpolation.
+    """
     n_levels = p.shape[0]
 
     level = np.clip(level, 1, n_levels - 1)
 
-    p_above = np.take_along_axis(p, level[None], axis=0).squeeze(0)
-    p_below = np.take_along_axis(p, (level - 1)[None], axis=0).squeeze(0)
-    param_above = np.take_along_axis(param, level[None], axis=0).squeeze(0)
-    param_below = np.take_along_axis(param, (level - 1)[None], axis=0).squeeze(0)
+    p_below = np.take_along_axis(p, level[None], axis=0).squeeze(0)
+    p_above = np.take_along_axis(p, (level - 1)[None], axis=0).squeeze(0)
+    param_below = np.take_along_axis(param, level[None], axis=0).squeeze(0)
+    param_above = np.take_along_axis(param, (level - 1)[None], axis=0).squeeze(0)
 
-    result = p_below + ((-param_below) / (param_above - param_below)) * (p_above - p_below)
+    result = p_above + ((-param_above) / (param_below - param_above)) * (p_below - p_above)
 
     return result
 
@@ -169,6 +179,10 @@ def _lfc_index(z, b, z_lcl, min_depth=1000.0, threshold=0.0):
     z_lcl : (n_profiles,), LCL height
     min_depth : required contiguous buoyant depth in metres
     threshold : buoyancy threshold
+
+    Returns the index of the BASE of the buoyant layer, i.e. the last buoyant
+    level going downwards, so the LFC itself lies between that index and the
+    one below it. Returns -1 where no LFC exists.
     """
     n_levels = b.shape[0]
 
@@ -193,8 +207,8 @@ def _lfc_index(z, b, z_lcl, min_depth=1000.0, threshold=0.0):
     # LFC = lowest/base index of sufficiently deep buoyant layer
     idx_lfc = n_levels - 1 - np.argmax(has_deep_buoyancy[::-1], axis=0)
 
-    # Use 0 if no LFC exists, preserving your original convention
-    idx_lfc = np.where(exists, idx_lfc, 0)
+    # Sentinel for profiles without an LFC
+    idx_lfc = np.where(exists, idx_lfc, -1)
 
     return idx_lfc
 
@@ -298,13 +312,26 @@ class _CapeCinComp:
 
         has_lcl = cond.any(axis=0)
 
-        # find index of first layer for which p <= p_lcl
+        # Index of the last level at or above the LCL (p ascends with index, so
+        # the index increases downwards).
         idx_lcl_level = np.where(
             has_lcl,
             p.shape[0] - 1 - np.argmax(cond[::-1], axis=0),
             -1,
         )
-        z_lcl = _where_is_param_zero(idx_lcl_level, zh_agl, p - p_lcl)
+        # The LCL lies between that level and the one below it, and
+        # ``_where_is_param_zero`` expects the lower end of the bracket.
+        idx_below_lcl = np.clip(idx_lcl_level + 1, 0, p.shape[0] - 1)
+        z_lcl = _where_is_param_zero(idx_below_lcl, zh_agl, p - p_lcl)
+
+        # Where the LCL coincides with the lowest valid level (e.g. a saturated
+        # parcel) there is no level below it to interpolate against, so take the
+        # height of that level itself. ``~(... > ...)`` also catches NaN, i.e. a
+        # sub-ground level below the LCL.
+        p_below_lcl = np.take_along_axis(p, idx_below_lcl[None], axis=0).squeeze(0)
+        z_at_lcl_level = np.take_along_axis(zh_agl, np.maximum(idx_lcl_level, 0)[None], axis=0).squeeze(0)
+        lcl_at_level = has_lcl & ~(p_below_lcl > p_lcl)
+        z_lcl[lcl_at_level] = z_at_lcl_level[lcl_at_level]
 
         theta_parcel = thermo.potential_temperature(t_start, p_start)
         theta_ep_parcel = thermo.ept_from_specific_humidity(t_start, q_start, p_start, method=self.ept_method)
@@ -355,35 +382,54 @@ class _CapeCinComp:
         # min_depth and threshold parameters are determined to avoid fake LFC selection
         # due to shallow buoyant layers or numerical errors.
 
+        # ``_lfc_index`` returns the base of the buoyant layer, so the LFC lies
+        # between that level and the one below it, which is the bracket
+        # ``_where_is_param_zero`` expects.
         idx_lfc_level = _lfc_index(zh_agl, dtv, z_lcl)
-        p_lfc = _where_is_param_zero(idx_lfc_level, p, dtv)
-        z_lfc = _where_is_param_zero(idx_lfc_level, zh_agl, dtv)
+        idx_below_lfc = np.clip(idx_lfc_level + 1, 0, p.shape[0] - 1)
+        no_lfc = idx_lfc_level == -1
 
-        p_lfc[idx_lfc_level == -1] = np.nan
-        z_lfc[idx_lfc_level == -1] = np.nan
+        p_lfc = _where_is_param_zero(idx_below_lfc, p, dtv)
+        z_lfc = _where_is_param_zero(idx_below_lfc, zh_agl, dtv)
 
-        # In cases where the LCL was not reached at the bottom, but was reached at the top
-        # set the p_LFC to p_LCL instead.
-        p_at_lfc_minus1 = np.take_along_axis(p, np.maximum(idx_lfc_level - 1, 0)[None], axis=0).squeeze(0)
-        lfc_below_lcl = p_at_lfc_minus1 >= p_lcl
-        z_lfc[lfc_below_lcl] = z_lcl[lfc_below_lcl]
-        p_lfc[lfc_below_lcl] = p_lcl[lfc_below_lcl]
+        p_lfc[no_lfc] = np.nan
+        z_lfc[no_lfc] = np.nan
+
+        # ``_lfc_index`` only considers levels above the LCL, so the base of the
+        # buoyant layer may be the LCL cut-off rather than a genuine change of sign
+        # in the buoyancy. In that case the parcel is already buoyant below the LCL
+        # and the LFC is reported at the LCL instead. ``~(... <= 0)`` also catches
+        # NaN, i.e. a sub-ground level below the base of the layer.
+        dtv_below_lfc = np.take_along_axis(dtv, idx_below_lfc[None], axis=0).squeeze(0)
+        lfc_at_lcl = ~no_lfc & ~(dtv_below_lfc <= 0.0)
+        z_lfc[lfc_at_lcl] = z_lcl[lfc_at_lcl]
+        p_lfc[lfc_at_lcl] = p_lcl[lfc_at_lcl]
 
         # Temperatures at LFC: interpolate t_parcel to where dtv crosses zero
-        t_lfc = _where_is_param_zero(idx_lfc_level, t_parcel, dtv)
-        t_lfc[idx_lfc_level == -1] = np.nan
-        t_lfc[lfc_below_lcl] = t_lcl[lfc_below_lcl]
+        t_lfc = _where_is_param_zero(idx_below_lfc, t_parcel, dtv)
+        t_lfc[no_lfc] = np.nan
+        t_lfc[lfc_at_lcl] = t_lcl[lfc_at_lcl]
 
         # Equilibrium Level (EL)
         # -------------------------
-        el_level = dtv.shape[0] - np.argmax(
-            dtv[::-1] > 0, axis=0
-        )  # finds index of first layer (going from top to bottom through profile) for which b > 0
+        # The EL is the top of the buoyant layer. Since the index increases
+        # downwards, the topmost buoyant level is the first one with dtv > 0 and
+        # the crossing lies just above it, which is the bracket
+        # ``_where_is_param_zero`` expects.
+        el_level = np.argmax(dtv > 0, axis=0)
+        # ``el_level == 0`` means either that no level is buoyant at all or that
+        # the top of the profile is still buoyant, i.e. the EL is above the domain;
+        # neither yields an EL. Without an LFC there is no convection either.
+        no_el = no_lfc | (el_level == 0)
+
         z_el = _where_is_param_zero(el_level, zh_agl, dtv)
         p_el = _where_is_param_zero(el_level, p, dtv)
-
         # Temperature at EL: interpolate t_parcel to where dtv crosses zero
         t_el = _where_is_param_zero(el_level, t_parcel, dtv)
+
+        z_el[no_el] = np.nan
+        p_el[no_el] = np.nan
+        t_el[no_el] = np.nan
 
         return (
             buoyancy,

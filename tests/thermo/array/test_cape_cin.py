@@ -476,6 +476,15 @@ def test_cape_cin_very_dry():
 class TestWhereIsParamZero:
     """_where_is_param_zero: linear interpolation to find the pressure at which param==0."""
 
+    def test_level_is_lower_end_of_bracket(self):
+        # ``level`` must be the lower (higher-index, higher-pressure) end of the
+        # bracketing pair: the crossing has to lie between ``level - 1`` and
+        # ``level``. Here param goes -1 → +3 between indices 1 and 2, so the
+        # crossing is a quarter of the way from index 1 and level must be 2.
+        p = np.array([[80000.0], [90000.0], [100000.0]])
+        param = np.array([[-5.0], [-1.0], [3.0]])
+        np.testing.assert_allclose(_where_is_param_zero(np.array([2]), p, param), [92500.0], atol=1e-6)
+
     def test_exact_zero_at_level(self):
         # param crosses zero between index 1 (below) and index 2 (above)
         # p increases with index (ascending pressure)
@@ -553,29 +562,29 @@ class TestLfcIndex:
         z_lcl = np.array([0.0])  # LCL at ground — no restriction
         return z, b, z_lcl, min_depth
 
-    def test_no_buoyancy_returns_zero(self):
-        # All negative buoyancy → no LFC → index 0
+    def test_no_buoyancy_returns_minus_one(self):
+        # All negative buoyancy → no LFC → sentinel -1
         z, b, z_lcl, _ = self._make_inputs([(5000, -1), (3000, -1), (1000, -1)])
         result = _lfc_index(z, b, z_lcl)
-        assert result[0] == 0
+        assert result[0] == -1
 
-    def test_single_buoyant_layer(self):
-        # Buoyant only at index 0 (top level), no min_depth required
+    def test_returns_base_index_of_buoyant_layer(self):
+        # Buoyant at indices 0-1 (5000-3000 m, depth 2000 m). Index 1 is the base
+        # of that layer, i.e. the last buoyant level going downwards.
         z = np.array([5000.0, 3000.0, 1000.0])[:, None]
-        b = np.array([1.0, -1.0, -1.0])[:, None]
+        b = np.array([1.0, 1.0, -1.0])[:, None]
         z_lcl = np.array([0.0])
-        result = _lfc_index(z, b, z_lcl, min_depth=0.0)
-        # Buoyancy exists → result should be non-zero
-        assert result[0] != 0
+        result = _lfc_index(z, b, z_lcl, min_depth=1500.0)
+        assert result[0] == 1
 
     def test_deep_buoyant_layer(self):
         # Levels at 5000, 4000, 3000, 2000, 1000 m; buoyant at top four (depth = 3000 m)
         z = np.array([5000.0, 4000.0, 3000.0, 2000.0, 1000.0])[:, None]
         b = np.array([1.0, 1.0, 1.0, 1.0, -1.0])[:, None]
         z_lcl = np.array([0.0])
-        # min_depth=2500: layer depth 3000 m qualifies → LFC should exist
+        # min_depth=2500: layer depth 3000 m qualifies, base of the layer is index 3
         result = _lfc_index(z, b, z_lcl, min_depth=2500.0)
-        assert result[0] != 0
+        assert result[0] == 3
 
     def test_shallow_buoyancy_below_min_depth(self):
         # Buoyant layer depth = 1000 m, min_depth = 1500 m → no LFC
@@ -583,7 +592,7 @@ class TestLfcIndex:
         b = np.array([1.0, -1.0, -1.0, -1.0])[:, None]
         z_lcl = np.array([0.0])
         result = _lfc_index(z, b, z_lcl, min_depth=1500.0)
-        assert result[0] == 0
+        assert result[0] == -1
 
     def test_lcl_mask(self):
         # All levels buoyant, but LCL is above them all → no LFC
@@ -592,7 +601,7 @@ class TestLfcIndex:
         z_lcl = np.array([4000.0])  # LCL above all levels
         # min_depth=1 so contig_depth=0 (nothing above LCL) fails the threshold
         result = _lfc_index(z, b, z_lcl, min_depth=1.0)
-        assert result[0] == 0
+        assert result[0] == -1
 
 
 # extra_outputs tests
@@ -848,6 +857,126 @@ def test_extra_outputs_vertical_axis_arbitrary():
         assert arr.shape == (ny, nx, nz), f"parcel_path.{attr}: expected {(ny, nx, nz)}, got {arr.shape}"
     # horizontal outputs are unaffected
     assert extras["parcel_path"].lcl.p.shape == (ny, nx)
+
+
+# ---------------------------------------------------------------------------
+# Key level (LCL / LFC / EL) correctness
+# ---------------------------------------------------------------------------
+
+# Cases from the reference data that produce convection for a surface parcel.
+BUOYANT_CASE_NAMES = ["elevated_instability", "unstable", "large_cape_small_cin"]
+
+
+def _key_levels(case_name, parcel_type="surface"):
+    """Return the extras dict (lcl/lfc/el/parcel_path) for one case and parcel type."""
+    data = CapeCinData()
+    p = data.p[case_name][:, None]
+    t = data.t[case_name][:, None]
+    zh = data.zh[case_name][:, None]
+    q = data.q[case_name][:, None]
+    func = _cape_cin_func(parcel_type)
+    _, _, extras = func(
+        *_strip_sfc(p, t, q, zh),
+        *_sfc_from_profile(p, t, q, zh),
+        extra_outputs=["lcl", "lfc", "el", "parcel_path"],
+    )
+    return extras
+
+
+def _buoyancy_profile(extras):
+    """Return (z, dtv) for the single column in ``extras``, ascending in height."""
+    path = extras["parcel_path"]
+    z = path.zh_agl[:, 0]
+    dtv = (path.tv - path.tv_env)[:, 0]
+    valid = np.isfinite(z) & np.isfinite(dtv)
+    return z[valid][::-1], dtv[valid][::-1]
+
+
+@pytest.mark.parametrize("parcel_type", PARCEL_TYPES)
+@pytest.mark.parametrize("case_name", CASE_NAMES)
+def test_key_levels_ordered(case_name, parcel_type):
+    """LCL, LFC and EL must be stacked in that order: height increasing, pressure decreasing."""
+    extras = _key_levels(case_name, parcel_type)
+    z_lcl, z_lfc, z_el = (extras[k].zh_agl[0] for k in ("lcl", "lfc", "el"))
+    p_lcl, p_lfc, p_el = (extras[k].p[0] for k in ("lcl", "lfc", "el"))
+
+    assert np.isfinite(z_lcl) and np.isfinite(p_lcl), "the LCL must always be defined"
+
+    if np.isfinite(z_lfc):
+        assert z_lfc >= z_lcl - 1e-6, f"LFC ({z_lfc:.1f} m) is below the LCL ({z_lcl:.1f} m)"
+        assert p_lfc <= p_lcl + 1e-6, f"LFC ({p_lfc:.0f} Pa) is below the LCL ({p_lcl:.0f} Pa)"
+
+    if np.isfinite(z_el):
+        assert np.isfinite(z_lfc), "EL is defined but the LFC is not"
+        assert z_el > z_lfc, f"EL ({z_el:.1f} m) is not above the LFC ({z_lfc:.1f} m)"
+        assert p_el < p_lfc, f"EL ({p_el:.0f} Pa) is not above the LFC ({p_lfc:.0f} Pa)"
+
+
+@pytest.mark.parametrize("case_name", BUOYANT_CASE_NAMES)
+def test_el_at_top_of_buoyant_layer(case_name):
+    """The EL must sit at the top of the positively buoyant layer, not at its base."""
+    extras = _key_levels(case_name)
+    z_el = extras["el"].zh_agl[0]
+    assert np.isfinite(z_el), f"{case_name}: the EL should be defined for a buoyant profile"
+
+    z, dtv = _buoyancy_profile(extras)
+    # The buoyancy interpolated to the EL vanishes ...
+    np.testing.assert_allclose(np.interp(z_el, z, dtv), 0.0, atol=1e-6)
+    # ... and nothing above the EL is still buoyant.
+    assert np.all(dtv[z > z_el] <= 0.0), f"{case_name}: positive buoyancy remains above the EL"
+    # The EL is well above the boundary layer for these profiles.
+    assert z_el > 5000.0, f"{case_name}: EL at {z_el:.1f} m is implausibly low"
+
+
+@pytest.mark.parametrize("case_name", BUOYANT_CASE_NAMES)
+def test_lfc_at_buoyancy_crossing_or_lcl(case_name):
+    """The LFC is either a genuine buoyancy zero-crossing or coincides with the LCL."""
+    extras = _key_levels(case_name)
+    z_lfc = extras["lfc"].zh_agl[0]
+    z_lcl = extras["lcl"].zh_agl[0]
+    assert np.isfinite(z_lfc), f"{case_name}: the LFC should be defined for a buoyant profile"
+
+    z, dtv = _buoyancy_profile(extras)
+    at_lcl = np.isclose(z_lfc, z_lcl, atol=1e-6)
+    if not at_lcl:
+        np.testing.assert_allclose(np.interp(z_lfc, z, dtv), 0.0, atol=1e-6)
+    # The parcel is buoyant just above the LFC.
+    assert np.interp(z_lfc + 1.0, z, dtv) > 0.0, f"{case_name}: parcel is not buoyant above the LFC"
+
+
+@pytest.mark.parametrize("case_name", CASE_NAMES)
+def test_lcl_height_matches_lcl_pressure(case_name):
+    """z_lcl must be the profile height interpolated onto p_lcl."""
+    data = CapeCinData()
+    p = data.p[case_name]
+    zh_agl = data.zh[case_name] - data.zh[case_name][-1]  # bottom row is the surface
+
+    extras = _key_levels(case_name)
+    order = np.argsort(p)
+    z_ref = np.interp(extras["lcl"].p[0], p[order], zh_agl[order])
+    np.testing.assert_allclose(extras["lcl"].zh_agl[0], z_ref, rtol=1e-6)
+
+
+@pytest.mark.parametrize("parcel_type", PARCEL_TYPES)
+def test_stable_profile_has_no_lfc_or_el(parcel_type):
+    """An isothermal (absolutely stable) profile has neither an LFC nor an EL."""
+    data = CapeCinData()
+    p_full = data.p["stable"][:, None]
+    zh_full = data.zh["stable"][:, None]
+    q_full = data.q["stable"][:, None]
+    p, zh, q = p_full[:-1], zh_full[:-1], q_full[:-1]
+    t = np.full_like(p, 260.0)
+    t_sfc = np.array([260.0])
+
+    func = _cape_cin_func(parcel_type)
+    cape, cin, extras = func(
+        p, t, q, zh, p_full[-1], t_sfc, q_full[-1], zh_full[-1], extra_outputs=["lcl", "lfc", "el"]
+    )
+    np.testing.assert_allclose(cape, 0.0, atol=1e-6)
+    for key in ("lfc", "el"):
+        assert np.isnan(extras[key].p[0]), f"{parcel_type}: {key} pressure should be NaN"
+        assert np.isnan(extras[key].zh_agl[0]), f"{parcel_type}: {key} height should be NaN"
+        assert np.isnan(extras[key].t[0]), f"{parcel_type}: {key} temperature should be NaN"
 
 
 # ---------------------------------------------------------------------------
