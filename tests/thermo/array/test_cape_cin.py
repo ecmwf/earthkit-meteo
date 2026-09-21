@@ -236,8 +236,6 @@ def test_cape_cin_missing_values():
         assert not np.isnan(cin[2])
 
 
-
-
 def test_mixed_layer_cape_cin_layer_depth_forwarded():
     data = CapeCinData()
     p = data.p["unstable"][:, None]

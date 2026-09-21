@@ -463,7 +463,7 @@ class _CapeCinComp:
         zh = np.where(subground, np.nan, zh)
 
         # If NaNs are allowed, mask unexpected NaNs in the input arrays to NaN
-        # This means that any level containing unexpected NaNs will be masked to NaN 
+        # This means that any level containing unexpected NaNs will be masked to NaN
         # and ignored in subsequent computations.
         if allow_nans and unexpected_nan.any():
             p = np.where(unexpected_nan[None, ...], np.nan, p)
@@ -490,11 +490,10 @@ class _CapeCinComp:
             cape[unexpected_nan] = np.nan
             cin[unexpected_nan] = np.nan
         else:
-        # Even if NaNs are allowed, mask locations to NaN where all levels contain unexpected NaNs.
+            # Even if NaNs are allowed, mask locations to NaN where all levels contain unexpected NaNs.
             all_levels_nan = np.all(nan_in_grid, axis=0)
             cape[all_levels_nan] = np.nan
             cin[all_levels_nan] = np.nan
-
 
         # TODO include LI calculation here and add to extra outputs if requested
 
