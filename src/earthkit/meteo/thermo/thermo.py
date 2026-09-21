@@ -3117,6 +3117,7 @@ def surface_cape_cin(
     vertical_axis: int = 0,
     ept_method: str = "bolton43",
     lcl_method: str = "davies",
+    allow_nans: bool = True,
 ) -> tuple[np.ndarray, np.ndarray]:
     r"""Compute CAPE and CIN for a parcel lifted from the surface.
 
@@ -3145,6 +3146,7 @@ def surface_cape_cin(
         vertical_axis=vertical_axis,
         ept_method=ept_method,
         lcl_method=lcl_method,
+        allow_nans=allow_nans,
     )
 
 
@@ -3163,6 +3165,7 @@ def mixed_layer_cape_cin(
     vertical_axis: int = 0,
     ept_method: str = "bolton43",
     lcl_method: str = "davies",
+    allow_nans: bool = True,
 ) -> tuple[np.ndarray, np.ndarray]:
     r"""Compute CAPE and CIN for a parcel averaged over a mixed surface layer.
 
@@ -3193,6 +3196,7 @@ def mixed_layer_cape_cin(
         vertical_axis=vertical_axis,
         ept_method=ept_method,
         lcl_method=lcl_method,
+        allow_nans=allow_nans,
     )
 
 
@@ -3212,6 +3216,7 @@ def most_unstable_cape_cin(
     vertical_axis: int = 0,
     ept_method: str = "bolton43",
     lcl_method: str = "davies",
+    allow_nans: bool = True,
 ) -> tuple[np.ndarray, np.ndarray]:
     r"""Compute CAPE and CIN for the most-unstable parcel.
 
@@ -3245,4 +3250,5 @@ def most_unstable_cape_cin(
         vertical_axis=vertical_axis,
         ept_method=ept_method,
         lcl_method=lcl_method,
+        allow_nans=allow_nans,
     )

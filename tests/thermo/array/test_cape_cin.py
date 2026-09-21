@@ -103,7 +103,7 @@ class CapeCinData:
 def _sfc_from_profile(p, t, q, zh):
     """Return (p_sfc, t_sfc, q_sfc, zh_sfc) taken from the bottom level of a stacked profile.
 
-    The reference CSV stores the surface as the last row of each column. The new
+    The reference CSV stores the surface as the last row of each column. The
     cape_cin API expects pressure-level inputs (without the surface) and the
     surface arrays as separate horizontal-only arguments.
     """
@@ -224,15 +224,21 @@ def test_cape_cin_missing_values():
 
     for parcel_type in PARCEL_TYPES:
         func = _cape_cin_func(parcel_type)
-        cape, cin = func(p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc)
+        cape, cin = func(p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc, allow_nans=False)
         assert np.isnan(cape[0])
         assert np.isnan(cin[0])
         assert np.isnan(cape[2])
         assert np.isnan(cin[2])
+        cape, cin = func(p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc, allow_nans=True)
+        assert not np.isnan(cape[0])
+        assert not np.isnan(cin[0])
+        assert not np.isnan(cape[2])
+        assert not np.isnan(cin[2])
+
+
 
 
 def test_mixed_layer_cape_cin_layer_depth_forwarded():
-    """Regression: layer_depth must reach the mixed-layer parcel computation."""
     data = CapeCinData()
     p = data.p["unstable"][:, None]
     t = data.t["unstable"][:, None]
@@ -285,10 +291,6 @@ def test_most_unstable_cape_cin_max_search_height_forwarded():
 def test_most_unstable_cape_cin_exclude_surface_layer():
     """exclude_surface_layer must exclude the surface parcel from the
     candidate set so that the selected parcel comes from above the surface.
-
-    Constructed so that the surface parcel would otherwise be the most
-    unstable: when ``exclude_surface_layer=True`` the next-best (elevated)
-    parcel is chosen instead, yielding a different CAPE value.
     """
     p_sfc = np.array([100000.0])
     t_sfc = np.array([295.0])

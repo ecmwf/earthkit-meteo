@@ -436,7 +436,7 @@ class _CapeCinComp:
     def _determine_parcel(self, p, zh_agl, t, q, p_sfc, t_sfc, q_sfc):
         raise NotImplementedError("This method should be implemented in the subclass")
 
-    def _cape_cin(self, p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc):
+    def _cape_cin(self, p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc, allow_nans=True):
         # Profile arrays have shape (n_pressure_levels, ...) with the vertical axis
         # as axis=0. Surface arrays have the horizontal-only shape (...). Internally
         # the surface is concatenated as an additional level.
@@ -462,6 +462,15 @@ class _CapeCinComp:
         q = np.where(subground, np.nan, q)
         zh = np.where(subground, np.nan, zh)
 
+        # If NaNs are allowed, mask unexpected NaNs in the input arrays to NaN
+        # This means that any level containing unexpected NaNs will be masked to NaN 
+        # and ignored in subsequent computations.
+        if allow_nans and unexpected_nan.any():
+            p = np.where(unexpected_nan[None, ...], np.nan, p)
+            t = np.where(unexpected_nan[None, ...], np.nan, t)
+            q = np.where(unexpected_nan[None, ...], np.nan, q)
+            zh = np.where(unexpected_nan[None, ...], np.nan, zh)
+
         # Sort ascending by pressure; NaN (sub-ground) levels sort to the end
         p, t, q, zh = self._sort_pressure_levels(p, t, q, zh)
 
@@ -475,8 +484,17 @@ class _CapeCinComp:
         )
         cape, cin = self._integrate_buoyancy(buoyancy, p, zh_agl, p_lfc)
 
-        cape[unexpected_nan] = np.nan
-        cin[unexpected_nan] = np.nan
+        # If NaNs are not allowed in the input arrays, set the output to NaN in all locations
+        # where unexpected NaNs were found in any level of the input arrays.
+        if not allow_nans:
+            cape[unexpected_nan] = np.nan
+            cin[unexpected_nan] = np.nan
+        else:
+        # Even if NaNs are allowed, mask locations to NaN where all levels contain unexpected NaNs.
+            all_levels_nan = np.all(nan_in_grid, axis=0)
+            cape[all_levels_nan] = np.nan
+            cin[all_levels_nan] = np.nan
+
 
         # TODO include LI calculation here and add to extra outputs if requested
 
@@ -658,7 +676,7 @@ def _assemble_extras(result, extra_outputs, vertical_axis, *, is_profile=False):
     return extras
 
 
-def _run_cape_cin(comp, p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc, *, extra_outputs, vertical_axis):
+def _run_cape_cin(comp, p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc, *, extra_outputs, vertical_axis, allow_nans):
     """Run a ``_CapeCinComp`` over the input arrays.
 
     Handles validation of ``extra_outputs``, ``vertical_axis`` reshaping of
@@ -719,7 +737,7 @@ def _run_cape_cin(comp, p, t, q, zh, p_sfc, t_sfc, q_sfc, zh_sfc, *, extra_outpu
         q = np.swapaxes(q, 0, vertical_axis)
         zh = np.swapaxes(zh, 0, vertical_axis)
 
-    result = comp._cape_cin(p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc)
+    result = comp._cape_cin(p, zh, t, q, p_sfc, t_sfc, q_sfc, zh_sfc, allow_nans=allow_nans)
 
     cape = result.cape.squeeze(axis=0) if is_profile else result.cape
     cin = result.cin.squeeze(axis=0) if is_profile else result.cin
@@ -745,6 +763,7 @@ def surface_cape_cin(
     vertical_axis=0,
     ept_method="bolton43",
     lcl_method="davies",
+    allow_nans=True,
 ):
     r"""Compute CAPE and CIN for a parcel lifted from the surface.
 
@@ -788,6 +807,11 @@ def surface_cape_cin(
     lcl_method : str, optional
         Method used to compute the Lifted Condensation Level. Passed to
         :func:`earthkit.meteo.thermo.array.lcl`. Defaults to ``"davies"``.
+    allow_nans : bool, optional
+        If ``True``, allows NaNs in the input arrays, and ignores levels where
+        NaNs are present in the input arrays for the computation.
+        If ``False``, any NaNs in the input arrays will lead to a NaN result
+        in the output at the corresponding locations. Defaults to ``True``.
 
     Returns
     -------
@@ -811,6 +835,7 @@ def surface_cape_cin(
         zh_sfc,
         extra_outputs=extra_outputs,
         vertical_axis=vertical_axis,
+        allow_nans=allow_nans,
     )
 
 
@@ -829,6 +854,7 @@ def mixed_layer_cape_cin(
     vertical_axis=0,
     ept_method="bolton43",
     lcl_method="davies",
+    allow_nans=True,
 ):
     r"""Compute CAPE and CIN for a parcel averaged over a mixed surface layer.
 
@@ -877,6 +903,11 @@ def mixed_layer_cape_cin(
     layer_depth : float, optional
         Depth (Pa) of the layer over which the parcel is averaged. Defaults to
         ``5000`` Pa.
+    allow_nans : bool, optional
+        If ``True``, allows NaNs in the input arrays, and ignores levels where
+        NaNs are present in the input arrays for the computation.
+        If ``False``, any NaNs in the input arrays will lead to a NaN result
+        in the output at the corresponding locations. Defaults to ``True``.
 
     Returns
     -------
@@ -900,6 +931,7 @@ def mixed_layer_cape_cin(
         zh_sfc,
         extra_outputs=extra_outputs,
         vertical_axis=vertical_axis,
+        allow_nans=allow_nans,
     )
 
 
@@ -919,6 +951,7 @@ def most_unstable_cape_cin(
     vertical_axis=0,
     ept_method="bolton43",
     lcl_method="davies",
+    allow_nans=True,
 ):
     r"""Compute CAPE and CIN for the most-unstable parcel.
 
@@ -970,6 +1003,11 @@ def most_unstable_cape_cin(
     max_search_height : float, optional
         Upper bound (m above the surface) of the search range for the most
         unstable parcel. Defaults to ``3000`` m.
+    allow_nans : bool, optional
+        If ``True``, allows NaNs in the input arrays, and ignores levels where
+        NaNs are present in the input arrays for the computation.
+        If ``False``, any NaNs in the input arrays will lead to a NaN result
+        in the output at the corresponding locations. Defaults to ``True``.
 
     Returns
     -------
@@ -998,4 +1036,5 @@ def most_unstable_cape_cin(
         zh_sfc,
         extra_outputs=extra_outputs,
         vertical_axis=vertical_axis,
+        allow_nans=allow_nans,
     )
