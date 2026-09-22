@@ -24,8 +24,7 @@ classifiers = [
 dependencies = [
   "deprecation",
   "earthkit-utils~=1.0",
-  "numpy",
-  "scipy"
+  "numpy"
 ]
 description = "A Python library for meteorological computations"
 dynamic = ["version"]
@@ -36,6 +35,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 optional-dependencies.all = [
   "earthkit-meteo[samples,scores,stats]"
+]
+optional-depencencies.cape = [
+  "scipy"
 ]
 optional-dependencies.dev = [
   "earthkit-meteo[all,docs,test]"
