@@ -35,6 +35,10 @@ c_pv = 1846.1
 r"""Specific heat of water vapour on constant pressure [:math:`J kg^{-1} K^{-1}`].
 See [IFS-CY47R3-PhysicalProcesses]_ (Chapter 12)."""
 
+c_l = 4218.0
+r"""Specific heat of liquid water [:math:`J kg^{-1} K^{-1}`].
+See [IFS-CY47R3-PhysicalProcesses]_ (Chapter 12)."""
+
 Lv = 2.5008e6
 r"""Latent heat of vapourisation [:math:`J kg^{-1}`]."""
 
