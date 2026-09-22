@@ -461,18 +461,23 @@ class _CapeCinComp:
         return p, t, q, zh
 
     def _integrate_buoyancy(self, buoyancy, p, zh_agl, p_lfc):
+        """Trapezoidal integration of buoyancy to compute CAPE and CIN."""
+
         layer_thickness = -np.diff(zh_agl, axis=0)
         dcape = constants.g * ((buoyancy[:-1] + buoyancy[1:]) / 2) * layer_thickness
         dcin = np.copy(dcape)
 
+        # Include the slice that straddles the LFC in the integration for CAPE and CIN
+        reaches_above_lfc = p[:-1] <= p_lfc[None]
+        reaches_below_lfc = p[1:] > p_lfc[None]
+
         dcape[dcape < 0] = 0
-        above_lfc = p[1:] <= p_lfc[None]
-        dcape[~above_lfc] = 0
+        dcape[~reaches_above_lfc] = 0
         cape = np.nansum(dcape, axis=0)
         cape[np.isnan(p_lfc)] = 0
 
         dcin[dcin > 0] = 0
-        dcin[above_lfc] = 0
+        dcin[~reaches_below_lfc] = 0
 
         cin = -np.nansum(dcin, axis=0)
         pos_cape = cape > 0
