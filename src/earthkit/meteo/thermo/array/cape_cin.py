@@ -462,7 +462,6 @@ class _CapeCinComp:
 
     def _integrate_buoyancy(self, buoyancy, p, zh_agl, p_lfc):
         """Trapezoidal integration of buoyancy to compute CAPE and CIN."""
-
         layer_thickness = -np.diff(zh_agl, axis=0)
         dcape = constants.g * ((buoyancy[:-1] + buoyancy[1:]) / 2) * layer_thickness
         dcin = np.copy(dcape)

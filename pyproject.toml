@@ -36,7 +36,7 @@ requires-python = ">=3.10"
 optional-dependencies.all = [
   "earthkit-meteo[samples,scores,stats]"
 ]
-optional-depencencies.cape = [
+optional-dependencies.cape = [
   "scipy"
 ]
 optional-dependencies.dev = [
