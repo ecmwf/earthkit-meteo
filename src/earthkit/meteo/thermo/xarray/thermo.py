@@ -241,7 +241,9 @@ def saturation_vapour_pressure(t: xr.DataArray, phase: str = "mixed", method: st
 
             e_{isat} = \frac{exp \left(43.494 - \frac{6545.8}{t_{c} + 278}\right)}{(t_{c} + 868)^{2}}
 
-      where :math:`t_{c} = t - 273.15` is the temperature in °C.
+      where :math:`t_{c} = t - 273.15` is the temperature in °C. These formulas were fitted to
+      the IAPWS reference data between 0 °C and 100 °C for water and between -100 °C and 0 °C
+      for ice.
 
     When ``phase`` is "mixed" the formula is based on the value of ``t`` (for both methods):
 

@@ -223,12 +223,19 @@ def test_saturation_vapour_pressure_huang_1(xp, device, phase):
 @pytest.mark.parametrize(
     "t,v_ref,phase",
     [
-        # reference values: IAPWS-95 for water and Murphy and Koop (2005) for ice
-        (273.16, 611.655, "water"),
-        (293.15, 2339.3, "water"),
-        (373.15, 101418.0, "water"),
-        (233.15, 12.84, "ice"),
-        (253.15, 103.26, "ice"),
+        # reference values: Tables 1 and 2 of Huang (2018), given with 5-6 significant digits
+        (273.16, 611.689, "water"),
+        (293.15, 2339.32, "water"),
+        (313.15, 7384.93, "water"),
+        (333.15, 19946.1, "water"),
+        (353.15, 47415.0, "water"),
+        (373.15, 101417.0, "water"),
+        (173.15, 0.0014050, "ice"),
+        (193.15, 0.05477, "ice"),
+        (213.15, 1.0814, "ice"),
+        (233.15, 12.841, "ice"),
+        (253.15, 103.23, "ice"),
+        (273.15, 611.29, "ice"),
     ],
 )
 def test_saturation_vapour_pressure_huang_2(xp, device, t, v_ref, phase):
@@ -236,7 +243,7 @@ def test_saturation_vapour_pressure_huang_2(xp, device, t, v_ref, phase):
     v_ref = xp.asarray(v_ref, device=device)
 
     svp = thermo.array.saturation_vapour_pressure(t, phase=phase, method="huang")
-    assert xp.allclose(svp, v_ref, rtol=1e-3)
+    assert xp.allclose(svp, v_ref, rtol=1e-4, atol=0)
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
