@@ -207,7 +207,7 @@ def mixing_ratio_from_vapour_pressure(e: ArrayLike, p: ArrayLike, eps: float = 1
     return xp.where(denom >= eps, constants.epsilon * e / denom, xp.nan)
 
 
-def saturation_vapour_pressure(t: ArrayLike, phase: str = "mixed") -> ArrayLike:
+def saturation_vapour_pressure(t: ArrayLike, phase: str = "mixed", method: str = "ifs") -> ArrayLike:
     r"""Compute the saturation vapour pressure from temperature with respect to a phase.
 
     Parameters
@@ -217,6 +217,8 @@ def saturation_vapour_pressure(t: ArrayLike, phase: str = "mixed") -> ArrayLike:
     phase: str, optional
         Define the phase with respect to the saturation vapour pressure is computed.
         It is either “water”, “ice” or “mixed”.
+    method: str, optional
+        The computation method: "ifs" or "huang".
 
     Returns
     -------
@@ -224,19 +226,31 @@ def saturation_vapour_pressure(t: ArrayLike, phase: str = "mixed") -> ArrayLike:
         Saturation vapour pressure (Pa)
 
 
-    The algorithm was taken from the IFS model [IFS-CY47R3-PhysicalProcesses]_ (see Chapter 12).
-    It uses the following formula when ``phase`` is "water" or "ice":
+    The actual computation is based on the ``method``:
 
-    .. math::
+    * "ifs": the algorithm taken from the IFS model [IFS-CY47R3-PhysicalProcesses]_ (see Chapter 12)
+      is used. It uses the following formula when ``phase`` is "water" or "ice":
 
-        e_{sat} = a_{1} exp \left(a_{3}\frac{t-273.16}{t-a_{4}}\right)
+        .. math::
 
-    where the parameters are set as follows:
+            e_{sat} = a_{1} exp \left(a_{3}\frac{t-273.16}{t-a_{4}}\right)
 
-    * ``phase`` = "water": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =17.502 and :math:`a_{4}` =32.19 K
-    * ``phase`` = "ice": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =22.587 and :math:`a_{4}` =-0.7 K
+      where the parameters are set as follows:
 
-    When ``phase`` is "mixed" the formula is based on the value of ``t``:
+      * ``phase`` = "water": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =17.502 and :math:`a_{4}` =32.19 K
+      * ``phase`` = "ice": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =22.587 and :math:`a_{4}` =-0.7 K
+
+    * "huang": the formulas by [Huang2018]_ are used when ``phase`` is "water" or "ice":
+
+        .. math::
+
+            e_{wsat} = \frac{exp \left(34.494 - \frac{4924.99}{t_{c} + 237.1}\right)}{(t_{c} + 105)^{1.57}}
+
+            e_{isat} = \frac{exp \left(43.494 - \frac{6545.8}{t_{c} + 278}\right)}{(t_{c} + 868)^{2}}
+
+      where :math:`t_{c} = t - 273.15` is the temperature in °C.
+
+    When ``phase`` is "mixed" the formula is based on the value of ``t`` (for both methods):
 
     * if :math:`t <= t_{i}`: the formula for ``phase`` = "ice" is used (:math:`t_{i} = 250.16 K`)
     * if :math:`t >= t_{0}`: the formula for ``phase`` = "water" is used (:math:`t_{0} = 273.16 K`)
@@ -251,7 +265,7 @@ def saturation_vapour_pressure(t: ArrayLike, phase: str = "mixed") -> ArrayLike:
     """
     from .es_comp import compute_es
 
-    return compute_es(t, phase)
+    return compute_es(t, phase, method)
 
 
 def saturation_mixing_ratio(t: ArrayLike, p: ArrayLike, phase: str = "mixed") -> ArrayLike:
@@ -316,7 +330,7 @@ def saturation_specific_humidity(t: ArrayLike, p: ArrayLike, phase: str = "mixed
     return specific_humidity_from_vapour_pressure(e, p)
 
 
-def saturation_vapour_pressure_slope(t: ArrayLike, phase: str = "mixed") -> ArrayLike:
+def saturation_vapour_pressure_slope(t: ArrayLike, phase: str = "mixed", method: str = "ifs") -> ArrayLike:
     r"""Compute the slope of saturation vapour pressure with respect to temperature.
 
     Parameters
@@ -327,6 +341,9 @@ def saturation_vapour_pressure_slope(t: ArrayLike, phase: str = "mixed") -> Arra
         Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
         for details.
+    method: str, optional
+        The computation method: "ifs" or "huang". See :func:`saturation_vapour_pressure`
+        for details.
 
     Returns
     -------
@@ -336,7 +353,7 @@ def saturation_vapour_pressure_slope(t: ArrayLike, phase: str = "mixed") -> Arra
     """
     from .es_comp import compute_slope
 
-    return compute_slope(t, phase)
+    return compute_slope(t, phase, method)
 
 
 def saturation_mixing_ratio_slope(
@@ -478,9 +495,9 @@ def temperature_from_saturation_vapour_pressure(es: ArrayLike) -> ArrayLike:
         Temperature (K). For zero ``es`` values returns nan.
 
 
-    The computation is always based on the "water" phase of
+    The computation is always based on the "water" phase of the "ifs" method of
     the :func:`saturation_vapour_pressure` formulation irrespective of the
-    phase ``es`` was computed to.
+    phase and method ``es`` was computed with.
 
     """
     from .es_comp import compute_t_from_es

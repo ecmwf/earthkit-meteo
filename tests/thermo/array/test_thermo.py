@@ -201,6 +201,56 @@ def test_saturation_vapour_pressure_2(xp, device, t, v_ref, phase):
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
+def test_saturation_vapour_pressure_huang_1(xp, device, phase):
+    ref_file = "sat_vp_huang.csv"
+
+    # o = {"t": read_data_file("sat_vp.csv")["t"]}
+    # for phase in ["mixed", "water", "ice"]:
+    #     o[phase] = thermo.array.saturation_vapour_pressure(o["t"], phase=phase, method="huang")
+    # save_test_reference(ref_file, o)
+
+    d = read_data_file(ref_file)
+
+    t = xp.asarray(d["t"], device=device)
+    v_ref = xp.asarray(d[phase], device=device)
+
+    svp = thermo.array.saturation_vapour_pressure(t, phase=phase, method="huang")
+    assert xp.allclose(svp, v_ref)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize(
+    "t,v_ref,phase",
+    [
+        # reference values: IAPWS-95 for water and Murphy and Koop (2005) for ice
+        (273.16, 611.655, "water"),
+        (293.15, 2339.3, "water"),
+        (373.15, 101418.0, "water"),
+        (233.15, 12.84, "ice"),
+        (253.15, 103.26, "ice"),
+    ],
+)
+def test_saturation_vapour_pressure_huang_2(xp, device, t, v_ref, phase):
+    t = xp.asarray(t, device=device)
+    v_ref = xp.asarray(v_ref, device=device)
+
+    svp = thermo.array.saturation_vapour_pressure(t, phase=phase, method="huang")
+    assert xp.allclose(svp, v_ref, rtol=1e-3)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+def test_saturation_vapour_pressure_invalid_method(xp, device):
+    t = xp.asarray([280.0], device=device)
+
+    with pytest.raises(ValueError):
+        thermo.array.saturation_vapour_pressure(t, method="unknown")
+
+    with pytest.raises(ValueError):
+        thermo.array.saturation_vapour_pressure_slope(t, method="unknown")
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
 def test_saturation_mixing_ratio(phase, xp, device):
     ref_file = "sat_mr.csv"
 
@@ -263,6 +313,22 @@ def test_saturation_vapour_pressure_slope(phase, xp, device):
 
     svp = thermo.array.saturation_vapour_pressure_slope(t, phase=phase)
     assert xp.allclose(svp, v_ref)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
+def test_saturation_vapour_pressure_slope_huang(phase, xp, device):
+    # the reference is a centred finite difference of the saturation vapour pressure. The
+    # boundaries of the mixed phase range are avoided since the slope is not continuous there.
+    t = xp.asarray(np.array([233.0, 245.0, 255.0, 265.0, 280.0, 300.0, 320.0]), device=device)
+    h = 1e-4
+
+    es_plus = thermo.array.saturation_vapour_pressure(t + h, phase=phase, method="huang")
+    es_minus = thermo.array.saturation_vapour_pressure(t - h, phase=phase, method="huang")
+    v_ref = (es_plus - es_minus) / (2 * h)
+
+    svp = thermo.array.saturation_vapour_pressure_slope(t, phase=phase, method="huang")
+    assert xp.allclose(svp, v_ref, rtol=1e-6)
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
