@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
+import earthkit.meteo.thermo.array  # noqa: F401 (makes thermo.array available)
 from earthkit.meteo import thermo
 from earthkit.meteo.utils import convert
 
