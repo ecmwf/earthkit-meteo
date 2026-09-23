@@ -415,6 +415,44 @@ def test_saturation_specific_humidity_slope_number(t, p, v_ref, xp, device):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
+def test_saturation_mixing_ratio_huang(phase, xp, device):
+    d = read_data_file("sat_mr.csv")
+    t = xp.asarray(d["t"], device=device)
+    p = xp.asarray(d["p"], device=device)
+
+    es = thermo.array.saturation_vapour_pressure(t, phase=phase, method="huang")
+    es_slope = thermo.array.saturation_vapour_pressure_slope(t, phase=phase, method="huang")
+
+    mr = thermo.array.saturation_mixing_ratio(t, p, phase=phase, method="huang")
+    v_ref = thermo.array.mixing_ratio_from_vapour_pressure(es, p)
+    assert xp.allclose(mr, v_ref, equal_nan=True)
+
+    mr_slope = thermo.array.saturation_mixing_ratio_slope(t, p, phase=phase, method="huang")
+    v_ref = thermo.array.saturation_mixing_ratio_slope(t, p, es=es, es_slope=es_slope)
+    assert xp.allclose(mr_slope, v_ref, equal_nan=True)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
+def test_saturation_specific_humidity_huang(phase, xp, device):
+    d = read_data_file("sat_q.csv")
+    t = xp.asarray(d["t"], device=device)
+    p = xp.asarray(d["p"], device=device)
+
+    es = thermo.array.saturation_vapour_pressure(t, phase=phase, method="huang")
+    es_slope = thermo.array.saturation_vapour_pressure_slope(t, phase=phase, method="huang")
+
+    q = thermo.array.saturation_specific_humidity(t, p, phase=phase, method="huang")
+    v_ref = thermo.array.specific_humidity_from_vapour_pressure(es, p)
+    assert xp.allclose(q, v_ref, equal_nan=True)
+
+    q_slope = thermo.array.saturation_specific_humidity_slope(t, p, phase=phase, method="huang")
+    v_ref = thermo.array.saturation_specific_humidity_slope(t, p, es=es, es_slope=es_slope)
+    assert xp.allclose(q_slope, v_ref, equal_nan=True)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 def test_temperature_from_saturation_vapour_pressure_1(xp, device):
     ref_file = "sat_vp.csv"
     d = read_data_file(ref_file)
