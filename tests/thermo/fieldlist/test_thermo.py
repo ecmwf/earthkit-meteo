@@ -351,6 +351,27 @@ def test_fieldlist_saturation_vapour_pressure_phase(input_type):
 
 
 @pytest.mark.parametrize("input_type", ["fieldlist", "field"])
+@pytest.mark.parametrize("name", ["saturation_vapour_pressure", "saturation_vapour_pressure_slope"])
+def test_fieldlist_saturation_vapour_pressure_method(input_type, name):
+    import earthkit.meteo.thermo.array as array
+    import earthkit.meteo.thermo.fieldlist as fieldlist
+
+    t = _make_input_fieldlist("t", values=TEMPERATURES, input_type=input_type)
+    out = getattr(fieldlist, name)(t, method="huang")
+
+    assert isinstance(out, type(t))
+
+    if input_type == "fieldlist":
+        assert len(out) == len(t)
+        for f, vals in zip(out, TEMPERATURES):
+            ref = getattr(array, name)(np.array(vals), method="huang")
+            np.testing.assert_allclose(f.values, ref)
+    elif input_type == "field":
+        ref = getattr(array, name)(np.array(TEMPERATURES[0]), method="huang")
+        np.testing.assert_allclose(out.values, ref)
+
+
+@pytest.mark.parametrize("input_type", ["fieldlist", "field"])
 @pytest.mark.parametrize("pres_type", ["fl", "value", None])
 def test_fieldlist_saturation_mixing_ratio(input_type, pres_type):
     import earthkit.meteo.thermo.array as array
@@ -469,6 +490,36 @@ def test_fieldlist_saturation_specific_humidity_slope(input_type, pres_type):
     elif input_type == "field":
         assert out.get("parameter.variable") == "sqw_slope"
         ref = array.saturation_specific_humidity_slope(np.array(TEMPERATURES[0]), np.array([PRESSURES[0]]))
+        np.testing.assert_allclose(out.values, ref)
+
+
+@pytest.mark.parametrize("input_type", ["fieldlist", "field"])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "saturation_mixing_ratio",
+        "saturation_specific_humidity",
+        "saturation_mixing_ratio_slope",
+        "saturation_specific_humidity_slope",
+    ],
+)
+def test_fieldlist_saturation_humidity_method(input_type, name):
+    import earthkit.meteo.thermo.array as array
+    import earthkit.meteo.thermo.fieldlist as fieldlist
+
+    t = _make_input_fieldlist("t", values=TEMPERATURES, input_type=input_type)
+    p = _make_pres_fieldlist(t, pres_type="fl")
+    out = getattr(fieldlist, name)(t, p, method="huang")
+
+    assert isinstance(out, type(t))
+
+    if input_type == "fieldlist":
+        assert len(out) == len(t)
+        for f, vals, p_val in zip(out, TEMPERATURES, PRESSURES):
+            ref = getattr(array, name)(np.array(vals), np.array([p_val]), method="huang")
+            np.testing.assert_allclose(f.values, ref)
+    elif input_type == "field":
+        ref = getattr(array, name)(np.array(TEMPERATURES[0]), np.array([PRESSURES[0]]), method="huang")
         np.testing.assert_allclose(out.values, ref)
 
 

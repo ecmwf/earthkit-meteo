@@ -463,24 +463,27 @@ def mixing_ratio_from_vapour_pressure(
 
 
 @overload
-def saturation_vapour_pressure(t: "ArrayLike", phase: str = "mixed") -> "ArrayLike": ...
+def saturation_vapour_pressure(t: "ArrayLike", phase: str = "mixed", method: str = "ifs") -> "ArrayLike": ...
 
 
 @overload
-def saturation_vapour_pressure(t: "xarray.DataArray", phase: str = "mixed") -> "xarray.DataArray": ...
+def saturation_vapour_pressure(
+    t: "xarray.DataArray", phase: str = "mixed", method: str = "ifs"
+) -> "xarray.DataArray": ...
 
 
 @overload
-def saturation_vapour_pressure(t: "FieldList", phase: str = "mixed") -> "FieldList": ...
+def saturation_vapour_pressure(t: "FieldList", phase: str = "mixed", method: str = "ifs") -> "FieldList": ...
 
 
 @overload
-def saturation_vapour_pressure(t: "Field", phase: str = "mixed") -> "Field": ...
+def saturation_vapour_pressure(t: "Field", phase: str = "mixed", method: str = "ifs") -> "Field": ...
 
 
 def saturation_vapour_pressure(
     t: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field":
     r"""Compute the saturation vapour pressure from temperature with respect to a phase.
 
@@ -491,6 +494,8 @@ def saturation_vapour_pressure(
     phase: str, optional
         Define the phase with respect to the saturation vapour pressure is computed.
         It is either “water”, “ice” or “mixed”.
+    method: str, optional
+        The computation method: \"ifs\" or \"huang\".
 
     Returns
     -------
@@ -498,19 +503,33 @@ def saturation_vapour_pressure(
         Saturation vapour pressure (Pa)
 
 
-    The algorithm was taken from the IFS model [IFS-CY47R3-PhysicalProcesses]_ (see Chapter 12).
-    It uses the following formula when ``phase`` is \"water\" or \"ice\":
+    The actual computation is based on the ``method``:
 
-    .. math::
+    * \"ifs\": the algorithm taken from the IFS model [IFS-CY47R3-PhysicalProcesses]_ (see Chapter 12)
+      is used. It uses the following formula when ``phase`` is \"water\" or \"ice\":
 
-        e_{sat} = a_{1}\operatorname{exp} \left(a_{3}\frac{t-273.16}{t-a_{4}}\right)
+        .. math::
 
-    where the parameters are set as follows:
+            e_{sat} = a_{1}\operatorname{exp} \left(a_{3}\frac{t-273.16}{t-a_{4}}\right)
 
-    * ``phase`` = \"water\": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =17.502 and :math:`a_{4}` =32.19 K
-    * ``phase`` = \"ice\": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =22.587 and :math:`a_{4}` =-0.7 K
+      where the parameters are set as follows:
 
-    When ``phase`` is \"mixed\" the formula is based on the value of ``t``:
+      * ``phase`` = \"water\": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =17.502 and :math:`a_{4}` =32.19 K
+      * ``phase`` = \"ice\": :math:`a_{1}` =611.21 Pa, :math:`a_{3}` =22.587 and :math:`a_{4}` =-0.7 K
+
+    * \"huang\": the formulas by [Huang2018]_ are used when ``phase`` is \"water\" or \"ice\":
+
+        .. math::
+
+            e_{wsat} =
+            \frac{\operatorname{exp} \left(34.494 - \frac{4924.99}{t_{c} + 237.1}\right)}{(t_{c} + 105)^{1.57}}
+
+            e_{isat} =
+            \frac{\operatorname{exp} \left(43.494 - \frac{6545.8}{t_{c} + 278}\right)}{(t_{c} + 868)^{2}}
+
+      where :math:`t_{c} = t - 273.15` is the temperature in °C.
+
+    When ``phase`` is \"mixed\" the formula is based on the value of ``t`` (for both methods):
 
     * if :math:`t <= t_{i}`: the formula for ``phase`` = \"ice\" is used (:math:`t_{i} = 250.16 K`)
     * if :math:`t >= t_{0}`: the formula for ``phase`` = \"water\" is used (:math:`t_{0} = 273.16 K`)
@@ -538,7 +557,7 @@ def saturation_vapour_pressure(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(saturation_vapour_pressure, array=True)
-    return dispatched(t, phase=phase)
+    return dispatched(t, phase=phase, method=method)
 
 
 @overload
@@ -546,6 +565,7 @@ def saturation_mixing_ratio(
     t: "ArrayLike",
     p: "ArrayLike",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "ArrayLike": ...
 
 
@@ -554,6 +574,7 @@ def saturation_mixing_ratio(
     t: "xarray.DataArray",
     p: "xarray.DataArray",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "xarray.DataArray": ...
 
 
@@ -562,6 +583,7 @@ def saturation_mixing_ratio(
     t: "FieldList",
     p: "FieldList",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "FieldList": ...
 
 
@@ -570,6 +592,7 @@ def saturation_mixing_ratio(
     t: "Field",
     p: "Field",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "Field": ...
 
 
@@ -577,6 +600,7 @@ def saturation_mixing_ratio(
     t: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
     p: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field":
     r"""Compute the saturation mixing ratio from temperature with respect to a phase.
 
@@ -589,6 +613,8 @@ def saturation_mixing_ratio(
     phase: str
         Define the phase with respect to the :func:`saturation_vapour_pressure` is computed.
         It is either “water”, “ice” or “mixed”.
+    method: str, optional
+        The computation method of :func:`saturation_vapour_pressure`: \"ifs\" or \"huang\".
 
     Returns
     -------
@@ -600,7 +626,7 @@ def saturation_mixing_ratio(
 
     .. code-block:: python
 
-        e = saturation_vapour_pressure(t, phase=phase)
+        e = saturation_vapour_pressure(t, phase=phase, method=method)
         return mixing_ratio_from_vapour_pressure(e, p)
 
 
@@ -618,7 +644,7 @@ def saturation_mixing_ratio(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(saturation_mixing_ratio, array=True)
-    return dispatched(t, p, phase=phase)
+    return dispatched(t, p, phase=phase, method=method)
 
 
 @overload
@@ -626,6 +652,7 @@ def saturation_specific_humidity(
     t: "ArrayLike",
     p: "ArrayLike",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "ArrayLike": ...
 
 
@@ -634,6 +661,7 @@ def saturation_specific_humidity(
     t: "xarray.DataArray",
     p: "xarray.DataArray",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "xarray.DataArray": ...
 
 
@@ -642,6 +670,7 @@ def saturation_specific_humidity(
     t: "FieldList",
     p: "FieldList",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "FieldList": ...
 
 
@@ -650,6 +679,7 @@ def saturation_specific_humidity(
     t: "Field",
     p: "Field",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "Field": ...
 
 
@@ -657,6 +687,7 @@ def saturation_specific_humidity(
     t: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
     p: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field":
     r"""Compute the saturation specific humidity from temperature with respect to a phase.
 
@@ -669,6 +700,8 @@ def saturation_specific_humidity(
     phase: str, optional
         Define the phase with respect to the :func:`saturation_vapour_pressure` is computed.
         It is either “water”, “ice” or “mixed”.
+    method: str, optional
+        The computation method of :func:`saturation_vapour_pressure`: \"ifs\" or \"huang\".
 
     Returns
     -------
@@ -680,7 +713,7 @@ def saturation_specific_humidity(
 
     .. code-block:: python
 
-        e = saturation_vapour_pressure(t, phase=phase)
+        e = saturation_vapour_pressure(t, phase=phase, method=method)
         return specific_humidity_from_vapour_pressure(e, p)
 
 
@@ -698,13 +731,14 @@ def saturation_specific_humidity(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(saturation_specific_humidity, array=True)
-    return dispatched(t, p, phase=phase)
+    return dispatched(t, p, phase=phase, method=method)
 
 
 @overload
 def saturation_vapour_pressure_slope(
     t: "ArrayLike",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "ArrayLike": ...
 
 
@@ -712,6 +746,7 @@ def saturation_vapour_pressure_slope(
 def saturation_vapour_pressure_slope(
     t: "xarray.DataArray",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "xarray.DataArray": ...
 
 
@@ -719,6 +754,7 @@ def saturation_vapour_pressure_slope(
 def saturation_vapour_pressure_slope(
     t: "FieldList",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "FieldList": ...
 
 
@@ -726,12 +762,14 @@ def saturation_vapour_pressure_slope(
 def saturation_vapour_pressure_slope(
     t: "Field",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "Field": ...
 
 
 def saturation_vapour_pressure_slope(
     t: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
     phase: str = "mixed",
+    method: str = "ifs",
 ) -> "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field":
     r"""Compute the slope of saturation vapour pressure with respect to temperature.
 
@@ -742,6 +780,9 @@ def saturation_vapour_pressure_slope(
     phase: str, optional
         Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
+        for details.
+    method: str, optional
+        The computation method: \"ifs\" or \"huang\". See :func:`saturation_vapour_pressure`
         for details.
 
     Returns
@@ -764,7 +805,7 @@ def saturation_vapour_pressure_slope(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(saturation_vapour_pressure_slope, array=True)
-    return dispatched(t, phase=phase)
+    return dispatched(t, phase=phase, method=method)
 
 
 @overload
@@ -775,6 +816,7 @@ def saturation_mixing_ratio_slope(
     es_slope: "ArrayLike" | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
+    method: str = "ifs",
 ) -> "ArrayLike": ...
 
 
@@ -786,6 +828,7 @@ def saturation_mixing_ratio_slope(
     es_slope: "xarray.DataArray" | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
+    method: str = "ifs",
 ) -> "xarray.DataArray": ...
 
 
@@ -797,6 +840,7 @@ def saturation_mixing_ratio_slope(
     es_slope: "FieldList" | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
+    method: str = "ifs",
 ) -> "FieldList": ...
 
 
@@ -808,6 +852,7 @@ def saturation_mixing_ratio_slope(
     es_slope: "Field" | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
+    method: str = "ifs",
 ) -> "Field": ...
 
 
@@ -818,6 +863,7 @@ def saturation_mixing_ratio_slope(
     es_slope: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field" | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
+    method: str = "ifs",
 ) -> "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field":
     r"""Compute the slope of saturation mixing ratio with respect to temperature.
 
@@ -828,15 +874,18 @@ def saturation_mixing_ratio_slope(
     p: array-like | xarray.DataArray | FieldList | Field
         Pressure (Pa)
     es: array-like | xarray.DataArray | FieldList | Field or None, optional
-        :func:`saturation_vapour_pressure` pre-computed for the given ``phase`` (Pa)
+        :func:`saturation_vapour_pressure` pre-computed for the given ``phase`` and ``method`` (Pa)
     es_slope: array-like | xarray.DataArray | FieldList | Field or None, optional
-        :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` (Pa/K)
+        :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` and ``method`` (Pa/K)
     phase: str, optional
         Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
         for details.
     eps: number
         Where p - es < ``eps`` nan is returned.
+    method: str, optional
+        The computation method: \"ifs\" or \"huang\". See :func:`saturation_vapour_pressure`
+        for details.
 
     Returns
     -------
@@ -853,7 +902,7 @@ def saturation_mixing_ratio_slope(
     where
 
         * :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
-        * :math:`e_{s}` is the :func:`saturation_vapour_pressure` for the given ``phase``
+        * :math:`e_{s}` is the :func:`saturation_vapour_pressure` for the given ``phase`` and ``method``
 
 
     Implementations
@@ -870,7 +919,7 @@ def saturation_mixing_ratio_slope(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(saturation_mixing_ratio_slope, array=True)
-    return dispatched(t, p, es, es_slope, phase=phase, eps=eps)
+    return dispatched(t, p, es, es_slope, phase=phase, eps=eps, method=method)
 
 
 @overload
@@ -881,6 +930,7 @@ def saturation_specific_humidity_slope(
     es_slope: "ArrayLike" | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
+    method: str = "ifs",
 ) -> "ArrayLike": ...
 
 
@@ -892,6 +942,7 @@ def saturation_specific_humidity_slope(
     es_slope: "xarray.DataArray" | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
+    method: str = "ifs",
 ) -> "xarray.DataArray": ...
 
 
@@ -903,6 +954,7 @@ def saturation_specific_humidity_slope(
     es_slope: "FieldList" | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
+    method: str = "ifs",
 ) -> "FieldList": ...
 
 
@@ -914,6 +966,7 @@ def saturation_specific_humidity_slope(
     es_slope: "Field" | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
+    method: str = "ifs",
 ) -> "Field": ...
 
 
@@ -924,6 +977,7 @@ def saturation_specific_humidity_slope(
     es_slope: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field" | None = None,
     phase: str = "mixed",
     eps: float = 1e-4,
+    method: str = "ifs",
 ) -> "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field":
     r"""Compute the slope of saturation specific humidity with respect to temperature.
 
@@ -934,15 +988,18 @@ def saturation_specific_humidity_slope(
     p: array-like | xarray.DataArray | FieldList | Field
         Pressure (Pa)
     es: array-like | xarray.DataArray | FieldList | Field or None, optional
-        :func:`saturation_vapour_pressure` pre-computed for the given ``phase`` (Pa)
+        :func:`saturation_vapour_pressure` pre-computed for the given ``phase`` and ``method`` (Pa)
     es_slope: array-like | xarray.DataArray | FieldList | Field or None, optional
-        :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` (Pa/K)
+        :func:`saturation_vapour_pressure_slope` pre-computed for the given ``phase`` and ``method`` (Pa/K)
     phase: str, optional
         Define the phase with respect to the computation will be performed.
         It is either “water”, “ice” or “mixed”. See :func:`saturation_vapour_pressure`
         for details.
     eps: number
         Where p - es < ``eps`` nan is returned.
+    method: str, optional
+        The computation method: \"ifs\" or \"huang\". See :func:`saturation_vapour_pressure`
+        for details.
 
     Returns
     -------
@@ -960,7 +1017,7 @@ def saturation_specific_humidity_slope(
     where
 
         * :math:`\epsilon = R_{d}/R_{v}` (see :data:`earthkit.meteo.constants.epsilon`).
-        * :math:`e_{s}` is the :func:`saturation_vapour_pressure` for the given ``phase``
+        * :math:`e_{s}` is the :func:`saturation_vapour_pressure` for the given ``phase`` and ``method``
 
 
     Implementations
@@ -977,7 +1034,7 @@ def saturation_specific_humidity_slope(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(saturation_specific_humidity_slope, array=True)
-    return dispatched(t, p, es=es, es_slope=es_slope, phase=phase, eps=eps)
+    return dispatched(t, p, es=es, es_slope=es_slope, phase=phase, eps=eps, method=method)
 
 
 @overload
@@ -1020,9 +1077,9 @@ def temperature_from_saturation_vapour_pressure(
         Temperature (K). For zero ``es`` values returns nan.
 
 
-    The computation is always based on the "water" phase of
+    The computation is always based on the "water" phase of the "ifs" method of
     the :func:`saturation_vapour_pressure` formulation irrespective of the
-    phase ``es`` was computed to.
+    phase and method ``es`` was computed with.
 
 
     Implementations
