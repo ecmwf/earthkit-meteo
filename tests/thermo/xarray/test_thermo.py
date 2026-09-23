@@ -140,6 +140,7 @@ def test_xr_saturation_vapour_pressure(t, phase, method):
     ref = thermo.array.saturation_vapour_pressure(_np(t), phase=phase, method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.attrs["method"] == method
 
 
 @pytest.mark.parametrize("method", ["ifs", "huang"])
@@ -156,6 +157,7 @@ def test_xr_saturation_mixing_ratio(t, p, phase, method):
     ref = thermo.array.saturation_mixing_ratio(_np(t), _np(p), phase=phase, method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.attrs["method"] == method
 
 
 @pytest.mark.parametrize("method", ["ifs", "huang"])
@@ -172,6 +174,7 @@ def test_xr_saturation_specific_humidity(t, p, phase, method):
     ref = thermo.array.saturation_specific_humidity(_np(t), _np(p), phase=phase, method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.attrs["method"] == method
 
 
 @pytest.mark.parametrize("method", ["ifs", "huang"])
@@ -187,6 +190,7 @@ def test_xr_saturation_vapour_pressure_slope(t, phase, method):
     ref = thermo.array.saturation_vapour_pressure_slope(_np(t), phase=phase, method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.attrs["method"] == method
 
 
 @pytest.mark.parametrize("method", ["ifs", "huang"])
@@ -203,6 +207,7 @@ def test_xr_saturation_mixing_ratio_slope(t, p, phase, method):
     ref = thermo.array.saturation_mixing_ratio_slope(_np(t), _np(p), phase=phase, method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.attrs["method"] == method
 
 
 @pytest.mark.parametrize("method", ["ifs", "huang"])
@@ -219,6 +224,7 @@ def test_xr_saturation_specific_humidity_slope(t, p, phase, method):
     ref = thermo.array.saturation_specific_humidity_slope(_np(t), _np(p), phase=phase, method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.attrs["method"] == method
 
 
 @pytest.mark.parametrize(

@@ -262,6 +262,7 @@ def saturation_vapour_pressure(t: xr.DataArray, phase: str = "mixed", method: st
         "standard_name": "",  # no standard name
         "units": "Pa",
         "long_name": f"Saturation vapour pressure w.r.t. {phase} phase",
+        "method": method,
     })
 
 
@@ -300,6 +301,7 @@ def saturation_mixing_ratio(
         "standard_name": "",  # no standard name
         "units": "kg kg-1",
         "long_name": f"Saturation mixing ratio w.r.t. {phase} phase",
+        "method": method,
     })
 
 
@@ -338,6 +340,7 @@ def saturation_specific_humidity(
         "standard_name": "",  # no standard name
         "units": "kg kg-1",
         "long_name": f"Saturation specific humidity w.r.t. {phase} phase",
+        "method": method,
     })
 
 
@@ -366,6 +369,7 @@ def saturation_vapour_pressure_slope(t: xr.DataArray, phase: str = "mixed", meth
         "standard_name": "",  # no standard name
         "units": "Pa K-1",
         "long_name": f"Derivative of saturation vapour pressure w.r.t. temperature and {phase} phase",
+        "method": method,
     })
 
 
@@ -430,6 +434,7 @@ def saturation_mixing_ratio_slope(
         "standard_name": "",  # no standard name
         "units": "kg kg-1 K-1",
         "long_name": f"Derivative of saturation mixing ratio w.r.t. temperature and {phase} phase",
+        "method": method,
     })
 
 
@@ -495,6 +500,7 @@ def saturation_specific_humidity_slope(
         "standard_name": "",  # no standard name
         "units": "kg kg-1 K-1",
         "long_name": f"Derivative of saturation specific humidity w.r.t. temperature and {phase} phase",
+        "method": method,
     })
 
 
