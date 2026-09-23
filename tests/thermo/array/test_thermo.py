@@ -258,6 +258,19 @@ def test_saturation_vapour_pressure_invalid_method(xp, device):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("t_b, phase", [(250.16, "ice"), (273.16, "water")])
+def test_saturation_vapour_pressure_huang_mixed_continuity(xp, device, t_b, phase):
+    # the Huang water and ice formulas differ by ~0.1 Pa at 273.16 K, but the "mixed"
+    # phase is still continuous at both ends of the interpolation range
+    t = xp.asarray(np.array([t_b - 1e-6, t_b, t_b + 1e-6]), device=device)
+    t_ref = xp.asarray(np.array([t_b]), device=device)
+
+    svp = thermo.array.saturation_vapour_pressure(t, phase="mixed", method="huang")
+    v_ref = thermo.array.saturation_vapour_pressure(t_ref, phase=phase, method="huang")
+    assert xp.allclose(svp, v_ref, rtol=1e-6)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
 def test_saturation_mixing_ratio(phase, xp, device):
     ref_file = "sat_mr.csv"
@@ -326,9 +339,10 @@ def test_saturation_vapour_pressure_slope(phase, xp, device):
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("phase", ["mixed", "water", "ice"])
 def test_saturation_vapour_pressure_slope_huang(phase, xp, device):
-    # the reference is a centred finite difference of the saturation vapour pressure. The
-    # boundaries of the mixed phase range are avoided since the slope is not continuous there.
-    t = xp.asarray(np.array([233.0, 245.0, 255.0, 265.0, 280.0, 300.0, 320.0]), device=device)
+    # the reference is a centred finite difference of the saturation vapour pressure. 273.16 K
+    # is avoided since the Huang water and ice formulas differ by ~0.1 Pa there, so the slope of
+    # the "mixed" phase is not continuous at this temperature (it is at 250.16 K).
+    t = xp.asarray(np.array([233.0, 245.0, 250.16, 255.0, 265.0, 280.0, 300.0, 320.0]), device=device)
     h = 1e-4
 
     es_plus = thermo.array.saturation_vapour_pressure(t + h, phase=phase, method="huang")
