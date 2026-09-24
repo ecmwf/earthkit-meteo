@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 European Centre for Medium-Range Weather Forecasts (ECMWF)
+// SPDX-License-Identifier: Apache-2.0
+
 document.addEventListener("DOMContentLoaded", function () {
     // Packages list is injected at build time from earthkit-packages.yml via earthkit-packages.js
     var packages = window.earthkitPackages || [];

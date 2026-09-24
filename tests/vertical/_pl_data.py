@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 European Centre for Medium-Range Weather Forecasts (ECMWF)
+# SPDX-License-Identifier: Apache-2.0
+
 # Test case:
 # p_surf, t, q values taken form Metview test file pl_to_hp_input.grib
 # Point0: value index=253 lat=20 lon=10
