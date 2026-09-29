@@ -125,6 +125,7 @@ def test_xr_mixing_ratio_from_vapour_pressure(e, p):
         assert out.ndim == 0
 
 
+@pytest.mark.parametrize("method", ["ifs", "huang"])
 @pytest.mark.parametrize(
     "t,phase",
     [
@@ -133,56 +134,97 @@ def test_xr_mixing_ratio_from_vapour_pressure(e, p):
         (273.15, "mixed"),
     ],
 )
-def test_xr_saturation_vapour_pressure(t, phase):
+def test_xr_saturation_vapour_pressure(t, phase, method):
     t_da = _da(t)
-    out = thermo.saturation_vapour_pressure(t_da, phase=phase)
-    ref = thermo.array.saturation_vapour_pressure(_np(t), phase=phase)
+    out = thermo.saturation_vapour_pressure(t_da, phase=phase, method=method)
+    ref = thermo.array.saturation_vapour_pressure(_np(t), phase=phase, method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.attrs["method"] == method
 
 
+@pytest.mark.parametrize("method", ["ifs", "huang"])
 @pytest.mark.parametrize(
     "t,p,phase",
     [
         (273.15, 100000.0, "water"),
     ],
 )
-def test_xr_saturation_mixing_ratio(t, p, phase):
+def test_xr_saturation_mixing_ratio(t, p, phase, method):
     t_da = _da(t)
     p_da = _da(p)
-    out = thermo.saturation_mixing_ratio(t_da, p_da, phase=phase)
-    ref = thermo.array.saturation_mixing_ratio(_np(t), _np(p), phase=phase)
+    out = thermo.saturation_mixing_ratio(t_da, p_da, phase=phase, method=method)
+    ref = thermo.array.saturation_mixing_ratio(_np(t), _np(p), phase=phase, method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.attrs["method"] == method
 
 
+@pytest.mark.parametrize("method", ["ifs", "huang"])
 @pytest.mark.parametrize(
     "t,p,phase",
     [
         (273.15, 100000.0, "water"),
     ],
 )
-def test_xr_saturation_specific_humidity(t, p, phase):
+def test_xr_saturation_specific_humidity(t, p, phase, method):
     t_da = _da(t)
     p_da = _da(p)
-    out = thermo.saturation_specific_humidity(t_da, p_da, phase=phase)
-    ref = thermo.array.saturation_specific_humidity(_np(t), _np(p), phase=phase)
+    out = thermo.saturation_specific_humidity(t_da, p_da, phase=phase, method=method)
+    ref = thermo.array.saturation_specific_humidity(_np(t), _np(p), phase=phase, method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.attrs["method"] == method
 
 
+@pytest.mark.parametrize("method", ["ifs", "huang"])
 @pytest.mark.parametrize(
     "t,phase",
     [
         (273.15, "water"),
     ],
 )
-def test_xr_saturation_vapour_pressure_slope(t, phase):
+def test_xr_saturation_vapour_pressure_slope(t, phase, method):
     t_da = _da(t)
-    out = thermo.saturation_vapour_pressure_slope(t_da, phase=phase)
-    ref = thermo.array.saturation_vapour_pressure_slope(_np(t), phase=phase)
+    out = thermo.saturation_vapour_pressure_slope(t_da, phase=phase, method=method)
+    ref = thermo.array.saturation_vapour_pressure_slope(_np(t), phase=phase, method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.attrs["method"] == method
+
+
+@pytest.mark.parametrize("method", ["ifs", "huang"])
+@pytest.mark.parametrize(
+    "t,p,phase",
+    [
+        (283.0, 100000.0, "mixed"),
+    ],
+)
+def test_xr_saturation_mixing_ratio_slope(t, p, phase, method):
+    t_da = _da(t)
+    p_da = _da(p)
+    out = thermo.saturation_mixing_ratio_slope(t_da, p_da, phase=phase, method=method)
+    ref = thermo.array.saturation_mixing_ratio_slope(_np(t), _np(p), phase=phase, method=method)
+    assert np.allclose(out.values, ref, equal_nan=True)
+    assert out.ndim == 0
+    assert out.attrs["method"] == method
+
+
+@pytest.mark.parametrize("method", ["ifs", "huang"])
+@pytest.mark.parametrize(
+    "t,p,phase",
+    [
+        (283.0, 100000.0, "mixed"),
+    ],
+)
+def test_xr_saturation_specific_humidity_slope(t, p, phase, method):
+    t_da = _da(t)
+    p_da = _da(p)
+    out = thermo.saturation_specific_humidity_slope(t_da, p_da, phase=phase, method=method)
+    ref = thermo.array.saturation_specific_humidity_slope(_np(t), _np(p), phase=phase, method=method)
+    assert np.allclose(out.values, ref, equal_nan=True)
+    assert out.ndim == 0
+    assert out.attrs["method"] == method
 
 
 @pytest.mark.parametrize(
