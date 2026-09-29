@@ -124,6 +124,16 @@ _FIELD_PARAMS = {
     "sept": {"variable": "sept", "units": "K", "paramId": 5, "edition": ("1", "2")},
     "specific_gas_constant": {"variable": "R", "units": "J/kg/K"},
     "specific_humidity": {"variable": "q", "units": "kg/kg", "paramId": 133, "edition": ("1", "2")},
+    "surface_downward_shortwave_radiation": {
+        "variable": "avg_sdswrf",
+        "units": "W/m2",
+        "paramId": 235035,
+    },
+    "surface_downward_longwave_flux": {
+        "variable": "avg_sdlwrf",
+        "units": "W/m2",
+        "paramId": 235036,
+    },
     "temperature": {"variable": "t", "units": "K", "paramId": 130, "edition": ("1", "2")},
     "toa_incident_solar_radiation": {
         "variable": "toa_incident_solar_radiation",
