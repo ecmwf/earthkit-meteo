@@ -56,12 +56,20 @@ def test_np_efi_highlevel_dispatch_mixed_axis(axis):
     assert np.allclose(got, ref)
 
 
-@pytest.mark.parametrize("axis", [0, 1, 2, 3])
-def test_np_sot_highlevel_dispatch_axis(axis):
-    clim = _move_axis(_data.clim, axis)
-    ens = _move_axis(_data.ens, axis)
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"clim_dim": 0, "ens_dim": 0},
+        {"clim_dim": 3, "ens_dim": 3},
+        {"clim_dim": 0, "ens_dim": 0, "perc_tail": 99},
+        {"clim_dim": 0, "ens_dim": 0, "eps": 1e-4},
+    ],
+)
+def test_np_sot_highlevel_dispatch_axis(kwargs):
+    clim = _move_axis(_data.clim, kwargs["clim_dim"])
+    ens = _move_axis(_data.ens, kwargs["ens_dim"])
     ref = extreme.array.sot(_data.clim, _data.ens, 90)
-    got = extreme.sot(clim, ens, 90, clim_dim=axis, ens_dim=axis)
+    got = extreme.sot(clim, ens, 90, **kwargs)
     assert np.allclose(got, ref)
 
 
