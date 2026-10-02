@@ -1408,3 +1408,87 @@ def interpolate_monotonic(
 
     levels = target.first_field_values()
     return to_resulting_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": coord_type})
+
+
+def extrapolate_temperature_below_surface(
+    t_sfc: FieldList | Field,
+    h_sfc: FieldList | Field,
+    p_sfc: FieldList | Field,
+    target_p: float,
+) -> FieldList | Field:
+    r"""Extrapolate temperature from the surface to a pressure level below the surface.
+
+    Parameters
+    ----------
+    t_sfc: FieldList|Field
+        Surface temperature (K).
+    h_sfc: FieldList|Field
+        Surface height above sea level (m).
+    p_sfc: FieldList|Field
+        Surface pressure (Pa).
+    target_p: float
+        Target pressure (Pa).
+
+    Returns
+    -------
+    FieldList|Field
+        Temperature (K) on ``target_p``. The result has the same type as the input
+        (FieldList or Field). Except for the parameter, the metadata is copied from ``t_sfc``.
+
+    Notes
+    -----
+    See :func:`earthkit.meteo.vertical.array.extrapolate_temperature_below_surface`
+    for the algorithm.
+    """
+    fieldlist_ufunc_kwargs = {"default_variable": "temperature"}
+
+    return fieldlist_ufunc(
+        array.extrapolate_temperature_below_surface,
+        t_sfc,
+        h_sfc,
+        p_sfc,
+        target_p=target_p,
+        fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs,
+    )
+
+
+def extrapolate_geopotential_below_surface(
+    t_sfc: FieldList | Field,
+    h_sfc: FieldList | Field,
+    p_sfc: FieldList | Field,
+    target_p: float,
+) -> FieldList | Field:
+    r"""Extrapolate geopotential from the surface to a pressure level below the surface.
+
+    Parameters
+    ----------
+    t_sfc: FieldList|Field
+        Surface temperature (K).
+    h_sfc: FieldList|Field
+        Surface height above sea level (m).
+    p_sfc: FieldList|Field
+        Surface pressure (Pa).
+    target_p: float
+        Target pressure (Pa).
+
+    Returns
+    -------
+    FieldList|Field
+        Geopotential (m2/s2) on ``target_p``. The result has the same type as the input
+        (FieldList or Field). Except for the parameter, the metadata is copied from ``t_sfc``.
+
+    Notes
+    -----
+    See :func:`earthkit.meteo.vertical.array.extrapolate_geopotential_below_surface`
+    for the algorithm.
+    """
+    fieldlist_ufunc_kwargs = {"default_variable": "geopotential"}
+
+    return fieldlist_ufunc(
+        array.extrapolate_geopotential_below_surface,
+        t_sfc,
+        h_sfc,
+        p_sfc,
+        target_p=target_p,
+        fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs,
+    )

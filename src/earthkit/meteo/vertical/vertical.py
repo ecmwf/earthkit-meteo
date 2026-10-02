@@ -1560,8 +1560,6 @@ def interpolate_sleve_to_theta_levels(
         Units of target theta (default: "K").
     folding_mode: str, optional
         Folding mode (default: "undef_fold").
-    vertical_dim: str, optional
-        Vertical dimension (default: "z").
 
     Returns
     -------
@@ -1587,4 +1585,204 @@ def interpolate_sleve_to_theta_levels(
         target_t_units=target_t_units,
         folding_mode=folding_mode,
         vertical_dim=vertical_dim,
+    )
+
+
+@overload
+def extrapolate_temperature_below_surface(
+    t_sfc: "ArrayLike",
+    h_sfc: "ArrayLike",
+    p_sfc: "ArrayLike",
+    target_p: "ArrayLike",
+) -> "ArrayLike": ...
+
+
+@overload
+def extrapolate_temperature_below_surface(
+    t_sfc: "xarray.DataArray",
+    h_sfc: "xarray.DataArray",
+    p_sfc: "xarray.DataArray",
+    target_p: "ArrayLike",
+) -> "xarray.DataArray": ...
+
+
+@overload
+def extrapolate_temperature_below_surface(
+    t_sfc: "FieldList | Field",
+    h_sfc: "FieldList | Field",
+    p_sfc: "FieldList | Field",
+    target_p: "ArrayLike",
+) -> "FieldList": ...
+
+
+def extrapolate_temperature_below_surface(
+    t_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    h_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    p_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    target_p: "ArrayLike",
+) -> "ArrayLike | xarray.DataArray | FieldList":
+    r"""Extrapolate temperature from the surface to pressure levels below the surface.
+
+    *New in version 1.2.0*
+
+    Parameters
+    ----------
+    t_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface temperature (K).
+    h_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface height above sea level (m).
+    p_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface pressure (Pa).
+    target_p : array-like
+        Target pressure(s) (Pa). The accepted form depends on the type of the other
+        arguments:
+
+        - array-like: a scalar or a 1D array of pressure levels. In the 1D case a new
+          leading vertical axis is added to the result.
+        - xarray.DataArray: a scalar or a DataArray with a level dimension, e.g.
+          ``xr.DataArray([85000.0, 100000.0], dims="z")``.
+        - FieldList/Field: a single number.
+
+    Returns
+    -------
+    array-like | xarray.DataArray | FieldList
+        Temperature (K) on the target pressure(s). The result has the same type as
+        ``t_sfc``.
+
+    The computation implements the FULL-POS scheme [1]_:
+
+    .. math::
+
+        T = T_{sfc} \left(1 + y + \frac{y^2}{2} + \frac{y^3}{6}\right), \qquad
+        y = \Gamma \frac{R_d}{g} \ln\frac{p}{p_{sfc}}
+
+    with :math:`\Gamma = 0.0065` K/m for :math:`h_{sfc} < 2000` m. Above that,
+    :math:`\Gamma = \max(T_0' - T_{sfc}, 0) / h_{sfc}`, where
+    :math:`T_0 = T_{sfc} + 0.0065\,h_{sfc}` and :math:`T_0' = \min(T_0, 298)` for
+    :math:`h_{sfc} > 2500` m, otherwise :math:`T_0' = (\min(T_0, 298) + T_0)/2`.
+    :math:`R_d` and :math:`g` are :data:`earthkit.meteo.constants.Rd` and
+    :data:`earthkit.meteo.constants.g`.
+
+    .. caution::
+        Values are computed at every point and are only meaningful where
+        ``target_p > p_sfc``. Use this to fill values that are undefined below the
+        surface (e.g. for data-driven models), not as a physical estimate.
+
+    References
+    ----------
+    .. [1] https://www.umr-cnrm.fr/gmapdoc/IMG/pdf/ykfpos46t1r1.pdf
+
+
+    Implementations
+    ---------------
+    :func:`extrapolate_temperature_below_surface` calls one of the following implementations
+    depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.vertical.array.extrapolate_temperature_below_surface` for array-like
+    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_temperature_below_surface` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_temperature_below_surface` for FieldList
+
+    The function returns an object of the same type as the ``t_sfc`` argument.
+    """
+    return dispatch(extrapolate_temperature_below_surface, xarray=True, fieldlist=True, array=True)(
+        t_sfc, h_sfc, p_sfc, target_p
+    )
+
+
+@overload
+def extrapolate_geopotential_below_surface(
+    t_sfc: "ArrayLike",
+    h_sfc: "ArrayLike",
+    p_sfc: "ArrayLike",
+    target_p: "ArrayLike",
+) -> "ArrayLike": ...
+
+
+@overload
+def extrapolate_geopotential_below_surface(
+    t_sfc: "xarray.DataArray",
+    h_sfc: "xarray.DataArray",
+    p_sfc: "xarray.DataArray",
+    target_p: "ArrayLike",
+) -> "xarray.DataArray": ...
+
+
+@overload
+def extrapolate_geopotential_below_surface(
+    t_sfc: "FieldList | Field",
+    h_sfc: "FieldList | Field",
+    p_sfc: "FieldList | Field",
+    target_p: "ArrayLike",
+) -> "FieldList": ...
+
+
+def extrapolate_geopotential_below_surface(
+    t_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    h_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    p_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    target_p: "ArrayLike",
+) -> "ArrayLike | xarray.DataArray | FieldList":
+    r"""Extrapolate geopotential from the surface to pressure levels below the surface.
+
+    *New in version 1.2.0*
+
+    Parameters
+    ----------
+    t_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface temperature (K).
+    h_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface height above sea level (m).
+    p_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface pressure (Pa).
+    target_p : array-like
+        Target pressure(s) (Pa). The accepted form depends on the type of the other
+        arguments:
+
+        - array-like: a scalar or a 1D array of pressure levels. In the 1D case a new
+          leading vertical axis is added to the result.
+        - xarray.DataArray: a scalar or a DataArray with a level dimension, e.g.
+          ``xr.DataArray([85000.0, 100000.0], dims="z")``.
+        - FieldList/Field: a single number.
+
+    Returns
+    -------
+    array-like | xarray.DataArray | FieldList
+        Geopotential (m2/s2) on the target pressure(s). The result has the same type as
+         ``t_sfc``.
+
+    The computation implements the FULL-POS scheme [1]_ with a constant lapse rate
+    :math:`\Gamma = 0.0065` K/m:
+
+    .. math::
+
+        \Phi = g\,h_{sfc} - R_d T_{sfc} \ln\frac{p}{p_{sfc}}
+            \left(1 + \frac{y}{2} + \frac{y^2}{6}\right), \qquad
+        y = \Gamma \frac{R_d}{g} \ln\frac{p}{p_{sfc}}
+
+    where :math:`R_d` and :math:`g` are :data:`earthkit.meteo.constants.Rd` and
+    :data:`earthkit.meteo.constants.g`.
+
+    .. caution::
+        Values are computed at every point and are only meaningful where
+        ``target_p > p_sfc``. Use this to fill values that are undefined below the
+        surface (e.g. for data-driven models), not as a physical estimate.
+
+    References
+    ----------
+    .. [1] https://www.umr-cnrm.fr/gmapdoc/IMG/pdf/ykfpos46t1r1.pdf
+
+    Implementations
+    ---------------
+    :func:`extrapolate_geopotential_below_surface` calls one of the following implementations
+    depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.vertical.array.extrapolate_geopotential_below_surface` for array-like
+    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_geopotential_below_surface` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_geopotential_below_surface` for FieldList
+
+    The function returns an object of the same type as the ``t_sfc`` argument.
+    """
+ 
+    return dispatch(extrapolate_geopotential_below_surface, xarray=True, fieldlist=True, array=True)(
+        t_sfc, h_sfc, p_sfc, target_p
     )

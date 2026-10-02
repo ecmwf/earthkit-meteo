@@ -15,6 +15,7 @@ from earthkit.meteo import constants
 from earthkit.meteo.utils.decorators import xarray_ufunc
 
 from .. import array
+from ..array.vertical import _geopotential_below_surface, _temperature_below_surface
 
 
 def geopotential_height_from_geopotential(z: xr.DataArray) -> xr.DataArray:
@@ -200,4 +201,66 @@ def geometric_height_from_geopotential(z: xr.DataArray, R_earth: float = constan
     return xarray_ufunc(array.geometric_height_from_geopotential, z, R_earth).assign_attrs({
         "standard_name": "geometric_height",
         "units": "m",
+    })
+
+
+def extrapolate_temperature_below_surface(
+    t_sfc: xr.DataArray, h_sfc: xr.DataArray, p_sfc: xr.DataArray, target_p: xr.DataArray | float
+) -> xr.DataArray:
+    r"""Extrapolate temperature from the surface to pressure levels below the surface.
+
+    Parameters
+    ----------
+    t_sfc : xr.DataArray
+        Surface temperature (K)
+    h_sfc : xr.DataArray
+        Surface height above sea level (m)
+    p_sfc : xr.DataArray
+        Surface pressure (Pa)
+    target_p : xr.DataArray | float
+        Target pressure (Pa). Broadcast against the other inputs following xarray rules,
+        e.g. ``xr.DataArray([85000.0, 100000.0], dims="z")`` adds a ``z`` dimension.
+
+    Returns
+    -------
+    xr.DataArray
+        Temperature (K)
+
+    See :func:`earthkit.meteo.vertical.array.extrapolate_temperature_below_surface`
+    for the algorithm.
+    """
+    return xarray_ufunc(_temperature_below_surface, t_sfc, h_sfc, p_sfc, target_p).assign_attrs({
+        "standard_name": "air_temperature",
+        "units": "K",
+    })
+
+
+def extrapolate_geopotential_below_surface(
+    t_sfc: xr.DataArray, h_sfc: xr.DataArray, p_sfc: xr.DataArray, target_p: xr.DataArray | float
+) -> xr.DataArray:
+    r"""Extrapolate geopotential from the surface to pressure levels below the surface.
+
+    Parameters
+    ----------
+    t_sfc : xr.DataArray
+        Surface temperature (K)
+    h_sfc : xr.DataArray
+        Surface height above sea level (m)
+    p_sfc : xr.DataArray
+        Surface pressure (Pa)
+    target_p : xr.DataArray | float
+        Target pressure (Pa). Broadcast against the other inputs following xarray rules,
+        e.g. ``xr.DataArray([85000.0, 100000.0], dims="z")`` adds a ``z`` dimension.
+
+    Returns
+    -------
+    xr.DataArray
+        Geopotential (m2/s2)
+
+    See :func:`earthkit.meteo.vertical.array.extrapolate_geopotential_below_surface`
+    for the algorithm.
+    """
+    return xarray_ufunc(_geopotential_below_surface, t_sfc, h_sfc, p_sfc, target_p).assign_attrs({
+        "standard_name": "geopotential",
+        "units": "m2 s-2",
     })

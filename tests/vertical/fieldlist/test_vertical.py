@@ -345,3 +345,30 @@ def test_fieldlist_pressure_on_hybrid_levels_core():
 
     atol, rtol = tolerance.get(key="alpha")
     assert np.allclose(alpha.to_numpy(), ref_alpha, atol=atol, rtol=rtol)
+
+
+def test_fieldlist_extrapolate_temperature_below_surface():
+    from earthkit.data import Field, FieldList
+
+    import earthkit.meteo.vertical.fieldlist as vertical
+
+    def make(values, variable, units):
+        field = Field.from_components(
+            values=np.array(values),
+            parameter={"variable": variable, "units": units},
+            vertical={"level": 0, "level_type": "surface"},
+        )
+        return FieldList.from_fields([field])
+
+    t_sfc = make([288.15, 290.0, 275.0, 290.0], "t", "K")
+    h_sfc = make([100.0, 2200.0, 3000.0, 3000.0], "h", "m")
+    p_sfc = make([100000.0, 78000.0, 70000.0, 70000.0], "sp", "Pa")
+    ref = [290.83740533454284, 303.07481159412237, 297.05478853917333, 299.32528337706367]
+
+    out = vertical.extrapolate_temperature_below_surface(t_sfc, h_sfc, p_sfc, 105000.0)
+
+    assert isinstance(out, FieldList)
+    assert len(out) == 1
+    assert out.get("parameter.variable") == ["t"]
+    np.testing.assert_allclose(np.asarray(out.to_numpy()).ravel(), ref, rtol=1e-10)
+    
