@@ -1773,3 +1773,89 @@ def interpolate_monotonic(
         aux_max_level_coord,
         vertical_dim=vertical_dim,
     )
+
+
+_BELOW_SURFACE_H1 = 2000.0  # m
+_BELOW_SURFACE_H2 = 2500.0  # m
+_BELOW_SURFACE_T1 = 298.0  # K
+
+
+def _below_surface_lapse_rate(t_sfc, h_sfc, xp):
+    t0 = t_sfc + constants.standard_lapse_rate * h_sfc
+    t0_min = xp.minimum(t0, _BELOW_SURFACE_T1)
+    t0_prime = xp.where(h_sfc > _BELOW_SURFACE_H2, t0_min, 0.5 * t0_min + 0.5 * t0)
+    # avoid division by zero where the standard lapse rate is used anyway
+    h_safe = xp.where(h_sfc < _BELOW_SURFACE_H1, 1.0, h_sfc)
+    return xp.where(
+        h_sfc < _BELOW_SURFACE_H1,
+        constants.standard_lapse_rate,
+        xp.maximum(t0_prime - t_sfc, 0.0) / h_safe,
+    )
+
+
+def extrapolate_temperature_below_surface(
+    t_sfc: ArrayLike, h_sfc: ArrayLike, p_sfc: ArrayLike, target_p: ArrayLike
+) -> ArrayLike:
+    r"""Extrapolate temperature from the surface to pressure levels below the surface.
+
+    *New in version 1.2.0*
+
+    Parameters
+    ----------
+    t_sfc : ArrayLike
+        Surface temperature (K).
+    h_sfc : ArrayLike
+        Surface height above sea level (m).
+    p_sfc : ArrayLike
+        Surface pressure (Pa).
+    target_p : ArrayLike
+        Target pressure (Pa). All inputs are broadcast against each other. To compute
+        several levels at once, give ``target_p`` a leading level axis, e.g.
+        ``target_p[:, np.newaxis]`` for 1D surface fields.
+
+    Returns
+    -------
+    ArrayLike
+        Temperature (K) on the target pressure(s), with the broadcast shape of the inputs.
+    """
+    xp = array_namespace(t_sfc, h_sfc, p_sfc, target_p)
+    t_sfc, h_sfc, p_sfc, target_p = xp.broadcast_arrays(
+        xp.asarray(t_sfc), xp.asarray(h_sfc), xp.asarray(p_sfc), xp.asarray(target_p)
+    )
+    gamma = _below_surface_lapse_rate(t_sfc, h_sfc, xp)
+    y = gamma * constants.Rd / constants.g * xp.log(target_p / p_sfc)
+    return t_sfc * (1.0 + y + y**2 / 2.0 + y**3 / 6.0)
+
+
+def extrapolate_geopotential_below_surface(
+    t_sfc: ArrayLike, h_sfc: ArrayLike, p_sfc: ArrayLike, target_p: ArrayLike
+) -> ArrayLike:
+    r"""Extrapolate geopotential from the surface to pressure levels below the surface.
+
+    *New in version 1.2.0*
+
+    Parameters
+    ----------
+    t_sfc : ArrayLike
+        Surface temperature (K).
+    h_sfc : ArrayLike
+        Surface height above sea level (m).
+    p_sfc : ArrayLike
+        Surface pressure (Pa).
+    target_p : ArrayLike
+        Target pressure (Pa). All inputs are broadcast against each other. To compute
+        several levels at once, give ``target_p`` a leading level axis, e.g.
+        ``target_p[:, np.newaxis]`` for 1D surface fields.
+
+    Returns
+    -------
+    ArrayLike
+        Geopotential (m2/s2) on the target pressure(s), with the broadcast shape of the inputs.
+    """
+    xp = array_namespace(t_sfc, h_sfc, p_sfc, target_p)
+    t_sfc, h_sfc, p_sfc, target_p = xp.broadcast_arrays(
+        xp.asarray(t_sfc), xp.asarray(h_sfc), xp.asarray(p_sfc), xp.asarray(target_p)
+    )
+    log_p = xp.log(target_p / p_sfc)
+    y = constants.standard_lapse_rate * constants.Rd / constants.g * log_p
+    return h_sfc * constants.g - constants.Rd * t_sfc * log_p * (1.0 + y / 2.0 + y**2 / 6.0)
