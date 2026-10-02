@@ -15,6 +15,7 @@ from earthkit.meteo import constants
 from earthkit.meteo.utils.decorators import xarray_ufunc
 
 from .. import array
+from ..array.vertical import _geopotential_below_surface, _temperature_below_surface
 
 
 def geopotential_height_from_geopotential(z: xr.DataArray) -> xr.DataArray:
@@ -228,7 +229,7 @@ def extrapolate_temperature_below_surface(
     See :func:`earthkit.meteo.vertical.array.extrapolate_temperature_below_surface`
     for the algorithm.
     """
-    return xarray_ufunc(array.extrapolate_temperature_below_surface, t_sfc, h_sfc, p_sfc, target_p).assign_attrs({
+    return xarray_ufunc(_temperature_below_surface, t_sfc, h_sfc, p_sfc, target_p).assign_attrs({
         "standard_name": "air_temperature",
         "units": "K",
     })
@@ -259,7 +260,7 @@ def extrapolate_geopotential_below_surface(
     See :func:`earthkit.meteo.vertical.array.extrapolate_geopotential_below_surface`
     for the algorithm.
     """
-    return xarray_ufunc(array.extrapolate_geopotential_below_surface, t_sfc, h_sfc, p_sfc, target_p).assign_attrs({
+    return xarray_ufunc(_geopotential_below_surface, t_sfc, h_sfc, p_sfc, target_p).assign_attrs({
         "standard_name": "geopotential",
         "units": "m2 s-2",
     })

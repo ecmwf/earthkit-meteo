@@ -1560,8 +1560,6 @@ def interpolate_sleve_to_theta_levels(
         Units of target theta (default: "K").
     folding_mode: str, optional
         Folding mode (default: "undef_fold").
-    vertical_dim: str, optional
-        Vertical dimension (default: "z").
 
     Returns
     -------
@@ -1605,7 +1603,6 @@ def extrapolate_temperature_below_surface(
     h_sfc: "xarray.DataArray",
     p_sfc: "xarray.DataArray",
     target_p: "ArrayLike",
-    vertical_dim: str | None = ...,
 ) -> "xarray.DataArray": ...
 
 
@@ -1623,7 +1620,6 @@ def extrapolate_temperature_below_surface(
     h_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
     p_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
     target_p: "ArrayLike",
-    vertical_dim: str | None = None,
 ) -> "ArrayLike | xarray.DataArray | FieldList":
     r"""Extrapolate temperature from the surface to pressure levels below the surface.
 
@@ -1632,24 +1628,26 @@ def extrapolate_temperature_below_surface(
     Parameters
     ----------
     t_sfc : array-like | xarray.DataArray | FieldList | Field
-        Surface temperature (K). For FieldList input, it must contain exactly one Field.
+        Surface temperature (K).
     h_sfc : array-like | xarray.DataArray | FieldList | Field
-        Surface height above sea level (m). For FieldList input, it must contain exactly one Field.
+        Surface height above sea level (m).
     p_sfc : array-like | xarray.DataArray | FieldList | Field
-        Surface pressure (Pa). For FieldList input, it must contain exactly one Field.
+        Surface pressure (Pa).
     target_p : array-like
-        Target pressure level(s) (Pa). Either a scalar or a 1D array.
-    vertical_dim : str, optional
-        Name of the vertical dimension of the result. Only supported for
-        xarray.DataArray input (default there: ``"level"``).
+        Target pressure(s) (Pa). The accepted form depends on the type of the other
+        arguments:
+
+        - array-like: a scalar or a 1D array of pressure levels. In the 1D case a new
+        leading vertical axis is added to the result.
+        - xarray.DataArray: a scalar or a DataArray with a level dimension, e.g.
+        ``xr.DataArray([85000.0, 100000.0], dims="z")``.
+        - FieldList/Field: a single number.
 
     Returns
     -------
     array-like | xarray.DataArray | FieldList
-        Temperature (K) on the target pressure level(s). For array-like input with a
-        1D ``target_p`` a new leading vertical axis is added. For xarray input, the new
-        dimension is ``vertical_dim``. For FieldList input, one Field per target level is returned.
-
+        Temperature (K) on the target pressure(s). The result has the same type as
+         ``t_sfc``.
 
     The computation implements the FULL-POS scheme [1]_:
 
@@ -1686,7 +1684,6 @@ def extrapolate_temperature_below_surface(
 
     The function returns an object of the same type as the ``t_sfc`` argument.
     """
-
     return dispatch(extrapolate_temperature_below_surface, xarray=True, fieldlist=True, array=True)(
         t_sfc, h_sfc, p_sfc, target_p
     )
@@ -1707,7 +1704,6 @@ def extrapolate_geopotential_below_surface(
     h_sfc: "xarray.DataArray",
     p_sfc: "xarray.DataArray",
     target_p: "ArrayLike",
-    vertical_dim: str | None = ...,
 ) -> "xarray.DataArray": ...
 
 
@@ -1725,7 +1721,6 @@ def extrapolate_geopotential_below_surface(
     h_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
     p_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
     target_p: "ArrayLike",
-    vertical_dim: str | None = None,
 ) -> "ArrayLike | xarray.DataArray | FieldList":
     r"""Extrapolate geopotential from the surface to pressure levels below the surface.
 
@@ -1734,24 +1729,26 @@ def extrapolate_geopotential_below_surface(
     Parameters
     ----------
     t_sfc : array-like | xarray.DataArray | FieldList | Field
-        Surface temperature (K). For FieldList input, it must contain exactly one Field.
+        Surface temperature (K).
     h_sfc : array-like | xarray.DataArray | FieldList | Field
-        Surface height above sea level (m). For FieldList input, it must contain exactly one Field.
+        Surface height above sea level (m).
     p_sfc : array-like | xarray.DataArray | FieldList | Field
-        Surface pressure (Pa). For FieldList input, it must contain exactly one Field.
+        Surface pressure (Pa).
     target_p : array-like
-        Target pressure level(s) (Pa). Either a scalar or a 1D array.
-    vertical_dim : str, optional
-        Name of the vertical dimension of the result. Only supported for
-        xarray.DataArray input (default there: ``"z"``).
+        Target pressure(s) (Pa). The accepted form depends on the type of the other
+        arguments:
+
+        - array-like: a scalar or a 1D array of pressure levels. In the 1D case a new
+        leading vertical axis is added to the result.
+        - xarray.DataArray: a scalar or a DataArray with a level dimension, e.g.
+        ``xr.DataArray([85000.0, 100000.0], dims="z")``.
+        - FieldList/Field: a single number.Target pressure level(s) (Pa). Either a scalar or a 1D array.
 
     Returns
     -------
     array-like | xarray.DataArray | FieldList
-        Geopotential (m2/s2) on the target pressure level(s). For array-like input with a
-        1D ``target_p`` a new leading vertical axis is added. For xarray input, the new
-        dimension is ``vertical_dim``. For FieldList input, one Field per target level is returned.
-
+        Geopotential (m2/s2) on the target pressure(s). The result has the same type as
+         ``t_sfc``.
 
     The computation implements the FULL-POS scheme [1]_ with a constant lapse rate
     :math:`\Gamma = 0.0065` K/m:
@@ -1773,7 +1770,6 @@ def extrapolate_geopotential_below_surface(
     References
     ----------
     .. [1] https://www.umr-cnrm.fr/gmapdoc/IMG/pdf/ykfpos46t1r1.pdf
-
 
     Implementations
     ---------------

@@ -1780,7 +1780,7 @@ _BELOW_SURFACE_H2 = 2500.0  # m
 _BELOW_SURFACE_T1 = 298.0  # K
 
 
-def _below_surface_lapse_rate(t_sfc, h_sfc, xp):
+def _lapse_rate(t_sfc, h_sfc, xp):
     t0 = t_sfc + constants.standard_lapse_rate * h_sfc
     t0_min = xp.minimum(t0, _BELOW_SURFACE_T1)
     t0_prime = xp.where(h_sfc > _BELOW_SURFACE_H2, t0_min, 0.5 * t0_min + 0.5 * t0)
@@ -1791,6 +1791,34 @@ def _below_surface_lapse_rate(t_sfc, h_sfc, xp):
         constants.standard_lapse_rate,
         xp.maximum(t0_prime - t_sfc, 0.0) / h_safe,
     )
+
+
+def _below_surface_levels(t_sfc, h_sfc, p_sfc, target_p):
+    # a 1D target_p is a list of levels: add a leading level axis
+    xp = array_namespace(t_sfc, h_sfc, p_sfc, target_p)
+    target_p = xp.asarray(target_p)
+    if target_p.ndim == 1:
+        ndim = max(xp.asarray(x).ndim for x in (t_sfc, h_sfc, p_sfc))
+        target_p = xp.reshape(target_p, (-1,) + (1,) * ndim)
+    return target_p
+
+
+def _temperature_below_surface(t_sfc, h_sfc, p_sfc, target_p):
+    # elementwise core: all inputs are broadcast against each other
+    xp = array_namespace(t_sfc, h_sfc, p_sfc, target_p)
+    t_sfc, h_sfc, p_sfc, target_p = xp.broadcast_arrays(*(xp.asarray(x) for x in (t_sfc, h_sfc, p_sfc, target_p)))
+    gamma = _lapse_rate(t_sfc, h_sfc, xp)
+    y = gamma * constants.Rd / constants.g * xp.log(target_p / p_sfc)
+    return t_sfc * (1.0 + y + y**2 / 2.0 + y**3 / 6.0)
+
+
+def _geopotential_below_surface(t_sfc, h_sfc, p_sfc, target_p):
+    # elementwise core: all inputs are broadcast against each other
+    xp = array_namespace(t_sfc, h_sfc, p_sfc, target_p)
+    t_sfc, h_sfc, p_sfc, target_p = xp.broadcast_arrays(*(xp.asarray(x) for x in (t_sfc, h_sfc, p_sfc, target_p)))
+    log_p = xp.log(target_p / p_sfc)
+    y = constants.standard_lapse_rate * constants.Rd / constants.g * log_p
+    return h_sfc * constants.g - constants.Rd * t_sfc * log_p * (1.0 + y / 2.0 + y**2 / 6.0)
 
 
 def extrapolate_temperature_below_surface(
@@ -1809,22 +1837,18 @@ def extrapolate_temperature_below_surface(
     p_sfc : ArrayLike
         Surface pressure (Pa).
     target_p : ArrayLike
-        Target pressure (Pa). All inputs are broadcast against each other. To compute
-        several levels at once, give ``target_p`` a leading level axis, e.g.
-        ``target_p[:, np.newaxis]`` for 1D surface fields.
+        Target pressure(s) (Pa). Either a scalar or a 1D array of pressure levels. In the
+        1D case a new leading vertical axis is added, so the result has the shape
+        ``(len(target_p), *surface_shape)``. Alternatively, a multidimensional array
+        broadcastable against the surface fields.
 
     Returns
     -------
     ArrayLike
-        Temperature (K) on the target pressure(s), with the broadcast shape of the inputs.
+        Temperature (K) on the target pressure(s).
     """
-    xp = array_namespace(t_sfc, h_sfc, p_sfc, target_p)
-    t_sfc, h_sfc, p_sfc, target_p = xp.broadcast_arrays(
-        xp.asarray(t_sfc), xp.asarray(h_sfc), xp.asarray(p_sfc), xp.asarray(target_p)
-    )
-    gamma = _below_surface_lapse_rate(t_sfc, h_sfc, xp)
-    y = gamma * constants.Rd / constants.g * xp.log(target_p / p_sfc)
-    return t_sfc * (1.0 + y + y**2 / 2.0 + y**3 / 6.0)
+    target_p = _below_surface_levels(t_sfc, h_sfc, p_sfc, target_p)
+    return _temperature_below_surface(t_sfc, h_sfc, p_sfc, target_p)
 
 
 def extrapolate_geopotential_below_surface(
@@ -1843,19 +1867,15 @@ def extrapolate_geopotential_below_surface(
     p_sfc : ArrayLike
         Surface pressure (Pa).
     target_p : ArrayLike
-        Target pressure (Pa). All inputs are broadcast against each other. To compute
-        several levels at once, give ``target_p`` a leading level axis, e.g.
-        ``target_p[:, np.newaxis]`` for 1D surface fields.
+        Target pressure(s) (Pa). Either a scalar or a 1D array of pressure levels. In the
+        1D case a new leading vertical axis is added, so the result has the shape
+        ``(len(target_p), *surface_shape)``. Alternatively, a multidimensional array
+        broadcastable against the surface fields.
 
     Returns
     -------
     ArrayLike
-        Geopotential (m2/s2) on the target pressure(s), with the broadcast shape of the inputs.
+        Geopotential (m2/s2) on the target pressure(s).
     """
-    xp = array_namespace(t_sfc, h_sfc, p_sfc, target_p)
-    t_sfc, h_sfc, p_sfc, target_p = xp.broadcast_arrays(
-        xp.asarray(t_sfc), xp.asarray(h_sfc), xp.asarray(p_sfc), xp.asarray(target_p)
-    )
-    log_p = xp.log(target_p / p_sfc)
-    y = constants.standard_lapse_rate * constants.Rd / constants.g * log_p
-    return h_sfc * constants.g - constants.Rd * t_sfc * log_p * (1.0 + y / 2.0 + y**2 / 6.0)
+    target_p = _below_surface_levels(t_sfc, h_sfc, p_sfc, target_p)
+    return _geopotential_below_surface(t_sfc, h_sfc, p_sfc, target_p)
