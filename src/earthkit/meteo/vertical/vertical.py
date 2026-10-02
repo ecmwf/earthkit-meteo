@@ -1638,16 +1638,16 @@ def extrapolate_temperature_below_surface(
         arguments:
 
         - array-like: a scalar or a 1D array of pressure levels. In the 1D case a new
-        leading vertical axis is added to the result.
+          leading vertical axis is added to the result.
         - xarray.DataArray: a scalar or a DataArray with a level dimension, e.g.
-        ``xr.DataArray([85000.0, 100000.0], dims="z")``.
+          ``xr.DataArray([85000.0, 100000.0], dims="z")``.
         - FieldList/Field: a single number.
 
     Returns
     -------
     array-like | xarray.DataArray | FieldList
         Temperature (K) on the target pressure(s). The result has the same type as
-         ``t_sfc``.
+        ``t_sfc``.
 
     The computation implements the FULL-POS scheme [1]_:
 
@@ -1739,10 +1739,10 @@ def extrapolate_geopotential_below_surface(
         arguments:
 
         - array-like: a scalar or a 1D array of pressure levels. In the 1D case a new
-        leading vertical axis is added to the result.
+          leading vertical axis is added to the result.
         - xarray.DataArray: a scalar or a DataArray with a level dimension, e.g.
-        ``xr.DataArray([85000.0, 100000.0], dims="z")``.
-        - FieldList/Field: a single number.Target pressure level(s) (Pa). Either a scalar or a 1D array.
+          ``xr.DataArray([85000.0, 100000.0], dims="z")``.
+        - FieldList/Field: a single number.
 
     Returns
     -------
