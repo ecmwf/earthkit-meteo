@@ -28,6 +28,7 @@ dependencies = [
 ]
 description = "A Python library for meteorological computations"
 dynamic = ["version"]
+entry-points."earthkit.cli".meteo = "earthkit.meteo.cli:COMMANDS"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 name = "earthkit-meteo"
