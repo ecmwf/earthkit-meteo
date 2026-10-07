@@ -367,6 +367,24 @@ def test_coriolis(lat, v_ref, xp, device):
             ],
         ),
         (3.4, 90.01, 1, [0, 5], False, [[1]], [-180.0000000000, 180.0000000000]),
+        (
+            [1.0, 1.0],
+            [11.3, 348.6],
+            16,
+            [0, 10],
+            False,
+            [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]],
+            [-11.25 + 22.5 * i for i in range(17)],
+        ),
+        (
+            1.0,
+            22.7,
+            8,
+            [0, 10],
+            False,
+            [[0, 1, 0, 0, 0, 0, 0, 0]],
+            [-22.5 + 45.0 * i for i in range(9)],
+        ),
     ],
 )
 def test_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref, xp, device):
