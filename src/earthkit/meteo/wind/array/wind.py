@@ -335,9 +335,9 @@ def windrose(
 
     dir_step = 360.0 / sectors
     dir_bins = xp.linspace(
-        int(-dir_step / 2),
-        int(360 + dir_step / 2),
-        int(360 / dir_step) + 2,
+        -dir_step / 2,
+        360 + dir_step / 2,
+        sectors + 2,
         dtype=speed.dtype,
         device=device,
     )
