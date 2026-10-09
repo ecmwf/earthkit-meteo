@@ -56,8 +56,6 @@ extensions = [
     "sphinx.ext.napoleon",
     # Renders LaTeX math in HTML using MathJax
     "sphinx.ext.mathjax",
-    # Option to click viewcode
-    "sphinx.ext.viewcode",
     # Links to the documentation of other projects via cross-references
     "sphinx.ext.intersphinx",
     # Generates summary tables for modules/classes/functions
