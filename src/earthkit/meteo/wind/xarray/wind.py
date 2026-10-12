@@ -34,7 +34,12 @@ def speed(u: xr.DataArray, v: xr.DataArray) -> xr.DataArray:
     xarray.DataArray
         Wind speed/magnitude (same units as ``u`` and ``v``)
     """
-    return xarray_ufunc(array.speed, u, v)
+    return xarray_ufunc(
+        array.speed,
+        u,
+        v,
+        xarray_ufunc_kwargs={"variables": "wind_speed"},
+    )
 
 
 def direction(
@@ -78,7 +83,14 @@ def direction(
         :width: 400px
 
     """
-    return xarray_ufunc(array.direction, u, v, convention=convention, to_positive=to_positive)
+    return xarray_ufunc(
+        array.direction,
+        u,
+        v,
+        convention=convention,
+        to_positive=to_positive,
+        xarray_ufunc_kwargs={"variables": "wind_direction"},
+    )
 
 
 def xy_to_polar(x: xr.DataArray, y: xr.DataArray, convention: str = "meteo") -> tuple[xr.DataArray, xr.DataArray]:
@@ -116,7 +128,7 @@ def xy_to_polar(x: xr.DataArray, y: xr.DataArray, convention: str = "meteo") -> 
         y,
         convention=convention,
         xarray_ufunc_kwargs={
-            "output_dtypes": [float, float],
+            "xarray_apply_ufunc_kwargs": {"output_dtypes": [float, float]},
         },
     )
 
@@ -158,7 +170,7 @@ def polar_to_xy(
         direction,
         convention=convention,
         xarray_ufunc_kwargs={
-            "output_dtypes": [float, float],
+            "xarray_apply_ufunc_kwargs": {"output_dtypes": [float, float]},
         },
     )
 
@@ -195,7 +207,13 @@ def w_from_omega(omega: xr.DataArray, t: xr.DataArray, p: xr.DataArray) -> xr.Da
         * :math:`g` is the gravitational acceleration (see :data:`earthkit.meteo.constants.g`)
 
     """
-    return xarray_ufunc(array.w_from_omega, omega, t, p)
+    return xarray_ufunc(
+        array.w_from_omega,
+        omega,
+        t,
+        p,
+        xarray_ufunc_kwargs={"variables": "geometric_vertical_velocity"},
+    )
 
 
 def coriolis(lat: xr.DataArray) -> xr.DataArray:
@@ -224,7 +242,11 @@ def coriolis(lat: xr.DataArray) -> xr.DataArray:
     (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
 
     """
-    return xarray_ufunc(array.coriolis, lat)
+    return xarray_ufunc(
+        array.coriolis,
+        lat,
+        xarray_ufunc_kwargs={"variables": "coriolis"},
+    )
 
 
 def windrose(

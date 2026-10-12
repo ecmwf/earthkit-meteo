@@ -70,6 +70,9 @@ def test_xr_vapour_pressure_from_specific_humidity(q, p):
     assert np.allclose(out.values, ref, equal_nan=True)
     if np.isscalar(q) and np.isscalar(p):
         assert out.ndim == 0
+    assert out.name == "vapp"
+    assert out.attrs.get("units") == "Pa"
+    assert out.attrs.get("standard_name") == "water_vapor_partial_pressure_in_air"
 
 
 @pytest.mark.parametrize(
@@ -141,6 +144,8 @@ def test_xr_saturation_vapour_pressure(t, phase, method):
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
     assert out.attrs["method"] == method
+    assert out.name == "swvp"
+    assert out.attrs.get("units") == "Pa"
 
 
 @pytest.mark.parametrize("method", ["ifs", "huang"])
@@ -239,6 +244,9 @@ def test_xr_temperature_from_saturation_vapour_pressure(es):
     ref = thermo.array.temperature_from_saturation_vapour_pressure(_np(es))
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.name == "t"
+    assert out.attrs.get("units") == "K"
+    assert out.attrs.get("standard_name") == "air_temperature"
 
 
 @pytest.mark.parametrize(
@@ -254,6 +262,9 @@ def test_xr_relative_humidity_from_dewpoint(t, td):
     ref = thermo.array.relative_humidity_from_dewpoint(_np(t), _np(td))
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.name == "r"
+    assert out.attrs.get("units") == "%"
+    assert out.attrs.get("standard_name") == "relative_humidity"
 
 
 @pytest.mark.parametrize(
@@ -361,6 +372,9 @@ def test_xr_virtual_temperature(t, q):
     ref = thermo.array.virtual_temperature(_np(t), _np(q))
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.name == "vtmp"
+    assert out.attrs.get("units") == "K"
+    assert out.attrs.get("standard_name") == "virtual_temperature"
 
 
 @pytest.mark.parametrize(
@@ -392,6 +406,9 @@ def test_xr_potential_temperature(t, p):
     ref = thermo.array.potential_temperature(_np(t), _np(p))
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.name == "pt"
+    assert out.attrs.get("units") == "K"
+    assert out.attrs.get("standard_name") == "air_potential_temperature"
 
 
 @pytest.mark.parametrize(
@@ -451,6 +468,8 @@ def test_xr_lcl_temperature(t, td, method):
     ref = thermo.array.lcl_temperature(_np(t), _np(td), method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.name == "t_lcl"
+    assert out.attrs.get("units") == "K"
 
 
 @pytest.mark.parametrize(
@@ -468,6 +487,10 @@ def test_xr_lcl(t, td, p, method):
     assert np.allclose(t_lcl.values, t_ref, equal_nan=True)
     assert np.allclose(p_lcl.values, p_ref, equal_nan=True)
     assert t_lcl.ndim == 0 and p_lcl.ndim == 0
+    assert t_lcl.name == "t_lcl"
+    assert t_lcl.attrs.get("units") == "K"
+    assert p_lcl.name == "p_lcl"
+    assert p_lcl.attrs.get("units") == "Pa"
 
 
 @pytest.mark.parametrize(
@@ -486,6 +509,9 @@ def test_xr_ept_from_dewpoint(t, td, p, method):
     ref = thermo.array.ept_from_dewpoint(_np(t), _np(td), _np(p), method=method)
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.name == "eqpt"
+    assert out.attrs.get("units") == "K"
+    assert out.attrs.get("standard_name") == "air_equivalent_potential_temperature"
 
 
 @pytest.mark.parametrize(
@@ -561,6 +587,9 @@ def test_xr_wet_bulb_temperature_from_dewpoint_vectorized(ept_method, t_method):
 
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.dims == ("point",)
+    assert out.name == "wbgt"
+    assert out.attrs.get("units") == "K"
+    assert out.attrs.get("standard_name") == "wet_bulb_temperature"
 
 
 @pytest.mark.parametrize(
@@ -635,3 +664,5 @@ def test_xr_specific_gas_constant(q):
     ref = thermo.array.specific_gas_constant(_np(q))
     assert np.allclose(out.values, ref, equal_nan=True)
     assert out.ndim == 0
+    assert out.name == "R"
+    assert out.attrs.get("units") == "J/kg/K"
