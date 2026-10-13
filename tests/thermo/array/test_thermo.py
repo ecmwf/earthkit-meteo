@@ -967,6 +967,29 @@ def test_wet_bulb_temperature(ept_method, t_method, xp, device):
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
+@pytest.mark.parametrize("t_method", ["bisect", "newton"])
+def test_wet_bulb_temperature_2d(ept_method, t_method, xp, device):
+    # regression test for a shape mismatch in compute_t_on_ma_stipanuk()
+    # (used when t_method="bisect") when called with non-1d inputs
+    data = ThermoInputData(xp, device)
+
+    ref_file = "t_wet.csv"
+    ref = read_data_file(ref_file)
+
+    shape = (20, 24)
+    t = xp.reshape(data.t, shape)
+    td = xp.reshape(data.td, shape)
+    p = xp.reshape(data.p, shape)
+
+    pt = thermo.array.wet_bulb_temperature_from_dewpoint(t, td, p, ept_method=ept_method, t_method=t_method)
+    assert pt.shape == shape
+
+    v_ref = xp.reshape(xp.asarray(ref[f"{ept_method}_{t_method}_td"], device=device), shape)
+    assert xp.allclose(pt, v_ref, rtol=1e-03, atol=0, equal_nan=True), f"{ept_method=} {t_method=}"
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
 @pytest.mark.parametrize("t_method", ["bisect", "newton", "direct"])
 def test_wet_bulb_potential_temperature(ept_method, t_method, xp, device):
     data = ThermoInputData(xp, device)
