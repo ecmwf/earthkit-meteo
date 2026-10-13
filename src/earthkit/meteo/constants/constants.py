@@ -81,3 +81,11 @@ r"""Factor for converting radians to degrees."""
 
 radian = 1.0 / degree
 r"""Factor for converting degrees to radians."""
+
+sigma = 5.6705085e-8
+r"""Stefan-Boltzmann constant [:math:`W m^{-2} K^{-4}`].
+See [IFS-CY47R3-PhysicalProcesses]_ (Chapter 12)."""
+
+emissivity_surface = 0.996
+r"""Default broadband longwave emissivity of the Earth's surface [:math:`1`].
+Value used by the COSMO/ICON model chain."""
