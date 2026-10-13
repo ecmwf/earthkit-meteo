@@ -83,8 +83,10 @@ def value_to_return_period(value, dist):
             value,
             dist=dist,
             xarray_ufunc_kwargs={
-                "input_core_dims": [[]],
-                "output_core_dims": [dist.dims],
+                "xarray_apply_ufunc_kwargs": {
+                    "input_core_dims": [[]],
+                    "output_core_dims": [dist.dims],
+                },
             },
         )
         .assign_coords(dist.coords)
@@ -116,6 +118,11 @@ def return_period_to_value(return_period, dist):
         array.return_period_to_value,
         return_period,
         dist=dist,
-        xarray_ufunc_kwargs={"input_core_dims": [[]], "output_core_dims": [dist.dims]},
+        xarray_ufunc_kwargs={
+            "xarray_apply_ufunc_kwargs": {
+                "input_core_dims": [[]],
+                "output_core_dims": [dist.dims],
+            },
+        },
     ).assign_coords(dist.coords)
     # TODO assign a name and metadata attributes (unit, etc.), but where from?

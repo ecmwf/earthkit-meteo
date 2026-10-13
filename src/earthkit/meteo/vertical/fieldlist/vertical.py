@@ -17,7 +17,6 @@ from numpy.typing import ArrayLike
 from earthkit.meteo import constants
 from earthkit.meteo.utils.decorators import fieldlist_ufunc
 from earthkit.meteo.utils.fieldlist import get_hybrid_level_parameters
-from earthkit.meteo.utils.param import FIELD_PARAMS
 
 from .. import array
 
@@ -358,6 +357,8 @@ def pressure_on_hybrid_levels(
     - :ref:`/tutorials/vertical/hybrid_levels_fieldlist.ipynb`
 
     """
+    from .utils import to_resulting_fieldlist
+
     if isinstance(sp, FieldList):
         if len(sp) != 1:
             raise ValueError(f"Expected exactly one surface pressure field, but found {len(sp)}.")
@@ -381,19 +382,22 @@ def pressure_on_hybrid_levels(
     output = tuple(output)
 
     params = {
-        "full": FIELD_PARAMS.get("pressure_full_level"),
-        "half": FIELD_PARAMS.get("pressure_half_level"),
-        "delta": FIELD_PARAMS.get("hybrid_delta"),
-        "alpha": FIELD_PARAMS.get("hybrid_alpha"),
+        "full": "pressure_full_level",
+        "half": "pressure_half_level",
+        "delta": "hybrid_delta",
+        "alpha": "hybrid_alpha",
     }
 
     def _output(template, fl_values, fl_levels, name):
-        for rv, rl in zip(fl_values, fl_levels):
-            yield template.set(
-                values=rv,
-                parameter=params[name],
-                vertical={"level": rl, "level_type": "hybrid"},
-            )
+        r = to_resulting_fieldlist(
+            fl_values,
+            template=template,
+            levels=fl_levels,
+            vertical={"level_type": "hybrid"},
+            metadata=None,
+            param_name=params[name],
+        )
+        return [f for f in r]
 
     res_keys = output[:-1]  # all output types except "level"
     results = [[] for _ in res_keys]
