@@ -43,7 +43,12 @@ def test_high_level_extrapolate_below_surface_dispatch(input_type):
 
         expected_type = FieldList
         args = tuple(
-            FieldList.from_fields([Field.from_components(values=v, vertical={"level": 0, "level_type": "surface"})])
+            FieldList.from_fields([Field.from_components(
+                values=v, 
+                parameter={"variable": "t", "units": "K"},
+                vertical={"level": 0, "level_type": "surface"}
+                )
+            ])
             for v in (t_sfc, h_sfc, p_sfc)
         )
 

@@ -1560,6 +1560,8 @@ def interpolate_sleve_to_theta_levels(
         Units of target theta (default: "K").
     folding_mode: str, optional
         Folding mode (default: "undef_fold").
+    vertical_dim: str, optional
+        Vertical dimension (default: "z").
 
     Returns
     -------
