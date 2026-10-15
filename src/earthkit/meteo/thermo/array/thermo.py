@@ -1085,15 +1085,8 @@ class _EptComp:
         ept = xp.asarray(ept)
         p = xp.asarray(p)
 
-        size = xp.size(ept) if xp.size(ept) > xp.size(p) else xp.size(p)
-        t = xp.full(size, constants.T0 - 20, dtype=ept.dtype, device=xp.device(ept))
-
-        # if isinstance(p, np.ndarray):
-        #     t = np.full(p.shape, constants.T0 - 20)
-        # elif isinstance(ept, np.ndarray):
-        #     t = np.full(ept.shape, constants.T0 - 20)
-        # else:
-        #     t = constants.T0 - 20
+        shape = xp.broadcast_shapes(ept.shape, p.shape)
+        t = xp.full(shape, constants.T0 - 20, dtype=ept.dtype, device=xp.device(ept))
         max_iter = 12
         dt = 120.0
 
