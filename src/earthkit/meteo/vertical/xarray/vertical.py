@@ -204,7 +204,7 @@ def geometric_height_from_geopotential(z: xr.DataArray, R_earth: float = constan
     })
 
 
-def extrapolate_temperature_below_surface(
+def extrapolate_temperature_to_pressure_levels_below_surface(
     t_sfc: xr.DataArray, h_sfc: xr.DataArray, p_sfc: xr.DataArray, target_p: xr.DataArray | float
 ) -> xr.DataArray:
     r"""Extrapolate temperature from the surface to pressure levels below the surface.
@@ -226,7 +226,7 @@ def extrapolate_temperature_below_surface(
     xr.DataArray
         Temperature (K)
 
-    See :func:`earthkit.meteo.vertical.array.extrapolate_temperature_below_surface`
+    See :func:`earthkit.meteo.vertical.array.extrapolate_temperature_to_pressure_levels_below_surface`
     for the algorithm.
     """
     return xarray_ufunc(_temperature_below_surface, t_sfc, h_sfc, p_sfc, target_p).assign_attrs({
@@ -235,7 +235,7 @@ def extrapolate_temperature_below_surface(
     })
 
 
-def extrapolate_geopotential_below_surface(
+def extrapolate_geopotential_to_pressure_levels_below_surface(
     t_sfc: xr.DataArray, h_sfc: xr.DataArray, p_sfc: xr.DataArray, target_p: xr.DataArray | float
 ) -> xr.DataArray:
     r"""Extrapolate geopotential from the surface to pressure levels below the surface.
@@ -257,7 +257,7 @@ def extrapolate_geopotential_below_surface(
     xr.DataArray
         Geopotential (m2/s2)
 
-    See :func:`earthkit.meteo.vertical.array.extrapolate_geopotential_below_surface`
+    See :func:`earthkit.meteo.vertical.array.extrapolate_geopotential_to_pressure_levels_below_surface`
     for the algorithm.
     """
     return xarray_ufunc(_geopotential_below_surface, t_sfc, h_sfc, p_sfc, target_p).assign_attrs({

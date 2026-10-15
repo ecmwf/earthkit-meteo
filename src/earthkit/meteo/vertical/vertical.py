@@ -1591,7 +1591,7 @@ def interpolate_sleve_to_theta_levels(
 
 
 @overload
-def extrapolate_temperature_below_surface(
+def extrapolate_temperature_to_pressure_levels_below_surface(
     t_sfc: "ArrayLike",
     h_sfc: "ArrayLike",
     p_sfc: "ArrayLike",
@@ -1600,7 +1600,7 @@ def extrapolate_temperature_below_surface(
 
 
 @overload
-def extrapolate_temperature_below_surface(
+def extrapolate_temperature_to_pressure_levels_below_surface(
     t_sfc: "xarray.DataArray",
     h_sfc: "xarray.DataArray",
     p_sfc: "xarray.DataArray",
@@ -1609,7 +1609,7 @@ def extrapolate_temperature_below_surface(
 
 
 @overload
-def extrapolate_temperature_below_surface(
+def extrapolate_temperature_to_pressure_levels_below_surface(
     t_sfc: "FieldList | Field",
     h_sfc: "FieldList | Field",
     p_sfc: "FieldList | Field",
@@ -1617,7 +1617,7 @@ def extrapolate_temperature_below_surface(
 ) -> "FieldList": ...
 
 
-def extrapolate_temperature_below_surface(
+def extrapolate_temperature_to_pressure_levels_below_surface(
     t_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
     h_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
     p_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
@@ -1677,22 +1677,22 @@ def extrapolate_temperature_below_surface(
 
     Implementations
     ---------------
-    :func:`extrapolate_temperature_below_surface` calls one of the following implementations
+    :func:`extrapolate_temperature_to_pressure_levels_below_surface` calls one of the following implementations
     depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.vertical.array.extrapolate_temperature_below_surface` for array-like
-    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_temperature_below_surface` for xarray.DataArray
-    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_temperature_below_surface` for FieldList
+    - :py:meth:`earthkit.meteo.vertical.array.extrapolate_temperature_to_pressure_levels_below_surface` for array-like
+    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_temperature_to_pressure_levels_below_surface` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_temperature_to_pressure_levels_below_surface` for FieldList
 
     The function returns an object of the same type as the ``t_sfc`` argument.
     """
-    return dispatch(extrapolate_temperature_below_surface, xarray=True, fieldlist=True, array=True)(
+    return dispatch(extrapolate_temperature_to_pressure_levels_below_surface, xarray=True, fieldlist=True, array=True)(
         t_sfc, h_sfc, p_sfc, target_p
     )
 
 
 @overload
-def extrapolate_geopotential_below_surface(
+def extrapolate_geopotential_to_pressure_levels_below_surface(
     t_sfc: "ArrayLike",
     h_sfc: "ArrayLike",
     p_sfc: "ArrayLike",
@@ -1701,7 +1701,7 @@ def extrapolate_geopotential_below_surface(
 
 
 @overload
-def extrapolate_geopotential_below_surface(
+def extrapolate_geopotential_to_pressure_levels_below_surface(
     t_sfc: "xarray.DataArray",
     h_sfc: "xarray.DataArray",
     p_sfc: "xarray.DataArray",
@@ -1710,7 +1710,7 @@ def extrapolate_geopotential_below_surface(
 
 
 @overload
-def extrapolate_geopotential_below_surface(
+def extrapolate_geopotential_to_pressure_levels_below_surface(
     t_sfc: "FieldList | Field",
     h_sfc: "FieldList | Field",
     p_sfc: "FieldList | Field",
@@ -1718,7 +1718,7 @@ def extrapolate_geopotential_below_surface(
 ) -> "FieldList": ...
 
 
-def extrapolate_geopotential_below_surface(
+def extrapolate_geopotential_to_pressure_levels_below_surface(
     t_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
     h_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
     p_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
@@ -1775,16 +1775,16 @@ def extrapolate_geopotential_below_surface(
 
     Implementations
     ---------------
-    :func:`extrapolate_geopotential_below_surface` calls one of the following implementations
+    :func:`extrapolate_geopotential_to_pressure_levels_below_surface` calls one of the following implementations
     depending on the type of the input arguments:
 
-    - :py:meth:`earthkit.meteo.vertical.array.extrapolate_geopotential_below_surface` for array-like
-    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_geopotential_below_surface` for xarray.DataArray
-    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_geopotential_below_surface` for FieldList
+    - :py:meth:`earthkit.meteo.vertical.array.extrapolate_geopotential_to_pressure_levels_below_surface` for array-like
+    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_geopotential_to_pressure_levels_below_surface` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_geopotential_to_pressure_levels_below_surface` for FieldList
 
     The function returns an object of the same type as the ``t_sfc`` argument.
     """
  
-    return dispatch(extrapolate_geopotential_below_surface, xarray=True, fieldlist=True, array=True)(
+    return dispatch(extrapolate_geopotential_to_pressure_levels_below_surface, xarray=True, fieldlist=True, array=True)(
         t_sfc, h_sfc, p_sfc, target_p
     )

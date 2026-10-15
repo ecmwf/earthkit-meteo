@@ -19,7 +19,7 @@ def vertical():
 
 
 @pytest.mark.parametrize("input_type", ["numpy", "xarray", "fieldlist"])
-def test_high_level_extrapolate_below_surface_dispatch(input_type):
+def test_high_level_extrapolate_to_pressure_levels_below_surface_dispatch(input_type):
     import numpy as np
 
     t_sfc = np.array([288.15, 290.0, 275.0, 290.0])
@@ -52,7 +52,7 @@ def test_high_level_extrapolate_below_surface_dispatch(input_type):
             for v in (t_sfc, h_sfc, p_sfc)
         )
 
-    res = vertical_high_level.extrapolate_temperature_below_surface(*args, 105000.0)
+    res = vertical_high_level.extrapolate_temperature_to_pressure_levels_below_surface(*args, 105000.0)
 
     assert isinstance(res, expected_type)
     values = res.to_numpy() if input_type == "fieldlist" else np.asarray(res)

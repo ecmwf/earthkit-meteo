@@ -1410,7 +1410,7 @@ def interpolate_monotonic(
     return to_resulting_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": coord_type})
 
 
-def extrapolate_temperature_below_surface(
+def extrapolate_temperature_to_pressure_levels_below_surface(
     t_sfc: FieldList | Field,
     h_sfc: FieldList | Field,
     p_sfc: FieldList | Field,
@@ -1437,13 +1437,13 @@ def extrapolate_temperature_below_surface(
 
     Notes
     -----
-    See :func:`earthkit.meteo.vertical.array.extrapolate_temperature_below_surface`
+    See :func:`earthkit.meteo.vertical.array.extrapolate_temperature_to_pressure_levels_below_surface`
     for the algorithm.
     """
     fieldlist_ufunc_kwargs = {"default_variable": "temperature"}
 
     return fieldlist_ufunc(
-        array.extrapolate_temperature_below_surface,
+        array.extrapolate_temperature_to_pressure_levels_below_surface,
         t_sfc,
         h_sfc,
         p_sfc,
@@ -1452,7 +1452,7 @@ def extrapolate_temperature_below_surface(
     )
 
 
-def extrapolate_geopotential_below_surface(
+def extrapolate_geopotential_to_pressure_levels_below_surface(
     t_sfc: FieldList | Field,
     h_sfc: FieldList | Field,
     p_sfc: FieldList | Field,
@@ -1479,13 +1479,13 @@ def extrapolate_geopotential_below_surface(
 
     Notes
     -----
-    See :func:`earthkit.meteo.vertical.array.extrapolate_geopotential_below_surface`
+    See :func:`earthkit.meteo.vertical.array.extrapolate_geopotential_to_pressure_levels_below_surface`
     for the algorithm.
     """
     fieldlist_ufunc_kwargs = {"default_variable": "geopotential"}
 
     return fieldlist_ufunc(
-        array.extrapolate_geopotential_below_surface,
+        array.extrapolate_geopotential_to_pressure_levels_below_surface,
         t_sfc,
         h_sfc,
         p_sfc,

@@ -9,8 +9,8 @@
 
 import numpy as np
 
-from earthkit.meteo.vertical.array import extrapolate_geopotential_below_surface
-from earthkit.meteo.vertical.array import extrapolate_temperature_below_surface
+from earthkit.meteo.vertical.array import extrapolate_geopotential_to_pressure_levels_below_surface
+from earthkit.meteo.vertical.array import extrapolate_temperature_to_pressure_levels_below_surface
 
 # The surface points cover the regimes of the temperature lapse rate:
 #   - h < 2000 m: standard lapse rate
@@ -36,15 +36,15 @@ REF_Z = np.array(
 )
 
 
-def test_array_extrapolate_temperature_below_surface():
-    res = extrapolate_temperature_below_surface(T_SFC, H_SFC, P_SFC, TARGET_P)
+def test_array_extrapolate_temperature_to_pressure_levels_below_surface():
+    res = extrapolate_temperature_to_pressure_levels_below_surface(T_SFC, H_SFC, P_SFC, TARGET_P)
 
     assert res.shape == (2, 4)
     np.testing.assert_allclose(res, REF_T, rtol=1e-10)
 
 
-def test_array_extrapolate_geopotential_below_surface():
-    res = extrapolate_geopotential_below_surface(T_SFC, H_SFC, P_SFC, TARGET_P)
+def test_array_extrapolate_geopotential_to_pressure_levels_below_surface():
+    res = extrapolate_geopotential_to_pressure_levels_below_surface(T_SFC, H_SFC, P_SFC, TARGET_P)
 
     assert res.shape == (2, 4)
     np.testing.assert_allclose(res, REF_Z, rtol=1e-10)

@@ -1821,7 +1821,7 @@ def _geopotential_below_surface(t_sfc, h_sfc, p_sfc, target_p):
     return h_sfc * constants.g - constants.Rd * t_sfc * log_p * (1.0 + y / 2.0 + y**2 / 6.0)
 
 
-def extrapolate_temperature_below_surface(
+def extrapolate_temperature_to_pressure_levels_below_surface(
     t_sfc: ArrayLike, h_sfc: ArrayLike, p_sfc: ArrayLike, target_p: ArrayLike
 ) -> ArrayLike:
     r"""Extrapolate temperature from the surface to pressure levels below the surface.
@@ -1851,7 +1851,7 @@ def extrapolate_temperature_below_surface(
     return _temperature_below_surface(t_sfc, h_sfc, p_sfc, target_p)
 
 
-def extrapolate_geopotential_below_surface(
+def extrapolate_geopotential_to_pressure_levels_below_surface(
     t_sfc: ArrayLike, h_sfc: ArrayLike, p_sfc: ArrayLike, target_p: ArrayLike
 ) -> ArrayLike:
     r"""Extrapolate geopotential from the surface to pressure levels below the surface.

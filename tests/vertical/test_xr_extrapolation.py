@@ -45,10 +45,10 @@ def _levels():
     return xr.DataArray(TARGET_P, dims="z", coords={"z": TARGET_P})
 
 
-def test_xr_extrapolate_temperature_below_surface():
-    from earthkit.meteo.vertical.xarray import extrapolate_temperature_below_surface
+def test_xr_extrapolate_temperature_to_pressure_levels_below_surface():
+    from earthkit.meteo.vertical.xarray import extrapolate_temperature_to_pressure_levels_below_surface
 
-    res = extrapolate_temperature_below_surface(_da(T_SFC), _da(H_SFC), _da(P_SFC), _levels())
+    res = extrapolate_temperature_to_pressure_levels_below_surface(_da(T_SFC), _da(H_SFC), _da(P_SFC), _levels())
 
     assert set(res.dims) == {"cell", "z"}
     np.testing.assert_allclose(res["z"].values, TARGET_P)
@@ -57,10 +57,10 @@ def test_xr_extrapolate_temperature_below_surface():
     np.testing.assert_allclose(res.transpose("z", "cell").values, REF_T, rtol=1e-10)
 
 
-def test_xr_extrapolate_geopotential_below_surface():
-    from earthkit.meteo.vertical.xarray import extrapolate_geopotential_below_surface
+def test_xr_extrapolate_geopotential_to_pressure_levels_below_surface():
+    from earthkit.meteo.vertical.xarray import extrapolate_geopotential_to_pressure_levels_below_surface
 
-    res = extrapolate_geopotential_below_surface(_da(T_SFC), _da(H_SFC), _da(P_SFC), _levels())
+    res = extrapolate_geopotential_to_pressure_levels_below_surface(_da(T_SFC), _da(H_SFC), _da(P_SFC), _levels())
 
     assert set(res.dims) == {"cell", "z"}
     np.testing.assert_allclose(res["z"].values, TARGET_P)
