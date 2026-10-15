@@ -13,6 +13,12 @@ import operator
 from earthkit.utils.array import array_namespace
 
 
+def _from_grid_spec(grid):
+    from earthkit.geo.grids import Grid
+
+    return Grid(grid)
+
+
 class Patterns(abc.ABC):
     """Collection/Generator of patterns.
 
@@ -21,16 +27,27 @@ class Patterns(abc.ABC):
     labels : Iterable[str]
         Labels for the patterns. The ordering determines the ordering of all
         outputs.
-    grid : dict
-        Specification of the grid on which the patterns live.
+    shape : tuple[int,...], optional
+        The shape of a single pattern (i.e., without the label dimension).
+    grid : earthkit.geo.grids.Grid | dict | str, optional
+        Specification of the grid on which the patterns live. If provided, the
+        pattern shape can be omitted and is inferred from the grid.
     xp : array_namespace, optional
         Array namespace of the generated patterns.
     """
 
-    def __init__(self, labels, *, grid, xp):
+    def __init__(self, labels, *, shape=None, grid=None, xp=None):
         self._labels = tuple(labels)
-        self._grid = grid
-        self._xp = xp
+        self._xp = xp if xp is not None else array_namespace()
+        if shape is None and grid is None:
+            raise ValueError("must provide shape of a pattern or grid to determine shape")
+        self._shape = None if shape is None else tuple(shape)
+        if grid is not None:
+            self._grid = _from_grid_spec(grid) if isinstance(grid, (str, dict)) else grid
+            if self._shape is None:
+                self._shape = self._grid.shape
+            elif self.shape != self.grid.shape:
+                raise ValueError(f"specified shape {self.shape} does not match grid shape {self.grid.shape}")
 
     @property
     def labels(self):
@@ -38,17 +55,14 @@ class Patterns(abc.ABC):
         return self._labels
 
     @property
-    def grid(self) -> dict:
+    def grid(self):
         """The grid on which the patterns live."""
         return self._grid
 
     @property
-    def shape(self):
+    def shape(self) -> tuple[int, ...]:
         """Shape of a single pattern."""
-        # TODO placeholder until this functionality is available from earthkit-geo
-        lat0, lon0, lat1, lon1 = self.grid["area"]
-        dlat, dlon = self.grid["grid"]
-        return (int(abs(lat0 - lat1) / dlat) + 1, int(abs(lon0 - lon1) / dlon) + 1)
+        return self._shape if self._shape is not None else self.grid.shape
 
     @property
     def size(self) -> int:
@@ -85,20 +99,19 @@ class ConstantPatterns(Patterns):
         Labels for the patterns.
     patterns : array_like
         The patterns (one for each label, stacked into a single array).
-    grid : dict
+    grid : dict | str | earthkit.geo.grid.Grid, optional
         Specification of the grid on which the patterns live.
     xp : array_namespace, optional
         The array namespace used for the patterns and their generation. By
         default, it is inferred from the type of `patterns`.
     """
 
-    def __init__(self, labels, patterns, *, grid, xp=None):
+    def __init__(self, labels, patterns, *, xp=None, grid=None):
         if xp is None:
             xp = array_namespace(patterns)
-        super().__init__(labels, grid=grid, xp=xp)
-        self._patterns = self._xp.asarray(patterns)
-        if self._patterns.ndim != 1 + len(self.shape):
-            raise ValueError("must have exactly one label axis in the patterns")
+        self._patterns = xp.asarray(patterns)
+        shape = self._patterns.shape[1:]  # set shape explicitly from patterns
+        super().__init__(labels, xp=xp, shape=shape, grid=grid)
         if len(self.labels) != self._patterns.shape[0]:
             raise ValueError("number of labels does not match number of patterns")
 
@@ -128,21 +141,19 @@ class ModulatedPatterns(Patterns):
         Scalar function to modulate the base patterns. The parameters required
         to evaluate this function must be provided when projecting as
         `patterns_extra_coords` kwargs.
-    grid : dict
+    grid : dict | str | earthkit.geo.grid.Grid, optional
         Specification of the grid on which the patterns live.
     xp : array_namespace, optional
         The array namespace used for the patterns and their generation. By
         default, it is inferred from the type of `base_patterns`.
     """
 
-    def __init__(self, labels, base_patterns, modulator, *, grid, xp=None):
+    def __init__(self, labels, base_patterns, modulator, *, grid=None, xp=None):
         if xp is None:
             xp = array_namespace(base_patterns)
-        super().__init__(labels, grid=grid, xp=xp)
-        self._base_patterns = self.xp.asarray(base_patterns)
-        # Pattern verification
-        if self._base_patterns.ndim != 1 + len(self.shape):
-            raise ValueError("must have exactly one label axis in the patterns")
+        self._base_patterns = xp.asarray(base_patterns)
+        shape = self._base_patterns.shape[1:]  # set shape explicitly from patterns
+        super().__init__(labels, shape=shape, grid=grid, xp=xp)
         if len(self.labels) != self._base_patterns.shape[0]:
             raise ValueError("number of labels does not match number of patterns")
         self._modulator = modulator

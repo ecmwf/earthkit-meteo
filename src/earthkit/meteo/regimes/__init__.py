@@ -14,16 +14,6 @@ Weather regimes based on projections onto spatial patterns.
   scheme based on the abstract base class :py:class:`Patterns`.
 - To compute regime indices, use the functions :py:func:`project` and
   :py:func:`regime_index` together with a given pattern collection/generator.
-
-
-.. note::
-    At the moment, only regular lat-lon grids are supported for the
-    specification of patterns::
-
-        {
-            "grid": [lon_spacing, lat_spacing],
-            "area": [lat0, lon0, lat1, lon1]
-        }
 """
 
 from . import array
