@@ -11,4 +11,5 @@
 Thermodynamic functions operating on numpy arrays.
 """
 
+from .cape_cin import *  # noqa
 from .thermo import *  # noqa
