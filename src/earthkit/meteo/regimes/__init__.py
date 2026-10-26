@@ -27,11 +27,8 @@ Weather regimes based on projections onto spatial patterns.
 """
 
 from . import array
-from .index import project
-from .index import regime_index
-from .patterns import ConstantPatterns
-from .patterns import ModulatedPatterns
-from .patterns import Patterns
+from .index import project, regime_index
+from .patterns import ConstantPatterns, ModulatedPatterns, Patterns
 
 __all__ = [
     "ConstantPatterns",
@@ -39,4 +36,5 @@ __all__ = [
     "Patterns",
     "project",
     "regime_index",
+    "array",
 ]

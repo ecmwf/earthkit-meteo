@@ -1,5 +1,8 @@
-Frequently asked questions
+Frequently Asked Questions
 ==========================
 
+This section is a stub and is currently being constructed.
 
-This section is currently under construction. Please check back later for answers to the most common questions about earthkit-meteo.
+Why is there an array, xarray and fieldlist submodule for every function?
+-------------------------------------------------------------------------
+:ref:`/tutorials/input/input_formats.ipynb`

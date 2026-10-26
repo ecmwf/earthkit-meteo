@@ -32,6 +32,8 @@ def _skip_api_items(app, what, name, obj, skip, options):
         skip = True
     elif name.endswith("ArrayLike"):
         skip = True
+    elif name.endswith("ArrayNamespace"):
+        skip = True
 
     # if not skip:
     #     print(f"{what} {name}")

@@ -1,6 +1,13 @@
 .. _concepts:
 
 Concepts
-===========================
+========
 
-This section is currently under construction. Please check back later for explanations of the core ideas behind earthkit-meteo.
+Explanations of the core ideas behind earthkit-meteo.
+
+
+.. toctree::
+    :maxdepth: 1
+
+    grib.rst
+    regimes.rst

@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, TypeAlias, overload
+from typing import TYPE_CHECKING, Any, Optional, TypeAlias, overload
 
 from earthkit.meteo.utils.decorators import dispatch
 
@@ -24,6 +24,7 @@ def sot(
     clim: "ArrayLike",
     ens: "ArrayLike",
     perc: int,
+    perc_tail: Optional[int] = None,
     eps: float = -1e4,
     clim_dim: int | None = None,
     ens_dim: int | None = None,
@@ -35,6 +36,7 @@ def sot(
     clim: "xarray.DataArray",
     ens: "xarray.DataArray",
     perc: int,
+    perc_tail: Optional[int] = None,
     eps: float = -1e4,
     clim_dim: str | None = None,
     ens_dim: str | None = None,
@@ -45,6 +47,7 @@ def sot(
     clim,
     ens,
     perc: int,
+    perc_tail: Optional[int] = None,
     eps: float = -1e4,
     clim_dim: str | int | None = None,
     ens_dim: str | int | None = None,
@@ -59,6 +62,8 @@ def sot(
         Ensemble forecast. The reduction dimension is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
+    perc_tail: int, optional
+        Percentile value for the tail (typically 1 or 99). If None, it will be set to 1 or 99 depending on ``perc``.
     eps: (float)
         Epsilon factor for zero values
     clim_dim: str or int, optional
@@ -82,7 +87,7 @@ def sot(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(sot, array=True)
-    return dispatched(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
+    return dispatched(clim, ens, perc, perc_tail=perc_tail, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
 
 
 @overload
@@ -90,6 +95,7 @@ def sot_unsorted(
     clim: "ArrayLike",
     ens: "ArrayLike",
     perc: int,
+    perc_tail: Optional[int] = None,
     eps: float = -1e4,
     clim_dim: int | None = None,
     ens_dim: int | None = None,
@@ -101,6 +107,7 @@ def sot_unsorted(
     clim: "xarray.DataArray",
     ens: "xarray.DataArray",
     perc: int,
+    perc_tail: Optional[int] = None,
     eps: float = -1e4,
     clim_dim: str | None = None,
     ens_dim: str | None = None,
@@ -111,6 +118,7 @@ def sot_unsorted(
     clim,
     ens,
     perc: int,
+    perc_tail: Optional[int] = None,
     eps: float = -1e4,
     clim_dim: str | int | None = None,
     ens_dim: str | int | None = None,
@@ -125,6 +133,8 @@ def sot_unsorted(
         Ensemble forecast. The reduction dimension is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
+    perc_tail: int, optional
+        Percentile value for the tail (typically 1 or 99). If None, it will be set to 1 or 99 depending on ``perc``.
     eps: (float)
         Epsilon factor for zero values
     clim_dim: str or int, optional
@@ -149,4 +159,4 @@ def sot_unsorted(
     The function returns an object of the same type as the input arguments.
     """
     dispatched = dispatch(sot_unsorted, array=True)
-    return dispatched(clim, ens, perc, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)
+    return dispatched(clim, ens, perc, perc_tail=perc_tail, eps=eps, clim_dim=clim_dim, ens_dim=ens_dim)

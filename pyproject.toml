@@ -4,10 +4,10 @@ requires = ["setuptools>=77", "setuptools-scm>=8"]
 
 [project]
 authors = [
-  {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"}
+  { name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int" }
 ]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
   "Operating System :: OS Independent",
@@ -23,17 +23,14 @@ classifiers = [
 ]
 dependencies = [
   "deprecation",
-  "earthkit-utils>=1.0.0rc0",
-  "numpy",
-  "scipy"
+  "earthkit-utils~=1.0",
+  "numpy"
 ]
 description = "A Python library for meteorological computations"
 dynamic = ["version"]
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 name = "earthkit-meteo"
-readme = "README.md"
-requires-python = ">=3.10"
 optional-dependencies.all = [
   "earthkit-meteo[samples,scores,stats]"
 ]
@@ -59,6 +56,9 @@ optional-dependencies.gpu = [
   "cupy",
   "torch"
 ]
+optional-dependencies.lunar = [
+  "astropy"
+]
 optional-dependencies.samples = [
   "requests"
 ]
@@ -71,13 +71,16 @@ optional-dependencies.stats = [
   "scipy>=1.15"
 ]
 optional-dependencies.test = [
-  "earthkit-data>=1.0.0rc0",
+  "astropy",
+  "earthkit-data",
   "netcdf4",
   "pytest",
   "pytest-cov",
   "requests",
   "xarray"
 ]
+readme = "README.md"
+requires-python = ">=3.10"
 urls.Documentation = "https://earthkit-meteo.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-meteo/"
 urls.Issues = "https://github.com/ecmwf/earthkit-meteo/issues"
@@ -95,7 +98,6 @@ convention = "numpy"
 
 [tool.ruff]
 line-length = 120
-preview = true
 lint.ignore = [
   "D1",  # pydocstyle: Missing Docstrings
   "D107",  # pydocstyle: numpy convention
@@ -110,6 +112,7 @@ lint.ignore = [
   "D416",
   "D417"
 ]
+lint.per-file-ignores."tests/**.py" = ["E402"]
 lint.select = [
   "D",  # pydocstyle
   "E",  # pycodestyle
@@ -117,7 +120,7 @@ lint.select = [
   "I",  # isort
   "W"  # pycodestyle warnings
 ]
-lint.per-file-ignores."tests/**.py" = ["E402"]
+preview = true
 
 [tool.setuptools]
 packages.find.include = ["earthkit.meteo"]

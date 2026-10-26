@@ -7,5 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
+from .bootstrap import *  # noqa
 from .deterministic import *  # noqa
 from .ensemble import *  # noqa

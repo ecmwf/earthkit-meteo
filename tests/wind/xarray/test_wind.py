@@ -12,7 +12,7 @@ import pytest
 
 import earthkit.meteo.wind.array as array_wind
 import earthkit.meteo.wind.xarray as wind
-from earthkit.meteo.utils.testing import IN_GITHUB, NO_EKD, NO_XARRAY
+from earthkit.meteo.utils.testing import NO_EKD, NO_XARRAY
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 
@@ -190,7 +190,6 @@ def test_xr_w_from_omega_1(omega, t, p, v_ref):
     assert np.allclose(w.values, np.asarray(v_ref))
 
 
-@pytest.mark.skipif(IN_GITHUB, reason="Disabled in github CI")
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 @pytest.mark.skipif(NO_EKD, reason="earthkit-data is not installed")
 def test_xr_w_from_omega_2():

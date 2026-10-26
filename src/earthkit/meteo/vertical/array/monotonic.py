@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-from typing import Union
+from __future__ import annotations
 
 from earthkit.utils.array import array_namespace
 from numpy.typing import ArrayLike
@@ -50,14 +50,14 @@ class MonotonicInterpolator:
     def __call__(
         self,
         data: ArrayLike,
-        coord: Union[ArrayLike, list, tuple, float, int],
-        target_coord: Union[ArrayLike, list, tuple, float, int],
+        coord: ArrayLike | list | tuple | float | int,
+        target_coord: ArrayLike | list | tuple | float | int,
         interpolation: str = "linear",
-        aux_min_level_data=None,
-        aux_min_level_coord=None,
-        aux_max_level_data=None,
-        aux_max_level_coord=None,
-        vertical_dim=0,
+        aux_min_level_data: ArrayLike | None = None,
+        aux_min_level_coord: ArrayLike | None = None,
+        aux_max_level_data: ArrayLike | None = None,
+        aux_max_level_coord: ArrayLike | None = None,
+        vertical_dim: int = 0,
     ):
 
         if interpolation not in ["linear", "log", "nearest"]:
@@ -101,6 +101,12 @@ class MonotonicInterpolator:
                 f"{coord.shape[0]}"
             )
 
+        if coord.ndim >= 2 and coord.shape[0] == nlev and all(s == 1 for s in coord.shape[1:]):
+            coord = xp.squeeze(coord, axis=1)
+
+        if target_coord.ndim >= 2 and all(s == 1 for s in target_coord.shape[1:]):
+            target_coord = xp.squeeze(target_coord, axis=1)
+
         self.data_is_scalar = data[0].ndim == 0
         self.coord_is_scalar = coord[0].ndim == 0
         self.target_is_scalar = target_coord[0].ndim == 0
@@ -142,7 +148,10 @@ class MonotonicInterpolator:
             #     coord = xp.broadcast_to(coord, (nlev,) + data.shape[1:]).T
 
             if not self.target_is_scalar:
-                coord = xp.broadcast_to(coord, (nlev,) + data.shape[1:]).T
+                coord = xp.broadcast_to(
+                    xp.reshape(coord, (nlev,) + (1,) * (data.ndim - 1)),
+                    (nlev,) + data.shape[1:],
+                )
 
         # assert data.shape == coord.shape, f"{data.shape=} != {coord.shape=}"
 
