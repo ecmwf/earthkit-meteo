@@ -1,6 +1,14 @@
 Version 1.1 Updates
 /////////////////////////
 
+Version 1.1.1
+===============
+
+Fixes
+++++++++++
+
+- Fixed an issue that made it impossible to call the high-level ``pressure_on_hybrid_levels()`` method in ``vertical`` (:pr:`201`)
+
 
 Version 1.1.0
 ===============

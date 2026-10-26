@@ -50,7 +50,7 @@ def sot_func(qc_tail, qc, qf, eps=-1e-4, lower_bound=-10, upper_bound=10):
     return sot
 
 
-def sot(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
+def sot(clim, ens, perc, perc_tail=None, eps=-1e4, clim_dim=0, ens_dim=0):
     """Compute Shift of Tails (SOT).
 
     From climatology percentiles (sorted)
@@ -67,6 +67,8 @@ def sot(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
         Ensemble forecast. The reduction axis is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
+    perc_tail: int
+        Percentile value for the tail (typically 1 or 99). If None, it will be set to 1 or 99 depending on ``perc``.
     eps: (float)
         Epsilon factor for zero values
     clim_dim: int
@@ -118,9 +120,9 @@ def sot(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
 
     qf = xp.percentile(ens, q=perc, axis=0)
     if perc > 50:
-        qc_tail = clim[99]
+        qc_tail = clim[perc_tail or 99]
     elif perc < 50:
-        qc_tail = clim[1]
+        qc_tail = clim[perc_tail or 1]
     else:
         raise Exception("Percentile value to be computed cannot be 50 for sot, has to be in the upper or lower half")
 
@@ -129,7 +131,7 @@ def sot(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
     return xp.reshape(sot, out_shape)
 
 
-def sot_unsorted(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
+def sot_unsorted(clim, ens, perc, perc_tail=None, eps=-1e4, clim_dim=0, ens_dim=0):
     """Compute Shift of Tails (SOT).
 
     From climatology percentiles (sorted)
@@ -146,6 +148,8 @@ def sot_unsorted(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
         Ensemble forecast. The reduction axis is set by ``ens_dim``.
     perc: int
         Percentile value (typically 10 or 90)
+    perc_tail: int
+        Percentile value for the tail (typically 1 or 99). If None, it will be set to 1 or 99 depending on ``perc``.
     eps: (float)
         Epsilon factor for zero values
     clim_dim: int
@@ -194,9 +198,9 @@ def sot_unsorted(clim, ens, perc, eps=-1e4, clim_dim=0, ens_dim=0):
     qf = xp.percentile(ens, q=perc, axis=0)
     qc = xp.percentile(clim, q=perc, axis=0)
     if perc > 50:
-        perc_tail = 99
+        perc_tail = perc_tail or 99
     elif perc < 50:
-        perc_tail = 1
+        perc_tail = perc_tail or 1
     else:
         raise Exception("Percentile value to be computed cannot be 50 for sot, has to be in the upper or lower half")
     qc_tail = xp.percentile(clim, q=perc_tail, axis=0)
