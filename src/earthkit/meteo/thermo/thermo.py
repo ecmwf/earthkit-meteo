@@ -2373,7 +2373,7 @@ def ept_from_dewpoint(
 
         .. math::
 
-            \Theta_{e} = \Theta (\frac{10^{5}}{p})^{\kappa 0.28 w} \operatorname{exp}(\frac{2675 w}{t_{LCL}})
+            \Theta_{e} = t (\frac{10^{5}}{p})^{\kappa (1-0.28 w)} \operatorname{exp}(\frac{2675 w}{t_{LCL}})
 
     * "bolton39": Eq (39) from [Bolton1980]_ is used:
 
@@ -2388,7 +2388,7 @@ def ept_from_dewpoint(
         .. math::
 
             \Theta_{e} =
-            t (\frac{10^{5}}{p})^{\kappa (1-0.28\; 10^{-3}w)} exp[(\frac{3376}{t_{LCL}} -
+            t (\frac{10^{5}}{p})^{\kappa (1-0.28 w)} exp[(\frac{3376}{t_{LCL}} -
             2.54)w(1+0.81w)]
 
     where:
@@ -2576,7 +2576,7 @@ def saturation_ept(
 
         .. math::
 
-            \Theta_{e} = \Theta (\frac{10^{5}}{p})^{\kappa 0.28 w_{sat}} \operatorname{exp}(\frac{2675 w_{sat}}{t})
+            \Theta_{e} = t (\frac{10^{5}}{p})^{\kappa (1-0.28 w_{sat})} \operatorname{exp}(\frac{2675 w_{sat}}{t})
 
     * "bolton39": Eq (39) from [Bolton1980]_ is used:
 
