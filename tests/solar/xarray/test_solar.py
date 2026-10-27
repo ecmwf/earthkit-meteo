@@ -84,6 +84,8 @@ def test_xr_cos_solar_zenith_angle():
 
     v_ref = array_solar.cos_solar_zenith_angle(date, lat.values, lon.values)
     assert np.allclose(v.values, np.asarray(v_ref))
+    assert v.name == "cossza"
+    assert v.attrs.get("units") == "1"
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
@@ -113,6 +115,8 @@ def test_xr_cos_solar_zenith_angle_integrated(integration_order):
     )
 
     assert np.allclose(v.values, np.asarray(v_ref))
+    assert v.name == "cossza_integrated"
+    assert v.attrs.get("units") == "1"
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
@@ -134,3 +138,5 @@ def test_xr_toa_incident_solar_radiation():
     )
 
     assert np.allclose(v.values, np.asarray(v_ref))
+    assert v.name == "toa_incident_solar_radiation"
+    assert v.attrs.get("units") == "W m-2"

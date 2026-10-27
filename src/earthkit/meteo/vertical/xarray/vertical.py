@@ -40,10 +40,11 @@ def geopotential_height_from_geopotential(z: xr.DataArray) -> xr.DataArray:
     where :math:`g` is the gravitational acceleration on the surface of
     the Earth (see :py:attr:`earthkit.meteo.constants.g`)
     """
-    return xarray_ufunc(array.geopotential_height_from_geopotential, z).assign_attrs({
-        "standard_name": "geopotential_height",
-        "units": "m",
-    })
+    return xarray_ufunc(
+        array.geopotential_height_from_geopotential,
+        z,
+        xarray_ufunc_kwargs={"variables": "geopotential_height"},
+    )
 
 
 def geopotential_from_geopotential_height(gh: xr.DataArray) -> xr.DataArray:
@@ -69,10 +70,11 @@ def geopotential_from_geopotential_height(gh: xr.DataArray) -> xr.DataArray:
     where :math:`g` is the gravitational acceleration on the surface of
     the Earth (see :py:attr:`earthkit.meteo.constants.g`)
     """
-    return xarray_ufunc(array.geopotential_from_geopotential_height, gh).assign_attrs({
-        "standard_name": "geopotential",
-        "units": "m2 s-2",
-    })
+    return xarray_ufunc(
+        array.geopotential_from_geopotential_height,
+        gh,
+        xarray_ufunc_kwargs={"variables": "geopotential"},
+    )
 
 
 def geopotential_height_from_geometric_height(h: xr.DataArray, R_earth: float = constants.R_earth) -> xr.DataArray:
@@ -99,10 +101,12 @@ def geopotential_height_from_geometric_height(h: xr.DataArray, R_earth: float = 
 
     where :math:`R_{earth}` is the average radius of the Earth (see :py:attr:`earthkit.meteo.constants.R_earth`)
     """
-    return xarray_ufunc(array.geopotential_height_from_geometric_height, h, R_earth).assign_attrs({
-        "standard_name": "geopotential_height",
-        "units": "m",
-    })
+    return xarray_ufunc(
+        array.geopotential_height_from_geometric_height,
+        h,
+        R_earth,
+        xarray_ufunc_kwargs={"variables": "geopotential_height"},
+    )
 
 
 def geopotential_from_geometric_height(h: xr.DataArray, R_earth: float = constants.R_earth) -> xr.DataArray:
@@ -133,10 +137,12 @@ def geopotential_from_geometric_height(h: xr.DataArray, R_earth: float = constan
         * :math:`g` is the gravitational acceleration on the surface of
           the Earth (see :py:attr:`earthkit.meteo.constants.g`)
     """
-    return xarray_ufunc(array.geopotential_from_geometric_height, h, R_earth).assign_attrs({
-        "standard_name": "geopotential",
-        "units": "m2 s-2",
-    })
+    return xarray_ufunc(
+        array.geopotential_from_geometric_height,
+        h,
+        R_earth,
+        xarray_ufunc_kwargs={"variables": "geopotential"},
+    )
 
 
 def geometric_height_from_geopotential_height(gh: xr.DataArray, R_earth: float = constants.R_earth) -> xr.DataArray:
@@ -163,10 +169,12 @@ def geometric_height_from_geopotential_height(gh: xr.DataArray, R_earth: float =
 
     where :math:`R_{earth}` is the average radius of the Earth (see :py:attr:`earthkit.meteo.constants.R_earth`)
     """
-    return xarray_ufunc(array.geometric_height_from_geopotential_height, gh, R_earth).assign_attrs({
-        "standard_name": "geometric_height",
-        "units": "m",
-    })
+    return xarray_ufunc(
+        array.geometric_height_from_geopotential_height,
+        gh,
+        R_earth,
+        xarray_ufunc_kwargs={"variables": "geometric_height_above_sea"},
+    )
 
 
 def geometric_height_from_geopotential(z: xr.DataArray, R_earth: float = constants.R_earth) -> xr.DataArray:
@@ -197,7 +205,9 @@ def geometric_height_from_geopotential(z: xr.DataArray, R_earth: float = constan
         * :math:`g` is the gravitational acceleration on the surface of
           the Earth (see :py:attr:`earthkit.meteo.constants.g`)
     """
-    return xarray_ufunc(array.geometric_height_from_geopotential, z, R_earth).assign_attrs({
-        "standard_name": "geometric_height",
-        "units": "m",
-    })
+    return xarray_ufunc(
+        array.geometric_height_from_geopotential,
+        z,
+        R_earth,
+        xarray_ufunc_kwargs={"variables": "geometric_height_above_sea"},
+    )
