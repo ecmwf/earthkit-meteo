@@ -347,27 +347,166 @@ def test_fieldlist_pressure_on_hybrid_levels_core():
     assert np.allclose(alpha.to_numpy(), ref_alpha, atol=atol, rtol=rtol)
 
 
-def test_fieldlist_extrapolate_temperature_to_pressure_levels_below_surface():
+EXTRAPOLATE_T_SFC = [288.15, 290.0, 275.0, 290.0]
+EXTRAPOLATE_H_SFC = [100.0, 2200.0, 3000.0, 3000.0]
+EXTRAPOLATE_P_SFC = [100000.0, 78000.0, 70000.0, 70000.0]
+EXTRAPOLATE_T_REF = [290.83740533454284, 303.07481159412237, 297.05478853917333, 299.32528337706367]
+
+EXTRAPOLATE_FUNCS = {
+    "temperature": ("extrapolate_temperature_to_pressure_levels_below_surface", "t", "K"),
+    "geopotential": ("extrapolate_geopotential_to_pressure_levels_below_surface", "z", "m2/s2"),
+}
+
+
+def _make_extrapolate_input(values, variable, units, input_type="fieldlist"):
     from earthkit.data import Field, FieldList
+
+    field = Field.from_components(
+        values=np.array(values),
+        parameter={"variable": variable, "units": units},
+        vertical={"level": 0, "level_type": "surface"},
+    )
+    return field if input_type == "field" else FieldList.from_fields([field])
+
+
+def _make_extrapolate_inputs(input_type="fieldlist"):
+    return (
+        _make_extrapolate_input(EXTRAPOLATE_T_SFC, "t", "K", input_type),
+        _make_extrapolate_input(EXTRAPOLATE_H_SFC, "h", "m", input_type),
+        _make_extrapolate_input(EXTRAPOLATE_P_SFC, "sp", "Pa", input_type),
+    )
+
+
+def _extrapolate_ref(kind, target_p=105000.0):
+    import earthkit.meteo.vertical.array as array
+
+    func = getattr(array, EXTRAPOLATE_FUNCS[kind][0])
+    return func(
+        np.array(EXTRAPOLATE_T_SFC),
+        np.array(EXTRAPOLATE_H_SFC),
+        np.array(EXTRAPOLATE_P_SFC),
+        target_p,
+    )
+
+
+def _check_pressure_level(field, level=1050.0, level_pa=105000.0):
+    assert field.get("vertical.level_type") == "pressure"
+    assert field.get("vertical.level") == level
+    assert field.vertical.level(units="Pa") == level_pa
+
+
+def test_fieldlist_extrapolate_temperature_to_pressure_levels_below_surface():
+    from earthkit.data import FieldList
 
     import earthkit.meteo.vertical.fieldlist as vertical
 
-    def make(values, variable, units):
-        field = Field.from_components(
-            values=np.array(values),
-            parameter={"variable": variable, "units": units},
-            vertical={"level": 0, "level_type": "surface"},
-        )
-        return FieldList.from_fields([field])
-
-    t_sfc = make([288.15, 290.0, 275.0, 290.0], "t", "K")
-    h_sfc = make([100.0, 2200.0, 3000.0, 3000.0], "h", "m")
-    p_sfc = make([100000.0, 78000.0, 70000.0, 70000.0], "sp", "Pa")
-    ref = [290.83740533454284, 303.07481159412237, 297.05478853917333, 299.32528337706367]
+    t_sfc, h_sfc, p_sfc = _make_extrapolate_inputs()
 
     out = vertical.extrapolate_temperature_to_pressure_levels_below_surface(t_sfc, h_sfc, p_sfc, 105000.0)
 
     assert isinstance(out, FieldList)
     assert len(out) == 1
     assert out.get("parameter.variable") == ["t"]
+    assert out.get("parameter.units") == ["K"]
+    _check_pressure_level(out[0])
+    np.testing.assert_allclose(np.asarray(out.to_numpy()).ravel(), EXTRAPOLATE_T_REF, rtol=1e-10)
+
+
+def test_fieldlist_extrapolate_geopotential_to_pressure_levels_below_surface():
+    from earthkit.data import FieldList
+
+    import earthkit.meteo.vertical.fieldlist as vertical
+
+    t_sfc, h_sfc, p_sfc = _make_extrapolate_inputs()
+    ref = _extrapolate_ref("geopotential")
+
+    out = vertical.extrapolate_geopotential_to_pressure_levels_below_surface(t_sfc, h_sfc, p_sfc, 105000.0)
+
+    assert isinstance(out, FieldList)
+    assert len(out) == 1
+    assert out.get("parameter.variable") == ["z"]
+    assert out.get("parameter.units") == ["m2/s2"]
+    _check_pressure_level(out[0])
     np.testing.assert_allclose(np.asarray(out.to_numpy()).ravel(), ref, rtol=1e-10)
+
+
+@pytest.mark.parametrize("kind", ["temperature", "geopotential"])
+def test_fieldlist_extrapolate_to_pressure_levels_below_surface_field(kind):
+    from earthkit.data import Field
+
+    import earthkit.meteo.vertical.fieldlist as vertical
+
+    func_name, variable, units = EXTRAPOLATE_FUNCS[kind]
+    t_sfc, h_sfc, p_sfc = _make_extrapolate_inputs("field")
+
+    out = getattr(vertical, func_name)(t_sfc, h_sfc, p_sfc, 105000.0)
+
+    assert isinstance(out, Field)
+    assert out.get("parameter.variable") == variable
+    assert out.get("parameter.units") == units
+    _check_pressure_level(out)
+    np.testing.assert_allclose(out.values, _extrapolate_ref(kind), rtol=1e-10)
+
+
+@pytest.mark.parametrize("kind", ["temperature", "geopotential"])
+def test_fieldlist_extrapolate_to_pressure_levels_below_surface_multiple_fields(kind):
+    from earthkit.data import FieldList
+
+    import earthkit.meteo.vertical.fieldlist as vertical
+
+    func_name, variable, units = EXTRAPOLATE_FUNCS[kind]
+    t1, h1, p1 = _make_extrapolate_inputs("field")
+    t2 = _make_extrapolate_input([v + 1.0 for v in EXTRAPOLATE_T_SFC], "t", "K", "field")
+    t_sfc = FieldList.from_fields([t1, t2])
+    h_sfc = FieldList.from_fields([h1, h1])
+    p_sfc = FieldList.from_fields([p1, p1])
+
+    out = getattr(vertical, func_name)(t_sfc, h_sfc, p_sfc, 105000.0)
+
+    assert isinstance(out, FieldList)
+    assert len(out) == 2
+    for i, f in enumerate(out):
+        assert f.get("parameter.variable") == variable
+        assert f.get("parameter.units") == units
+        _check_pressure_level(f)
+
+    func = getattr(import_module("earthkit.meteo.vertical.array"), func_name)
+    ref2 = func(
+        np.array(EXTRAPOLATE_T_SFC) + 1.0,
+        np.array(EXTRAPOLATE_H_SFC),
+        np.array(EXTRAPOLATE_P_SFC),
+        105000.0,
+    )
+    np.testing.assert_allclose(out[0].values, _extrapolate_ref(kind), rtol=1e-10)
+    np.testing.assert_allclose(out[1].values, ref2, rtol=1e-10)
+
+
+@pytest.mark.parametrize("kind", ["temperature", "geopotential"])
+@pytest.mark.parametrize("target_p", [[105000.0], [105000.0, 100000.0], np.array([105000.0, 100000.0])])
+def test_fieldlist_extrapolate_to_pressure_levels_below_surface_multiple_levels(kind, target_p):
+    import earthkit.meteo.vertical.fieldlist as vertical
+
+    func_name = EXTRAPOLATE_FUNCS[kind][0]
+    t_sfc, h_sfc, p_sfc = _make_extrapolate_inputs()
+
+    with pytest.raises(ValueError, match=r"earthkit\.meteo\.vertical\.array.*earthkit\.meteo\.vertical\.xarray"):
+        getattr(vertical, func_name)(t_sfc, h_sfc, p_sfc, target_p)
+
+
+@pytest.mark.parametrize("kind", ["temperature", "geopotential"])
+@pytest.mark.parametrize(
+    "target_p",
+    [105000, np.float64(105000.0), np.array(105000.0)],
+    ids=["int", "numpy_float64", "numpy_0d"],
+)
+def test_fieldlist_extrapolate_to_pressure_levels_below_surface_scalar_types(kind, target_p):
+    import earthkit.meteo.vertical.fieldlist as vertical
+
+    func_name = EXTRAPOLATE_FUNCS[kind][0]
+    t_sfc, h_sfc, p_sfc = _make_extrapolate_inputs()
+
+    out = getattr(vertical, func_name)(t_sfc, h_sfc, p_sfc, target_p)
+
+    assert len(out) == 1
+    _check_pressure_level(out[0])
+    np.testing.assert_allclose(np.asarray(out.to_numpy()).ravel(), _extrapolate_ref(kind), rtol=1e-10)
