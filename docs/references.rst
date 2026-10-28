@@ -27,6 +27,11 @@ Davies-Jones, R., (2008). An Efficient and Accurate Method for Computing the Wet
 along Pseudoadiabats. Mon. Wea. Rev., 136, 2764-2785, doi: `10.1175/2007MWR2224.1 <https://doi.org/10.1175/2007MWR2224.1>`_
 
 
+.. [FULL-POS-CY46T1R1]
+
+Yessad, K., FULL-POS in the cycle 46T1R1 of ARPEGE/IFS. URL: https://www.umr-cnrm.fr/gmapdoc/IMG/pdf/ykfpos46t1r1.pdf
+
+
 .. [Gaussian_Quadrature]
 
 Gaussian quadrature.  URL: https://en.wikipedia.org/wiki/Gaussian_quadrature

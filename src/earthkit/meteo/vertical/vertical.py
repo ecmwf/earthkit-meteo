@@ -1651,28 +1651,32 @@ def extrapolate_temperature_to_pressure_levels_below_surface(
         Temperature (K) on the target pressure(s). The result has the same type as
         ``t_sfc``.
 
-    The computation implements the FULL-POS scheme [1]_:
+
+    The computation implements the FULL-POS scheme [FULL-POS-CY46T1R1]_:
 
     .. math::
 
         T = T_{sfc} \left(1 + y + \frac{y^2}{2} + \frac{y^3}{6}\right), \qquad
         y = \Gamma \frac{R_d}{g} \ln\frac{p}{p_{sfc}}
 
-    with :math:`\Gamma = 0.0065` K/m for :math:`h_{sfc} < 2000` m. Above that,
-    :math:`\Gamma = \max(T_0' - T_{sfc}, 0) / h_{sfc}`, where
-    :math:`T_0 = T_{sfc} + 0.0065\,h_{sfc}` and :math:`T_0' = \min(T_0, 298)` for
-    :math:`h_{sfc} > 2500` m, otherwise :math:`T_0' = (\min(T_0, 298) + T_0)/2`.
-    :math:`R_d` and :math:`g` are :data:`earthkit.meteo.constants.Rd` and
-    :data:`earthkit.meteo.constants.g`.
+    where:
+
+        * :math:`\Gamma` is the lapse rate (K/m):
+
+            * :math:`\Gamma = 0.0065` for :math:`h_{sfc} < 2000` m
+            * :math:`\Gamma = \max(T_0' - T_{sfc}, 0) / h_{sfc}` otherwise
+
+        * :math:`T_0 = T_{sfc} + 0.0065\,h_{sfc}`
+        * :math:`T_0' = \min(T_0, 298)` for :math:`h_{sfc} > 2500` m, otherwise
+          :math:`T_0' = (\min(T_0, 298) + T_0)/2`
+        * :math:`R_d` is the gas constant of dry air (see :data:`earthkit.meteo.constants.Rd`)
+        * :math:`g` is the gravitational acceleration on the surface of the Earth
+          (see :data:`earthkit.meteo.constants.g`)
 
     .. caution::
         Values are computed at every point and are only meaningful where
         ``target_p > p_sfc``. Use this to fill values that are undefined below the
         surface (e.g. for data-driven models), not as a physical estimate.
-
-    References
-    ----------
-    .. [1] https://www.umr-cnrm.fr/gmapdoc/IMG/pdf/ykfpos46t1r1.pdf
 
 
     Implementations
@@ -1681,8 +1685,10 @@ def extrapolate_temperature_to_pressure_levels_below_surface(
     depending on the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.vertical.array.extrapolate_temperature_to_pressure_levels_below_surface` for array-like
-    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_temperature_to_pressure_levels_below_surface` for xarray.DataArray
-    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_temperature_to_pressure_levels_below_surface` for FieldList
+    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_temperature_to_pressure_levels_below_surface`
+      for xarray.DataArray
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_temperature_to_pressure_levels_below_surface`
+      for FieldList
 
     The function returns an object of the same type as the ``t_sfc`` argument.
     """
@@ -1750,28 +1756,29 @@ def extrapolate_geopotential_to_pressure_levels_below_surface(
     -------
     array-like | xarray.DataArray | FieldList
         Geopotential (m2/s2) on the target pressure(s). The result has the same type as
-         ``t_sfc``.
+        ``t_sfc``.
 
-    The computation implements the FULL-POS scheme [1]_ with a constant lapse rate
-    :math:`\Gamma = 0.0065` K/m:
+
+    The computation implements the FULL-POS scheme [FULL-POS-CY46T1R1]_:
 
     .. math::
 
-        \Phi = g\,h_{sfc} - R_d T_{sfc} \ln\frac{p}{p_{sfc}}
+        z = g\,h_{sfc} - R_d T_{sfc} \ln\frac{p}{p_{sfc}}
             \left(1 + \frac{y}{2} + \frac{y^2}{6}\right), \qquad
         y = \Gamma \frac{R_d}{g} \ln\frac{p}{p_{sfc}}
 
-    where :math:`R_d` and :math:`g` are :data:`earthkit.meteo.constants.Rd` and
-    :data:`earthkit.meteo.constants.g`.
+    where:
+
+        * :math:`\Gamma = 0.0065` K/m is the constant lapse rate
+        * :math:`R_d` is the gas constant of dry air (see :data:`earthkit.meteo.constants.Rd`)
+        * :math:`g` is the gravitational acceleration on the surface of the Earth
+          (see :data:`earthkit.meteo.constants.g`)
 
     .. caution::
         Values are computed at every point and are only meaningful where
         ``target_p > p_sfc``. Use this to fill values that are undefined below the
         surface (e.g. for data-driven models), not as a physical estimate.
 
-    References
-    ----------
-    .. [1] https://www.umr-cnrm.fr/gmapdoc/IMG/pdf/ykfpos46t1r1.pdf
 
     Implementations
     ---------------
@@ -1779,12 +1786,13 @@ def extrapolate_geopotential_to_pressure_levels_below_surface(
     depending on the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.vertical.array.extrapolate_geopotential_to_pressure_levels_below_surface` for array-like
-    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_geopotential_to_pressure_levels_below_surface` for xarray.DataArray
-    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_geopotential_to_pressure_levels_below_surface` for FieldList
+    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_geopotential_to_pressure_levels_below_surface`
+      for xarray.DataArray
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_geopotential_to_pressure_levels_below_surface`
+      for FieldList
 
     The function returns an object of the same type as the ``t_sfc`` argument.
     """
- 
     return dispatch(extrapolate_geopotential_to_pressure_levels_below_surface, xarray=True, fieldlist=True, array=True)(
         t_sfc, h_sfc, p_sfc, target_p
     )

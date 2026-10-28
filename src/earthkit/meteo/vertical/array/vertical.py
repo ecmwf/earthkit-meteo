@@ -1846,6 +1846,34 @@ def extrapolate_temperature_to_pressure_levels_below_surface(
     -------
     ArrayLike
         Temperature (K) on the target pressure(s).
+
+
+    The computation implements the FULL-POS scheme [FULL-POS-CY46T1R1]_:
+
+    .. math::
+
+        T = T_{sfc} \left(1 + y + \frac{y^2}{2} + \frac{y^3}{6}\right), \qquad
+        y = \Gamma \frac{R_d}{g} \ln\frac{p}{p_{sfc}}
+
+    where:
+
+        * :math:`\Gamma` is the lapse rate (K/m):
+
+            * :math:`\Gamma = 0.0065` for :math:`h_{sfc} < 2000` m
+            * :math:`\Gamma = \max(T_0' - T_{sfc}, 0) / h_{sfc}` otherwise
+
+        * :math:`T_0 = T_{sfc} + 0.0065\,h_{sfc}`
+        * :math:`T_0' = \min(T_0, 298)` for :math:`h_{sfc} > 2500` m, otherwise
+          :math:`T_0' = (\min(T_0, 298) + T_0)/2`
+        * :math:`R_d` is the gas constant of dry air (see :data:`earthkit.meteo.constants.Rd`)
+        * :math:`g` is the gravitational acceleration on the surface of the Earth
+          (see :data:`earthkit.meteo.constants.g`)
+
+    .. caution::
+        Values are computed at every point and are only meaningful where
+        ``target_p > p_sfc``. Use this to fill values that are undefined below the
+        surface (e.g. for data-driven models), not as a physical estimate.
+
     """
     target_p = _below_surface_levels(t_sfc, h_sfc, p_sfc, target_p)
     return _temperature_below_surface(t_sfc, h_sfc, p_sfc, target_p)
@@ -1876,6 +1904,28 @@ def extrapolate_geopotential_to_pressure_levels_below_surface(
     -------
     ArrayLike
         Geopotential (m2/s2) on the target pressure(s).
+
+
+    The computation implements the FULL-POS scheme [FULL-POS-CY46T1R1]_:
+
+    .. math::
+
+        z = g\,h_{sfc} - R_d T_{sfc} \ln\frac{p}{p_{sfc}}
+            \left(1 + \frac{y}{2} + \frac{y^2}{6}\right), \qquad
+        y = \Gamma \frac{R_d}{g} \ln\frac{p}{p_{sfc}}
+
+    where:
+
+        * :math:`\Gamma = 0.0065` K/m is the constant lapse rate
+        * :math:`R_d` is the gas constant of dry air (see :data:`earthkit.meteo.constants.Rd`)
+        * :math:`g` is the gravitational acceleration on the surface of the Earth
+          (see :data:`earthkit.meteo.constants.g`)
+
+    .. caution::
+        Values are computed at every point and are only meaningful where
+        ``target_p > p_sfc``. Use this to fill values that are undefined below the
+        surface (e.g. for data-driven models), not as a physical estimate.
+
     """
     target_p = _below_surface_levels(t_sfc, h_sfc, p_sfc, target_p)
     return _geopotential_below_surface(t_sfc, h_sfc, p_sfc, target_p)
