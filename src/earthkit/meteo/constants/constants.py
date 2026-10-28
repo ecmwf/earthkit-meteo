@@ -72,6 +72,10 @@ sideral_day = solar_day / (1.0 + solar_day / sideral_year)
 r"""Length of the sideral day [:math:`s`].
 Defined as :math:`\frac{solar\_day}{1 + \frac{solar\_day}{sideral\_year}}`."""
 
+standard_lapse_rate = 0.0065
+r"""Standard atmosphere temperature lapse rate in the troposphere [:math:`K m^{-1}`].
+ Used e.g. in the extrapolation of temperature and geopotential below the surface."""
+
 omega = 2.0 * np.pi / sideral_day
 r"""Rotation rate of the Earth [:math:`s^{-1}`].
 Defined as :math:`\frac{2\pi}{sideral\_day}`."""

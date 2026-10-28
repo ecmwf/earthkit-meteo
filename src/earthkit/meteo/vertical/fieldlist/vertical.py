@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+import numpy as np
 from earthkit.data import Field, FieldList  # type: ignore[import]
 from numpy.typing import ArrayLike
 
@@ -1408,3 +1409,125 @@ def interpolate_monotonic(
 
     levels = target.first_field_values()
     return to_resulting_fieldlist(res_arr, template=data[0], levels=levels, vertical={"level_type": coord_type})
+
+
+def _target_pressure_vertical(target_p) -> dict:
+    """Return the vertical metadata for a single target pressure (Pa).
+
+    The pressure level is stored in hPa, as earthkit-data uses hPa for pressure levels.
+    """
+    if np.ndim(target_p) != 0:
+        raise ValueError(
+            "target_p must be a single value (Pa) in the fieldlist version. To extrapolate to several "
+            "pressure levels use the array (earthkit.meteo.vertical.array) or xarray "
+            "(earthkit.meteo.vertical.xarray) versions."
+        )
+    return {"level_type": "pressure", "level": float(target_p) / 100.0}
+
+
+def extrapolate_temperature_to_pressure_levels_below_surface(
+    t_sfc: FieldList | Field,
+    h_sfc: FieldList | Field,
+    p_sfc: FieldList | Field,
+    target_p: float,
+) -> FieldList | Field:
+    r"""Extrapolate temperature from the surface to a pressure level below the surface.
+
+    Parameters
+    ----------
+    t_sfc: FieldList|Field
+        Surface temperature (K).
+    h_sfc: FieldList|Field
+        Surface height above sea level (m).
+    p_sfc: FieldList|Field
+        Surface pressure (Pa).
+    target_p: float
+        Target pressure (Pa). Must be a single value. To extrapolate to several pressure
+        levels use the array (:mod:`earthkit.meteo.vertical.array`) or xarray
+        (:mod:`earthkit.meteo.vertical.xarray`) versions.
+
+    Returns
+    -------
+    FieldList|Field
+        Temperature (K) on ``target_p``. The result has the same type as the input
+        (FieldList or Field). The vertical metadata is set to the pressure level ``target_p``
+        (stored in hPa, as earthkit-data uses hPa for pressure levels) and the parameter is
+        set to temperature. The rest of the metadata is copied from ``t_sfc``.
+
+    Raises
+    ------
+    ValueError
+        If ``target_p`` is not a single value.
+
+    Notes
+    -----
+    See :func:`earthkit.meteo.vertical.array.extrapolate_temperature_to_pressure_levels_below_surface`
+    for the algorithm.
+    """
+    fieldlist_ufunc_kwargs = {
+        "default_variable": "temperature",
+        "vertical": _target_pressure_vertical(target_p),
+    }
+
+    return fieldlist_ufunc(
+        array.extrapolate_temperature_to_pressure_levels_below_surface,
+        t_sfc,
+        h_sfc,
+        p_sfc,
+        target_p=target_p,
+        fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs,
+    )
+
+
+def extrapolate_geopotential_to_pressure_levels_below_surface(
+    t_sfc: FieldList | Field,
+    h_sfc: FieldList | Field,
+    p_sfc: FieldList | Field,
+    target_p: float,
+) -> FieldList | Field:
+    r"""Extrapolate geopotential from the surface to a pressure level below the surface.
+
+    Parameters
+    ----------
+    t_sfc: FieldList|Field
+        Surface temperature (K).
+    h_sfc: FieldList|Field
+        Surface height above sea level (m).
+    p_sfc: FieldList|Field
+        Surface pressure (Pa).
+    target_p: float
+        Target pressure (Pa). Must be a single value. To extrapolate to several pressure
+        levels use the array (:mod:`earthkit.meteo.vertical.array`) or xarray
+        (:mod:`earthkit.meteo.vertical.xarray`) versions.
+
+    Returns
+    -------
+    FieldList|Field
+        Geopotential (m2/s2) on ``target_p``. The result has the same type as the input
+        (FieldList or Field). The vertical metadata is set to the pressure level ``target_p``
+        (stored in hPa, as earthkit-data uses hPa for pressure levels) and the parameter is
+        set to geopotential. The rest of the metadata is copied from ``t_sfc``.
+
+    Raises
+    ------
+    ValueError
+        If ``target_p`` is not a single value.
+
+    Notes
+    -----
+    See :func:`earthkit.meteo.vertical.array.extrapolate_geopotential_to_pressure_levels_below_surface`
+    for the algorithm.
+    """
+    fieldlist_ufunc_kwargs = {
+        "default_variable": "geopotential",
+        "vertical": _target_pressure_vertical(target_p),
+    }
+
+    return fieldlist_ufunc(
+        array.extrapolate_geopotential_to_pressure_levels_below_surface,
+        t_sfc,
+        h_sfc,
+        p_sfc,
+        target_p=target_p,
+        fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs,
+    )
