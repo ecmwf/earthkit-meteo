@@ -35,7 +35,7 @@ def field_ufunc(func, *args, **kwargs):
         Additional keyword arguments to pass to the function. The following special keyword arguments are recognized:
         - fieldlist_ufunc_kwargs: dict, optional
             A dictionary of keyword arguments to pass to the function when applied to FieldList objects.
-            This can include 'variables', 'param_ids', 'default_variable'
+            This can include 'variables', 'param_ids', 'default_variable', 'vertical'
 
             - 'variables': dict, optional
                 A mapping of input field parameter.variable values to output parameter variable
@@ -46,6 +46,10 @@ def field_ufunc(func, *args, **kwargs):
             - 'default_variable': str, optional
                 The default parameter variable name to use if no mapping is found in
                 'variables' or 'param_ids'. This must be defined in FIELD_PARAMS.
+            - 'vertical': dict, optional
+                The vertical metadata (e.g. {"level_type": "pressure", "level": 1000.0}) to set
+                on the resulting Field. It is set together with the values and the parameter metadata.
+                When not specified, the vertical metadata is copied from the first input field.
 
             The algorithm for determining the output parameter variable name is as follows:
             1. If 'variables' is provided, check if the first input field's parameter.variable
@@ -101,7 +105,11 @@ def field_ufunc(func, *args, **kwargs):
     if param_item is None:
         raise ValueError(f"Unknown parameter '{name}' specified in fieldlist_ufunc_kwargs")
     parameter_kwargs = {"parameter.variable": param_item["variable"], "parameter.units": param_item["units"]}
-    result = field.set({"values": v, **parameter_kwargs})
+    metadata = {"values": v, **parameter_kwargs}
+    vertical = fieldlist_ufunc_kwargs.get("vertical")
+    if vertical is not None:
+        metadata["vertical"] = vertical
+    result = field.set(metadata)
 
     return result
 

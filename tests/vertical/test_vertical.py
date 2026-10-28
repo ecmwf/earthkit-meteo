@@ -56,3 +56,7 @@ def test_high_level_extrapolate_to_pressure_levels_below_surface_dispatch(input_
     assert isinstance(res, expected_type)
     values = res.to_numpy() if input_type == "fieldlist" else np.asarray(res)
     np.testing.assert_allclose(np.ravel(values), ref, rtol=1e-10)
+
+    if input_type == "fieldlist":
+        assert res.get("vertical.level_type") == ["pressure"]
+        assert res.get("vertical.level") == [1050.0]
