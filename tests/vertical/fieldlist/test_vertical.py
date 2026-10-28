@@ -371,4 +371,3 @@ def test_fieldlist_extrapolate_temperature_to_pressure_levels_below_surface():
     assert len(out) == 1
     assert out.get("parameter.variable") == ["t"]
     np.testing.assert_allclose(np.asarray(out.to_numpy()).ravel(), ref, rtol=1e-10)
-    
