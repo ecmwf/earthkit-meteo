@@ -34,6 +34,9 @@ name = "earthkit-meteo"
 optional-dependencies.all = [
   "earthkit-meteo[samples,scores,stats]"
 ]
+optional-dependencies.cape = [
+  "scipy"
+]
 optional-dependencies.dev = [
   "earthkit-meteo[all,docs,test]"
 ]
