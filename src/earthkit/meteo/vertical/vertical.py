@@ -1796,3 +1796,143 @@ def extrapolate_geopotential_to_pressure_levels_below_surface(
     return dispatch(extrapolate_geopotential_to_pressure_levels_below_surface, xarray=True, fieldlist=True, array=True)(
         t_sfc, h_sfc, p_sfc, target_p
     )
+
+
+@overload
+def vertical_integral_pressure(data: "ArrayLike", p: "ArrayLike", vertical_dim: int = 0) -> "ArrayLike": ...
+
+
+def vertical_integral_pressure(data: "ArrayLike", p: "ArrayLike", vertical_dim: int = 0) -> "ArrayLike":
+    r"""Integrate data over pressure.
+
+    *New in version 1.4.0*
+
+    Computes the integral of ``data`` along the axis defined by ``vertical_dim``:
+
+    .. math::
+
+        I = \frac{1}{g} \int_{p_{top}}^{p_{bot}} f \, dp
+
+    where :math:`f` are the data values, :math:`p` is the pressure (Pa) and :math:`g` is
+    the gravitational acceleration on the surface of the Earth (see
+    :py:attr:`earthkit.meteo.constants.g`). All quantities are in SI units.
+
+    Parameters
+    ----------
+    data : array-like
+        Data to be integrated. The axis corresponding to the vertical coordinate is
+        defined by ``vertical_dim``.
+    p : array-like
+        Pressure (Pa) on the data levels (:math:`N` values along the vertical) or on the
+        layer interfaces (:math:`N + 1` values), 1D or in the shape of ``data``. See
+        :py:meth:`earthkit.meteo.vertical.array.vertical_integral_pressure` for details.
+    vertical_dim : int, default=0
+        Axis corresponding to the vertical coordinate in ``data`` and in ``p``.
+
+    Returns
+    -------
+    array-like
+        The vertically integrated data. The shape is the shape of ``data`` with the
+        vertical axis removed.
+
+    Raises
+    ------
+    ValueError
+        If the number of vertical values or the shape of ``p`` are inconsistent with
+        ``data``.
+
+    See Also
+    --------
+    vertical_integral_height
+    pressure_on_hybrid_levels
+
+
+    Notes
+    -----
+    See :py:meth:`earthkit.meteo.vertical.array.vertical_integral_pressure` for the
+    details of the integration schemes and for the hydrostatic assumption the
+    :math:`1/g` form relies on.
+
+
+    Implementations
+    ---------------
+    :func:`vertical_integral_pressure` calls the following implementation:
+
+    - :py:meth:`earthkit.meteo.vertical.array.vertical_integral_pressure` for array-like
+
+    Currently only array-like input is supported.
+    """
+    return dispatch(vertical_integral_pressure, xarray=False, fieldlist=False, array=True)(data, p, vertical_dim)
+
+
+@overload
+def vertical_integral_height(
+    data: "ArrayLike", h: "ArrayLike", rho: "ArrayLike | None" = None, vertical_dim: int = 0
+) -> "ArrayLike": ...
+
+
+def vertical_integral_height(
+    data: "ArrayLike", h: "ArrayLike", rho: "ArrayLike | None" = None, vertical_dim: int = 0
+) -> "ArrayLike":
+    r"""Integrate data over geometric height.
+
+    *New in version 1.4.0*
+
+    Computes the integral of ``data`` along the axis defined by ``vertical_dim``, without
+    ``rho``:
+
+    .. math::
+
+        I = \int_{z_{bot}}^{z_{top}} f \, dz
+
+    and with ``rho`` the mass-weighted integral :math:`\int \rho f \, dz`, where
+    :math:`f` are the data values, :math:`z` is the geometric height (m) and
+    :math:`\rho` is the air density (kg m-3). All quantities are in SI units.
+
+    Parameters
+    ----------
+    data : array-like
+        Data to be integrated. The axis corresponding to the vertical coordinate is
+        defined by ``vertical_dim``.
+    h : array-like
+        Geometric height (m) on the data levels (:math:`N` values along the vertical) or
+        on the layer interfaces (:math:`N + 1` values), 1D or in the shape of ``data``.
+        See :py:meth:`earthkit.meteo.vertical.array.vertical_integral_height` for details.
+    rho : array-like | None
+        Air density (kg m-3) on the data levels. When None (default) the plain integral
+        over height is computed.
+    vertical_dim : int, default=0
+        Axis corresponding to the vertical coordinate in ``data``, ``h`` and ``rho``.
+
+    Returns
+    -------
+    array-like
+        The vertically integrated data. The shape is the shape of ``data`` with the
+        vertical axis removed.
+
+    Raises
+    ------
+    ValueError
+        If the number of vertical values or the shape of ``h`` and ``rho`` are
+        inconsistent with ``data``.
+
+    See Also
+    --------
+    vertical_integral_pressure
+
+
+    Notes
+    -----
+    See :py:meth:`earthkit.meteo.vertical.array.vertical_integral_height` for the details
+    of the integration schemes. No hydrostatic assumption is made.
+
+
+    Implementations
+    ---------------
+    :func:`vertical_integral_height` calls the following implementation:
+
+    - :py:meth:`earthkit.meteo.vertical.array.vertical_integral_height` for array-like
+
+    Currently only array-like input is supported.
+    """
+    return dispatch(vertical_integral_height, xarray=False, fieldlist=False, array=True)(data, h, rho, vertical_dim)
