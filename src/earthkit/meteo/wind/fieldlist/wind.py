@@ -282,9 +282,9 @@ def coriolis(data: FieldList | Field) -> FieldList | Field:
     (see :data:`earthkit.meteo.constants.omega`) and :math:`\phi` is the latitude.
 
     """
-    from earthkit.meteo.utils.param import FIELD_PARAMS
+    from earthkit.utils.parameters import PARAMS
 
-    out_metadata = FIELD_PARAMS.field_parameter_metadata("coriolis")
+    out_metadata = PARAMS.field_parameter_metadata("coriolis")
 
     result = []
     if isinstance(data, Field):

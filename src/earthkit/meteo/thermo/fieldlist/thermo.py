@@ -1253,10 +1253,10 @@ def lcl(
     if p is None:
         p = pressure_from_metadata(t)  # convert to Pa
 
-    from earthkit.meteo.utils.param import FIELD_PARAMS
+    from earthkit.utils.parameters import PARAMS
 
-    t_out_metadata = FIELD_PARAMS.field_parameter_metadata("lcl_temperature")
-    p_out_metadata = FIELD_PARAMS.field_parameter_metadata("lcl_pressure")
+    t_out_metadata = PARAMS.field_parameter_metadata("lcl_temperature")
+    p_out_metadata = PARAMS.field_parameter_metadata("lcl_pressure")
 
     # Handle single Field input
     if isinstance(t, ekd.Field):
