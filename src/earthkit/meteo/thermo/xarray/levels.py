@@ -214,7 +214,7 @@ def _height_of_uppermost_crossing(
     # "high_fold" also accepts a crossing where the profile rises through the
     # threshold. The uppermost crossing is from above only if the profile ends
     # below the threshold.
-    column_top = values.isel({vertical_dim: -1})
+    column_top = values.isel({vertical_dim: -1}, drop=True)
     height = height.where(column_top < threshold)
 
     if lapse_rate is not None:
@@ -258,8 +258,10 @@ def _add_surface_point(
 
     def with_surface(levels: xr.DataArray, surface: xr.DataArray) -> xr.DataArray:
         levels = levels.where(above_surface, surface)
-        # The surface point has no vertical coordinate, so drop those of the levels.
+        # The surface point has no vertical coordinate, so drop those of the levels,
+        # and any scalar coordinate of the surface named like the vertical dimension.
         levels = levels.drop_vars([name for name, coord in levels.coords.items() if vertical_dim in coord.dims])
+        surface = surface.drop_vars(vertical_dim, errors="ignore")
         surface = surface.broadcast_like(columns).expand_dims(vertical_dim).transpose(*levels.dims)
         return xr.concat([surface, levels], dim=vertical_dim)
 

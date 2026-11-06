@@ -263,6 +263,28 @@ def test_dims_and_coords():
     assert_allclose(result.values.ravel(), expected)
 
 
+@pytest.mark.parametrize("order", ["bottom_up", "top_down"])
+@pytest.mark.parametrize("with_surface", [False, True])
+def test_height_levels_given_as_coordinate(order, with_surface):
+    # Data on constant height levels: the heights are the coordinate of the vertical dimension
+    heights = np.arange(0.0, 6001.0, 500.0)
+    t_bottom = np.array([288.15, 290.0, 292.0])
+    coords = {"height": heights, "lat": [46.0, 47.0, 48.0]}
+    t = xr.DataArray(t_bottom - 0.0065 * heights[:, None], dims=("height", "lat"), coords=coords)
+    if order == "top_down":
+        t = t.isel(height=slice(None, None, -1))
+    kwargs = {}
+    if with_surface:
+        # The lowest level as the surface keeps a scalar coordinate named like the vertical dimension
+        kwargs = {"t_sfc": t.sel(height=0.0), "z_sfc": 0.0}
+
+    result = thermo.freezing_level(t, t["height"], vertical_dim="height", **kwargs)
+
+    assert result.dims == ("lat",)
+    assert "height" not in result.coords
+    assert_allclose(result.values, (t_bottom - T0) / 0.0065)
+
+
 def test_xarray_implementation_is_dispatched():
     from earthkit.meteo.thermo import xarray as thermo_xarray
 
