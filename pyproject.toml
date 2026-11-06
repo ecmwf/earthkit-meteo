@@ -87,7 +87,9 @@ urls.Issues = "https://github.com/ecmwf/earthkit-meteo/issues"
 urls.Repository = "https://github.com/ecmwf/earthkit-meteo/"
 
 [tool.coverage]
+report.ignore_errors = true
 run.branch = "true"
+run.omit = ["*.pyx"]
 
 [tool.isort]
 profile = "black"
