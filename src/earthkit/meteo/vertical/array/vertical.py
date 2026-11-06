@@ -1773,3 +1773,159 @@ def interpolate_monotonic(
         aux_max_level_coord,
         vertical_dim=vertical_dim,
     )
+
+
+_BELOW_SURFACE_H1 = 2000.0  # m
+_BELOW_SURFACE_H2 = 2500.0  # m
+_BELOW_SURFACE_T1 = 298.0  # K
+
+
+def _lapse_rate(t_sfc, h_sfc, xp):
+    t0 = t_sfc + constants.standard_lapse_rate * h_sfc
+    t0_min = xp.minimum(t0, _BELOW_SURFACE_T1)
+    t0_prime = xp.where(h_sfc > _BELOW_SURFACE_H2, t0_min, 0.5 * t0_min + 0.5 * t0)
+    # avoid division by zero where the standard lapse rate is used anyway
+    h_safe = xp.where(h_sfc < _BELOW_SURFACE_H1, 1.0, h_sfc)
+    return xp.where(
+        h_sfc < _BELOW_SURFACE_H1,
+        constants.standard_lapse_rate,
+        xp.maximum(t0_prime - t_sfc, 0.0) / h_safe,
+    )
+
+
+def _below_surface_levels(t_sfc, h_sfc, p_sfc, target_p):
+    # a 1D target_p is a list of levels: add a leading level axis
+    xp = array_namespace(t_sfc, h_sfc, p_sfc, target_p)
+    target_p = xp.asarray(target_p)
+    if target_p.ndim == 1:
+        ndim = max(xp.asarray(x).ndim for x in (t_sfc, h_sfc, p_sfc))
+        target_p = xp.reshape(target_p, (-1,) + (1,) * ndim)
+    return target_p
+
+
+def _temperature_below_surface(t_sfc, h_sfc, p_sfc, target_p):
+    # elementwise core: all inputs are broadcast against each other
+    xp = array_namespace(t_sfc, h_sfc, p_sfc, target_p)
+    t_sfc, h_sfc, p_sfc, target_p = xp.broadcast_arrays(*(xp.asarray(x) for x in (t_sfc, h_sfc, p_sfc, target_p)))
+    gamma = _lapse_rate(t_sfc, h_sfc, xp)
+    y = gamma * constants.Rd / constants.g * xp.log(target_p / p_sfc)
+    return t_sfc * (1.0 + y + y**2 / 2.0 + y**3 / 6.0)
+
+
+def _geopotential_below_surface(t_sfc, h_sfc, p_sfc, target_p):
+    # elementwise core: all inputs are broadcast against each other
+    xp = array_namespace(t_sfc, h_sfc, p_sfc, target_p)
+    t_sfc, h_sfc, p_sfc, target_p = xp.broadcast_arrays(*(xp.asarray(x) for x in (t_sfc, h_sfc, p_sfc, target_p)))
+    log_p = xp.log(target_p / p_sfc)
+    y = constants.standard_lapse_rate * constants.Rd / constants.g * log_p
+    return h_sfc * constants.g - constants.Rd * t_sfc * log_p * (1.0 + y / 2.0 + y**2 / 6.0)
+
+
+def extrapolate_temperature_to_pressure_levels_below_surface(
+    t_sfc: ArrayLike, h_sfc: ArrayLike, p_sfc: ArrayLike, target_p: ArrayLike
+) -> ArrayLike:
+    r"""Extrapolate temperature from the surface to pressure levels below the surface.
+
+    *New in version 1.2.0*
+
+    Parameters
+    ----------
+    t_sfc : ArrayLike
+        Surface temperature (K).
+    h_sfc : ArrayLike
+        Surface height above sea level (m).
+    p_sfc : ArrayLike
+        Surface pressure (Pa).
+    target_p : ArrayLike
+        Target pressure(s) (Pa). Either a scalar or a 1D array of pressure levels. In the
+        1D case a new leading vertical axis is added, so the result has the shape
+        ``(len(target_p), *surface_shape)``. Alternatively, a multidimensional array
+        broadcastable against the surface fields.
+
+    Returns
+    -------
+    ArrayLike
+        Temperature (K) on the target pressure(s).
+
+
+    The computation implements the FULL-POS scheme [FULL-POS-CY46T1R1]_:
+
+    .. math::
+
+        T = T_{sfc} \left(1 + y + \frac{y^2}{2} + \frac{y^3}{6}\right), \qquad
+        y = \Gamma \frac{R_d}{g} \ln\frac{p}{p_{sfc}}
+
+    where:
+
+        * :math:`\Gamma` is the lapse rate (K/m):
+
+            * :math:`\Gamma = 0.0065` for :math:`h_{sfc} < 2000` m
+            * :math:`\Gamma = \max(T_0' - T_{sfc}, 0) / h_{sfc}` otherwise
+
+        * :math:`T_0 = T_{sfc} + 0.0065\,h_{sfc}`
+        * :math:`T_0' = \min(T_0, 298)` for :math:`h_{sfc} > 2500` m, otherwise
+          :math:`T_0' = (\min(T_0, 298) + T_0)/2`
+        * :math:`R_d` is the gas constant of dry air (see :data:`earthkit.meteo.constants.Rd`)
+        * :math:`g` is the gravitational acceleration on the surface of the Earth
+          (see :data:`earthkit.meteo.constants.g`)
+
+    .. caution::
+        Values are computed at every point and are only meaningful where
+        ``target_p > p_sfc``. Use this to fill values that are undefined below the
+        surface (e.g. for data-driven models), not as a physical estimate.
+
+    """
+    target_p = _below_surface_levels(t_sfc, h_sfc, p_sfc, target_p)
+    return _temperature_below_surface(t_sfc, h_sfc, p_sfc, target_p)
+
+
+def extrapolate_geopotential_to_pressure_levels_below_surface(
+    t_sfc: ArrayLike, h_sfc: ArrayLike, p_sfc: ArrayLike, target_p: ArrayLike
+) -> ArrayLike:
+    r"""Extrapolate geopotential from the surface to pressure levels below the surface.
+
+    *New in version 1.2.0*
+
+    Parameters
+    ----------
+    t_sfc : ArrayLike
+        Surface temperature (K).
+    h_sfc : ArrayLike
+        Surface height above sea level (m).
+    p_sfc : ArrayLike
+        Surface pressure (Pa).
+    target_p : ArrayLike
+        Target pressure(s) (Pa). Either a scalar or a 1D array of pressure levels. In the
+        1D case a new leading vertical axis is added, so the result has the shape
+        ``(len(target_p), *surface_shape)``. Alternatively, a multidimensional array
+        broadcastable against the surface fields.
+
+    Returns
+    -------
+    ArrayLike
+        Geopotential (m2/s2) on the target pressure(s).
+
+
+    The computation implements the FULL-POS scheme [FULL-POS-CY46T1R1]_:
+
+    .. math::
+
+        z = g\,h_{sfc} - R_d T_{sfc} \ln\frac{p}{p_{sfc}}
+            \left(1 + \frac{y}{2} + \frac{y^2}{6}\right), \qquad
+        y = \Gamma \frac{R_d}{g} \ln\frac{p}{p_{sfc}}
+
+    where:
+
+        * :math:`\Gamma = 0.0065` K/m is the constant lapse rate
+        * :math:`R_d` is the gas constant of dry air (see :data:`earthkit.meteo.constants.Rd`)
+        * :math:`g` is the gravitational acceleration on the surface of the Earth
+          (see :data:`earthkit.meteo.constants.g`)
+
+    .. caution::
+        Values are computed at every point and are only meaningful where
+        ``target_p > p_sfc``. Use this to fill values that are undefined below the
+        surface (e.g. for data-driven models), not as a physical estimate.
+
+    """
+    target_p = _below_surface_levels(t_sfc, h_sfc, p_sfc, target_p)
+    return _geopotential_below_surface(t_sfc, h_sfc, p_sfc, target_p)

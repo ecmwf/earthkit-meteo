@@ -16,7 +16,7 @@ import pytest
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 import earthkit.meteo.thermo.array  # noqa: F401 (makes thermo.array available)
-from earthkit.meteo import thermo
+from earthkit.meteo import constants, thermo
 from earthkit.meteo.utils import convert
 
 np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
@@ -879,6 +879,36 @@ def test_ept(method, xp, device):
     pt = thermo.array.ept_from_specific_humidity(data.t, data.q, data.p, method=method)
     v_ref = xp.asarray(ref[method + "_q"], device=device)
     assert xp.allclose(pt, v_ref), f"q {method=}"
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+def test_ept_bolton43_bolton_units(xp, device):
+    # Regression test for https://github.com/ecmwf/earthkit-meteo/issues/221
+    # Bolton (1980) eq. 43 uses the mixing ratio r in g/kg and p in hPa:
+    #   theta_e = T * (1000/p)^(kappa * (1 - 0.28e-3 * r))
+    #             * exp((3.376/T_L - 0.00254) * r * (1 + 0.81e-3 * r))
+    # Here kappa is the earthkit value instead of 0.2854.
+    t = xp.asarray([278.15, 288.15, 293.15, 303.15, 283.15], device=device)
+    td = xp.asarray([276.15, 283.15, 288.15, 298.15, 270.15], device=device)
+    p = xp.asarray([50000.0, 70000.0, 85000.0, 85000.0, 60000.0], device=device)
+
+    w = thermo.array.mixing_ratio_from_dewpoint(td, p)
+    q = thermo.array.specific_humidity_from_dewpoint(td, p)
+    t_lcl = thermo.array.lcl_temperature(t, td, method="bolton")
+
+    r = 1000.0 * w
+    p_hpa = p / 100.0
+    v_ref = (
+        t
+        * (1000.0 / p_hpa) ** (constants.kappa * (1 - 0.28e-3 * r))
+        * xp.exp((3.376 / t_lcl - 0.00254) * r * (1 + 0.81e-3 * r))
+    )
+
+    v = thermo.array.ept_from_dewpoint(t, td, p, method="bolton43")
+    assert xp.allclose(v, v_ref, rtol=1e-5, atol=0), "td"
+
+    v = thermo.array.ept_from_specific_humidity(t, q, p, method="bolton43")
+    assert xp.allclose(v, v_ref, rtol=1e-5, atol=0), "q"
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
