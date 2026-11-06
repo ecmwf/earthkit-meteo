@@ -16,6 +16,7 @@ from typing import (
     overload,
 )
 
+from earthkit.meteo import constants
 from earthkit.meteo.utils.decorators import dispatch
 
 if TYPE_CHECKING:
@@ -3159,3 +3160,154 @@ def specific_gas_constant(
     """
     dispatched = dispatch(specific_gas_constant, array=True)
     return dispatched(q)
+
+
+def freezing_level(
+    t: "xarray.DataArray",
+    z: "xarray.DataArray",
+    t_sfc: "xarray.DataArray" | float | None = None,
+    z_sfc: "xarray.DataArray" | float | None = None,
+    threshold: float = constants.T_C2K,
+    lapse_rate: float | None = None,
+    min_height: float | None = None,
+    vertical_dim: str = "z",
+) -> "xarray.DataArray":
+    r"""Compute the freezing level: the height where the temperature falls below 0 °C.
+
+    The freezing level is the uppermost height where the temperature profile
+    crosses ``threshold`` from above (warmer below, colder above), linearly
+    interpolated in height. With several warm layers in a column, the top of the
+    highest one is returned.
+
+    Parameters
+    ----------
+    t: xarray.DataArray
+        Temperature on the vertical levels (K).
+    z: xarray.DataArray
+        Height of the vertical levels (m), e.g. geometric height above sea level.
+        The levels can be ordered bottom-up or top-down.
+    t_sfc: xarray.DataArray or float, optional
+        Temperature at the surface, e.g. the 2 m temperature (K). Must be given
+        together with ``z_sfc``.
+    z_sfc: xarray.DataArray or float, optional
+        Height of the surface (m), in the same reference as ``z``, e.g. the orography.
+        ``t_sfc`` is taken as the value at this height, and the levels not above it
+        (or with a missing height) are treated as below the surface. Must be given
+        together with ``t_sfc``.
+    threshold: float, optional
+        Temperature defining the freezing level (K). Defaults to 0 °C (273.15 K).
+    lapse_rate: float, optional
+        Rate at which the temperature decreases with height (K m-1), e.g. 0.0065.
+        When given, columns without a crossing are extrapolated from the surface:
+        :math:`z_{sfc} - (threshold - t_{sfc}) / lapse\_rate`. This lies below
+        ``z_sfc`` when the column is colder than ``threshold`` everywhere. When not
+        given, these columns are NaN. Requires ``t_sfc`` and ``z_sfc``.
+    min_height: float, optional
+        Lower bound of the result (m). When not given, the result is not bounded.
+    vertical_dim: str, optional
+        Name of the vertical dimension (default: "z").
+
+    Returns
+    -------
+    xarray.DataArray
+        Height of the freezing level (m), in the same reference as ``z``, with the
+        vertical dimension removed. NaN where there is no crossing and no
+        extrapolation, and in columns containing missing values.
+
+
+    Implementations
+    ------------------------
+    :func:`freezing_level` calls one of the following implementations depending on
+    the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.thermo.xarray.freezing_level` for xarray.DataArray
+
+    The function returns an object of the same type as the ``t`` argument.
+    """
+    dispatched = dispatch(freezing_level, xarray=True, array=False, fieldlist=False)
+    return dispatched(
+        t,
+        z,
+        t_sfc=t_sfc,
+        z_sfc=z_sfc,
+        threshold=threshold,
+        lapse_rate=lapse_rate,
+        min_height=min_height,
+        vertical_dim=vertical_dim,
+    )
+
+
+def snowfall_limit(
+    tw: "xarray.DataArray",
+    z: "xarray.DataArray",
+    tw_sfc: "xarray.DataArray" | float | None = None,
+    z_sfc: "xarray.DataArray" | float | None = None,
+    threshold: float = constants.T_C2K + 1.3,
+    lapse_rate: float | None = None,
+    min_height: float | None = None,
+    vertical_dim: str = "z",
+) -> "xarray.DataArray":
+    r"""Compute the snowfall limit: the height where the wet-bulb temperature falls below 1.3 °C.
+
+    The snowfall limit is the uppermost height where the wet-bulb temperature
+    profile crosses ``threshold`` from above (warmer below, colder above), linearly
+    interpolated in height. Below it, falling snow is expected to have mostly melted.
+
+    Parameters
+    ----------
+    tw: xarray.DataArray
+        Wet-bulb temperature on the vertical levels (K), e.g. computed with
+        :func:`wet_bulb_temperature_from_specific_humidity`.
+    z: xarray.DataArray
+        Height of the vertical levels (m), e.g. geometric height above sea level.
+        The levels can be ordered bottom-up or top-down.
+    tw_sfc: xarray.DataArray or float, optional
+        Wet-bulb temperature at the surface, e.g. at 2 m (K). Must be given together
+        with ``z_sfc``.
+    z_sfc: xarray.DataArray or float, optional
+        Height of the surface (m), in the same reference as ``z``, e.g. the orography.
+        ``tw_sfc`` is taken as the value at this height, and the levels not above it
+        (or with a missing height) are treated as below the surface. Must be given
+        together with ``tw_sfc``.
+    threshold: float, optional
+        Wet-bulb temperature defining the snowfall limit (K). Defaults to 1.3 °C
+        (274.45 K).
+    lapse_rate: float, optional
+        Rate at which the wet-bulb temperature decreases with height (K m-1), e.g.
+        0.005. When given, columns without a crossing are extrapolated from the
+        surface: :math:`z_{sfc} - (threshold - tw_{sfc}) / lapse\_rate`. This lies
+        below ``z_sfc`` when the column is colder than ``threshold`` everywhere. When
+        not given, these columns are NaN. Requires ``tw_sfc`` and ``z_sfc``.
+    min_height: float, optional
+        Lower bound of the result (m). When not given, the result is not bounded.
+    vertical_dim: str, optional
+        Name of the vertical dimension (default: "z").
+
+    Returns
+    -------
+    xarray.DataArray
+        Height of the snowfall limit (m), in the same reference as ``z``, with the
+        vertical dimension removed. NaN where there is no crossing and no
+        extrapolation, and in columns containing missing values.
+
+
+    Implementations
+    ------------------------
+    :func:`snowfall_limit` calls one of the following implementations depending on
+    the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.thermo.xarray.snowfall_limit` for xarray.DataArray
+
+    The function returns an object of the same type as the ``tw`` argument.
+    """
+    dispatched = dispatch(snowfall_limit, xarray=True, array=False, fieldlist=False)
+    return dispatched(
+        tw,
+        z,
+        tw_sfc=tw_sfc,
+        z_sfc=z_sfc,
+        threshold=threshold,
+        lapse_rate=lapse_rate,
+        min_height=min_height,
+        vertical_dim=vertical_dim,
+    )
