@@ -22,10 +22,6 @@ class TestConstantPatterns:
     def patterns(self):
         return regimes.ConstantPatterns(
             labels=["dipole", "monopole", "dipole_inv"],
-            grid={
-                "grid": [1.0, 1.0],
-                "area": [max(self.lat), min(self.lon), min(self.lat), max(self.lon)],
-            },
             patterns=np.stack([self.dipole, self.monopole, -self.dipole]).copy(),
         )
 
@@ -61,10 +57,6 @@ class TestModulatedPatterns:
     def patterns(self):
         return regimes.ModulatedPatterns(
             labels=["dipole"],
-            grid={
-                "grid": [1.0, 1.0],
-                "area": [max(self.lat), min(self.lon), min(self.lat), max(self.lon)],
-            },
             base_patterns=np.stack([self.dipole]).copy(),
             modulator=lambda x, y: y * np.sign(x),
         )
@@ -106,3 +98,51 @@ class TestModulatedPatterns:
         assert pat.shape == (2, 1, *self.dipole.shape)
         np.testing.assert_allclose(pat[0, 0], self.dipole)
         np.testing.assert_allclose(pat[1, 0], -2 * self.dipole)
+
+
+class TestPatternsWithGrid:
+    @pytest.fixture
+    def TestPatterns(self):
+        class TestPatterns(regimes.Patterns):
+            def __init__(self, **kwargs):
+                super().__init__(["a", "b"], **kwargs)
+
+            def patterns(self):
+                pass
+
+        return TestPatterns
+
+    @pytest.fixture
+    def Grid(self):
+        ekg = pytest.importorskip("earthkit.geo")
+        return ekg.grids.Grid
+
+    def test_shape_or_grid_is_required(self, TestPatterns):
+        with pytest.raises(ValueError):
+            TestPatterns(shape=None, grid=None)
+
+    def test_explicit_shape_is_used_without_grid(self, TestPatterns):
+        patterns = TestPatterns(shape=(3, 4), grid=None)
+        assert patterns.shape == (3, 4)
+        assert patterns.size == 12
+        assert patterns.ndim == 2
+
+    def test_shape_is_inferred_from_grid_if_absent(self, TestPatterns, Grid):
+        grid = Grid("O16")
+        patterns = TestPatterns(shape=None, grid=grid)
+        assert patterns.shape == grid.shape
+
+    @pytest.mark.parametrize(
+        "grid_spec",
+        [
+            "O16",
+            "N16",
+            {"grid": [5.0, 2.5]},
+            {"grid": [0.5, 0.5], "area": [90, -80, 30, 40]},
+        ],
+    )
+    def test_shape_and_grid_shape_must_match_if_both_given(self, TestPatterns, Grid, grid_spec):
+        grid = Grid(grid_spec)
+        TestPatterns(shape=grid.shape, grid=grid)
+        with pytest.raises(ValueError):
+            TestPatterns(shape=(1, 1, 2, 3, 4, 5), grid=grid)
