@@ -34,6 +34,9 @@ name = "earthkit-meteo"
 optional-dependencies.all = [
   "earthkit-meteo[samples,scores,stats]"
 ]
+optional-dependencies.cape = [
+  "scipy"
+]
 optional-dependencies.dev = [
   "earthkit-meteo[all,docs,test]"
 ]
@@ -59,6 +62,9 @@ optional-dependencies.gpu = [
 optional-dependencies.lunar = [
   "astropy"
 ]
+optional-dependencies.regimes = [
+  "earthkit-geo>=1"
+]
 optional-dependencies.samples = [
   "requests"
 ]
@@ -73,6 +79,7 @@ optional-dependencies.stats = [
 optional-dependencies.test = [
   "astropy",
   "earthkit-data",
+  "earthkit-geo>=1",
   "netcdf4",
   "pytest",
   "pytest-cov",

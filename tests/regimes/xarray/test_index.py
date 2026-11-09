@@ -37,8 +37,7 @@ def data3d():
 def patterns():
     class MockPatterns(Patterns):
         def __init__(self):
-            grid = {"grid": [1.0, 1.0], "area": [46.0, 0.0, 45.0, 3.0]}
-            super().__init__(["a", "b"], grid=grid, xp=np)
+            super().__init__(["a", "b"], shape=(2, 4), xp=np)
 
         def patterns(self, **kwargs):
             self.received_kwargs = kwargs  # to verify mapped coordinates
