@@ -11,3 +11,4 @@ Explanations of the core ideas behind earthkit-meteo.
 
     grib.rst
     regimes.rst
+    metadata/index.rst

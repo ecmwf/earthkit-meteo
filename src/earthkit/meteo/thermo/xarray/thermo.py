@@ -41,7 +41,7 @@ def specific_humidity_from_mixing_ratio(w: xr.DataArray) -> xr.DataArray:
     return xarray_ufunc(
         array.specific_humidity_from_mixing_ratio,
         w,
-        xarray_ufunc_kwargs={"variables": "specific_humidity"},
+        xarray_ufunc_kwargs={"parameters": "specific_humidity"},
     )
 
 
@@ -70,7 +70,7 @@ def mixing_ratio_from_specific_humidity(q: xr.DataArray) -> xr.DataArray:
     return xarray_ufunc(
         array.mixing_ratio_from_specific_humidity,
         q,
-        xarray_ufunc_kwargs={"variables": "mixing_ratio"},
+        xarray_ufunc_kwargs={"parameters": "mixing_ratio"},
     )
 
 
@@ -103,7 +103,7 @@ def vapour_pressure_from_specific_humidity(q: xr.DataArray, p: xr.DataArray) -> 
         array.vapour_pressure_from_specific_humidity,
         q,
         p,
-        xarray_ufunc_kwargs={"variables": "vapour_pressure"},
+        xarray_ufunc_kwargs={"parameters": "vapour_pressure"},
     )
 
 
@@ -136,7 +136,7 @@ def vapour_pressure_from_mixing_ratio(w: xr.DataArray, p: xr.DataArray) -> xr.Da
         array.vapour_pressure_from_mixing_ratio,
         w,
         p,
-        xarray_ufunc_kwargs={"variables": "vapour_pressure"},
+        xarray_ufunc_kwargs={"parameters": "vapour_pressure"},
     )
 
 
@@ -172,7 +172,7 @@ def specific_humidity_from_vapour_pressure(e: xr.DataArray, p: xr.DataArray, eps
         e,
         p,
         eps=eps,
-        xarray_ufunc_kwargs={"variables": "specific_humidity"},
+        xarray_ufunc_kwargs={"parameters": "specific_humidity"},
     )
 
 
@@ -208,7 +208,7 @@ def mixing_ratio_from_vapour_pressure(e: xr.DataArray, p: xr.DataArray, eps: flo
         e,
         p,
         eps=eps,
-        xarray_ufunc_kwargs={"variables": "mixing_ratio"},
+        xarray_ufunc_kwargs={"parameters": "mixing_ratio"},
     )
 
 
@@ -276,7 +276,7 @@ def saturation_vapour_pressure(t: xr.DataArray, phase: str = "mixed", method: st
         phase=phase,
         method=method,
         xarray_ufunc_kwargs={
-            "variables": "saturation_vapour_pressure",
+            "parameters": "saturation_vapour_pressure",
             "attrs": {"comment": f"phase: {phase} method: {method}"},
         },
     )
@@ -320,7 +320,7 @@ def saturation_mixing_ratio(
         phase=phase,
         method=method,
         xarray_ufunc_kwargs={
-            "variables": "saturation_mixing_ratio",
+            "parameters": "saturation_mixing_ratio",
             "attrs": {"comment": f"phase: {phase} method: {method}"},
         },
     )
@@ -364,7 +364,7 @@ def saturation_specific_humidity(
         phase=phase,
         method=method,
         xarray_ufunc_kwargs={
-            "variables": "saturation_specific_humidity",
+            "parameters": "saturation_specific_humidity",
             "attrs": {"comment": f"phase: {phase} method: {method}"},
         },
     )
@@ -397,7 +397,7 @@ def saturation_vapour_pressure_slope(t: xr.DataArray, phase: str = "mixed", meth
         phase=phase,
         method=method,
         xarray_ufunc_kwargs={
-            "variables": "saturation_vapour_pressure_slope",
+            "parameters": "saturation_vapour_pressure_slope",
             "attrs": {"comment": f"phase: {phase} method: {method}"},
         },
     )
@@ -461,7 +461,7 @@ def saturation_mixing_ratio_slope(
         eps=eps,
         method=method,
         xarray_ufunc_kwargs={
-            "variables": "saturation_mixing_ratio_slope",
+            "parameters": "saturation_mixing_ratio_slope",
             "attrs": {"comment": f"phase: {phase} method: {method}"},
         },
     )
@@ -526,7 +526,7 @@ def saturation_specific_humidity_slope(
         eps=eps,
         method=method,
         xarray_ufunc_kwargs={
-            "variables": "saturation_specific_humidity_slope",
+            "parameters": "saturation_specific_humidity_slope",
             "attrs": {"comment": f"phase: {phase} method: {method}"},
         },
     )
@@ -554,7 +554,7 @@ def temperature_from_saturation_vapour_pressure(es: xr.DataArray) -> xr.DataArra
     return xarray_ufunc(
         array.temperature_from_saturation_vapour_pressure,
         es,
-        xarray_ufunc_kwargs={"variables": "temperature"},
+        xarray_ufunc_kwargs={"parameters": "temperature"},
     )
 
 
@@ -587,7 +587,7 @@ def relative_humidity_from_dewpoint(t: xr.DataArray, td: xr.DataArray) -> xr.Dat
         array.relative_humidity_from_dewpoint,
         t,
         td,
-        xarray_ufunc_kwargs={"variables": "relative_humidity"},
+        xarray_ufunc_kwargs={"parameters": "relative_humidity"},
     ).assign_attrs({"units": "%"})
 
 
@@ -626,7 +626,7 @@ def relative_humidity_from_specific_humidity(t: xr.DataArray, q: xr.DataArray, p
         t,
         q,
         p,
-        xarray_ufunc_kwargs={"variables": "relative_humidity"},
+        xarray_ufunc_kwargs={"parameters": "relative_humidity"},
     )
 
 
@@ -665,7 +665,7 @@ def specific_humidity_from_dewpoint(td: xr.DataArray, p: xr.DataArray) -> xr.Dat
         array.specific_humidity_from_dewpoint,
         td,
         p,
-        xarray_ufunc_kwargs={"variables": "specific_humidity"},
+        xarray_ufunc_kwargs={"parameters": "specific_humidity"},
     )
 
 
@@ -704,7 +704,7 @@ def mixing_ratio_from_dewpoint(td: xr.DataArray, p: xr.DataArray) -> xr.DataArra
         array.mixing_ratio_from_dewpoint,
         td,
         p,
-        xarray_ufunc_kwargs={"variables": "mixing_ratio"},
+        xarray_ufunc_kwargs={"parameters": "mixing_ratio"},
     )
 
 
@@ -746,7 +746,7 @@ def specific_humidity_from_relative_humidity(t: xr.DataArray, r: xr.DataArray, p
         t,
         r,
         p,
-        xarray_ufunc_kwargs={"variables": "specific_humidity"},
+        xarray_ufunc_kwargs={"parameters": "specific_humidity"},
     )
 
 
@@ -786,7 +786,7 @@ def dewpoint_from_relative_humidity(t: xr.DataArray, r: xr.DataArray) -> xr.Data
         array.dewpoint_from_relative_humidity,
         t,
         r,
-        xarray_ufunc_kwargs={"variables": "dewpoint"},
+        xarray_ufunc_kwargs={"parameters": "dewpoint"},
     )
 
 
@@ -827,7 +827,7 @@ def dewpoint_from_specific_humidity(q: xr.DataArray, p: xr.DataArray) -> xr.Data
         array.dewpoint_from_specific_humidity,
         q,
         p,
-        xarray_ufunc_kwargs={"variables": "dewpoint"},
+        xarray_ufunc_kwargs={"parameters": "dewpoint"},
     )
 
 
@@ -860,7 +860,7 @@ def virtual_temperature(t: xr.DataArray, q: xr.DataArray) -> xr.DataArray:
         array.virtual_temperature,
         t,
         q,
-        xarray_ufunc_kwargs={"variables": "virtual_temperature"},
+        xarray_ufunc_kwargs={"parameters": "virtual_temperature"},
     )
 
 
@@ -899,7 +899,7 @@ def virtual_potential_temperature(t: xr.DataArray, q: xr.DataArray, p: xr.DataAr
         t,
         q,
         p,
-        xarray_ufunc_kwargs={"variables": "virtual_potential_temperature"},
+        xarray_ufunc_kwargs={"parameters": "virtual_potential_temperature"},
     )
 
 
@@ -932,7 +932,7 @@ def potential_temperature(t: xr.DataArray, p: xr.DataArray) -> xr.DataArray:
         array.potential_temperature,
         t,
         p,
-        xarray_ufunc_kwargs={"variables": "potential_temperature"},
+        xarray_ufunc_kwargs={"parameters": "potential_temperature"},
     )
 
 
@@ -965,7 +965,7 @@ def temperature_from_potential_temperature(th: xr.DataArray, p: xr.DataArray) ->
         array.temperature_from_potential_temperature,
         th,
         p,
-        xarray_ufunc_kwargs={"variables": "temperature"},
+        xarray_ufunc_kwargs={"parameters": "temperature"},
     )
 
 
@@ -997,7 +997,7 @@ def pressure_on_dry_adiabat(t: xr.DataArray, t_def: xr.DataArray, p_def: xr.Data
 
     """
     return xarray_ufunc(
-        array.pressure_on_dry_adiabat, t, t_def, p_def, xarray_ufunc_kwargs={"variables": "pressure_on_dry_adiabat"}
+        array.pressure_on_dry_adiabat, t, t_def, p_def, xarray_ufunc_kwargs={"parameters": "pressure_on_dry_adiabat"}
     )
 
 
@@ -1033,7 +1033,7 @@ def temperature_on_dry_adiabat(p: xr.DataArray, t_def: xr.DataArray, p_def: xr.D
         p,
         t_def,
         p_def,
-        xarray_ufunc_kwargs={"variables": "temperature_on_dry_adiabat"},
+        xarray_ufunc_kwargs={"parameters": "temperature_on_dry_adiabat"},
     )
 
 
@@ -1078,7 +1078,7 @@ def lcl_temperature(t: xr.DataArray, td: xr.DataArray, method: str = "davies") -
         t,
         td,
         method=method,
-        xarray_ufunc_kwargs={"variables": "lcl_temperature"},
+        xarray_ufunc_kwargs={"parameters": "lcl_temperature"},
     )
 
 
@@ -1118,7 +1118,7 @@ def lcl(
         p,
         method=method,
         xarray_ufunc_kwargs={
-            "variables": ("lcl_temperature", "lcl_pressure"),
+            "parameters": ("lcl_temperature", "lcl_pressure"),
             "xarray_apply_ufunc_kwargs": {"output_dtypes": [float, float]},
         },
     )
@@ -1199,7 +1199,7 @@ def ept_from_dewpoint(t: xr.DataArray, td: xr.DataArray, p: xr.DataArray, method
         td,
         p,
         method=method,
-        xarray_ufunc_kwargs={"variables": "eqpt", "attrs": {"comment": f"method: {method}"}},
+        xarray_ufunc_kwargs={"parameters": "eqpt", "attrs": {"comment": f"method: {method}"}},
     )
 
 
@@ -1234,7 +1234,7 @@ def ept_from_specific_humidity(t: xr.DataArray, q: xr.DataArray, p: xr.DataArray
         q,
         p,
         method=method,
-        xarray_ufunc_kwargs={"variables": "eqpt", "attrs": {"comment": f"method: {method}"}},
+        xarray_ufunc_kwargs={"parameters": "eqpt", "attrs": {"comment": f"method: {method}"}},
     )
 
 
@@ -1294,7 +1294,7 @@ def saturation_ept(t: xr.DataArray, p: xr.DataArray, method: str = "ifs") -> xr.
         t,
         p,
         method=method,
-        xarray_ufunc_kwargs={"variables": "sept", "attrs": {"comment": f"method: {method}"}},
+        xarray_ufunc_kwargs={"parameters": "sept", "attrs": {"comment": f"method: {method}"}},
     )
 
 
@@ -1341,7 +1341,7 @@ def temperature_on_moist_adiabat(
         ept_method=ept_method,
         t_method=t_method,
         xarray_ufunc_kwargs={
-            "variables": "temperature_on_moist_adiabat",
+            "parameters": "temperature_on_moist_adiabat",
             "attrs": {"comment": f"ept_method: {ept_method} t_method: {t_method}"},
         },
     )
@@ -1397,7 +1397,7 @@ def wet_bulb_temperature_from_dewpoint(
         ept_method=ept_method,
         t_method=t_method,
         xarray_ufunc_kwargs={
-            "variables": "wet_bulb_temperature",
+            "parameters": "wet_bulb_temperature",
             "attrs": {"comment": f"ept_method: {ept_method} t_method: {t_method}"},
         },
     )
@@ -1454,7 +1454,7 @@ def wet_bulb_temperature_from_specific_humidity(
         ept_method=ept_method,
         t_method=t_method,
         xarray_ufunc_kwargs={
-            "variables": "wet_bulb_temperature",
+            "parameters": "wet_bulb_temperature",
             "attrs": {"comment": f"ept_method: {ept_method} t_method: {t_method}"},
         },
     )
@@ -1511,7 +1511,7 @@ def wet_bulb_potential_temperature_from_dewpoint(
         ept_method=ept_method,
         t_method=t_method,
         xarray_ufunc_kwargs={
-            "variables": "wet_bulb_potential_temperature",
+            "parameters": "wet_bulb_potential_temperature",
             "attrs": {"comment": f"ept_method: {ept_method} t_method: {t_method}"},
         },
     )
@@ -1565,7 +1565,7 @@ def wet_bulb_potential_temperature_from_specific_humidity(
         ept_method=ept_method,
         t_method=t_method,
         xarray_ufunc_kwargs={
-            "variables": "wet_bulb_potential_temperature",
+            "parameters": "wet_bulb_potential_temperature",
             "attrs": {"comment": f"ept_method: {ept_method} t_method: {t_method}"},
         },
     )
@@ -1602,5 +1602,5 @@ def specific_gas_constant(q: xr.DataArray) -> xr.DataArray:
     return xarray_ufunc(
         array.specific_gas_constant,
         q,
-        xarray_ufunc_kwargs={"variables": "specific_gas_constant"},
+        xarray_ufunc_kwargs={"parameters": "specific_gas_constant"},
     )

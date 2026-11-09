@@ -87,7 +87,7 @@ def cos_solar_zenith_angle(date, latitudes: xr.DataArray, longitudes: xr.DataArr
         _impl,
         latitudes,
         longitudes,
-        xarray_ufunc_kwargs={"variables": "cos_solar_zenith_angle"},
+        xarray_ufunc_kwargs={"parameters": "cos_solar_zenith_angle"},
     )
 
 
@@ -137,7 +137,7 @@ def cos_solar_zenith_angle_integrated(
         _impl,
         latitudes,
         longitudes,
-        xarray_ufunc_kwargs={"variables": "cos_solar_zenith_angle_integrated"},
+        xarray_ufunc_kwargs={"parameters": "cos_solar_zenith_angle_integrated"},
     )
 
 
@@ -203,5 +203,5 @@ def toa_incident_solar_radiation(
         _impl,
         latitudes,
         longitudes,
-        xarray_ufunc_kwargs={"variables": "toa_incident_solar_radiation"},
+        xarray_ufunc_kwargs={"parameters": "toa_incident_solar_radiation"},
     )

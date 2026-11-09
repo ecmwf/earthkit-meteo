@@ -38,7 +38,7 @@ def speed(u: xr.DataArray, v: xr.DataArray) -> xr.DataArray:
         array.speed,
         u,
         v,
-        xarray_ufunc_kwargs={"variables": "wind_speed"},
+        xarray_ufunc_kwargs={"parameters": "wind_speed"},
     )
 
 
@@ -89,7 +89,7 @@ def direction(
         v,
         convention=convention,
         to_positive=to_positive,
-        xarray_ufunc_kwargs={"variables": "wind_direction"},
+        xarray_ufunc_kwargs={"parameters": "wind_direction"},
     )
 
 
@@ -212,7 +212,7 @@ def w_from_omega(omega: xr.DataArray, t: xr.DataArray, p: xr.DataArray) -> xr.Da
         omega,
         t,
         p,
-        xarray_ufunc_kwargs={"variables": "geometric_vertical_velocity"},
+        xarray_ufunc_kwargs={"parameters": "geometric_vertical_velocity"},
     )
 
 
@@ -245,7 +245,7 @@ def coriolis(lat: xr.DataArray) -> xr.DataArray:
     return xarray_ufunc(
         array.coriolis,
         lat,
-        xarray_ufunc_kwargs={"variables": "coriolis"},
+        xarray_ufunc_kwargs={"parameters": "coriolis"},
     )
 
 

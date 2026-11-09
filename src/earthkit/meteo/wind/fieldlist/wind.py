@@ -38,7 +38,7 @@ def speed(u: FieldList | Field, v: FieldList | Field) -> FieldList | Field:
         Wind speed/magnitude (same units as ``u`` and ``v``). The result has
         the same type as the input (FieldList or Field).
     """
-    variables = {
+    parameters = {
         "u": "wind_speed",
         "10u": "10m_wind_speed",
         "100ua": "100m_wind_speed",
@@ -53,9 +53,9 @@ def speed(u: FieldList | Field, v: FieldList | Field) -> FieldList | Field:
     }
 
     fieldlist_ufunc_kwargs = {
-        "variables": variables,
+        "parameters": parameters,
         "param_ids": param_ids,
-        "default_variable": "wind_speed",
+        "default_parameter": "wind_speed",
     }
     return fieldlist_ufunc(array.speed, u, v, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
@@ -101,7 +101,7 @@ def direction(u: FieldList | Field, v: FieldList | Field, convention="meteo", to
 
     """
     fieldlist_ufunc_kwargs = {
-        "default_variable": "wind_direction",
+        "default_parameter": "wind_direction",
     }
     return fieldlist_ufunc(
         array.direction,
@@ -249,7 +249,7 @@ def w_from_omega(
         p = pressure_from_metadata(omega)  # convert to Pa
 
     fieldlist_ufunc_kwargs = {
-        "default_variable": "geometric_vertical_velocity",
+        "default_parameter": "geometric_vertical_velocity",
     }
 
     return fieldlist_ufunc(array.w_from_omega, omega, t, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)

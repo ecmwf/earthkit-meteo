@@ -44,7 +44,7 @@ def geopotential_height_from_geopotential(z: xr.DataArray) -> xr.DataArray:
     return xarray_ufunc(
         array.geopotential_height_from_geopotential,
         z,
-        xarray_ufunc_kwargs={"variables": "geopotential_height"},
+        xarray_ufunc_kwargs={"parameters": "geopotential_height"},
     )
 
 
@@ -74,7 +74,7 @@ def geopotential_from_geopotential_height(gh: xr.DataArray) -> xr.DataArray:
     return xarray_ufunc(
         array.geopotential_from_geopotential_height,
         gh,
-        xarray_ufunc_kwargs={"variables": "geopotential"},
+        xarray_ufunc_kwargs={"parameters": "geopotential"},
     )
 
 
@@ -106,7 +106,7 @@ def geopotential_height_from_geometric_height(h: xr.DataArray, R_earth: float = 
         array.geopotential_height_from_geometric_height,
         h,
         R_earth,
-        xarray_ufunc_kwargs={"variables": "geopotential_height"},
+        xarray_ufunc_kwargs={"parameters": "geopotential_height"},
     )
 
 
@@ -142,7 +142,7 @@ def geopotential_from_geometric_height(h: xr.DataArray, R_earth: float = constan
         array.geopotential_from_geometric_height,
         h,
         R_earth,
-        xarray_ufunc_kwargs={"variables": "geopotential"},
+        xarray_ufunc_kwargs={"parameters": "geopotential"},
     )
 
 
@@ -174,7 +174,7 @@ def geometric_height_from_geopotential_height(gh: xr.DataArray, R_earth: float =
         array.geometric_height_from_geopotential_height,
         gh,
         R_earth,
-        xarray_ufunc_kwargs={"variables": "geometric_height_above_sea"},
+        xarray_ufunc_kwargs={"parameters": "geometric_height_above_sea"},
     )
 
 
@@ -210,7 +210,7 @@ def geometric_height_from_geopotential(z: xr.DataArray, R_earth: float = constan
         array.geometric_height_from_geopotential,
         z,
         R_earth,
-        xarray_ufunc_kwargs={"variables": "geometric_height_above_sea"},
+        xarray_ufunc_kwargs={"parameters": "geometric_height_above_sea"},
     )
 
 
@@ -240,7 +240,7 @@ def extrapolate_temperature_to_pressure_levels_below_surface(
     for the algorithm.
     """
     return xarray_ufunc(
-        _temperature_below_surface, t_sfc, h_sfc, p_sfc, target_p, xarray_ufunc_kwargs={"variables": "temperature"}
+        _temperature_below_surface, t_sfc, h_sfc, p_sfc, target_p, xarray_ufunc_kwargs={"parameters": "temperature"}
     )
 
 
@@ -270,5 +270,5 @@ def extrapolate_geopotential_to_pressure_levels_below_surface(
     for the algorithm.
     """
     return xarray_ufunc(
-        _geopotential_below_surface, t_sfc, h_sfc, p_sfc, target_p, xarray_ufunc_kwargs={"variables": "geopotential"}
+        _geopotential_below_surface, t_sfc, h_sfc, p_sfc, target_p, xarray_ufunc_kwargs={"parameters": "geopotential"}
     )
