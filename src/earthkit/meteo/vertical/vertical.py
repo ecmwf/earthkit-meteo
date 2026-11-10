@@ -1799,15 +1799,29 @@ def extrapolate_geopotential_to_pressure_levels_below_surface(
 
 
 @overload
-def vertical_integral_pressure(data: "ArrayLike", p: "ArrayLike", vertical_dim: int = 0) -> "ArrayLike": ...
+def vertical_integral_pressure(data: "ArrayLike", p: "ArrayLike", vertical_dim: int | None = None) -> "ArrayLike": ...
 
 
-def vertical_integral_pressure(data: "ArrayLike", p: "ArrayLike", vertical_dim: int = 0) -> "ArrayLike":
+@overload
+def vertical_integral_pressure(
+    data: "xarray.DataArray", p: "xarray.DataArray | None" = None, vertical_dim: str | None = None
+) -> "xarray.DataArray": ...
+
+
+@overload
+def vertical_integral_pressure(data: "FieldList", p: "FieldList | None" = None) -> "FieldList": ...
+
+
+def vertical_integral_pressure(
+    data: "ArrayLike | xarray.DataArray | FieldList",
+    p: "ArrayLike | xarray.DataArray | FieldList | None" = None,
+    vertical_dim: "int | str | None" = None,
+):
     r"""Integrate data over pressure.
 
     *New in version 1.4.0*
 
-    Computes the integral of ``data`` along the axis defined by ``vertical_dim``:
+    Computes the integral of ``data`` along the vertical axis defined by ``vertical_dim``:
 
     .. math::
 
@@ -1819,27 +1833,52 @@ def vertical_integral_pressure(data: "ArrayLike", p: "ArrayLike", vertical_dim: 
 
     Parameters
     ----------
-    data : array-like
-        Data to be integrated. The axis corresponding to the vertical coordinate is
-        defined by ``vertical_dim``.
-    p : array-like
+    data : array-like | xarray.DataArray | FieldList
+        Data to be integrated. The axis, dimension or fields corresponding to the vertical
+        coordinate are defined by ``vertical_dim``. When the input data is FieldList it must
+        hold a single vertical column: one field per level, with unique levels and the same
+        parameter, base date and time, step and ensemble member.
+    p : array-like | xarray.DataArray | FieldList | None
         Pressure (Pa) on the data levels (:math:`N` values along the vertical) or on the
-        layer interfaces (:math:`N + 1` values), 1D or in the shape of ``data``. See
-        :py:meth:`earthkit.meteo.vertical.array.vertical_integral_pressure` for details.
-    vertical_dim : int, default=0
-        Axis corresponding to the vertical coordinate in ``data`` and in ``p``.
+        layer interfaces (:math:`N + 1` values). The accepted form depends on the type of
+        ``data``:
+
+        - array-like: 1D or in the shape of ``data``. It is mandatory. See
+          :py:meth:`earthkit.meteo.vertical.array.vertical_integral_pressure` for details.
+        - xarray.DataArray: defined either on the ``vertical_dim`` dimension, holding the
+          :math:`N` values of the data levels, or on its own dimension of :math:`N + 1`
+          values that is not in ``data``, holding the layer interfaces. Its other dimensions
+          must be dimensions of ``data``: the missing ones are broadcast over the data. When
+          None (default) the ``vertical_dim`` coordinate of ``data`` is used; its "units"
+          attribute may be "Pa" (default) or "hPa".
+        - FieldList: one field for each level of ``data``, on the same levels, or one more
+          field than ``data``, holding the pressure of the layer interfaces enclosing the
+          data levels. When None (default) the pressure is taken from the level metadata of
+          ``data``, which must be on pressure levels.
+
+    vertical_dim : int | str | None
+        Vertical dimension specification. The accepted form depends on the type of ``data``:
+
+        - array-like: the number of the axis corresponding to the vertical coordinate in
+          ``data`` and in ``p`` (default: 0).
+        - xarray.DataArray: the name of the vertical dimension in ``data`` (default: "z").
+        - FieldList: this keyword argument is not supported.
 
     Returns
     -------
-    array-like
-        The vertically integrated data. The shape is the shape of ``data`` with the
-        vertical axis removed.
+    array-like | xarray.DataArray | FieldList
+        The vertically integrated data. The shape is the one of ``data`` with the vertical
+        axis removed. For FieldList input the result is a FieldList holding a single field
+        with the level type "entire_atmosphere".
 
     Raises
     ------
     ValueError
         If the number of vertical values or the shape of ``p`` are inconsistent with
         ``data``.
+    TypeError
+        If the input data is array-like and ``p`` is missing, or if the input data is
+        FieldList and ``vertical_dim`` is given.
 
     See Also
     --------
@@ -1856,30 +1895,57 @@ def vertical_integral_pressure(data: "ArrayLike", p: "ArrayLike", vertical_dim: 
 
     Implementations
     ---------------
-    :func:`vertical_integral_pressure` calls the following implementation:
+    :func:`vertical_integral_pressure` calls one of the following implementations
+    depending on the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.vertical.array.vertical_integral_pressure` for array-like
+    - :py:meth:`earthkit.meteo.vertical.xarray.vertical_integral_pressure` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.vertical_integral_pressure` for FieldList
 
-    Currently only array-like input is supported.
+    The function returns an object of the same type as the ``data`` argument.
     """
-    return dispatch(vertical_integral_pressure, xarray=False, fieldlist=False, array=True)(data, p, vertical_dim)
+    _kwargs = {}
+    if p is not None:
+        _kwargs["p"] = p
+    if vertical_dim is not None:
+        _kwargs["vertical_dim"] = vertical_dim
+
+    return dispatch(vertical_integral_pressure, xarray=True, fieldlist=True, array=True)(data, **_kwargs)
 
 
 @overload
 def vertical_integral_height(
-    data: "ArrayLike", h: "ArrayLike", rho: "ArrayLike | None" = None, vertical_dim: int = 0
+    data: "ArrayLike", h: "ArrayLike", rho: "ArrayLike | None" = None, vertical_dim: int | None = None
 ) -> "ArrayLike": ...
 
 
+@overload
 def vertical_integral_height(
-    data: "ArrayLike", h: "ArrayLike", rho: "ArrayLike | None" = None, vertical_dim: int = 0
-) -> "ArrayLike":
+    data: "xarray.DataArray",
+    h: "xarray.DataArray | None" = None,
+    rho: "xarray.DataArray | None" = None,
+    vertical_dim: str | None = None,
+) -> "xarray.DataArray": ...
+
+
+@overload
+def vertical_integral_height(
+    data: "FieldList", h: "FieldList | None" = None, rho: "FieldList | None" = None
+) -> "FieldList": ...
+
+
+def vertical_integral_height(
+    data: "ArrayLike | xarray.DataArray | FieldList",
+    h: "ArrayLike | xarray.DataArray | FieldList | None" = None,
+    rho: "ArrayLike | xarray.DataArray | FieldList | None" = None,
+    vertical_dim: "int | str | None" = None,
+):
     r"""Integrate data over geometric height.
 
     *New in version 1.4.0*
 
-    Computes the integral of ``data`` along the axis defined by ``vertical_dim``, without
-    ``rho``:
+    Computes the integral of ``data`` along the vertical axis defined by ``vertical_dim``,
+    without ``rho``:
 
     .. math::
 
@@ -1891,30 +1957,57 @@ def vertical_integral_height(
 
     Parameters
     ----------
-    data : array-like
-        Data to be integrated. The axis corresponding to the vertical coordinate is
-        defined by ``vertical_dim``.
-    h : array-like
-        Geometric height (m) on the data levels (:math:`N` values along the vertical) or
-        on the layer interfaces (:math:`N + 1` values), 1D or in the shape of ``data``.
-        See :py:meth:`earthkit.meteo.vertical.array.vertical_integral_height` for details.
-    rho : array-like | None
-        Air density (kg m-3) on the data levels. When None (default) the plain integral
-        over height is computed.
-    vertical_dim : int, default=0
-        Axis corresponding to the vertical coordinate in ``data``, ``h`` and ``rho``.
+    data : array-like | xarray.DataArray | FieldList
+        Data to be integrated. The axis, dimension or fields corresponding to the vertical
+        coordinate are defined by ``vertical_dim``. When the input data is FieldList it must
+        hold a single vertical column: one field per level, with unique levels and the same
+        parameter, base date and time, step and ensemble member.
+    h : array-like | xarray.DataArray | FieldList | None
+        Geometric height (m) on the data levels (:math:`N` values along the vertical) or on
+        the layer interfaces (:math:`N + 1` values). The accepted form depends on the type of
+        ``data``:
+
+        - array-like: 1D or in the shape of ``data``. It is mandatory. See
+          :py:meth:`earthkit.meteo.vertical.array.vertical_integral_height` for details.
+        - xarray.DataArray: defined either on the ``vertical_dim`` dimension, holding the
+          :math:`N` values of the data levels, or on its own dimension of :math:`N + 1`
+          values that is not in ``data``, holding the layer interfaces. Its other dimensions
+          must be dimensions of ``data``: the missing ones are broadcast over the data. When
+          None (default) the ``vertical_dim`` coordinate of ``data`` is used; its "units"
+          attribute may be "m" (default) or "km".
+        - FieldList: one field for each level of ``data``, on the same levels, or one more
+          field than ``data``, holding the height of the layer interfaces enclosing the data
+          levels. When None (default) the height is taken from the level metadata of
+          ``data``, which must be on "height_above_ground_level" or
+          "height_above_mean_sea_level" levels.
+    rho : array-like | xarray.DataArray | FieldList | None
+        Air density (kg m-3) on the :math:`N` data levels, in the same form as the level
+        values of ``h``. When None (default) the plain integral over height is computed.
+        For FieldList input it is a FieldList with one field for each level of ``data``, on
+        the same levels.
+    vertical_dim : int | str | None
+        Vertical dimension specification. The accepted form depends on the type of ``data``:
+
+        - array-like: the number of the axis corresponding to the vertical coordinate in
+          ``data``, ``h`` and ``rho`` (default: 0).
+        - xarray.DataArray: the name of the vertical dimension in ``data`` (default: "z").
+        - FieldList: this keyword argument is not supported.
 
     Returns
     -------
-    array-like
-        The vertically integrated data. The shape is the shape of ``data`` with the
-        vertical axis removed.
+    array-like | xarray.DataArray | FieldList
+        The vertically integrated data. The shape is the one of ``data`` with the vertical
+        axis removed. For FieldList input the result is a FieldList holding a single field
+        with the level type "entire_atmosphere".
 
     Raises
     ------
     ValueError
         If the number of vertical values or the shape of ``h`` and ``rho`` are
         inconsistent with ``data``.
+    TypeError
+        If the input data is array-like and ``h`` is missing, or if the input data is
+        FieldList and ``vertical_dim`` is given.
 
     See Also
     --------
@@ -1929,10 +2022,21 @@ def vertical_integral_height(
 
     Implementations
     ---------------
-    :func:`vertical_integral_height` calls the following implementation:
+    :func:`vertical_integral_height` calls one of the following implementations depending on
+    the type of the input arguments:
 
     - :py:meth:`earthkit.meteo.vertical.array.vertical_integral_height` for array-like
+    - :py:meth:`earthkit.meteo.vertical.xarray.vertical_integral_height` for xarray.DataArray
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.vertical_integral_height` for FieldList
 
-    Currently only array-like input is supported.
+    The function returns an object of the same type as the ``data`` argument.
     """
-    return dispatch(vertical_integral_height, xarray=False, fieldlist=False, array=True)(data, h, rho, vertical_dim)
+    _kwargs = {}
+    if h is not None:
+        _kwargs["h"] = h
+    if rho is not None:
+        _kwargs["rho"] = rho
+    if vertical_dim is not None:
+        _kwargs["vertical_dim"] = vertical_dim
+
+    return dispatch(vertical_integral_height, xarray=True, fieldlist=True, array=True)(data, **_kwargs)
