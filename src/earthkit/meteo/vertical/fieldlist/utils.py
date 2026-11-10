@@ -8,9 +8,9 @@
 #
 
 from earthkit.data import Field, FieldList  # type: ignore[import]
+from earthkit.utils.parameters import PARAMS
 
 from earthkit.meteo.utils.fieldlist import get_hybrid_level_parameters
-from earthkit.meteo.utils.param import FIELD_PARAMS
 
 """Helper classes for handling inputs to vertical computation functions when using FieldList objects."""
 
@@ -90,7 +90,7 @@ def coord_fieldlist_from_template(fl_template=None, keep_template_shape=False):
 def to_resulting_fieldlist(arr, template=None, levels=None, vertical=None, metadata=None, param_name=""):
     metadata = metadata or {}
     if param_name:
-        param_item = FIELD_PARAMS.get(param_name)
+        param_item = PARAMS.get(param_name)
         param_metadata = {
             "variable": param_item["variable"],
             "units": param_item["units"],

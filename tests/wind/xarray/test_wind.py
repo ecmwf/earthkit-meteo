@@ -52,6 +52,8 @@ def _da(values):
 def test_xr_wind_speed(u, v, v_ref):
     sp = wind.speed(_da(u), _da(v))
     assert np.allclose(sp.values, np.asarray(v_ref), equal_nan=True)
+    assert sp.name == "ws"
+    assert sp.attrs.get("units") == "m s-1"  # Assuming the units are meters per second
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
@@ -111,6 +113,9 @@ def test_xr_wind_speed(u, v, v_ref):
 def test_xr_wind_direction(u, v, v_ref, kwargs):
     d = wind.direction(_da(u), _da(v), **kwargs)
     assert np.allclose(d.values, np.asarray(v_ref), equal_nan=True)
+    assert d.name == "wdir"
+    assert d.attrs.get("units") == "degree"
+    assert d.attrs.get("standard_name") == "wind_from_direction"
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
@@ -188,6 +193,9 @@ def test_xr_w_from_omega_1(omega, t, p, v_ref):
     p = _da(p) * 100.0
     w = wind.w_from_omega(omega, t, p)
     assert np.allclose(w.values, np.asarray(v_ref))
+    assert w.name == "wz"
+    assert w.attrs.get("units") == "m s-1"
+    assert w.attrs.get("standard_name") == "upward_air_velocity"
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
@@ -211,6 +219,9 @@ def test_xr_w_from_omega_2():
 def test_xr_coriolis(lat, v_ref):
     c = wind.coriolis(_da(lat))
     assert np.allclose(c.values, np.asarray(v_ref), rtol=1e-04)
+    assert c.name == "fc"
+    assert c.attrs.get("units") == "s-1"
+    assert c.attrs.get("standard_name") == "coriolis_parameter"
 
 
 @pytest.mark.parametrize(

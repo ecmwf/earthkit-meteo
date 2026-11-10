@@ -75,8 +75,10 @@ def sot(
         clim_dim=-1,
         ens_dim=-1,
         xarray_ufunc_kwargs={
-            "input_core_dims": core_dims,
-            "output_core_dims": [[]],
+            "xarray_apply_ufunc_kwargs": {
+                "input_core_dims": core_dims,
+                "output_core_dims": [[]],
+            },
         },
     )
 
@@ -130,7 +132,9 @@ def sot_unsorted(
         clim_dim=-1,
         ens_dim=-1,
         xarray_ufunc_kwargs={
-            "input_core_dims": core_dims,
-            "output_core_dims": [[]],
+            "xarray_apply_ufunc_kwargs": {
+                "input_core_dims": core_dims,
+                "output_core_dims": [[]],
+            },
         },
     )
