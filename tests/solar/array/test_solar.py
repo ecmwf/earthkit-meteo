@@ -64,6 +64,32 @@ def test_cos_solar_zenith_angle_1(xp, device, date, lat, lon, v_ref):
     assert xp.allclose(v, v_ref)
 
 
+def test_cos_solar_zenith_angle_uses_minutes():
+    # The hour angle advances 15 degrees an hour, so moving the time forward by 30
+    # minutes moves the sun as moving the place 7.5 degrees east does. The declination
+    # changes slightly in 30 minutes, hence the tolerance.
+    date = datetime.datetime(2024, 4, 22, 9, 0, 0)
+    later = solar.cos_solar_zenith_angle(date + datetime.timedelta(minutes=30), 40.0, 18.0)
+    east = solar.cos_solar_zenith_angle(date, 40.0, 18.0 + 7.5)
+    at_the_hour = solar.cos_solar_zenith_angle(date, 40.0, 18.0)
+    assert np.isclose(later, east, atol=1e-4)
+    assert not np.isclose(later, at_the_hour, atol=1e-2)
+
+
+def test_cos_solar_zenith_angle_integrated_over_a_sunrise_hour():
+    # In London on 21 June 2025 the sun rises at about 03:43 UTC. Over the hour from
+    # 03:00 to 04:00 the sun is up for about 17 minutes, so the average is small but
+    # positive. It must match a fine average of the instantaneous value.
+    begin = datetime.datetime(2025, 6, 21, 3, 0, 0)
+    end = datetime.datetime(2025, 6, 21, 4, 0, 0)
+    v = solar.cos_solar_zenith_angle_integrated(begin, end, 51.5, -0.1, intervals_per_hour=4)
+    fine = np.mean([
+        solar.cos_solar_zenith_angle(begin + datetime.timedelta(seconds=s + 0.5), 51.5, -0.1) for s in range(3600)
+    ])
+    assert v > 0.0
+    assert np.isclose(v, fine, atol=5e-4)
+
+
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "begin_date,end_date,lat,lon,integration_order,v_ref",
@@ -74,7 +100,7 @@ def test_cos_solar_zenith_angle_1(xp, device, date, lat, lon, v_ref):
             40.0,
             18.0,
             1,
-            0.3110738757,
+            0.3108234014,
         ),
         (
             datetime.datetime(2024, 4, 22),
@@ -82,7 +108,7 @@ def test_cos_solar_zenith_angle_1(xp, device, date, lat, lon, v_ref):
             40.0,
             18.0,
             2,
-            0.3110738757,
+            0.3112472832,
         ),
         (
             datetime.datetime(2024, 4, 22),
@@ -90,7 +116,7 @@ def test_cos_solar_zenith_angle_1(xp, device, date, lat, lon, v_ref):
             40.0,
             18.0,
             3,
-            0.3110738757,
+            0.3109985566,
         ),
         (
             datetime.datetime(2024, 4, 22),
@@ -98,7 +124,7 @@ def test_cos_solar_zenith_angle_1(xp, device, date, lat, lon, v_ref):
             40.0,
             18.0,
             4,
-            0.3110738757,
+            0.3111356893,
         ),
     ],
 )
@@ -126,7 +152,7 @@ def test_incoming_solar_radiation():
             datetime.datetime(2024, 4, 23),
             40.0,
             18.0,
-            1503617.8237746414,
+            1503271.6092681934,
         )
     ],
 )

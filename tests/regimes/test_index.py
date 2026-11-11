@@ -19,7 +19,6 @@ def patterns():
     return regimes.ConstantPatterns(
         labels=["foo", "bar"],
         patterns=[[[1.0, 1.0]], [[0.1, 0.9]]],
-        grid={"grid": [1.0, 1.0], "area": [45.0, 0.0, 45.0, 1.0]},
     )
 
 

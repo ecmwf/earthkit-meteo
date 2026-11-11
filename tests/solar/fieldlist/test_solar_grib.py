@@ -139,7 +139,7 @@ def test_fieldlist_grib_cos_solar_zenith_angle_integrated(input_type):
         assert out.get(k) == v
 
     # values
-    ref_vals = np.array([[0.3980200995, 0.3980200995], [0.7784063554, 0.6636375477], [0.9502192569, 0.7514338509]])
+    ref_vals = np.array([[0.3980200995, 0.3980200995], [0.7588072930, 0.6190668604], [0.9162726851, 0.6742351560]])
     assert field.shape == (7, 12)
     np.testing.assert_allclose(field.to_numpy()[:3, :2], ref_vals)
 
@@ -181,8 +181,8 @@ def test_fieldlist_grib_toa_incident_solar_radiation(input_type):
     # values
     ref_vals = np.array([
         [1882745.2876005317, 1882745.2876005317],
-        [3682078.0591244297, 3139190.6148891458],
-        [4494800.9882375803, 3554492.3520308542],
+        [3589369.3611647878, 2928359.2317418475],
+        [4334224.8130679233, 3189321.6845897138],
     ])
     assert field.shape == (7, 12)
     np.testing.assert_allclose(field.to_numpy()[:3, :2], ref_vals)

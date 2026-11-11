@@ -1588,3 +1588,351 @@ def interpolate_sleve_to_theta_levels(
         folding_mode=folding_mode,
         vertical_dim=vertical_dim,
     )
+
+
+@overload
+def extrapolate_temperature_to_pressure_levels_below_surface(
+    t_sfc: "ArrayLike",
+    h_sfc: "ArrayLike",
+    p_sfc: "ArrayLike",
+    target_p: "ArrayLike",
+) -> "ArrayLike": ...
+
+
+@overload
+def extrapolate_temperature_to_pressure_levels_below_surface(
+    t_sfc: "xarray.DataArray",
+    h_sfc: "xarray.DataArray",
+    p_sfc: "xarray.DataArray",
+    target_p: "ArrayLike",
+) -> "xarray.DataArray": ...
+
+
+@overload
+def extrapolate_temperature_to_pressure_levels_below_surface(
+    t_sfc: "FieldList | Field",
+    h_sfc: "FieldList | Field",
+    p_sfc: "FieldList | Field",
+    target_p: "ArrayLike",
+) -> "FieldList": ...
+
+
+def extrapolate_temperature_to_pressure_levels_below_surface(
+    t_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    h_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    p_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    target_p: "ArrayLike",
+) -> "ArrayLike | xarray.DataArray | FieldList":
+    r"""Extrapolate temperature from the surface to pressure levels below the surface.
+
+    *New in version 1.2.0*
+
+    Parameters
+    ----------
+    t_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface temperature (K).
+    h_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface height above sea level (m).
+    p_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface pressure (Pa).
+    target_p : array-like
+        Target pressure(s) (Pa). The accepted form depends on the type of the other
+        arguments:
+
+        - array-like: a scalar or a 1D array of pressure levels. In the 1D case a new
+          leading vertical axis is added to the result.
+        - xarray.DataArray: a scalar or a DataArray with a level dimension, e.g.
+          ``xr.DataArray([85000.0, 100000.0], dims="z")``.
+        - FieldList/Field: a single number.
+
+    Returns
+    -------
+    array-like | xarray.DataArray | FieldList
+        Temperature (K) on the target pressure(s). The result has the same type as
+        ``t_sfc``.
+
+
+    The computation implements the FULL-POS scheme [FULL-POS-CY46T1R1]_:
+
+    .. math::
+
+        T = T_{sfc} \left(1 + y + \frac{y^2}{2} + \frac{y^3}{6}\right), \qquad
+        y = \Gamma \frac{R_d}{g} \ln\frac{p}{p_{sfc}}
+
+    where:
+
+        * :math:`\Gamma` is the lapse rate (K/m):
+
+            * :math:`\Gamma = 0.0065` for :math:`h_{sfc} < 2000` m
+            * :math:`\Gamma = \max(T_0' - T_{sfc}, 0) / h_{sfc}` otherwise
+
+        * :math:`T_0 = T_{sfc} + 0.0065\,h_{sfc}`
+        * :math:`T_0' = \min(T_0, 298)` for :math:`h_{sfc} > 2500` m, otherwise
+          :math:`T_0' = (\min(T_0, 298) + T_0)/2`
+        * :math:`R_d` is the gas constant of dry air (see :data:`earthkit.meteo.constants.Rd`)
+        * :math:`g` is the gravitational acceleration on the surface of the Earth
+          (see :data:`earthkit.meteo.constants.g`)
+
+    .. caution::
+        Values are computed at every point and are only meaningful where
+        ``target_p > p_sfc``. Use this to fill values that are undefined below the
+        surface (e.g. for data-driven models), not as a physical estimate.
+
+
+    Implementations
+    ---------------
+    :func:`extrapolate_temperature_to_pressure_levels_below_surface` calls one of the following implementations
+    depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.vertical.array.extrapolate_temperature_to_pressure_levels_below_surface` for array-like
+    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_temperature_to_pressure_levels_below_surface`
+      for xarray.DataArray
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_temperature_to_pressure_levels_below_surface`
+      for FieldList
+
+    The function returns an object of the same type as the ``t_sfc`` argument.
+    """
+    return dispatch(extrapolate_temperature_to_pressure_levels_below_surface, xarray=True, fieldlist=True, array=True)(
+        t_sfc, h_sfc, p_sfc, target_p
+    )
+
+
+@overload
+def extrapolate_geopotential_to_pressure_levels_below_surface(
+    t_sfc: "ArrayLike",
+    h_sfc: "ArrayLike",
+    p_sfc: "ArrayLike",
+    target_p: "ArrayLike",
+) -> "ArrayLike": ...
+
+
+@overload
+def extrapolate_geopotential_to_pressure_levels_below_surface(
+    t_sfc: "xarray.DataArray",
+    h_sfc: "xarray.DataArray",
+    p_sfc: "xarray.DataArray",
+    target_p: "ArrayLike",
+) -> "xarray.DataArray": ...
+
+
+@overload
+def extrapolate_geopotential_to_pressure_levels_below_surface(
+    t_sfc: "FieldList | Field",
+    h_sfc: "FieldList | Field",
+    p_sfc: "FieldList | Field",
+    target_p: "ArrayLike",
+) -> "FieldList": ...
+
+
+def extrapolate_geopotential_to_pressure_levels_below_surface(
+    t_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    h_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    p_sfc: "ArrayLike | xarray.DataArray | FieldList | Field",
+    target_p: "ArrayLike",
+) -> "ArrayLike | xarray.DataArray | FieldList":
+    r"""Extrapolate geopotential from the surface to pressure levels below the surface.
+
+    *New in version 1.2.0*
+
+    Parameters
+    ----------
+    t_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface temperature (K).
+    h_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface height above sea level (m).
+    p_sfc : array-like | xarray.DataArray | FieldList | Field
+        Surface pressure (Pa).
+    target_p : array-like
+        Target pressure(s) (Pa). The accepted form depends on the type of the other
+        arguments:
+
+        - array-like: a scalar or a 1D array of pressure levels. In the 1D case a new
+          leading vertical axis is added to the result.
+        - xarray.DataArray: a scalar or a DataArray with a level dimension, e.g.
+          ``xr.DataArray([85000.0, 100000.0], dims="z")``.
+        - FieldList/Field: a single number.
+
+    Returns
+    -------
+    array-like | xarray.DataArray | FieldList
+        Geopotential (m2/s2) on the target pressure(s). The result has the same type as
+        ``t_sfc``.
+
+
+    The computation implements the FULL-POS scheme [FULL-POS-CY46T1R1]_:
+
+    .. math::
+
+        z = g\,h_{sfc} - R_d T_{sfc} \ln\frac{p}{p_{sfc}}
+            \left(1 + \frac{y}{2} + \frac{y^2}{6}\right), \qquad
+        y = \Gamma \frac{R_d}{g} \ln\frac{p}{p_{sfc}}
+
+    where:
+
+        * :math:`\Gamma = 0.0065` K/m is the constant lapse rate
+        * :math:`R_d` is the gas constant of dry air (see :data:`earthkit.meteo.constants.Rd`)
+        * :math:`g` is the gravitational acceleration on the surface of the Earth
+          (see :data:`earthkit.meteo.constants.g`)
+
+    .. caution::
+        Values are computed at every point and are only meaningful where
+        ``target_p > p_sfc``. Use this to fill values that are undefined below the
+        surface (e.g. for data-driven models), not as a physical estimate.
+
+
+    Implementations
+    ---------------
+    :func:`extrapolate_geopotential_to_pressure_levels_below_surface` calls one of the following implementations
+    depending on the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.vertical.array.extrapolate_geopotential_to_pressure_levels_below_surface` for array-like
+    - :py:meth:`earthkit.meteo.vertical.xarray.extrapolate_geopotential_to_pressure_levels_below_surface`
+      for xarray.DataArray
+    - :py:meth:`earthkit.meteo.vertical.fieldlist.extrapolate_geopotential_to_pressure_levels_below_surface`
+      for FieldList
+
+    The function returns an object of the same type as the ``t_sfc`` argument.
+    """
+    return dispatch(extrapolate_geopotential_to_pressure_levels_below_surface, xarray=True, fieldlist=True, array=True)(
+        t_sfc, h_sfc, p_sfc, target_p
+    )
+
+
+@overload
+def vertical_integral_pressure(data: "ArrayLike", p: "ArrayLike", vertical_dim: int = 0) -> "ArrayLike": ...
+
+
+def vertical_integral_pressure(data: "ArrayLike", p: "ArrayLike", vertical_dim: int = 0) -> "ArrayLike":
+    r"""Integrate data over pressure.
+
+    *New in version 1.4.0*
+
+    Computes the integral of ``data`` along the axis defined by ``vertical_dim``:
+
+    .. math::
+
+        I = \frac{1}{g} \int_{p_{top}}^{p_{bot}} f \, dp
+
+    where :math:`f` are the data values, :math:`p` is the pressure (Pa) and :math:`g` is
+    the gravitational acceleration on the surface of the Earth (see
+    :py:attr:`earthkit.meteo.constants.g`). All quantities are in SI units.
+
+    Parameters
+    ----------
+    data : array-like
+        Data to be integrated. The axis corresponding to the vertical coordinate is
+        defined by ``vertical_dim``.
+    p : array-like
+        Pressure (Pa) on the data levels (:math:`N` values along the vertical) or on the
+        layer interfaces (:math:`N + 1` values), 1D or in the shape of ``data``. See
+        :py:meth:`earthkit.meteo.vertical.array.vertical_integral_pressure` for details.
+    vertical_dim : int, default=0
+        Axis corresponding to the vertical coordinate in ``data`` and in ``p``.
+
+    Returns
+    -------
+    array-like
+        The vertically integrated data. The shape is the shape of ``data`` with the
+        vertical axis removed.
+
+    Raises
+    ------
+    ValueError
+        If the number of vertical values or the shape of ``p`` are inconsistent with
+        ``data``.
+
+    See Also
+    --------
+    vertical_integral_height
+    pressure_on_hybrid_levels
+
+
+    Notes
+    -----
+    See :py:meth:`earthkit.meteo.vertical.array.vertical_integral_pressure` for the
+    details of the integration schemes and for the hydrostatic assumption the
+    :math:`1/g` form relies on.
+
+
+    Implementations
+    ---------------
+    :func:`vertical_integral_pressure` calls the following implementation:
+
+    - :py:meth:`earthkit.meteo.vertical.array.vertical_integral_pressure` for array-like
+
+    Currently only array-like input is supported.
+    """
+    return dispatch(vertical_integral_pressure, xarray=False, fieldlist=False, array=True)(data, p, vertical_dim)
+
+
+@overload
+def vertical_integral_height(
+    data: "ArrayLike", h: "ArrayLike", rho: "ArrayLike | None" = None, vertical_dim: int = 0
+) -> "ArrayLike": ...
+
+
+def vertical_integral_height(
+    data: "ArrayLike", h: "ArrayLike", rho: "ArrayLike | None" = None, vertical_dim: int = 0
+) -> "ArrayLike":
+    r"""Integrate data over geometric height.
+
+    *New in version 1.4.0*
+
+    Computes the integral of ``data`` along the axis defined by ``vertical_dim``, without
+    ``rho``:
+
+    .. math::
+
+        I = \int_{z_{bot}}^{z_{top}} f \, dz
+
+    and with ``rho`` the mass-weighted integral :math:`\int \rho f \, dz`, where
+    :math:`f` are the data values, :math:`z` is the geometric height (m) and
+    :math:`\rho` is the air density (kg m-3). All quantities are in SI units.
+
+    Parameters
+    ----------
+    data : array-like
+        Data to be integrated. The axis corresponding to the vertical coordinate is
+        defined by ``vertical_dim``.
+    h : array-like
+        Geometric height (m) on the data levels (:math:`N` values along the vertical) or
+        on the layer interfaces (:math:`N + 1` values), 1D or in the shape of ``data``.
+        See :py:meth:`earthkit.meteo.vertical.array.vertical_integral_height` for details.
+    rho : array-like | None
+        Air density (kg m-3) on the data levels. When None (default) the plain integral
+        over height is computed.
+    vertical_dim : int, default=0
+        Axis corresponding to the vertical coordinate in ``data``, ``h`` and ``rho``.
+
+    Returns
+    -------
+    array-like
+        The vertically integrated data. The shape is the shape of ``data`` with the
+        vertical axis removed.
+
+    Raises
+    ------
+    ValueError
+        If the number of vertical values or the shape of ``h`` and ``rho`` are
+        inconsistent with ``data``.
+
+    See Also
+    --------
+    vertical_integral_pressure
+
+
+    Notes
+    -----
+    See :py:meth:`earthkit.meteo.vertical.array.vertical_integral_height` for the details
+    of the integration schemes. No hydrostatic assumption is made.
+
+
+    Implementations
+    ---------------
+    :func:`vertical_integral_height` calls the following implementation:
+
+    - :py:meth:`earthkit.meteo.vertical.array.vertical_integral_height` for array-like
+
+    Currently only array-like input is supported.
+    """
+    return dispatch(vertical_integral_height, xarray=False, fieldlist=False, array=True)(data, h, rho, vertical_dim)

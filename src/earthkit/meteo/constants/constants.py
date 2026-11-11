@@ -35,6 +35,10 @@ c_pv = 1846.1
 r"""Specific heat of water vapour on constant pressure [:math:`J kg^{-1} K^{-1}`].
 See [IFS-CY47R3-PhysicalProcesses]_ (Chapter 12)."""
 
+c_l = 4218.0
+r"""Specific heat of liquid water [:math:`J kg^{-1} K^{-1}`].
+See [IFS-CY47R3-PhysicalProcesses]_ (Chapter 12)."""
+
 Lv = 2.5008e6
 r"""Latent heat of vapourisation [:math:`J kg^{-1}`]."""
 
@@ -71,6 +75,10 @@ Defined as :math:`\frac{2\pi\times 365.25\times solar\_day}{6.283076}`."""
 sideral_day = solar_day / (1.0 + solar_day / sideral_year)
 r"""Length of the sideral day [:math:`s`].
 Defined as :math:`\frac{solar\_day}{1 + \frac{solar\_day}{sideral\_year}}`."""
+
+standard_lapse_rate = 0.0065
+r"""Standard atmosphere temperature lapse rate in the troposphere [:math:`K m^{-1}`].
+ Used e.g. in the extrapolation of temperature and geopotential below the surface."""
 
 omega = 2.0 * np.pi / sideral_day
 r"""Rotation rate of the Earth [:math:`s^{-1}`].
