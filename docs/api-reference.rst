@@ -8,6 +8,7 @@ and classes in `earthkit-meteo`.
 - :doc:`autoapi/earthkit/meteo/constants/index`
 - :doc:`autoapi/earthkit/meteo/extreme/index`
 - :doc:`autoapi/earthkit/meteo/lunar/index`
+- :doc:`autoapi/earthkit/meteo/radiation/index`
 - :doc:`autoapi/earthkit/meteo/regimes/index`
 - :doc:`autoapi/earthkit/meteo/score/index`
 - :doc:`autoapi/earthkit/meteo/solar/index`
