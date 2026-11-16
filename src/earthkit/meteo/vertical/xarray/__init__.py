@@ -11,5 +11,6 @@
 Vertical computation functions operating on xarray objects.
 """
 
+from .integral import *  # noqa
 from .interpolation import *  # noqa
 from .vertical import *  # noqa

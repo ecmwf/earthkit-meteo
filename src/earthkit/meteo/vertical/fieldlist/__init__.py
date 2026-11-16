@@ -11,4 +11,5 @@
 Vertical computation functions operating on earthkit.data FieldList objects.
 """
 
+from .integral import *  # noqa
 from .vertical import *  # noqa
