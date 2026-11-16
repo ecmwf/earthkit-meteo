@@ -275,6 +275,7 @@ def windrose(
     sectors: int = 16,
     speed_bins: ArrayLike | None = None,
     percent: bool = True,
+    sectors_start: float | None = None,
 ) -> tuple[ArrayLike, ArrayLike]:
     """Generate windrose data.
 
@@ -293,6 +294,9 @@ def windrose(
         If False, returns the number of valid samples in each bin. If True, returns
         the percentage of the number of samples in each bin with respect to the total
         number of valid samples.
+    sectors_start: float | None
+        The starting angle of the first sector (degrees). If None, the first sector does not start
+        at 0 degrees (North) but is shifted by half a sector size.
 
 
     Returns
@@ -309,8 +313,8 @@ def windrose(
     Notes
     -----
     The ``sectors`` parameter defines the number of direction bins in 360
-    degrees. The sectors do not start at 0 degrees (North) but are shifted by
-    half a sector size.
+    degrees. If ``sectors_start`` is not provided, then the sectors start at
+    0 degrees (North) shifted by half a sector size.
     E.g. if ``sectors`` is 4 the sectors are defined as:
 
     .. image:: /_static/wind_sector.png
@@ -334,14 +338,20 @@ def windrose(
     device = xp.device(speed)
 
     dir_step = 360.0 / sectors
+    sectors_start = -dir_step / 2 if sectors_start is None else sectors_start
+    sectors_end = 360.0 + sectors_start + dir_step
     dir_bins = xp.linspace(
-        -dir_step / 2,
-        360 + dir_step / 2,
+        sectors_start,
+        sectors_end,
         sectors + 2,
         dtype=speed.dtype,
         device=device,
     )
     speed_bins = xp.asarray(speed_bins, dtype=speed.dtype, device=device)
+
+    # If there speed array only contains NaN values, return a histogram filled with NaNs
+    if xp.all(xp.isnan(speed)):
+        return xp.full((len(speed_bins) - 1, sectors), xp.nan), dir_bins[:-1]
 
     # NOTE: np.histogram2d is only available in numpy. For other namespaces we use a fallback implementation
     # based on histogramdd. (See utils.compute.histogram2d). However, neither histogram2d nor

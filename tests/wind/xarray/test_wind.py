@@ -214,7 +214,7 @@ def test_xr_coriolis(lat, v_ref):
 
 
 @pytest.mark.parametrize(
-    "sp,d,sectors,sp_bins,percent,v_ref,dir_bin_ref",
+    "sp,d,sectors,sp_bins,percent,sectors_start,v_ref,dir_bin_ref",
     [
         (
             [3.5, 1, 1.1, 2.1, 0.1, 0.0, 2.4, 1.9, 1.7, 3.9, 3.1, 2.1, np.nan, np.nan],
@@ -237,6 +237,7 @@ def test_xr_coriolis(lat, v_ref):
             6,
             [0, 1, 2, 3, 4],
             False,
+            None,
             [
                 [
                     0.0000000000,
@@ -302,6 +303,7 @@ def test_xr_coriolis(lat, v_ref):
             6,
             [0, 1, 2, 3, 4],
             True,
+            None,
             np.array([
                 [
                     0.0000000000,
@@ -354,6 +356,7 @@ def test_xr_coriolis(lat, v_ref):
             6,
             [0, 5],
             False,
+            None,
             [[0, 0, 1, 0, 0, 0]],
             [
                 -30.0000000000,
@@ -365,11 +368,33 @@ def test_xr_coriolis(lat, v_ref):
                 330.0000000000,
             ],
         ),
-        (3.4, 90.01, 1, [0, 5], False, [[1]], [-180.0000000000, 180.0000000000]),
+        (3.4, 90.01, 1, [0, 5], False, None, [[1]], [-180.0000000000, 180.0000000000]),
+        (
+            [np.nan, np.nan],
+            [11.3, 348.6],
+            8,
+            [0, 10],
+            False,
+            None,
+            np.full((1, 8), np.nan),
+            [-22.5 + 45.0 * i for i in range(9)],
+        ),
+        (
+            [1.0, 1.0, 1.0],
+            [11.3, 150, 360],
+            8,
+            [0, 10],
+            False,
+            0.0,
+            [[2, 0, 0, 1, 0, 0, 0, 0]],
+            np.linspace(0, 360, 9),
+        ),
     ],
 )
-def test_xr_windrose(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref):
-    hist, dir_bins = wind.windrose(_da(sp), _da(d), sectors=sectors, speed_bins=sp_bins, percent=percent)
+def test_xr_windrose(sp, d, sectors, sp_bins, percent, sectors_start, v_ref, dir_bin_ref):
+    hist, dir_bins = wind.windrose(
+        _da(sp), _da(d), sectors=sectors, speed_bins=sp_bins, percent=percent, sectors_start=sectors_start
+    )
 
     assert hist.dims == ("speed_bin", "direction_bin")
     assert dir_bins.dims == ("direction_bin_edge",)

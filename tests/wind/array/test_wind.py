@@ -215,7 +215,7 @@ def test_coriolis(lat, v_ref, xp, device):
     ),
 )
 @pytest.mark.parametrize(
-    "sp,d,sectors,sp_bins,percent,v_ref,dir_bin_ref",
+    "sp,d,sectors,sp_bins,percent,sectors_start,v_ref,dir_bin_ref",
     [
         (
             [3.5, 1, 1.1, 2.1, 0.1, 0.0, 2.4, 1.9, 1.7, 3.9, 3.1, 2.1, np.nan, np.nan],
@@ -238,6 +238,7 @@ def test_coriolis(lat, v_ref, xp, device):
             6,
             [0, 1, 2, 3, 4],
             False,
+            None,
             [
                 [
                     0.0000000000,
@@ -303,6 +304,7 @@ def test_coriolis(lat, v_ref, xp, device):
             6,
             [0, 1, 2, 3, 4],
             True,
+            None,
             np.array([
                 [
                     0.0000000000,
@@ -355,6 +357,7 @@ def test_coriolis(lat, v_ref, xp, device):
             6,
             [0, 5],
             False,
+            None,
             [[0, 0, 1, 0, 0, 0]],
             [
                 -30.0000000000,
@@ -366,13 +369,14 @@ def test_coriolis(lat, v_ref, xp, device):
                 330.0000000000,
             ],
         ),
-        (3.4, 90.01, 1, [0, 5], False, [[1]], [-180.0000000000, 180.0000000000]),
+        (3.4, 90.01, 1, [0, 5], False, None, [[1]], [-180.0000000000, 180.0000000000]),
         (
             [1.0, 1.0],
             [11.3, 348.6],
             16,
             [0, 10],
             False,
+            None,
             [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]],
             [-11.25 + 22.5 * i for i in range(17)],
         ),
@@ -382,17 +386,38 @@ def test_coriolis(lat, v_ref, xp, device):
             8,
             [0, 10],
             False,
+            None,
             [[0, 1, 0, 0, 0, 0, 0, 0]],
             [-22.5 + 45.0 * i for i in range(9)],
         ),
+        (
+            [np.nan, np.nan],
+            [11.3, 348.6],
+            8,
+            [0, 10],
+            False,
+            None,
+            np.full((1, 8), np.nan),
+            [-22.5 + 45.0 * i for i in range(9)],
+        ),
+        (
+            [1.0, 1.0, 1.0],
+            [11.3, 150, 360],
+            8,
+            [0, 10],
+            False,
+            0.0,
+            [[2, 0, 0, 1, 0, 0, 0, 0]],
+            np.linspace(0, 360, 9),
+        ),
     ],
 )
-def test_windrose_1(sp, d, sectors, sp_bins, percent, v_ref, dir_bin_ref, xp, device):
+def test_windrose_1(sp, d, sectors, sp_bins, percent, sectors_start, v_ref, dir_bin_ref, xp, device):
     sp, d, sp_bins, v_ref, dir_bin_ref = (xp.asarray(x, device=device) for x in [sp, d, sp_bins, v_ref, dir_bin_ref])
 
     dir_bin_ref = xp.astype(dir_bin_ref, sp.dtype)
 
-    r = wind.windrose(sp, d, sectors=sectors, speed_bins=sp_bins, percent=percent)
+    r = wind.windrose(sp, d, sectors=sectors, speed_bins=sp_bins, percent=percent, sectors_start=sectors_start)
 
     dir_bin_ref = xp.astype(dir_bin_ref, r[0].dtype)
     v_ref = xp.astype(v_ref, r[1].dtype)
