@@ -1187,6 +1187,18 @@ class _EptCompIfs(_EptComp):
     def is_mixing_ratio_based(self):
         return False
 
+    def compute_wbpt(self, ept):
+        xp = array_namespace(ept)
+        t0 = 273.16
+        x = ept / t0
+        # Davies-Jones (2008) Eq (3.8) with the coefficients refitted to the IFS
+        # equivalent potential temperature (issue 232). The fit is valid for
+        # theta-w about -70 .. +55 degC with a max error of about 0.04 K
+        # against the exact solution (the "newton" method) in -40 .. +40 degC.
+        a = [6.0904145536638055, -17.392501234747346, 12.263421054764812, 3.8185883578792397, -4.806272830221761]
+        b = [1.0, -3.3895337568994055, 3.425322743484435, -0.5114885199723536, -0.5390661911083696]
+        return ept - xp.exp(xp.polyval(x, a) / xp.polyval(x, b))
+
     def _ept(self, ths):
         xp = ths.ns
         th = potential_temperature(ths.t, ths.p)
@@ -1693,7 +1705,8 @@ def wet_bulb_potential_temperature_from_dewpoint(
         Specifies the method to find the temperature along the moist adiabat defined
         by the equivalent potential temperature. The possible values are as follows:
 
-        * "direct": the rational formula defined by Eq (3.8) in [DaviesJones2008]_ is used
+        * "direct": the rational formula defined by Eq (3.8) in [DaviesJones2008]_ is used. For ``ept_method`` = "ifs"
+          the coefficients of the formula were refitted to the IFS equivalent potential temperature.
         * "bisect": :func:`temperature_on_moist_adiabat` with ``t_method`` = "bisect" is used
         * "newton": :func:`temperature_on_moist_adiabat` with ``t_method`` = "newton" is used
 
@@ -1743,7 +1756,8 @@ def wet_bulb_potential_temperature_from_specific_humidity(
         Specifies the method to find the temperature along the moist adiabat
         defined by the equivalent potential temperature. The possible values are as follows:
 
-        * "direct": the rational formula defined by Eq (3.8) in [DaviesJones2008]_ is used
+        * "direct": the rational formula defined by Eq (3.8) in [DaviesJones2008]_ is used. For ``ept_method`` = "ifs"
+          the coefficients of the formula were refitted to the IFS equivalent potential temperature.
         * "bisect": :func:`temperature_on_moist_adiabat` with ``t_method`` = "bisect" is used
         * "newton": :func:`temperature_on_moist_adiabat` with ``t_method`` = "newton" is used
 

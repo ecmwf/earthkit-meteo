@@ -1056,6 +1056,108 @@ def test_wet_bulb_potential_temperature(ept_method, t_method, xp, device):
     assert xp.allclose(pt, v_ref, rtol=1e-03, atol=0, equal_nan=True), f"q {ept_method=} {t_method=}"
 
 
+def _wbpt_grid(xp, device, dtype):
+    """Build a dense grid of saturated to near saturated, physically sensible states.
+
+    For each pressure level the temperature is sampled every 0.25 K within a range which
+    results in a wet bulb potential temperature of about -40 .. +45 degC, and the relative
+    humidity is varied between 90 and 100 %.
+
+    Returns
+    -------
+    tuple
+        The grid as (t, td, q, p), where all the arrays have the same shape and
+        the ``dtype`` type.
+    """
+    levels = [
+        (100000.0, -40.0, 45.0),
+        (85000.0, -40.0, 40.0),
+        (70000.0, -45.0, 30.0),
+        (50000.0, -55.0, 15.0),
+    ]
+
+    t, td, p = [], [], []
+    for pp, lo, hi in levels:
+        tt = np.arange(lo, hi + 1e-9, 0.25) + 273.15
+        for r in (100.0, 98.0, 95.0, 90.0):
+            dd = np.asarray(thermo.array.dewpoint_from_relative_humidity(tt, np.full_like(tt, r)))
+            keep = np.isfinite(dd) & (dd <= tt)
+            t.append(tt[keep])
+            td.append(dd[keep])
+            p.append(np.full(int(keep.sum()), pp))
+
+    t, td, p = np.concatenate(t), np.concatenate(td), np.concatenate(p)
+    q = np.asarray(thermo.array.specific_humidity_from_dewpoint(td, p))
+
+    return tuple(xp.asarray(v.astype(dtype), device=device) for v in (t, td, q, p))
+
+
+def _wbpt_calls(td, q):
+    """The wet bulb potential temperature functions paired with their humidity input."""
+    return (
+        (thermo.array.wet_bulb_potential_temperature_from_dewpoint, td),
+        (thermo.array.wet_bulb_potential_temperature_from_specific_humidity, q),
+    )
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
+def test_wet_bulb_potential_temperature_direct_vs_bisect(ept_method, xp, device):
+    # Regression test for issue 232: with ept_method="ifs" the rational formula used by
+    # t_method="direct" had to be refitted to the IFS equivalent potential temperature.
+    # The tolerance is 0.15 K because the bisect solver itself deviates from the newton
+    # one by about 0.1 K.
+    atol = 0.15
+
+    # the cases reported in issue 232
+    t = xp.asarray([303.15, 293.15, 288.15], device=device)
+    td = xp.asarray([300.15, 290.15, 286.15], device=device)
+    p = xp.asarray([1e5, 85000.0, 85000.0], device=device)
+    q = thermo.array.specific_humidity_from_dewpoint(td, p)
+
+    for f, hum in _wbpt_calls(td, q):
+        d = f(t, hum, p, ept_method=ept_method, t_method="direct")
+        b = f(t, hum, p, ept_method=ept_method, t_method="bisect")
+        assert xp.allclose(d, b, rtol=0, atol=atol), f"{ept_method=} {f.__name__}"
+
+    if ept_method == "ifs":
+        # the defaults are ept_method="ifs" and t_method="direct", so they must also be accurate
+        for f, hum in _wbpt_calls(td, q):
+            assert xp.allclose(f(t, hum, p), f(t, hum, p, t_method="bisect"), rtol=0, atol=atol), (
+                f"default {f.__name__}"
+            )
+
+    # Dense grid of near saturated states. The theta-w range checked for each method is the
+    # range its coefficients are fitted for. The coefficients used by bolton35 and bolton39
+    # are the ones defined by Davies-Jones (2008) for the Bolton theta-e: they deviate from
+    # the iterative solution by up to ~0.37 K below theta-w = 0 degC. This is a pre-existing
+    # limitation, out of the scope of issue 232, so only the warm part is checked for these
+    # methods. The coefficients used by "ifs" were refitted to the IFS theta-e and are valid
+    # for theta-w of about -70 .. +55 degC, hence the whole range is checked.
+    bands = {"ifs": (-40.0, 40.0), "bolton35": (0.0, 40.0), "bolton39": (0.0, 40.0)}
+    lo, hi = bands[ept_method]
+
+    # float32 does not need a looser tolerance: the coefficients of the rational formula are
+    # floats, so it is evaluated in float64 even for float32 inputs, and the bisect solver is
+    # also much better than 0.15 K in float32. The largest deviation over the grid is the same
+    # as in float64 (0.11 K for "ifs" and ~0.09/0.05 K for the Bolton methods in their range).
+    for dtype in (xp.float64, xp.float32):
+        t, td, q, p = _wbpt_grid(xp, device, dtype)
+
+        for f, hum in _wbpt_calls(td, q):
+            b = f(t, hum, p, ept_method=ept_method, t_method="bisect")
+            d = f(t, hum, p, ept_method=ept_method, t_method="direct")
+
+            # skip the points outside the range and the ones the solver could not compute
+            keep = xp.isfinite(b) & xp.isfinite(d) & (b > lo + 273.15) & (b < hi + 273.15)
+            assert int(xp.sum(keep)) > 1000, f"{ept_method=} {dtype=} {f.__name__}"
+
+            zero = xp.zeros_like(d)
+            got = xp.where(keep, d, zero)
+            ref = xp.where(keep, b, zero)
+            assert xp.allclose(got, ref, rtol=0, atol=atol), f"{ept_method=} {dtype=} {f.__name__}"
+
+
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "q,v_ref",
