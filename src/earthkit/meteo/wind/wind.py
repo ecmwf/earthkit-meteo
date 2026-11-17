@@ -475,6 +475,7 @@ def windrose(
     sectors: int = 16,
     speed_bins: Iterable[float] | None = None,
     percent: bool = True,
+    sectors_start: float | None = None,
 ) -> tuple["ArrayLike", "ArrayLike"]: ...
 
 
@@ -485,6 +486,7 @@ def windrose(
     sectors: int = 16,
     speed_bins: Iterable[float] | None = None,
     percent: bool = True,
+    sectors_start: float | None = None,
 ) -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
 
 
