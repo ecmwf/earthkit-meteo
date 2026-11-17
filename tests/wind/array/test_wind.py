@@ -410,6 +410,56 @@ def test_coriolis(lat, v_ref, xp, device):
             [[2, 0, 0, 1, 0, 0, 0, 0]],
             np.linspace(0, 360, 9),
         ),
+        (
+            [1.0, 1.0, 1.0, 1.0, 1.0],
+            [5, 11.3, 150, 350, 360],
+            8,
+            [0, 10],
+            False,
+            10,
+            [[1, 0, 0, 1, 0, 0, 0, 3]],
+            np.linspace(10, 370, 9),
+        ),
+        (
+            [1.0, 1.0, 1.0, 1.0, 1.0],
+            [5, 11.3, 150, 350, 360],
+            8,
+            [0, 10],
+            False,
+            22.5,
+            [[0, 0, 1, 0, 0, 0, 0, 4]],
+            np.linspace(22.5, 382.5, 9),
+        ),
+        (
+            [1.0, 1.0, 1.0, 1.0, 1.0],
+            [5, 11.3, 150, 350, 360],
+            8,
+            [0, 10],
+            False,
+            -50,
+            [[1, 3, 0, 0, 1, 0, 0, 0]],
+            np.linspace(-50, 310, 9),
+        ),
+        (
+            [1.0, 1.0, 1.0, 1.0, 1.0],
+            [5, 11.3, 150, 350, 360],
+            8,
+            [0, 10],
+            False,
+            360,
+            [[3, 0, 0, 1, 0, 0, 0, 1]],
+            np.linspace(360, 720, 9),
+        ),
+        (
+            [1.0, 1.0, 1.0, 1.0, 1.0],
+            [5, 11.3, 150, 350, 360],
+            8,
+            [0, 10],
+            False,
+            -359,
+            [[2, 0, 0, 1, 0, 0, 0, 2]],
+            np.linspace(-359, 1, 9),
+        ),
     ],
 )
 def test_windrose_1(sp, d, sectors, sp_bins, percent, sectors_start, v_ref, dir_bin_ref, xp, device):
@@ -438,3 +488,12 @@ def test_windrose_invalid(sp, d, sectors, sp_bins, xp, device):
 
     with pytest.raises(ValueError):
         wind.windrose(sp, d, sectors=sectors, speed_bins=sp_bins, percent=False)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("sectors_start", [-360, 400])
+def test_windrose_invalid_sectors_start(sectors_start, xp, device):
+    sp, d = xp.asarray(3.4, device=device), xp.asarray(90.01, device=device)
+
+    with pytest.raises(ValueError):
+        wind.windrose(sp, d, sectors=8, speed_bins=xp.asarray([0, 5]), percent=False, sectors_start=sectors_start)

@@ -296,7 +296,7 @@ def windrose(
         number of valid samples.
     sectors_start: float | None
         The starting angle of the first sector (degrees). If None, the first sector does not start
-        at 0 degrees (North) but is shifted by half a sector size.
+        at 0 degrees (North) but is shifted by half a sector size. Must be greater than -360 and at most 360.
 
 
     Returns
@@ -339,19 +339,19 @@ def windrose(
 
     dir_step = 360.0 / sectors
     sectors_start = -dir_step / 2 if sectors_start is None else sectors_start
-    sectors_end = 360.0 + sectors_start + dir_step
-    dir_bins = xp.linspace(
-        sectors_start,
-        sectors_end,
-        sectors + 2,
-        dtype=speed.dtype,
-        device=device,
-    )
+    if not -360 < sectors_start <= 360:
+        raise ValueError("windrose(): sectors_start must be greater than -360 and at most 360!")
+
+    dir_bins = xp.linspace(sectors_start, sectors_start + 360.0, sectors + 1, dtype=speed.dtype, device=device)
     speed_bins = xp.asarray(speed_bins, dtype=speed.dtype, device=device)
 
     # If there speed array only contains NaN values, return a histogram filled with NaNs
     if xp.all(xp.isnan(speed)):
-        return xp.full((len(speed_bins) - 1, sectors), xp.nan), dir_bins[:-1]
+        return xp.full((len(speed_bins) - 1, sectors), xp.nan), dir_bins
+
+    # wrap the directions into [sectors_start, sectors_start + 360)
+    direction = xp.where(direction < sectors_start, direction + 360.0, direction)
+    direction = xp.where(direction >= sectors_start + 360.0, direction - 360.0, direction)
 
     # NOTE: np.histogram2d is only available in numpy. For other namespaces we use a fallback implementation
     # based on histogramdd. (See utils.compute.histogram2d). However, neither histogram2d nor
@@ -361,10 +361,5 @@ def windrose(
         direction,
         bins=[speed_bins, dir_bins],
     )[0]
-
-    # unify the north bins
-    res[:, 0] = res[:, 0] + res[:, -1]
-    res = res[:, :-1]
-    dir_bins = dir_bins[:-1]
 
     return ((res * 100.0 / res.sum()) if percent else res), dir_bins

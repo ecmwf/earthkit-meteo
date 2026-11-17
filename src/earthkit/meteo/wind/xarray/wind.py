@@ -254,7 +254,7 @@ def windrose(
         number of valid samples.
     sectors_start: float | None
         The starting angle of the first sector (degrees). If None, the first sector does not start
-        at 0 degrees (North) but is shifted by half a sector size.
+        at 0 degrees (North) but is shifted by half a sector size. Must be greater than -360 and at most 360.
 
     Returns
     -------
