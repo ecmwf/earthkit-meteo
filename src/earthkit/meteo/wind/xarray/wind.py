@@ -233,6 +233,7 @@ def windrose(
     sectors: int = 16,
     speed_bins: Iterable[float] | None = None,
     percent: bool = True,
+    sectors_start: float | None = None,
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """Generate windrose data.
 
@@ -251,6 +252,9 @@ def windrose(
         If False, returns the number of valid samples in each bin. If True, returns
         the percentage of the number of samples in each bin with respect to the total
         number of valid samples.
+    sectors_start: float | None
+        The starting angle of the first sector (degrees). If None, the first sector does not start
+        at 0 degrees (North) but is shifted by half a sector size. Must be at least -180 and less than 180.
 
     Returns
     -------
@@ -265,8 +269,8 @@ def windrose(
     Notes
     -----
     The ``sectors`` parameter defines the number of direction bins in 360
-    degrees. The sectors do not start at 0 degrees (North) but are shifted by
-    half a sector size.
+    degrees. If ``sectors_start`` is not provided, then the sectors start at
+    0 degrees (North) shifted by half a sector size.
     E.g. if ``sectors`` is 4 the sectors are defined as:
 
     .. image:: /_static/wind_sector.png
@@ -285,6 +289,7 @@ def windrose(
         sectors=sectors,
         speed_bins=speed_bins,
         percent=percent,
+        sectors_start=sectors_start,
     )
 
     speed_bins = np.asarray(speed_bins, dtype=res.dtype)

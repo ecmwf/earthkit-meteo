@@ -275,6 +275,7 @@ def windrose(
     sectors: int = 16,
     speed_bins: ArrayLike | None = None,
     percent: bool = True,
+    sectors_start: float | None = None,
 ) -> tuple[ArrayLike, ArrayLike]:
     """Generate windrose data.
 
@@ -293,6 +294,9 @@ def windrose(
         If False, returns the number of valid samples in each bin. If True, returns
         the percentage of the number of samples in each bin with respect to the total
         number of valid samples.
+    sectors_start: float | None
+        The starting angle of the first sector (degrees). If None, the first sector does not start
+        at 0 degrees (North) but is shifted by half a sector size. Must be at least -180 and less than 180.
 
 
     Returns
@@ -309,8 +313,8 @@ def windrose(
     Notes
     -----
     The ``sectors`` parameter defines the number of direction bins in 360
-    degrees. The sectors do not start at 0 degrees (North) but are shifted by
-    half a sector size.
+    degrees. If ``sectors_start`` is not provided, then the sectors start at
+    0 degrees (North) shifted by half a sector size.
     E.g. if ``sectors`` is 4 the sectors are defined as:
 
     .. image:: /_static/wind_sector.png
@@ -334,14 +338,20 @@ def windrose(
     device = xp.device(speed)
 
     dir_step = 360.0 / sectors
-    dir_bins = xp.linspace(
-        -dir_step / 2,
-        360 + dir_step / 2,
-        sectors + 2,
-        dtype=speed.dtype,
-        device=device,
-    )
+    sectors_start = -dir_step / 2 if sectors_start is None else sectors_start
+    if not -180 <= sectors_start < 180:
+        raise ValueError("windrose(): sectors_start must be at least -180 and less than 180!")
+
+    dir_bins = xp.linspace(sectors_start, sectors_start + 360.0, sectors + 1, dtype=speed.dtype, device=device)
     speed_bins = xp.asarray(speed_bins, dtype=speed.dtype, device=device)
+
+    # If there speed array only contains NaN values, return a histogram filled with NaNs
+    if xp.all(xp.isnan(speed)):
+        return xp.full((len(speed_bins) - 1, sectors), xp.nan, dtype=speed.dtype, device=device), dir_bins
+
+    # wrap the directions into [sectors_start, sectors_start + 360)
+    direction = xp.where(direction < sectors_start, direction + 360.0, direction)
+    direction = xp.where(direction >= sectors_start + 360.0, direction - 360.0, direction)
 
     # NOTE: np.histogram2d is only available in numpy. For other namespaces we use a fallback implementation
     # based on histogramdd. (See utils.compute.histogram2d). However, neither histogram2d nor
@@ -351,10 +361,5 @@ def windrose(
         direction,
         bins=[speed_bins, dir_bins],
     )[0]
-
-    # unify the north bins
-    res[:, 0] = res[:, 0] + res[:, -1]
-    res = res[:, :-1]
-    dir_bins = dir_bins[:-1]
 
     return ((res * 100.0 / res.sum()) if percent else res), dir_bins

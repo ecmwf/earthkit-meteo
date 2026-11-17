@@ -475,6 +475,7 @@ def windrose(
     sectors: int = 16,
     speed_bins: Iterable[float] | None = None,
     percent: bool = True,
+    sectors_start: float | None = None,
 ) -> tuple["ArrayLike", "ArrayLike"]: ...
 
 
@@ -485,6 +486,7 @@ def windrose(
     sectors: int = 16,
     speed_bins: Iterable[float] | None = None,
     percent: bool = True,
+    sectors_start: float | None = None,
 ) -> tuple["xarray.DataArray", "xarray.DataArray"]: ...
 
 
@@ -494,6 +496,7 @@ def windrose(
     sectors: int = 16,
     speed_bins: Iterable[float] | None = None,
     percent: bool = True,
+    sectors_start: float | None = None,
 ) -> tuple[
     "ArrayLike" | "xarray.DataArray",
     "ArrayLike" | "xarray.DataArray",
@@ -512,6 +515,9 @@ def windrose(
         Speed bins. Must contain at least two values.
     percent : bool, optional
         If True, return percentages. If False, return counts.
+    sectors_start : float | None, optional
+        The starting angle of the first sector (degrees). If None, the first sector does not start
+        at 0 degrees (North) but is shifted by half a sector size. Must be at least -180 and less than 180.
 
     Returns
     -------
@@ -533,4 +539,6 @@ def windrose(
 
     """
     dispatched = dispatch(windrose, fieldlist=False, array=True)
-    return dispatched(speed, direction, sectors=sectors, speed_bins=speed_bins, percent=percent)
+    return dispatched(
+        speed, direction, sectors=sectors, speed_bins=speed_bins, percent=percent, sectors_start=sectors_start
+    )
