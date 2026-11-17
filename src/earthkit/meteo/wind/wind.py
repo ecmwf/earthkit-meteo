@@ -515,7 +515,7 @@ def windrose(
         If True, return percentages. If False, return counts.
     sectors_start : float | None, optional
         The starting angle of the first sector (degrees). If None, the first sector does not start
-        at 0 degrees (North) but is shifted by half a sector size. Must be greater than -360 and at most 360.
+        at 0 degrees (North) but is shifted by half a sector size. Must be at least -180 and less than 180.
 
     Returns
     -------

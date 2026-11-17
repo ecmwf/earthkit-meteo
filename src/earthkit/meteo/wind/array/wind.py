@@ -296,7 +296,7 @@ def windrose(
         number of valid samples.
     sectors_start: float | None
         The starting angle of the first sector (degrees). If None, the first sector does not start
-        at 0 degrees (North) but is shifted by half a sector size. Must be greater than -360 and at most 360.
+        at 0 degrees (North) but is shifted by half a sector size. Must be at least -180 and less than 180.
 
 
     Returns
@@ -339,8 +339,8 @@ def windrose(
 
     dir_step = 360.0 / sectors
     sectors_start = -dir_step / 2 if sectors_start is None else sectors_start
-    if not -360 < sectors_start <= 360:
-        raise ValueError("windrose(): sectors_start must be greater than -360 and at most 360!")
+    if not -180 <= sectors_start < 180:
+        raise ValueError("windrose(): sectors_start must be at least -180 and less than 180!")
 
     dir_bins = xp.linspace(sectors_start, sectors_start + 360.0, sectors + 1, dtype=speed.dtype, device=device)
     speed_bins = xp.asarray(speed_bins, dtype=speed.dtype, device=device)

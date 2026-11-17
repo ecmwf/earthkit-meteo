@@ -446,9 +446,9 @@ def test_coriolis(lat, v_ref, xp, device):
             8,
             [0, 10],
             False,
-            360,
-            [[3, 0, 0, 1, 0, 0, 0, 1]],
-            np.linspace(360, 720, 9),
+            -180,
+            [[0, 0, 0, 1, 3, 0, 0, 1]],
+            np.linspace(-180, 180, 9),
         ),
         (
             [1.0, 1.0, 1.0, 1.0, 1.0],
@@ -456,9 +456,9 @@ def test_coriolis(lat, v_ref, xp, device):
             8,
             [0, 10],
             False,
-            -359,
-            [[2, 0, 0, 1, 0, 0, 0, 2]],
-            np.linspace(-359, 1, 9),
+            179,
+            [[0, 0, 0, 1, 3, 0, 0, 1]],
+            np.linspace(179, 539, 9),
         ),
     ],
 )
@@ -491,7 +491,7 @@ def test_windrose_invalid(sp, d, sectors, sp_bins, xp, device):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
-@pytest.mark.parametrize("sectors_start", [-360, 400])
+@pytest.mark.parametrize("sectors_start", [-180.5, 180, 360])
 def test_windrose_invalid_sectors_start(sectors_start, xp, device):
     sp, d = xp.asarray(3.4, device=device), xp.asarray(90.01, device=device)
 
