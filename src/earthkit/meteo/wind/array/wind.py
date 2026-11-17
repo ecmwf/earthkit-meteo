@@ -347,7 +347,7 @@ def windrose(
 
     # If there speed array only contains NaN values, return a histogram filled with NaNs
     if xp.all(xp.isnan(speed)):
-        return xp.full((len(speed_bins) - 1, sectors), xp.nan), dir_bins
+        return xp.full((len(speed_bins) - 1, sectors), xp.nan, dtype=speed.dtype, device=device), dir_bins
 
     # wrap the directions into [sectors_start, sectors_start + 360)
     direction = xp.where(direction < sectors_start, direction + 360.0, direction)
