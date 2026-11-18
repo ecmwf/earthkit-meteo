@@ -201,6 +201,47 @@ def test_lapse_rate_extrapolation_above_surface():
     assert_allclose(result.values, [(281.0 - T0) / 0.005])
 
 
+def test_lapse_rate_per_column():
+    # one rate per column; a non-positive or missing rate leaves the column undefined
+    cold = [270, 268, 266, 264, 262, 260, 255]
+    t, z = _profiles([cold] * 4)
+    lapse_rate = _column_values(0.0065, 0.005, 0.0, np.nan)
+
+    result = thermo.freezing_level(
+        t, z, t_sfc=_column_values(*[270.55] * 4), z_sfc=_column_values(*[200.0] * 4), lapse_rate=lapse_rate
+    )
+
+    assert_allclose(result.values, [200.0 - 2.6 / 0.0065, 200.0 - 2.6 / 0.005, np.nan, np.nan], rtol=1e-6)
+
+
+def test_snowfall_limit_lapse_rate_per_column():
+    # same columns as above, with the freezing-level threshold
+    cold = [270, 268, 266, 264, 262, 260, 255]
+    tw, z = _profiles([cold] * 4)
+    lapse_rate = _column_values(0.0065, 0.005, 0.0, np.nan)
+
+    result = thermo.snowfall_limit(
+        tw,
+        z,
+        tw_sfc=_column_values(*[270.55] * 4),
+        z_sfc=_column_values(*[200.0] * 4),
+        threshold=T0,
+        lapse_rate=lapse_rate,
+    )
+
+    assert_allclose(result.values, [200.0 - 2.6 / 0.0065, 200.0 - 2.6 / 0.005, np.nan, np.nan], rtol=1e-6)
+
+
+def test_lapse_rate_scalar_equals_constant_array():
+    t, z = _profiles([[270, 268, 266, 264, 262, 260, 255], [283, 280, 277, 274, 271, 268, 262]])
+    kwargs = dict(t_sfc=_column_values(271.0, 285.0), z_sfc=_column_values(0.0, 0.0))
+
+    scalar = thermo.freezing_level(t, z, lapse_rate=0.0065, **kwargs)
+    array = thermo.freezing_level(t, z, lapse_rate=_column_values(0.0065, 0.0065), **kwargs)
+
+    np.testing.assert_array_equal(scalar.values, array.values)
+
+
 def test_min_height():
     t, z = _profiles([[270, 268, 266, 264, 262, 260, 255], [283, 280, 277, 274, 271, 268, 262]])
     kwargs = dict(t_sfc=_column_values(265.0, 285.0), z_sfc=_column_values(0.0, 0.0), lapse_rate=0.0065)

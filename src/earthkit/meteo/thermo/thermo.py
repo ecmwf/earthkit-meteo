@@ -3322,7 +3322,7 @@ def freezing_level(
     t_sfc: "xarray.DataArray" | float | None = None,
     z_sfc: "xarray.DataArray" | float | None = None,
     threshold: float = constants.T_C2K,
-    lapse_rate: float | None = None,
+    lapse_rate: "xarray.DataArray" | float | None = None,
     min_height: float | None = None,
     vertical_dim: str = "z",
 ) -> "xarray.DataArray":
@@ -3350,12 +3350,14 @@ def freezing_level(
         together with ``t_sfc``.
     threshold: float, optional
         Temperature defining the freezing level (K). Defaults to 0 °C (273.15 K).
-    lapse_rate: float, optional
+    lapse_rate: xarray.DataArray or float, optional
         Rate at which the temperature decreases with height (K m-1), e.g. 0.0065.
         When given, columns without a crossing are extrapolated from the surface:
         :math:`z_{sfc} - (threshold - t_{sfc}) / lapse\_rate`. This lies below
         ``z_sfc`` when the column is colder than ``threshold`` everywhere. When not
-        given, these columns are NaN. Requires ``t_sfc`` and ``z_sfc``.
+        given, these columns are NaN. Requires ``t_sfc`` and ``z_sfc``. An array
+        gives one rate per column; columns where it is not positive or missing are
+        not extrapolated.
     min_height: float, optional
         Lower bound of the result (m). When not given, the result is not bounded.
     vertical_dim: str, optional
@@ -3397,7 +3399,7 @@ def snowfall_limit(
     tw_sfc: "xarray.DataArray" | float | None = None,
     z_sfc: "xarray.DataArray" | float | None = None,
     threshold: float = constants.T_C2K + 1.3,
-    lapse_rate: float | None = None,
+    lapse_rate: "xarray.DataArray" | float | None = None,
     min_height: float | None = None,
     vertical_dim: str = "z",
 ) -> "xarray.DataArray":
@@ -3426,12 +3428,14 @@ def snowfall_limit(
     threshold: float, optional
         Wet-bulb temperature defining the snowfall limit (K). Defaults to 1.3 °C
         (274.45 K).
-    lapse_rate: float, optional
+    lapse_rate: xarray.DataArray or float, optional
         Rate at which the wet-bulb temperature decreases with height (K m-1), e.g.
         0.005. When given, columns without a crossing are extrapolated from the
         surface: :math:`z_{sfc} - (threshold - tw_{sfc}) / lapse\_rate`. This lies
         below ``z_sfc`` when the column is colder than ``threshold`` everywhere. When
-        not given, these columns are NaN. Requires ``tw_sfc`` and ``z_sfc``.
+        not given, these columns are NaN. Requires ``tw_sfc`` and ``z_sfc``. An array
+        gives one rate per column; columns where it is not positive or missing are
+        not extrapolated.
     min_height: float, optional
         Lower bound of the result (m). When not given, the result is not bounded.
     vertical_dim: str, optional
