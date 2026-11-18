@@ -19,10 +19,10 @@ np.set_printoptions(formatter={"float_kind": "{:.10f}".format})
 pytestmark = pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
 
 
-def _da(values):
+def _da(values, dtype=None):
     import xarray as xr
 
-    return xr.DataArray(np.asarray(values))
+    return xr.DataArray(np.asarray(values, dtype=dtype))
 
 
 @pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
@@ -439,6 +439,18 @@ def test_xr_coriolis(lat, v_ref):
             [[0, 0, 0, 1, 3, 0, 0, 1]],
             np.linspace(179, 539, 9),
         ),
+        (
+            # 7 sectors: sectors_start is -360/14, which is not exactly representable. The
+            # sample at the wrap-around (sectors_start + 360) belongs to the first sector.
+            [1.0, 1.0, 1.0],
+            [334.2857142857143, 100.0, 200.0],
+            7,
+            [0, 10],
+            False,
+            None,
+            [[1, 0, 1, 0, 1, 0, 0]],
+            np.linspace(-360.0 / 14, 360.0 - 360.0 / 14, 8),
+        ),
     ],
 )
 def test_xr_windrose(sp, d, sectors, sp_bins, percent, sectors_start, v_ref, dir_bin_ref):
@@ -457,6 +469,62 @@ def test_xr_windrose(sp, d, sectors, sp_bins, percent, sectors_start, v_ref, dir
     )
     assert np.allclose(hist.values, np.asarray(v_ref), equal_nan=True, rtol=1e-04)
     assert np.allclose(dir_bins.values, np.asarray(dir_bin_ref), equal_nan=True, rtol=1e-04)
+
+
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
+@pytest.mark.parametrize("sectors", [5, 7, 11, 13, 22])
+@pytest.mark.parametrize("dtype", ["float64", "float32"])
+def test_xr_windrose_wrap_around(sectors, dtype):
+    # 0, 360 and sectors_start + 360 (e.g. 334.2857142857143 for 7 sectors, which is not exactly
+    # representable) are the same bearing and must be counted in the first sector instead of
+    # being dropped by the wrap-around.
+    step = 360.0 / sectors
+    start = -step / 2
+    sp = [5.0, 5.0, 5.0]
+    d = [start + 360.0, 0.0, 360.0]
+
+    hist, dir_bins = wind.windrose(_da(sp, dtype), _da(d, dtype), sectors=sectors, speed_bins=[0, 10], percent=False)
+
+    assert float(hist.sum()) == len(d)
+    assert hist.values[0].tolist() == [float(len(d))] + [0.0] * (sectors - 1)
+    assert np.allclose(dir_bins.values, np.linspace(start, start + 360.0, sectors + 1))
+
+    pct, _ = wind.windrose(_da(sp, dtype), _da(d, dtype), sectors=sectors, speed_bins=[0, 10], percent=True)
+    assert float(pct.sum()) == pytest.approx(100.0, rel=1e-4)
+
+    # the array implementation agrees
+    hist_array, _ = array_wind.windrose(
+        np.asarray(sp, dtype=dtype),
+        np.asarray(d, dtype=dtype),
+        sectors=sectors,
+        speed_bins=[0, 10],
+        percent=False,
+    )
+    assert np.allclose(hist.values, np.asarray(hist_array))
+
+
+@pytest.mark.skipif(NO_XARRAY, reason="xarray is not installed")
+@pytest.mark.parametrize("sectors", [7, 11])
+@pytest.mark.parametrize("sp_dtype,d_dtype", [("float32", "float64"), ("float64", "float32")])
+def test_xr_windrose_wrap_around_mixed_dtypes(sectors, sp_dtype, d_dtype):
+    # The direction bins are built in the dtype of the speed, so the directions are converted to it
+    # before they are wrapped. A sample at sectors_start + 360 provided with a wider dtype than the
+    # speed must not be dropped.
+    step = 360.0 / sectors
+    start = -step / 2
+    sp = _da([5.0, 5.0, 5.0], sp_dtype)
+    d = _da([start + 360.0, 0.0, 360.0], d_dtype)
+
+    hist, dir_bins = wind.windrose(sp, d, sectors=sectors, speed_bins=[0, 10], percent=False)
+    assert float(hist.sum()) == 3
+    assert np.allclose(dir_bins.values, np.linspace(start, start + 360.0, sectors + 1))
+
+    pct, _ = wind.windrose(sp, d, sectors=sectors, speed_bins=[0, 10], percent=True)
+    assert float(pct.sum()) == pytest.approx(100.0, rel=1e-4)
+
+    if sp_dtype == "float32":
+        # the bins are float32: 0, 360 and sectors_start + 360 are the same bearing
+        assert hist.values[0].tolist() == [3.0] + [0.0] * (sectors - 1)
 
 
 @pytest.mark.parametrize(
