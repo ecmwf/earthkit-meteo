@@ -285,40 +285,71 @@ def windrose(
         Speed
     direction : array-like
         Meteorological wind direction (degrees). See :func:`direction` for details.
-        Values must be between 0 and 360.
-    sectors: number
-        Number of sectors the 360 degrees direction range is split into. See below for details.
-    speed_bin: array-like
-        Speed bins
-    percent: bool
-        If False, returns the number of valid samples in each bin. If True, returns
-        the percentage of the number of samples in each bin with respect to the total
-        number of valid samples.
-    sectors_start: float | None
-        The starting angle of the first sector (degrees). If None, the first sector does not start
-        at 0 degrees (North) but is shifted by half a sector size. Must be at least -180 and less than 180.
+        Values are expected to be in the [0, 360] range, where 0 and 360 both
+        correspond to North. Values outside this range are wrapped into it,
+        e.g. -90 is treated as 270.
+    sectors : int, optional
+        Number of sectors the 360 degrees direction range is split into. Must be at
+        least 1. A non-integer value is truncated to an integer. See below for details.
+    speed_bins : array-like | None, optional
+        Speed bins. Must have at least 2 elements. Samples whose speed is outside the
+        [speed_bins[0], speed_bins[-1]] range are ignored.
+    percent : bool, optional
+        If False, returns the number of samples in each bin. If True, returns the
+        percentage of the samples in each bin with respect to the total number of
+        samples falling in the histogram.
+    sectors_start : float | None, optional
+        The starting angle of the first sector (degrees). Must be at least -180 and
+        less than 180. If None, the first sector does not start at 0 degrees (North)
+        but is centred on it, i.e. ``sectors_start`` is ``-(360 / sectors) / 2``.
+
+        .. versionadded:: 1.4.0
 
 
     Returns
     -------
     2d array-like
-       The bi-dimensional histogram of ``speed`` and ``direction``.  Values in
-       ``speed`` are histogrammed along the first dimension and values in ``direction``
-       are histogrammed along the second dimension.
+        The bi-dimensional histogram of ``speed`` and ``direction``.  Values in
+        ``speed`` are histogrammed along the first dimension and values in ``direction``
+        are histogrammed along the second dimension.
 
     array-like
-        The direction bins (i.e. the sectors) (degrees)
+        The direction bins (i.e. the sectors) (degrees). It contains ``sectors + 1``
+        bin edges, from ``sectors_start`` to ``sectors_start + 360``.
 
 
     Notes
     -----
     The ``sectors`` parameter defines the number of direction bins in 360
-    degrees. If ``sectors_start`` is not provided, then the sectors start at
-    0 degrees (North) shifted by half a sector size.
-    E.g. if ``sectors`` is 4 the sectors are defined as:
+    degrees. Any integer value of at least 1 is supported. The bins are evenly
+    spaced and cover the [``sectors_start``, ``sectors_start + 360``] range. If
+    ``sectors_start`` is not provided, then the sectors start at 0 degrees
+    (North) shifted by half a sector size, so the first sector is centred on
+    North and its lower edge is ``-(360 / sectors) / 2``.
+
+    Each direction is first wrapped into [``sectors_start``, ``sectors_start + 360``)
+    and then counted in the bin containing it. Bins are half open,
+    [``lower``, ``upper``), except the last one, which also includes its upper edge.
+    Since the wrapping happens first, a direction of ``sectors_start + 360`` belongs
+    to the first sector, like North.
+
+    E.g. if ``sectors`` is 4 and ``sectors_start`` is not provided, the sector edges
+    are -45, 45, 135, 225 and 315 degrees:
 
     .. image:: /_static/wind_sector.png
         :width: 350px
+
+    If ``sectors_start`` is 0 and ``sectors`` is 4, the sector edges are 0, 90, 180,
+    270 and 360 degrees:
+
+    .. image:: /_static/wind_sector_start0.png
+        :width: 350px
+
+    While if ``sectors`` is 3, which is also supported, and ``sectors_start`` is not
+    provided, they are -60, 60, 180 and 300 degrees.
+
+    Samples where either ``speed`` or ``direction`` is NaN are ignored. If all the
+    ``speed`` values are NaN, the histogram is filled with NaN.
 
     """
     speed_bins = speed_bins if speed_bins is not None else []
@@ -328,7 +359,7 @@ def windrose(
 
     sectors = int(sectors)
     if sectors < 1:
-        raise ValueError("windrose(): sectors must be greater than 1!")
+        raise ValueError("windrose(): sectors must be at least 1!")
 
     xp = array_namespace(speed, direction)
 
@@ -349,9 +380,30 @@ def windrose(
     if xp.all(xp.isnan(speed)):
         return xp.full((len(speed_bins) - 1, sectors), xp.nan, dtype=speed.dtype, device=device), dir_bins
 
-    # wrap the directions into [sectors_start, sectors_start + 360)
-    direction = xp.where(direction < sectors_start, direction + 360.0, direction)
-    direction = xp.where(direction >= sectors_start + 360.0, direction - 360.0, direction)
+    # Wrap the directions into [sectors_start, sectors_start + 360). When the bins are floating
+    # point, the directions are converted to the dtype of the bins (``speed.dtype``) and
+    # ``dir_bins[0]`` is used instead of ``sectors_start``, so that the shift is computed with the
+    # same float representation as the histogram edges: adding/subtracting 360 would place a
+    # direction at the wrap-around slightly below the first edge (whenever ``sectors_start + 360``
+    # is not exactly representable) and a direction with a wider dtype than the edges (e.g. a
+    # float64 direction with float32 speed) slightly above the last one. Either sample would be
+    # silently dropped by the histogram. With non floating point bins (e.g. an integer speed) a
+    # direction cannot be represented by the bins anyway, so the directions are left untouched:
+    # converting them would truncate them and turn a NaN direction into a value that is counted.
+    floating_bins = xp.isdtype(dir_bins.dtype, "real floating")
+    start = dir_bins[0] if floating_bins else sectors_start
+    if floating_bins:
+        direction = xp.asarray(direction, dtype=dir_bins.dtype, device=device)
+
+    wrapped = xp.remainder(direction - start, 360.0)
+    # Rounding may return exactly 360.0 for a direction just below the start. Such a sample is
+    # indistinguishable from ``sectors_start`` and belongs to the first sector.
+    direction = start + xp.where(wrapped >= 360.0, wrapped - 360.0, wrapped)
+    if floating_bins:
+        # As a safety net, keep every sample within the edges: rounding could place it just
+        # outside them, and the histogram would silently drop it. NaNs are left untouched by clip
+        # and are ignored by the histogram.
+        direction = xp.clip(direction, dir_bins[0], dir_bins[-1])
 
     # NOTE: np.histogram2d is only available in numpy. For other namespaces we use a fallback implementation
     # based on histogramdd. (See utils.compute.histogram2d). However, neither histogram2d nor

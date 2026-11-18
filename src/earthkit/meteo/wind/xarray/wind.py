@@ -243,38 +243,71 @@ def windrose(
         Speed
     direction : xarray.DataArray
         Meteorological wind direction (degrees). See :func:`earthkit.meteo.wind.direction` for details.
-        Values must be between 0 and 360.
-    sectors: number
-        Number of sectors the 360 degrees direction range is split into.
-    speed_bin: array-like
-        Speed bins
-    percent: bool
-        If False, returns the number of valid samples in each bin. If True, returns
-        the percentage of the number of samples in each bin with respect to the total
-        number of valid samples.
-    sectors_start: float | None
-        The starting angle of the first sector (degrees). If None, the first sector does not start
-        at 0 degrees (North) but is shifted by half a sector size. Must be at least -180 and less than 180.
+        Values are expected to be in the [0, 360] range, where 0 and 360 both
+        correspond to North. Values outside this range are wrapped into it,
+        e.g. -90 is treated as 270.
+    sectors : int, optional
+        Number of sectors the 360 degrees direction range is split into. Must be at
+        least 1. A non-integer value is truncated to an integer. See below for details.
+    speed_bins : Iterable[float] | None, optional
+        Speed bins. Must have at least 2 elements. Samples whose speed is outside the
+        [speed_bins[0], speed_bins[-1]] range are ignored.
+    percent : bool, optional
+        If False, returns the number of samples in each bin. If True, returns the
+        percentage of the samples in each bin with respect to the total number of
+        samples falling in the histogram.
+    sectors_start : float | None, optional
+        The starting angle of the first sector (degrees). Must be at least -180 and
+        less than 180. If None, the first sector does not start at 0 degrees (North)
+        but is centred on it, i.e. ``sectors_start`` is ``-(360 / sectors) / 2``.
+
+        .. versionadded:: 1.4.0
 
     Returns
     -------
     xarray.DataArray
         The bi-dimensional histogram of ``speed`` and ``direction``.  Values in
         ``speed`` are histogrammed along the first dimension and values in ``direction``
-        are histogrammed along the second dimension.
+        are histogrammed along the second dimension. The dimensions are ``speed_bin``
+        and ``direction_bin`` and their coordinates are the lower bin edges.
     xarray.DataArray
-        The direction bins (i.e. the sectors) (degrees)
+        The direction bins (i.e. the sectors) (degrees). It contains ``sectors + 1``
+        bin edges, from ``sectors_start`` to ``sectors_start + 360``, along the
+        ``direction_bin_edge`` dimension.
 
 
     Notes
     -----
     The ``sectors`` parameter defines the number of direction bins in 360
-    degrees. If ``sectors_start`` is not provided, then the sectors start at
-    0 degrees (North) shifted by half a sector size.
-    E.g. if ``sectors`` is 4 the sectors are defined as:
+    degrees. Any integer value of at least 1 is supported. The bins are evenly
+    spaced and cover the [``sectors_start``, ``sectors_start + 360``] range. If
+    ``sectors_start`` is not provided, then the sectors start at 0 degrees
+    (North) shifted by half a sector size, so the first sector is centred on
+    North and its lower edge is ``-(360 / sectors) / 2``.
+
+    Each direction is first wrapped into [``sectors_start``, ``sectors_start + 360``)
+    and then counted in the bin containing it. Bins are half open,
+    [``lower``, ``upper``), except the last one, which also includes its upper edge.
+    Since the wrapping happens first, a direction of ``sectors_start + 360`` belongs
+    to the first sector, like North.
+
+    E.g. if ``sectors`` is 4 and ``sectors_start`` is not provided, the sector edges
+    are -45, 45, 135, 225 and 315 degrees:
 
     .. image:: /_static/wind_sector.png
         :width: 350px
+
+    If ``sectors_start`` is 0 and ``sectors`` is 4, the sector edges are 0, 90, 180,
+    270 and 360 degrees:
+
+    .. image:: /_static/wind_sector_start0.png
+        :width: 350px
+
+    While if ``sectors`` is 3, which is also supported, and ``sectors_start`` is not
+    provided, they are -60, 60, 180 and 300 degrees.
+
+    Samples where either ``speed`` or ``direction`` is NaN are ignored. If all the
+    ``speed`` values are NaN, the histogram is filled with NaN.
 
     """
     import xarray as xr
