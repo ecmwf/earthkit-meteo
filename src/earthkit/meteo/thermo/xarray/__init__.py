@@ -11,6 +11,7 @@
 Thermo related functions operating on xarray objects.
 """
 
+from .levels import freezing_level, snowfall_limit
 from .thermo import (
     dewpoint_from_relative_humidity,
     dewpoint_from_specific_humidity,
@@ -57,6 +58,7 @@ __all__ = [
     "dewpoint_from_specific_humidity",
     "ept_from_dewpoint",
     "ept_from_specific_humidity",
+    "freezing_level",
     "_kelvin_to_celsius",
     "lcl",
     "lcl_temperature",
@@ -74,6 +76,7 @@ __all__ = [
     "saturation_specific_humidity_slope",
     "saturation_vapour_pressure",
     "saturation_vapour_pressure_slope",
+    "snowfall_limit",
     "specific_gas_constant",
     "specific_humidity_from_dewpoint",
     "specific_humidity_from_mixing_ratio",

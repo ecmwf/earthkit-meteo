@@ -1485,7 +1485,8 @@ def wet_bulb_potential_temperature_from_dewpoint(
         Specifies the method to find the temperature along the moist adiabat defined
         by the equivalent potential temperature. The possible values are as follows:
 
-        * "direct": the rational formula defined by Eq (3.8) in [DaviesJones2008]_ is used
+        * "direct": the rational formula defined by Eq (3.8) in [DaviesJones2008]_ is used. For ``ept_method`` = "ifs"
+          the coefficients of the formula were refitted to the IFS equivalent potential temperature.
         * "bisect": :func:`temperature_on_moist_adiabat` with ``t_method`` = "bisect" is used
         * "newton": :func:`temperature_on_moist_adiabat` with ``t_method`` = "newton" is used
 
@@ -1542,7 +1543,8 @@ def wet_bulb_potential_temperature_from_specific_humidity(
         Specifies the method to find the temperature along the moist adiabat
         defined by the equivalent potential temperature. The possible values are as follows:
 
-        * "direct": the rational formula defined by Eq (3.8) in [DaviesJones2008]_ is used
+        * "direct": the rational formula defined by Eq (3.8) in [DaviesJones2008]_ is used. For ``ept_method`` = "ifs"
+          the coefficients of the formula were refitted to the IFS equivalent potential temperature.
         * "bisect": :func:`temperature_on_moist_adiabat` with ``t_method`` = "bisect" is used
         * "newton": :func:`temperature_on_moist_adiabat` with ``t_method`` = "newton" is used
 
