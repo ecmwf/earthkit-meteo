@@ -98,9 +98,6 @@ report.ignore_errors = true
 run.branch = "true"
 run.omit = ["*.pyx"]
 
-[tool.isort]
-profile = "black"
-
 [tool.pydocstyle]
 add_ignore = ["D1", "D200", "D205", "D400", "D401"]
 convention = "numpy"

@@ -28,7 +28,6 @@ repos:
   rev: 0.7.14
   hooks:
   - id: mdformat
-    exclude: cruft-update-template.md
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
   rev: v2.16.0
   hooks:
@@ -36,7 +35,20 @@ repos:
     args: [--autofix, --preserve-quotes]
   - id: pretty-format-toml
     args: [--autofix]
+- repo: https://github.com/fsfe/reuse-tool
+  rev: v6.2.0
+  hooks:
+  - id: reuse
 - repo: https://github.com/sphinx-contrib/sphinx-lint
   rev: v1.0.0
   hooks:
   - id: sphinx-lint
+- repo: local
+  hooks:
+  - id: reuse-annotate
+    name: Add SPDX headers
+    entry: reuse annotate --template ecmwf --copyright "European Centre for Medium-Range Weather Forecasts (ECMWF)" --license Apache-2.0
+    language: python
+    additional_dependencies:
+    - reuse[charset-normalizer]
+    files: \.(py|c|h|cpp|f90|js|ts|sh|rs)$
