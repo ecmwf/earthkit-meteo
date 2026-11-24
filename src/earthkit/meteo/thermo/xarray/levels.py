@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import xarray as xr
 
 from earthkit.meteo import constants
@@ -28,7 +29,7 @@ def freezing_level(
     t_sfc: xr.DataArray | float | None = None,
     z_sfc: xr.DataArray | float | None = None,
     threshold: float = constants.T_C2K,
-    lapse_rate: float | None = None,
+    lapse_rate: xr.DataArray | float | None = None,
     min_height: float | None = None,
     vertical_dim: str = "z",
 ) -> xr.DataArray:
@@ -56,12 +57,14 @@ def freezing_level(
         together with ``t_sfc``.
     threshold : float, optional
         Temperature defining the freezing level (K). Defaults to 0 °C (273.15 K).
-    lapse_rate : float, optional
+    lapse_rate : xarray.DataArray or float, optional
         Rate at which the temperature decreases with height (K m-1), e.g. 0.0065.
         When given, columns without a crossing are extrapolated from the surface:
         :math:`z_{sfc} - (threshold - t_{sfc}) / lapse\_rate`. This lies below
         ``z_sfc`` when the column is colder than ``threshold`` everywhere. When not
-        given, these columns are NaN. Requires ``t_sfc`` and ``z_sfc``.
+        given, these columns are NaN. Requires ``t_sfc`` and ``z_sfc``. An array
+        gives one rate per column; columns where it is not positive or missing are
+        not extrapolated.
     min_height : float, optional
         Lower bound of the result (m). When not given, the result is not bounded.
     vertical_dim : str, optional
@@ -105,7 +108,7 @@ def snowfall_limit(
     tw_sfc: xr.DataArray | float | None = None,
     z_sfc: xr.DataArray | float | None = None,
     threshold: float = constants.T_C2K + 1.3,
-    lapse_rate: float | None = None,
+    lapse_rate: xr.DataArray | float | None = None,
     min_height: float | None = None,
     vertical_dim: str = "z",
 ) -> xr.DataArray:
@@ -134,12 +137,14 @@ def snowfall_limit(
     threshold : float, optional
         Wet-bulb temperature defining the snowfall limit (K). Defaults to 1.3 °C
         (274.45 K).
-    lapse_rate : float, optional
+    lapse_rate : xarray.DataArray or float, optional
         Rate at which the wet-bulb temperature decreases with height (K m-1), e.g.
         0.005. When given, columns without a crossing are extrapolated from the
         surface: :math:`z_{sfc} - (threshold - tw_{sfc}) / lapse\_rate`. This lies
         below ``z_sfc`` when the column is colder than ``threshold`` everywhere. When
-        not given, these columns are NaN. Requires ``tw_sfc`` and ``z_sfc``.
+        not given, these columns are NaN. Requires ``tw_sfc`` and ``z_sfc``. An array
+        gives one rate per column; columns where it is not positive or missing are
+        not extrapolated.
     min_height : float, optional
         Lower bound of the result (m). When not given, the result is not bounded.
     vertical_dim : str, optional
@@ -184,7 +189,7 @@ def _height_of_uppermost_crossing(
     *,
     values_sfc: xr.DataArray | float | None,
     z_sfc: xr.DataArray | float | None,
-    lapse_rate: float | None,
+    lapse_rate: xr.DataArray | float | None,
     min_height: float | None,
     vertical_dim: str,
 ) -> xr.DataArray:
@@ -199,7 +204,7 @@ def _height_of_uppermost_crossing(
     if lapse_rate is not None:
         if not has_surface:
             raise ValueError("lapse_rate requires the surface value and the surface height")
-        if lapse_rate <= 0:
+        if np.ndim(lapse_rate) == 0 and lapse_rate <= 0:
             raise ValueError(f"lapse_rate must be positive, got {lapse_rate}")
 
     values, z = _bottom_up(values, z, vertical_dim)
@@ -218,6 +223,10 @@ def _height_of_uppermost_crossing(
     height = height.where(column_top < threshold)
 
     if lapse_rate is not None:
+        if np.ndim(lapse_rate) > 0:
+            # a scalar is checked above and kept as a Python float, so it does not promote float32
+            lapse_rate = xr.DataArray(lapse_rate)
+            lapse_rate = lapse_rate.where(lapse_rate > 0)
         height = height.fillna(z_sfc - (threshold - values_sfc) / lapse_rate)
 
     is_complete = values.notnull().all(vertical_dim) & z.notnull().all(vertical_dim)
