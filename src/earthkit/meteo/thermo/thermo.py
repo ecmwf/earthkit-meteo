@@ -1665,6 +1665,91 @@ def dewpoint_from_specific_humidity(
 
 
 @overload
+def dewpoint_from_mixing_ratio(
+    w: "ArrayLike",
+    p: "ArrayLike",
+) -> "ArrayLike": ...
+
+
+@overload
+def dewpoint_from_mixing_ratio(
+    w: "xarray.DataArray",
+    p: "xarray.DataArray",
+) -> "xarray.DataArray": ...
+
+
+@overload
+def dewpoint_from_mixing_ratio(
+    w: "FieldList",
+    p: "FieldList",
+) -> "FieldList": ...
+
+
+@overload
+def dewpoint_from_mixing_ratio(
+    w: "Field",
+    p: "Field",
+) -> "Field": ...
+
+
+def dewpoint_from_mixing_ratio(
+    w: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+    p: "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field",
+) -> "ArrayLike" | "xarray.DataArray" | "FieldList" | "Field":
+    r"""Compute the dewpoint temperature from mixing ratio.
+
+    Parameters
+    ----------
+    w: array-like | xarray.DataArray | FieldList | Field
+        Mixing ratio (kg/kg)
+    p: array-like | xarray.DataArray | FieldList | Field
+        Pressure (Pa)
+
+    Returns
+    -------
+    array-like | xarray.DataArray | FieldList | Field
+        Dewpoint temperature (K). For zero ``w`` values returns nan.
+
+
+    The computation starts with determining the saturation vapour pressure over
+    water at the dewpoint temperature:
+
+    .. math::
+
+        e_{wsat}(td) = e(w, p)
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_mixing_ratio`)
+        * :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water
+        * :math:`td` is the dewpoint
+
+    Then :math:`td` is computed from :math:`e_{wsat}(td)` by inverting the equations
+    used in :func:`saturation_vapour_pressure`. This is the inverse of
+    :func:`mixing_ratio_from_dewpoint`.
+
+    For a fixed ``w`` and a range of ``p`` the result is the saturation mixing ratio
+    line (isohume) of thermodynamic diagrams.
+
+
+    Implementations
+    ------------------------
+    :func:`dewpoint_from_mixing_ratio` calls one of the following implementations depending on
+    the type of the input arguments:
+
+    - :py:meth:`earthkit.meteo.thermo.array.dewpoint_from_mixing_ratio` for array-like
+    - :py:meth:`earthkit.meteo.thermo.xarray.dewpoint_from_mixing_ratio`
+      for xarray.DataArray
+    - :py:meth:`earthkit.meteo.thermo.fieldlist.dewpoint_from_mixing_ratio`
+      for FieldList | Field
+
+    The function returns an object of the same type as the input arguments.
+    """
+    dispatched = dispatch(dewpoint_from_mixing_ratio, array=True)
+    return dispatched(w, p)
+
+
+@overload
 def virtual_temperature(
     t: "ArrayLike",
     q: "ArrayLike",

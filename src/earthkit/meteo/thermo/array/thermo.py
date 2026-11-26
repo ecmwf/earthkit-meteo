@@ -763,6 +763,46 @@ def dewpoint_from_specific_humidity(q: ArrayLike, p: ArrayLike) -> ArrayLike:
     return temperature_from_saturation_vapour_pressure(vapour_pressure_from_specific_humidity(q, p))
 
 
+def dewpoint_from_mixing_ratio(w: ArrayLike, p: ArrayLike) -> ArrayLike:
+    r"""Compute the dewpoint temperature from mixing ratio.
+
+    Parameters
+    ----------
+    w: array-like
+        Mixing ratio (kg/kg)
+    p: array-like
+        Pressure (Pa)
+
+    Returns
+    -------
+    array-like
+        Dewpoint temperature (K). For zero ``w`` values returns nan.
+
+
+    The computation starts with determining the saturation vapour pressure over
+    water at the dewpoint temperature:
+
+    .. math::
+
+        e_{wsat}(td) = e(w, p)
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_mixing_ratio`)
+        * :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water
+        * :math:`td` is the dewpoint
+
+    Then :math:`td` is computed from :math:`e_{wsat}(td)` by inverting the equations
+    used in :func:`saturation_vapour_pressure`. This is the inverse of
+    :func:`mixing_ratio_from_dewpoint`.
+
+    For a fixed ``w`` and a range of ``p`` the result is the saturation mixing ratio
+    line (isohume) of thermodynamic diagrams.
+
+    """
+    return temperature_from_saturation_vapour_pressure(vapour_pressure_from_mixing_ratio(w, p))
+
+
 def virtual_temperature(t: ArrayLike, q: ArrayLike) -> ArrayLike:
     r"""Compute the virtual temperature from temperature and specific humidity.
 
@@ -1080,24 +1120,72 @@ class _EptComp:
         b = [1.0, -3.552497, 3.781782, -0.6899655, -0.5929340]
         return ept - xp.exp(xp.polyval(x, a) / xp.polyval(x, b))
 
+    # The Stipanuk iteration starts at T0 - 20 K and takes 12 halving steps from
+    # 60 K, so it can only reach temperatures within STIPANUK_REACH of its start.
+    STIPANUK_START = constants.T0 - 20
+    STIPANUK_N_ITER = 12
+    STIPANUK_DT = 120.0
+    STIPANUK_REACH = STIPANUK_DT * (1.0 - 0.5**STIPANUK_N_ITER)
+
+    # Temperature bracket (K) of the fallback bisection used where the solution
+    # is beyond the reach of the Stipanuk iteration. It has to cover the cold
+    # upper part of the moist adiabats drawn on thermodynamic diagrams (e.g.
+    # about 76 K at 20 hPa on the -40 C moist adiabat) as well as very hot and
+    # humid conditions. When the solution is outside the bracket nan is returned.
+    T_MIN_MA = 50.0
+    T_MAX_MA = 420.0
+    # Number of bisection steps: (T_MAX_MA - T_MIN_MA) / 2**24 < 3e-5 K
+    N_ITER_MA = 24
+
     def compute_t_on_ma_stipanuk(self, ept, p):
         xp = array_namespace(ept, p)
         ept = xp.asarray(ept)
         p = xp.asarray(p)
 
         shape = xp.broadcast_shapes(ept.shape, p.shape)
-        t = xp.full(shape, constants.T0 - 20, dtype=ept.dtype, device=xp.device(ept))
-        max_iter = 12
-        dt = 120.0
+        t = xp.full(shape, self.STIPANUK_START, dtype=ept.dtype, device=xp.device(ept))
+        dt = self.STIPANUK_DT
 
-        for _ in range(max_iter):
+        for _ in range(self.STIPANUK_N_ITER):
             ths = _ThermoState(t=t, p=p)
             dt /= 2.0
             t += xp.sign(ept * xp.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)) * dt
-        # ths.t = t
-        # return ept - self._th_sat(ths) * np.exp(self._G_sat(ths))
+
+        # Where every step went the same way the solution is beyond the reach of
+        # the iteration (e.g. the cold upper part of the moist adiabats) and the
+        # result is clamped. Those values are recomputed with a bisection over a
+        # wider bracket. The smallest step is about 0.03 K, so a tolerance of
+        # 1e-3 K only selects the clamped values.
+        tol = 1e-3
+        clamped = (t < self.STIPANUK_START - self.STIPANUK_REACH + tol) | (
+            t > self.STIPANUK_START + self.STIPANUK_REACH - tol
+        )
+        if xp.any(clamped):
+            t = xp.where(clamped, self._t_on_ma_bisect(ept, p, shape, xp), t)
 
         return t
+
+    def _t_on_ma_bisect(self, ept, p, shape, xp):
+        lo = xp.full(shape, self.T_MIN_MA, dtype=ept.dtype, device=xp.device(ept))
+        hi = xp.full(shape, self.T_MAX_MA, dtype=ept.dtype, device=xp.device(ept))
+
+        for _ in range(self.N_ITER_MA):
+            t = 0.5 * (lo + hi)
+            ths = _ThermoState(t=t, p=p)
+            # Positive when the saturated parcel at t is colder than the moist
+            # adiabat defined by ept. A NaN means the saturation vapour pressure
+            # exceeds p, i.e. t is far too warm, so it is treated as negative.
+            d = ept * xp.exp(self._G_sat(ths, scale=-1.0)) - self._th_sat(ths)
+            warmer = d > 0
+            lo = xp.where(warmer, t, lo)
+            hi = xp.where(warmer, hi, t)
+
+        t = 0.5 * (lo + hi)
+        # The solution is outside the bracket if the bisection converged onto one
+        # of its ends.
+        tol = 1e-3
+        outside = (t < self.T_MIN_MA + tol) | (t > self.T_MAX_MA - tol)
+        return xp.where(outside, xp.asarray(xp.nan, dtype=t.dtype, device=xp.device(t)), t)
 
     def compute_t_on_ma_davies(self, ept, p):
         xp = array_namespace(ept, p)
