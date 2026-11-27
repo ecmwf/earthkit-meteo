@@ -655,7 +655,7 @@ def test_extra_outputs_parcel_path_shape():
     assert isinstance(path, ParcelPath)
 
     # Profile arrays
-    for attr in ("zh_agl", "t", "q", "tv", "tv_env"):
+    for attr in ("p", "zh_agl", "t", "q", "tv", "tv_env"):
         arr = getattr(path, attr)
         assert arr.shape == (nz_path,) + horizontal_shape, (
             f"parcel_path.{attr}: expected shape {(nz_path,) + horizontal_shape}, got {arr.shape}"
@@ -701,11 +701,41 @@ def test_extra_outputs_parcel_path_nd_shape():
     nz_path = nz
 
     assert isinstance(path, ParcelPath)
-    for attr in ("zh_agl", "t", "q", "tv", "tv_env"):
+    for attr in ("p", "zh_agl", "t", "q", "tv", "tv_env"):
         assert getattr(path, attr).shape == (nz_path, ny, nx), f"profile array {attr} wrong shape"
     for level_attr in ("lcl", "lfc", "el"):
         assert getattr(path, level_attr).p.shape == (ny, nx), f"key level {level_attr}.p wrong shape"
         assert getattr(path, level_attr).zh_agl.shape == (ny, nx), f"key level {level_attr}.zh_agl wrong shape"
+
+
+def test_extra_outputs_parcel_path_pressure():
+    """parcel_path.p pairs each parcel temperature with its pressure."""
+    p, zh, t, q = _unstable_1col()
+    cape, cin, extras = thermo.surface_cape_cin(
+        *_strip_sfc(p, t, q, zh), *_sfc_from_profile(p, t, q, zh), extra_outputs=["parcel_path"]
+    )
+    path = extras["parcel_path"]
+    p_path = path.p[:, 0]
+    valid = ~np.isnan(p_path)
+
+    # The pressures are the input levels above the ground plus the surface, in
+    # ascending order; levels below the ground are NaN
+    p_pl, _, _, zh_pl = _strip_sfc(p, t, q, zh)
+    p_sfc, _, _, zh_sfc = _sfc_from_profile(p, t, q, zh)
+    above_ground = zh_pl[:, 0] >= zh_sfc[0]
+    assert not above_ground.all()  # the case has a level below the ground
+    expected = np.sort(np.append(p_pl[above_ground, 0], p_sfc[0]))
+    np.testing.assert_allclose(p_path[valid], expected)
+    assert np.all(np.diff(p_path[valid]) > 0)
+
+    # Below the LCL the parcel follows the dry adiabat through its origin
+    origin = path.origin
+    theta = thermo.potential_temperature(origin.t[0], origin.p[0])
+    dry = valid & (p_path > path.lcl.p[0]) & (p_path <= origin.p[0])
+    assert dry.sum() >= 2
+    np.testing.assert_allclose(
+        path.t[dry, 0], thermo.temperature_from_potential_temperature(theta, p_path[dry]), rtol=1e-10
+    )
 
 
 def test_extra_outputs_standalone_key_levels():

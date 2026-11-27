@@ -349,6 +349,22 @@ def test_xr_dewpoint_from_specific_humidity(q, p):
 
 
 @pytest.mark.parametrize(
+    "w,p",
+    [
+        (0.01, 100000.0),
+    ],
+)
+def test_xr_dewpoint_from_mixing_ratio(w, p):
+    w_da = _da(w)
+    p_da = _da(p)
+    out = thermo.dewpoint_from_mixing_ratio(w_da, p_da)
+    ref = thermo.array.dewpoint_from_mixing_ratio(_np(w), _np(p))
+    assert np.allclose(out.values, ref, equal_nan=True)
+    assert out.ndim == 0
+    assert out.attrs["units"] == "K"
+
+
+@pytest.mark.parametrize(
     "t,q",
     [
         (293.15, 0.01),

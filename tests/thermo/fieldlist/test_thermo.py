@@ -733,6 +733,29 @@ def test_fieldlist_dewpoint_from_specific_humidity(input_type, pres_type):
 
 
 @pytest.mark.parametrize("input_type", ["fieldlist", "field"])
+@pytest.mark.parametrize("pres_type", ["fl", "value", None])
+def test_fieldlist_dewpoint_from_mixing_ratio(input_type, pres_type):
+    import earthkit.meteo.thermo.array as array
+    from earthkit.meteo.thermo.fieldlist import dewpoint_from_mixing_ratio
+
+    # the specific humidity values are used as mixing ratios
+    w = _make_input_fieldlist("q", values=SPECIFIC_HUMIDITIES, input_type=input_type)
+    p = _make_pres_fieldlist(w, pres_type=pres_type)
+    out = dewpoint_from_mixing_ratio(w, p)
+
+    assert isinstance(out, type(w))
+
+    if input_type == "fieldlist":
+        assert len(out) == len(w)
+        for f, vals, p_val in zip(out, SPECIFIC_HUMIDITIES, PRESSURES):
+            ref = array.dewpoint_from_mixing_ratio(np.array(vals), np.array([p_val]))
+            np.testing.assert_allclose(f.values, ref)
+    elif input_type == "field":
+        ref = array.dewpoint_from_mixing_ratio(np.array(SPECIFIC_HUMIDITIES[0]), np.array([PRESSURES[0]]))
+        np.testing.assert_allclose(out.values, ref)
+
+
+@pytest.mark.parametrize("input_type", ["fieldlist", "field"])
 def test_fieldlist_virtual_temperature(input_type):
     import earthkit.meteo.thermo.array as array
     from earthkit.meteo.thermo.fieldlist import virtual_temperature

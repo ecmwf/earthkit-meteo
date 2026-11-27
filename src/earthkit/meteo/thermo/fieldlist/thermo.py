@@ -927,6 +927,56 @@ def dewpoint_from_specific_humidity(
     return fieldlist_ufunc(array.dewpoint_from_specific_humidity, q, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
 
 
+def dewpoint_from_mixing_ratio(
+    w: FieldList | Field, p: FieldList | Field | Iterable[float] | float | None = None
+) -> FieldList | Field:
+    r"""Compute the dewpoint temperature from mixing ratio.
+
+    Parameters
+    ----------
+    w : FieldList|Field
+        Mixing ratio (kg/kg).
+    p : FieldList|Field|Iterable[float]|float|None
+        Pressure (Pa). If None, inferred from the
+        field metadata of ``w``. Otherwise, if ``w``
+        is a FieldList ``p`` must be a FieldList or an
+        array-like of the same length as ``w``. If ``w``
+        is a Field, ``p`` must be a single Field or a float.
+
+    Returns
+    -------
+    FieldList|Field
+        Dewpoint temperature (K). For zero ``w`` values returns nan.
+        The result has the same type as the input ``w`` (FieldList or Field).
+
+
+    The computation starts with determining the saturation vapour pressure over
+    water at the dewpoint temperature:
+
+    .. math::
+
+        e_{wsat}(td) = e(w, p)
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_mixing_ratio`)
+        * :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water
+        * :math:`td` is the dewpoint
+
+    Then :math:`td` is computed from :math:`e_{wsat}(td)` by inverting the equations
+    used in :func:`saturation_vapour_pressure`. This is the inverse of
+    :func:`mixing_ratio_from_dewpoint`.
+
+    For a fixed ``w`` and a range of ``p`` the result is the saturation mixing ratio
+    line (isohume) of thermodynamic diagrams.
+
+    """
+    fieldlist_ufunc_kwargs = {"default_variable": "dewpoint"}
+    if p is None:
+        p = pressure_from_metadata(w)  # convert to Pa
+    return fieldlist_ufunc(array.dewpoint_from_mixing_ratio, w, p, fieldlist_ufunc_kwargs=fieldlist_ufunc_kwargs)
+
+
 def virtual_temperature(t: FieldList | Field, q: FieldList | Field) -> FieldList | Field:
     r"""Compute the virtual temperature from temperature and specific humidity.
 

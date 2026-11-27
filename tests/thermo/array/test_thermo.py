@@ -702,6 +702,32 @@ def test_dewpoint_from_specific_humidity(q, p, v_ref, xp, device):
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+def test_dewpoint_from_mixing_ratio_roundtrip(xp, device):
+    # dewpoint_from_mixing_ratio is the inverse of mixing_ratio_from_dewpoint
+    td = xp.asarray([200.0, 233.15, 253.15, 273.15, 288.15, 303.15], device=device)
+    p = xp.asarray([5000.0, 20000.0, 50000.0, 85000.0, 100000.0, 105000.0], device=device)
+    w = thermo.array.mixing_ratio_from_dewpoint(td, p)
+    td_back = thermo.array.dewpoint_from_mixing_ratio(w, p)
+    assert xp.allclose(td_back, td, rtol=0, atol=1e-6)
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize(
+    "w, p, td_min, td_max",
+    [
+        # 10 g/kg at 1000 hPa corresponds to a dewpoint of about 14 C
+        (0.01, 100000.0, 287.0, 287.5),
+        # 1 g/kg at 500 hPa gives e = 80.3 Pa, which is the saturation vapour
+        # pressure over water at about -25 C
+        (0.001, 50000.0, 247.6, 248.6),
+    ],
+)
+def test_dewpoint_from_mixing_ratio_values(w, p, td_min, td_max, xp, device):
+    td = thermo.array.dewpoint_from_mixing_ratio(xp.asarray(w, device=device), xp.asarray(p, device=device))
+    assert td_min < float(td) < td_max
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
 @pytest.mark.parametrize(
     "t,q,v_ref",
     [([286.4, 293.4], [0.0196078431, 0.0291262136], [289.8130240470, 298.5937453245])],
@@ -955,6 +981,31 @@ def test_temperature_on_moist_adiabat(ept_method, t_method, xp, device):
     pt = thermo.array.temperature_on_moist_adiabat(ept, p, ept_method=ept_method, t_method=t_method)
     v_ref = xp.asarray(ref[f"{ept_method}_{t_method}"], device=device)
     assert xp.allclose(pt, v_ref, equal_nan=True), f"{ept_method=} {t_method=}"
+
+
+@pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)
+@pytest.mark.parametrize("ept_method", ["ifs", "bolton35", "bolton39"])
+def test_temperature_on_moist_adiabat_bisect_full_range(ept_method, xp, device):
+    # The bisection has to cover the cold upper part of the moist adiabats drawn
+    # on thermodynamic diagrams. It used to be limited to about 133 K.
+    p = xp.asarray([105000.0, 70000.0, 30000.0, 10000.0, 5000.0, 2000.0], device=device)
+    for t_sat in [233.15, 263.15, 283.15, 303.15]:
+        ept = thermo.array.saturation_ept(xp.asarray([t_sat], device=device), 1e5, method=ept_method)
+        ept = xp.full(p.shape, float(ept[0]), device=device)
+        t = thermo.array.temperature_on_moist_adiabat(ept, p, ept_method=ept_method, t_method="bisect")
+        # the result must lie on the moist adiabat (within the ~0.03 K precision
+        # of the bisection)
+        ept_back = thermo.array.saturation_ept(t, p, method=ept_method)
+        assert xp.allclose(ept_back, ept, rtol=1e-3, atol=0), f"{ept_method=} {t_sat=}"
+        # temperature monotonically decreases with height and is not clamped
+        assert not xp.any(xp.isnan(t))
+        assert xp.all(t[1:] < t[:-1])
+
+    # On the -40 C moist adiabat the temperature at 20 hPa is about 76 K, well
+    # below the former 133 K limit of the iteration.
+    ept = thermo.array.saturation_ept(xp.asarray([233.15], device=device), 1e5, method=ept_method)
+    t = thermo.array.temperature_on_moist_adiabat(ept, xp.asarray([2000.0], device=device), ept_method=ept_method)
+    assert 75.0 < float(t[0]) < 78.0
 
 
 @pytest.mark.parametrize("xp, device", NAMESPACE_DEVICES)

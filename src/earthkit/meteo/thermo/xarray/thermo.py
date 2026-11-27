@@ -786,6 +786,49 @@ def dewpoint_from_specific_humidity(q: xr.DataArray, p: xr.DataArray) -> xr.Data
     })
 
 
+def dewpoint_from_mixing_ratio(w: xr.DataArray, p: xr.DataArray) -> xr.DataArray:
+    r"""Compute the dewpoint temperature from mixing ratio.
+
+    Parameters
+    ----------
+    w: xarray.DataArray
+        Mixing ratio (kg/kg)
+    p: xarray.DataArray
+        Pressure (Pa)
+
+    Returns
+    -------
+    xarray.DataArray
+        Dewpoint temperature (K). For zero ``w`` values returns nan.
+
+
+    The computation starts with determining the saturation vapour pressure over
+    water at the dewpoint temperature:
+
+    .. math::
+
+        e_{wsat}(td) = e(w, p)
+
+    where:
+
+        * :math:`e` is the vapour pressure (see :func:`vapour_pressure_from_mixing_ratio`)
+        * :math:`e_{wsat}` is the :func:`saturation_vapour_pressure` over water
+        * :math:`td` is the dewpoint
+
+    Then :math:`td` is computed from :math:`e_{wsat}(td)` by inverting the equations
+    used in :func:`saturation_vapour_pressure`. This is the inverse of
+    :func:`mixing_ratio_from_dewpoint`.
+
+    For a fixed ``w`` and a range of ``p`` the result is the saturation mixing ratio
+    line (isohume) of thermodynamic diagrams.
+
+    """
+    return xarray_ufunc(array.dewpoint_from_mixing_ratio, w, p).assign_attrs({
+        "standard_name": "dew_point_temperature",
+        "units": "K",
+    })
+
+
 def virtual_temperature(t: xr.DataArray, q: xr.DataArray) -> xr.DataArray:
     r"""Compute the virtual temperature from temperature and specific humidity.
 

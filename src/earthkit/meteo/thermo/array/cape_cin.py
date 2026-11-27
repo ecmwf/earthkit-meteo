@@ -54,9 +54,12 @@ class ParcelOrigin:
 class ParcelPath:
     """Parcel ascent profile and diagnostic levels.
 
-    Profile arrays (``zh_agl``, ``t``, ``q``, ``tv``, ``tv_env``) have shape
-    ``(n_levels, ...)`` and are ordered consistently from one end of the
-    profile to the other. All profile arrays share the same ordering.
+    Profile arrays (``p``, ``zh_agl``, ``t``, ``q``, ``tv``, ``tv_env``) have
+    shape ``(n_levels, ...)`` where the levels are the input levels plus the
+    surface. They are ordered by ascending pressure, i.e. from the top of the
+    profile downwards, with levels below the ground (and missing levels) at the
+    end as NaN. All profile arrays share the same ordering, so e.g. ``t`` can be
+    plotted against ``p``.
 
     The key diagnostic levels (``lcl``, ``lfc``, ``el``) and the parcel
     ``origin`` have shape ``(...)`` (horizontal dimensions only) so that the
@@ -68,6 +71,8 @@ class ParcelPath:
     """Geopotential height above ground level (m)."""
     t: np.ndarray
     """Parcel temperature (K)."""
+    p: np.ndarray
+    """Pressure (Pa)."""
     q: np.ndarray
     """Parcel specific humidity (kg/kg)."""
     tv: np.ndarray
@@ -554,6 +559,7 @@ class _CapeCinComp:
         parcel_path = ParcelPath(
             zh_agl=zh_agl,
             t=t_parcel,
+            p=p,
             q=q_parcel,
             tv=tv_parcel,
             tv_env=tv_env,
@@ -701,6 +707,7 @@ def _assemble_extras(result, extra_outputs, vertical_axis, *, is_profile=False):
                 path = ParcelPath(
                     zh_agl=np.swapaxes(path.zh_agl, 0, vertical_axis),
                     t=np.swapaxes(path.t, 0, vertical_axis),
+                    p=np.swapaxes(path.p, 0, vertical_axis),
                     q=np.swapaxes(path.q, 0, vertical_axis),
                     tv=np.swapaxes(path.tv, 0, vertical_axis),
                     tv_env=np.swapaxes(path.tv_env, 0, vertical_axis),
@@ -713,6 +720,7 @@ def _assemble_extras(result, extra_outputs, vertical_axis, *, is_profile=False):
                 path = ParcelPath(
                     zh_agl=path.zh_agl.squeeze(axis=-1),
                     t=path.t.squeeze(axis=-1),
+                    p=path.p.squeeze(axis=-1),
                     q=path.q.squeeze(axis=-1),
                     tv=path.tv.squeeze(axis=-1),
                     tv_env=path.tv_env.squeeze(axis=-1),
